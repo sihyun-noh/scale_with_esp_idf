@@ -1,0 +1,4 @@
+[mapping:wifi]
+archive: libwifi.a
+entries:
+  * (noflash)

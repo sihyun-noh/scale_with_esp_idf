@@ -1,0 +1,4 @@
+[mapping:syscfg]
+archive: libsyscfg.a
+entries:
+  * (default)

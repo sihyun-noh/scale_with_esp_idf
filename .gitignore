@@ -1,0 +1,11 @@
+build/
+product/**/build
+.vscode/
+.DS_Store
+.cache
+tags
+sdkconfig.old
+compile_commands.json
+*.patch
+*.swp
+cscope.*

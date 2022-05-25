@@ -1,0 +1,5 @@
+config SMARTFARM_MQTT_FEATURE
+  bool "SmartFarm MQTT feature"
+  default "y"
+  help
+    MQTT feature that supports MQTT client

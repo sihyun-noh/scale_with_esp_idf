@@ -1,0 +1,4 @@
+[mapping:sysevent]
+archive: libsysevent.a
+entries:
+  * (noflash)

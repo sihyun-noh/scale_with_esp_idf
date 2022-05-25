@@ -1,0 +1,5 @@
+config SMARTFARM_SYSLOG_FEATURE
+  bool "SmartFarm Syslog feature"
+  default "y"
+  help
+    Shows the log messages in console mode and add them to list.

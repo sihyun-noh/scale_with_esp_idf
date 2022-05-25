@@ -1,0 +1,4 @@
+[mapping:setup]
+archive: libsetup.a
+entries:
+  * (noflash)

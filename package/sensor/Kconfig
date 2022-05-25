@@ -1,0 +1,13 @@
+menu "SmartFarm Sensors Configuration"
+  config BATTERY_FEATURE
+    bool "Battery feature"
+    default "y"
+    help
+      Battery feature to get battery level of sensor
+
+  config SHT3x_FEATURE
+    bool "SHT3x feature"
+    default "y"
+    help
+      SHT3x Temperature and Humidity Sensor
+endmenu # Sensors

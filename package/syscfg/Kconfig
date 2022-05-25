@@ -1,0 +1,5 @@
+config SMARTFARM_SYSCFG_FEATURE
+  bool "SmartFarm Syscfg feature"
+  default "y"
+  help
+    Syscfg feature that set and get configuration

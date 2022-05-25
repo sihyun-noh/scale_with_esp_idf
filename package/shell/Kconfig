@@ -1,0 +1,5 @@
+config SMARTFARM_SHELL_FEATURE
+  bool "SmartFarm CommandLine feature"
+  default "y"
+  help
+    CommandLine feature to run utililty and test command

@@ -1,0 +1,5 @@
+config SMARTFRAM_EASYSETUP_FEATURE
+  bool "SmartFarm EasySetup feature"
+  default "y"
+  help
+    EasySetup feature that supports zero touch setup without user intervention
