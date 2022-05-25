@@ -24,7 +24,7 @@ static void mqtt_event_callback(void *handler_args, int32_t event_id, void *even
   }
 }
 
-int mqtt_start_cmd(int argc, char *argv[]) {
+int mqtt_start_cmd(int argc, char **argv) {
   if (argv[1] == NULL || argv[2] == NULL) {
     return -1;
   }
@@ -44,7 +44,7 @@ int mqtt_start_cmd(int argc, char *argv[]) {
   return mqtt_client_start(ctx);
 }
 
-int mqtt_subscribe_cmd(int argc, char *argv[]) {
+int mqtt_subscribe_cmd(int argc, char **argv) {
   if (argv[1] == NULL || argv[2] == NULL) {
     return -1;
   }
@@ -57,7 +57,7 @@ int mqtt_subscribe_cmd(int argc, char *argv[]) {
   return 0;
 }
 
-int mqtt_publish_cmd(int argc, char *argv[]) {
+int mqtt_publish_cmd(int argc, char **argv) {
   if (argv[1] == NULL || argv[2] == NULL || argv[3] == NULL) {
     return -1;
   }
