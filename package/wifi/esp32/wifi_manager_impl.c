@@ -16,7 +16,7 @@
 #include "esp32/wifi_manager_impl.h"
 
 #include <string.h>
-#include <strings.h>
+#include <stdbool.h>
 
 #include "esp_err.h"
 #include "esp_netif.h"
@@ -34,7 +34,7 @@
 #define DEFAULT_MAX_STA_CONN 4
 
 static const char *TAG = "wifi-manager";
-
+static bool b_connected;
 struct wifi_context {
   SemaphoreHandle_t wifi_mutex;
   esp_netif_t *ap_netif;
@@ -43,9 +43,12 @@ struct wifi_context {
 
 static int is_wifi_sta_ready() {
   int wait_count = 0;
+  wifi_mode_t wifi_mode = WIFI_MODE_NULL;
 
   do {
-    if (sysevent_get(WIFI_EVENT, WIFI_EVENT_STA_START, NULL, 0) == 0) {
+    // if (sysevent_get(WIFI_EVENT, WIFI_EVENT_STA_START, NULL, 0) == 0) {
+    esp_wifi_get_mode(&wifi_mode);
+    if (wifi_mode == WIFI_MODE_STA) {
       wait_count = 0;
       break;
     } else {
@@ -205,10 +208,13 @@ int wifi_stop_mode_impl(wifi_context_t *ctx) {
 
   esp_err_t ret = ESP_OK;
 
-  ret = esp_wifi_disconnect();
-  if (ret != ESP_OK) {
-    goto _error;
+  if (b_connected) {
+    ret = esp_wifi_disconnect();
+    if (ret != ESP_OK) {
+      goto _error;
+    }
   }
+
   ret = esp_wifi_stop();
   if (ret != ESP_OK) {
     goto _error;
@@ -229,6 +235,11 @@ _error:
 int wifi_connect_ap_impl(wifi_context_t *ctx, const char *ssid, const char *password) {
   if (ctx == NULL || ssid == NULL || password == NULL) {
     LOGE(TAG, "Invalid arguments");
+    return -1;
+  }
+
+  if (b_connected) {
+    LOGE(TAG, "already connected.");
     return -1;
   }
 
@@ -266,6 +277,7 @@ int wifi_connect_ap_impl(wifi_context_t *ctx, const char *ssid, const char *pass
     LOGE(TAG, "Wifi station mode is not ready");
   }
 
+  b_connected = true;
   xSemaphoreGive(ctx->wifi_mutex);
 
   return ret;
@@ -275,13 +287,19 @@ int wifi_disconnect_ap_impl(wifi_context_t *ctx) {
   if (ctx == NULL) {
     return -1;
   }
+  if (!b_connected) {
+    LOGE(TAG, "not connected.");
+    return -1;
+  }
 
   xSemaphoreTake(ctx->wifi_mutex, portMAX_DELAY);
   int ret = 0;
+
   if (ESP_OK != esp_wifi_disconnect()) {
     SLOGE(TAG, "Failed to disconnect");
     ret = -1;
   }
+  b_connected = false;
   xSemaphoreGive(ctx->wifi_mutex);
   return ret;
 }
