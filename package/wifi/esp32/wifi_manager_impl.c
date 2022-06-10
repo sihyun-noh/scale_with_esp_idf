@@ -213,6 +213,7 @@ int wifi_stop_mode_impl(wifi_context_t *ctx) {
     if (ret != ESP_OK) {
       goto _error;
     }
+    b_connected = false;
   }
 
   ret = esp_wifi_stop();
