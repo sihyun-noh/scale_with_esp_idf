@@ -31,6 +31,8 @@
 #include "esp_log.h"
 #include "sys/queue.h"
 
+#include "monitoring.h"
+
 /**
  * @brief Define of Sysevent base
  */
@@ -214,12 +216,12 @@ static void sysevent_handler(void *handler_arg, esp_event_base_t event_base, int
   ESP_LOGI(TAG, "sysevent_handler: event_base=%s, event_id=%d, event_data=%p", event_base, event_id, event_data);
 
   char ip_addr[32] = { 0 };
+  char buf_monitor[50] = { 0 };
+
   event_msg_t event_msg;
   memset(&event_msg, 0, sizeof(event_msg_t));
-
   event_msg.event_id = event_id;
   snprintf(event_msg.event_base, sizeof(event_msg.event_base), "%s", event_base);
-
   if (event_data) {
     if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
       ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
@@ -239,6 +241,29 @@ static void sysevent_handler(void *handler_arg, esp_event_base_t event_base, int
         if (event_msg.event_data) {
           memcpy(event_msg.event_data, event_data, event_msg.event_data_len);
           ESP_LOGI(TAG, "sysevent_handler: event data = %s", (char *)event_msg.event_data);
+        }
+      }
+    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_CONNECTED) {
+      wifi_event_sta_connected_t *event = (wifi_event_sta_connected_t *)event_data;
+      snprintf(buf_monitor, sizeof(buf_monitor), "%s", event->ssid);
+      event_msg.event_data_len = strlen(buf_monitor);
+      if (event_msg.event_data_len) {
+        event_msg.event_data = (char *)calloc(1, event_msg.event_data_len + 1);
+        if (event_msg.event_data) {
+          memcpy(event_msg.event_data, buf_monitor, event_msg.event_data_len);
+          ESP_LOGI(TAG, "sysevent_handler: event data = %s", buf_monitor);
+        }
+      }
+    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+      wifi_event_sta_disconnected_t *event = (wifi_event_sta_disconnected_t *)event_data;
+      uint8_t reason = event->reason;
+      snprintf(buf_monitor, sizeof(buf_monitor), "%u - %s", reason, reason2str(reason));
+      event_msg.event_data_len = strlen(buf_monitor);
+      if (event_msg.event_data_len) {
+        event_msg.event_data = (char *)calloc(1, event_msg.event_data_len + 1);
+        if (event_msg.event_data) {
+          memcpy(event_msg.event_data, buf_monitor, event_msg.event_data_len);
+          ESP_LOGI(TAG, "sysevent_handler: event data = %s", buf_monitor);
         }
       }
     }
@@ -506,10 +531,10 @@ int sysevent_get_impl(sysevent_ctx_t *ctx, const char *event_base, int event_id,
     goto _exit;
   }
 
-  ESP_LOGI(TAG, "Wait for event_base = %s, event_id = %d", event_base, event_id);
+  // ESP_LOGI(TAG, "Wait for event_base = %s, event_id = %d", event_base, event_id);
 
   if (xQueueReceive(ctx->sysevent_res, &event_msg, portMAX_DELAY) == pdTRUE) {
-    ESP_LOGI(TAG, "Got event_base = %s, event_id = %d", event_msg.event_base, event_msg.event_id);
+    //   ESP_LOGI(TAG, "Got event_base = %s, event_id = %d", event_msg.event_base, event_msg.event_id);
     if (strcmp(event_msg.event_base, NO_EVENT_BASE) == 0 && event_msg.event_id == NO_EVENT_ID) {
       // No event in accordance with event base and event id
       goto _exit;
@@ -556,4 +581,3 @@ int sysevent_get_with_handler_impl(sysevent_ctx_t *ctx, const char *event_base, 
   xSemaphoreGive(ctx->sysevent_sem);
   return ret;
 }
-

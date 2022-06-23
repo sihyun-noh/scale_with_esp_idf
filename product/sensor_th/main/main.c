@@ -15,6 +15,8 @@
 #include "syslog.h"
 #include "wifi_manager.h"
 
+#include "monitoring.h"
+
 typedef enum {
   SYSINIT_OK,
   ERR_NVS_FLASH,
@@ -87,6 +89,10 @@ void app_main(void) {
 
   create_easy_setup_task();
   create_sensor_task();
+
+  if (carete_monitoring_task() == false) {
+    LOGI(TAG, "Failed to monitoring task start");
+  }
 
   // Start interactive shell command line
   ctx = sc_init();
