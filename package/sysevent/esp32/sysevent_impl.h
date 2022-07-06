@@ -18,6 +18,7 @@
 #define _SYSEVENT_IMPL_H_
 
 #include "esp_err.h"
+#include "esp_event.h"
 
 #include "sysevent.h"
 
@@ -25,6 +26,9 @@
  * @brief Event APIs for esp32 platform
  *
  */
+
+// Declare an event base
+// ESP_EVENT_DECLARE_BASE(SYSEVENT_BASE);
 
 /**
  * @brief Sysevent context structure
@@ -81,4 +85,15 @@ int sysevent_get_impl(sysevent_ctx_t *ctx, const char *event_base, int event_id,
 int sysevent_get_with_handler_impl(sysevent_ctx_t *ctx, const char *event_base, int event_id,
                                    event_handler_t event_handler, void *handler_data);
 
+/**
+ * @brief Unregister the event handler used by sysevent_get_with_handler when it is no longer used.
+ *
+ * @param ctx the context of sysevent
+ * @param event_base the event base what user want to get
+ * @param event_id the event id what user want to get
+ * @param event_handler the event handler function what the user wants to unregister if it is no longer used.
+ * @return int 0 on success, -1 on failure
+ */
+int sysevent_unregister_handler_impl(sysevent_ctx_t *ctx, const char *event_base, int event_id,
+                                     event_handler_t event_handler);
 #endif /* _SYSEVENT_IMPL_H_ */

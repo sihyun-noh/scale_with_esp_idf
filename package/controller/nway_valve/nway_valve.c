@@ -1,8 +1,6 @@
-/** @file adc_api.c
+/** @file nway_valve.c
  *
- * @brief adc peripheral abstraction api that will be used in application layer
- *
- * This adc api is designed to support various adc drivers
+ * @brief Device driver module for N-way valve
  *
  * Created by Greenlabs, Smartfarm Team.
  * Copyright (c) 2022 Greenlabs Co. and/or its affiliates. All rights reserved.
@@ -15,17 +13,15 @@
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
 
-#include "adc_api.h"
-#include "esp32/adc_hal.h"
+#include "dac_api.h"
+#include "nway_valve.h"
 
-bool adc_calibration_init(void) {
-  return adc_hal_calibration_init();
+#include "esp_log.h"
+
+void nway_valve_init(uint8_t chan) {
+  dac_init(chan);
 }
 
-int adc_read(uint8_t chan) {
-  return adc_hal_read(chan);
-}
-
-int adc_read_to_voltage(uint8_t chan) {
-  return adc_hal_read_to_voltage(chan);
+void write_nway_valve(uint8_t chan, uint8_t value) {
+  dac_write(chan, value);
 }

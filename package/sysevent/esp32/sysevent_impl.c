@@ -46,6 +46,8 @@ ESP_EVENT_DEFINE_BASE(SYSEVENT_BASE);
 #define SYSEVENT_REQ_QUEUE_SIZE (32)
 #define SYSEVENT_RES_QUEUE_SIZE (32)
 
+typedef enum req_cmd { REQ_EVENT = 0, REQ_REGISTER_EVENT_HANDLER, REQ_UNREGISTER_EVENT_HANDLER } req_cmd_t;
+
 portMUX_TYPE msg_count_lock = portMUX_INITIALIZER_UNLOCKED;
 
 typedef struct event_msg {
@@ -56,6 +58,7 @@ typedef struct event_msg {
 } event_msg_t;
 
 typedef struct event_req {
+  req_cmd_t cmd;
   char event_base[32];
   uint32_t event_id;
   event_handler_t event_handler;
@@ -98,9 +101,14 @@ static uint32_t event_msg_cnt = 0;
 
 static const char *TAG = "sysevent";
 
+static event_msg_internal_t *event_msg_find_list(const char *event_base, uint32_t event_id);
+static void event_msg_remove_list(event_msg_internal_t *item);
+static void event_msg_remove_list_all(void);
+
 static int event_msg_add_list(event_msg_t *event_msg) {
   if (event_msg_cnt >= MAX_EVENT_MSG) {
     ESP_LOGI(TAG, "Internal Event messsage list is full");
+    event_msg_remove_list_all();
     return -1;
   }
 
@@ -204,6 +212,26 @@ static int event_handler_add_list(event_req_t *event_req) {
   return 0;
 }
 
+static event_handler_internal_t *event_handler_find_list(const char *event_base, uint32_t event_id,
+                                                         event_handler_t event_handler) {
+  event_handler_internal_t *it = NULL;
+  SLIST_FOREACH(it, &event_handler_list, next) {
+    if (strcmp(it->event_req.event_base, event_base) == 0 && it->event_req.event_id == event_id &&
+        it->event_req.event_handler == event_handler) {
+      return it;
+    }
+  }
+  return NULL;
+}
+
+static void event_handler_remove_list(event_handler_internal_t *item) {
+  if (item == NULL) {
+    return;
+  }
+  SLIST_REMOVE(&event_handler_list, item, event_handler_internal, next);
+  free(item);
+}
+
 static void event_handler_remove_list_all(void) {
   event_handler_internal_t *item, *temp;
   SLIST_FOREACH_SAFE(item, &event_handler_list, next, temp) {
@@ -220,8 +248,10 @@ static void sysevent_handler(void *handler_arg, esp_event_base_t event_base, int
 
   event_msg_t event_msg;
   memset(&event_msg, 0, sizeof(event_msg_t));
+
   event_msg.event_id = event_id;
   snprintf(event_msg.event_base, sizeof(event_msg.event_base), "%s", event_base);
+
   if (event_data) {
     if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
       ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
@@ -336,11 +366,17 @@ static int sysevent_get_request(sysevent_ctx_t *ctx, TickType_t ticks_to_run) {
       // Remove the event message from the internal event message list
       event_msg_remove_list(item);
     } else {
-      if (event_req.event_handler) {
+      if (event_req.event_handler && event_req.cmd == REQ_REGISTER_EVENT_HANDLER) {
         // If event_handler needs to be called, add it to the event_handler list and call it later when the event
         // occurs.
         ESP_LOGI(TAG, "Add %s and %d to event_handler list for later calls", event_req.event_base, event_req.event_id);
         event_handler_add_list(&event_req);
+      } else if (event_req.event_handler && event_req.cmd == REQ_UNREGISTER_EVENT_HANDLER) {
+        event_handler_internal_t *handler_item =
+            event_handler_find_list(event_req.event_base, event_req.event_id, event_req.event_handler);
+        if (handler_item) {
+          event_handler_remove_list(handler_item);
+        }
       } else {
         memset(&event_msg, 0, sizeof(event_msg_t));
         snprintf(event_msg.event_base, sizeof(event_msg.event_base), "%s", NO_EVENT_BASE);
@@ -525,6 +561,7 @@ int sysevent_get_impl(sysevent_ctx_t *ctx, const char *event_base, int event_id,
   xSemaphoreTake(ctx->sysevent_sem, portMAX_DELAY);
 
   snprintf(event_req.event_base, sizeof(event_req.event_base), "%s", event_base);
+  event_req.cmd = REQ_EVENT;
   event_req.event_id = event_id;
 
   if (xQueueSendToBack(ctx->sysevent_req, &event_req, 0) != pdPASS) {
@@ -570,9 +607,37 @@ int sysevent_get_with_handler_impl(sysevent_ctx_t *ctx, const char *event_base, 
   memset(&event_req, 0, sizeof(event_req_t));
 
   snprintf(event_req.event_base, sizeof(event_req.event_base), "%s", event_base);
+  event_req.cmd = REQ_REGISTER_EVENT_HANDLER;
   event_req.event_id = event_id;
   event_req.event_handler = event_handler;
   event_req.handler_data = handler_data;
+
+  if (xQueueSendToBack(ctx->sysevent_req, &event_req, 0) == pdPASS) {
+    ret = 0;
+  }
+
+  xSemaphoreGive(ctx->sysevent_sem);
+  return ret;
+}
+
+int sysevent_unregister_handler_impl(sysevent_ctx_t *ctx, const char *event_base, int event_id,
+                                     event_handler_t event_handler) {
+  int ret = -1;
+  if (ctx == NULL || event_base == NULL || event_handler == NULL) {
+    ESP_LOGI(TAG, "sysevent_unregister_handler_impl : Invalid parameter");
+    return ret;
+  }
+
+  xSemaphoreTake(ctx->sysevent_sem, portMAX_DELAY);
+
+  event_req_t event_req;
+  memset(&event_req, 0, sizeof(event_req_t));
+
+  snprintf(event_req.event_base, sizeof(event_req.event_base), "%s", event_base);
+  event_req.cmd = REQ_UNREGISTER_EVENT_HANDLER;
+  event_req.event_id = event_id;
+  event_req.event_handler = event_handler;
+  event_req.handler_data = NULL;
 
   if (xQueueSendToBack(ctx->sysevent_req, &event_req, 0) == pdPASS) {
     ret = 0;

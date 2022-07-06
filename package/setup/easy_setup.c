@@ -13,25 +13,24 @@
  * IMPLIED, OR STATUTORY, INCLUDING THE IMPLIED WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
-#include <esp_https_server.h>
-#include <freertos/FreeRTOS.h>
-#include <freertos/event_groups.h>
-#include <sys/param.h>
-
 #include "syscfg.h"
 #include "sysevent.h"
 #include "syslog.h"
+#include "event_ids.h"
 #include "wifi_manager.h"
 
-//#include "time_api.h"
+#include <sys/param.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/event_groups.h>
+#include <esp_https_server.h>
+
+#include "time_api.h"
 #include "cJSON.h"
 #include "mdns.h"
 
-#define MODEL_NAME "GLSTH"
 #define WIFI_PASS "!ALfE42vcchYpFQyPuCN*v_w"
 
-/* The event group allows multiple bits for each event, but we only care about
- * two events:
+/* The event group allows multiple bits for each event, but we only care about two events:
  * - we are connected to the AP with an IP
  * - we failed to connect after the maximum amount of retries */
 #define WIFI_CONNECTED BIT0
@@ -43,6 +42,7 @@ typedef enum {
   UNCONFIGURED_MODE = 0,
   PAIRING_MODE,
   CONFIRM_MODE,
+  STA_CONNECT_MODE,
   PAIRED_MODE,
   UNPAIRED_MODE,
   SERVER_GET_MODE
@@ -51,7 +51,7 @@ typedef enum {
 static const char *TAG = "easy_setup";
 
 static TaskHandle_t easy_setup_handle = NULL;
-static httpd_handle_t httpd_hanlde = NULL;
+static httpd_handle_t httpd_handle = NULL;
 
 static int ap_mode_running = 0;
 static int s_retry_connect = 0;
@@ -62,12 +62,11 @@ static int router_connect = 0;
 static EventGroupHandle_t s_wifi_event_group;
 
 extern void initialise_mdns(void);
-extern void create_http_test_task(void);
 
 char AP_SSID[30] = { 0 };
 char farmssid[50] = { 0 };
 char farmpw[50] = { 0 };
-char farmip[80] = { 0 };
+char farmip[30] = { 0 };
 
 /**
  * @brief An HTTP GET handler
@@ -127,8 +126,7 @@ static esp_err_t post_handler(httpd_req_t *req) {
 
   cJSON *Server = cJSON_GetObjectItem(root, "Server");
   if (cJSON_IsString(Server)) {
-    // "http://223.171.52.138:8803/api/v1/wifi-sensor"
-    snprintf(farmip, sizeof(farmip), "http://%s/api/v1/wifi-sensor", Server->valuestring);
+    snprintf(farmip, sizeof(farmip), "%s", Server->valuestring);
     syscfg_set(CFG_DATA, "farmip", farmip);
     LOGI(TAG, "Got server url = %s ", Server->valuestring);
   }
@@ -191,39 +189,42 @@ static void stop_webserver(httpd_handle_t server) {
     // Un-register uri handler
     httpd_unregister_uri_handler(server, "/", HTTP_GET);
     httpd_unregister_uri_handler(server, "/", HTTP_POST);
-
     // Stop the httpd server
     httpd_ssl_stop(server);
   }
 }
 
 int ap_connect_handler(void *arg) {
-  if (httpd_hanlde == NULL) {
-    httpd_hanlde = start_webserver();
+  if (httpd_handle == NULL) {
+    LOGI(TAG, "Start Webserver in ap_connect_handler...");
+    httpd_handle = start_webserver();
   }
   return 0;
 }
 
 int ap_disconnect_handler(void *arg) {
-  if (httpd_hanlde) {
-    stop_webserver(httpd_hanlde);
-    httpd_hanlde = NULL;
+  if (httpd_handle) {
+    LOGI(TAG, "Stop Webserver in ap_disconnect_handler...");
+    stop_webserver(httpd_handle);
+    httpd_handle = NULL;
   }
   return 0;
 }
 
 int sta_disconnect_handler(void *arg) {
-  if (httpd_hanlde) {
-    stop_webserver(httpd_hanlde);
-    httpd_hanlde = NULL;
+  if (httpd_handle) {
+    LOGI(TAG, "Stop Webserver in sta_disconnect_handler...");
+    stop_webserver(httpd_handle);
+    httpd_handle = NULL;
   }
   xEventGroupSetBits(s_wifi_event_group, WIFI_DISCONNECT);
   return 0;
 }
 
 int sta_ip_handler(void *arg) {
-  if (httpd_hanlde == NULL) {
-    httpd_hanlde = start_webserver();
+  if (httpd_handle == NULL) {
+    LOGI(TAG, "Start Webserver in sta_ip_handler...");
+    httpd_handle = start_webserver();
   }
   xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED);
   return 0;
@@ -232,13 +233,19 @@ int sta_ip_handler(void *arg) {
 void easy_setup_task(void *pvParameters) {
   int exit = 0;
   uint8_t mac[6] = { 0 };
+  char model_name[10] = { 0 };
+
   setup_mode_t curr_mode = UNCONFIGURED_MODE;
 
   syscfg_get(CFG_DATA, "ssid", farmssid, sizeof(farmssid));
   syscfg_get(CFG_DATA, "password", farmpw, sizeof(farmpw));
   syscfg_get(CFG_DATA, "farmip", farmip, sizeof(farmip));
+  syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
 
   if (farmssid[0] && farmpw[0]) {
+    if (farmip[0]) {
+      curr_mode = STA_CONNECT_MODE;
+    }
     curr_mode = PAIRING_MODE;
   } else {
     curr_mode = UNCONFIGURED_MODE;
@@ -250,7 +257,7 @@ void easy_setup_task(void *pvParameters) {
         if (ap_mode_running == 0) {
           esp_read_mac(mac, ESP_MAC_WIFI_STA);
           /* snprintf() is more secure than sprintf() */
-          snprintf(AP_SSID, sizeof(AP_SSID), "%s-%02X%02X%02X%02X%02X%02X", MODEL_NAME, mac[0], mac[1], mac[2], mac[3],
+          snprintf(AP_SSID, sizeof(AP_SSID), "%s-%02X%02X%02X%02X%02X%02X", model_name, mac[0], mac[1], mac[2], mac[3],
                    mac[4], mac[5]);
 
           wifi_ap_mode(AP_SSID, WIFI_PASS);
@@ -263,6 +270,8 @@ void easy_setup_task(void *pvParameters) {
           syscfg_get(CFG_DATA, "ssid", farmssid, sizeof(farmssid));
           syscfg_get(CFG_DATA, "password", farmpw, sizeof(farmpw));
           if (farmssid[0] && farmpw[0]) {
+            sysevent_unregister_handler(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, ap_connect_handler);
+            sysevent_unregister_handler(WIFI_EVENT, WIFI_EVENT_AP_STOP, ap_disconnect_handler);
             curr_mode = PAIRING_MODE;
           }
         }
@@ -272,6 +281,9 @@ void easy_setup_task(void *pvParameters) {
         sysevent_get_with_handler(IP_EVENT, IP_EVENT_STA_GOT_IP, sta_ip_handler, NULL);
         wifi_stop_mode();
         vTaskDelay(500 / portTICK_PERIOD_MS);
+        curr_mode = STA_CONNECT_MODE;
+      } break;
+      case STA_CONNECT_MODE: {
         wifi_sta_mode();
         wifi_connect_ap(farmssid, farmpw);
         LOGI(TAG, "Connecting to AP with SSID:%s password:%s", farmssid, farmpw);
@@ -279,9 +291,8 @@ void easy_setup_task(void *pvParameters) {
       } break;
       case CONFIRM_MODE: {
         // Waiting for event message to check if the connection is success.
-        /* Waiting until either the connection is established (WIFI_CONNECTED)
-         * or connection failed (WIFI_DISCONNECT) The bits are set by event
-         * handler (see above) */
+        /* Waiting until either the connection is established (WIFI_CONNECTED) or connection failed (WIFI_DISCONNECT)
+         * The bits are set by event handler (see above) */
         EventBits_t bits =
             xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED | WIFI_DISCONNECT, pdFALSE, pdFALSE, portMAX_DELAY);
         if (bits & WIFI_CONNECTED) {
@@ -304,17 +315,14 @@ void easy_setup_task(void *pvParameters) {
         }
       } break;
       case PAIRED_MODE: {
-        initialise_mdns();
         router_connect = 1;
-        /* if (tm_is_timezone_set() == false) { */
-        /*   tm_init_sntp(); */
-        /*   tm_apply_timesync(); */
-        /*   // TODO : Get the timezone using the region code of the
-         * manufacturing data. */
-        /*   // Currently hardcoding the timezone to be KST-9 */
-        /*   tm_set_timezone("Asia/Seoul"); */
-        /* } */
-        curr_mode = SERVER_GET_MODE;
+        if (farmip[0]) {
+          LOGI(TAG, "!!! EasySetup is DONE !!!");
+          exit = 1;
+        } else {
+          initialise_mdns();
+          curr_mode = SERVER_GET_MODE;
+        }
       } break;
       case SERVER_GET_MODE: {
         if (farmip[0]) {
@@ -335,13 +343,17 @@ void easy_setup_task(void *pvParameters) {
       } break;
     }
     if (exit) {
+      sysevent_set(EASY_SETUP_DONE, "OK");
       break;
     }
     vTaskDelay(500 / portTICK_PERIOD_MS);
   }
 
   SLOGI(TAG, "Exit EasySetup Task!!!");
+  sysevent_unregister_handler(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, sta_disconnect_handler);
+  sysevent_unregister_handler(IP_EVENT, IP_EVENT_STA_GOT_IP, sta_ip_handler);
   easy_setup_handle = NULL;
+
   vEventGroupDelete(s_wifi_event_group);
   vTaskDelete(NULL);
 }

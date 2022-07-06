@@ -15,13 +15,14 @@
  */
 #include "syscfg_impl.h"
 
-#include "esp_log.h"
-#include "esp_partition.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/portmacro.h"
 #include "freertos/semphr.h"
+
 #include "nvs.h"
 #include "nvs_flash.h"
+#include "esp_partition.h"
+#include "esp_log.h"
 
 #define CFG_PARTITION_NAME "cfg" /*<! NVS partition name of system configuration */
 #define MFG_PARTITION_NAME "mfg" /*<! NVS partition name of manufacturing */
@@ -45,24 +46,22 @@ static int _syscfg_open(void *data);
 static int _syscfg_close(void *data);
 
 static struct syscfg_context syscfg_ctx[] = {
-    [CFG_DATA] =
-        {
-            .partition_name = CFG_PARTITION_NAME,
-            .nvs_name = "cfg",
-            .handle = 0,
-            .init = _syscfg_init,
-            .open = _syscfg_open,
-            .close = _syscfg_close,
-        },
-    [MFG_DATA] =
-        {
-            .partition_name = MFG_PARTITION_NAME,
-            .nvs_name = "mfg",
-            .handle = 0,
-            .init = _syscfg_init,
-            .open = _syscfg_open,
-            .close = _syscfg_close,
-        },
+  [CFG_DATA] = {
+    .partition_name = CFG_PARTITION_NAME,
+    .nvs_name = "cfg",
+    .handle = 0,
+    .init = _syscfg_init,
+    .open = _syscfg_open,
+    .close = _syscfg_close,
+  },
+  [MFG_DATA] = {
+    .partition_name = MFG_PARTITION_NAME,
+    .nvs_name = "mfg",
+    .handle = 0,
+    .init = _syscfg_init,
+    .open = _syscfg_open,
+    .close = _syscfg_close,
+  },
 };
 
 static void _get_nvs_partition_name(syscfg_type_t type, char **pp_partition_name, char **pp_nvs_name) {

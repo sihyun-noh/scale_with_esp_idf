@@ -14,17 +14,15 @@
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
 #include "shell_command_impl.h"
-
-#include <stdio.h>
-
-#include "esp_system.h"
-#include "nvs_flash.h"
 #include "shell_console_impl_priv.h"
 #include "syscfg_cmd.h"
 #include "syslog.h"
 
-extern void stop_shell(void);
+#include <stdio.h>
+#include "esp_system.h"
+#include "nvs_flash.h"
 
+extern void stop_shell(void);
 extern int mqtt_start_cmd(int argc, char **argv);
 extern int mqtt_subscribe_cmd(int argc, char **argv);
 extern int mqtt_publish_cmd(int argc, char **argv);

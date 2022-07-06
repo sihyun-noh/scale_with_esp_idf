@@ -4,6 +4,12 @@
 enum {
   I2C_TEMPERATURE_EVENT = 1,
   I2C_HUMIDITY_EVENT = 2,
+  ADC_BATTERY_EVENT = 3,
+  I2C_CO2_EVENT = 4,
+  EASY_SETUP_DONE = 5,
+  MDNS_EVENT = 6,
+  MDNS_START = 7,
+  MDNS_STOP = 8,
 };
 
 #endif /* _EVENT_IDS_H_ */

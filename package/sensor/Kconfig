@@ -10,4 +10,10 @@ menu "SmartFarm Sensors Configuration"
     default "y"
     help
       SHT3x Temperature and Humidity Sensor
+  
+  config SCD4x_FEATURE
+    bool "SCD4x feature"
+    default "y"
+    help
+      SCD4x CO2 and Temperature Humidity Sensor
 endmenu # Sensors

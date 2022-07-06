@@ -45,3 +45,7 @@ int sysevent_get(const char* event_base, int event_id, void* event_data, size_t 
 int sysevent_get_with_handler(const char* event_base, int event_id, event_handler_t event_handler, void* handler_data) {
   return sysevent_get_with_handler_impl(ctx, event_base, event_id, event_handler, handler_data);
 }
+
+int sysevent_unregister_handler(const char* event_base, int event_id, event_handler_t event_handler) {
+  return sysevent_unregister_handler_impl(ctx, event_base, event_id, event_handler);
+}

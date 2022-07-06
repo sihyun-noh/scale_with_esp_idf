@@ -15,6 +15,7 @@ extern "C" {
  * The bus MUST not be acquired before initializing it, as this is handled
  * internally by the adc_init function!
  *
+ * @return bool true on success, false on failure
  */
 bool adc_calibration_init(void);
 
@@ -23,10 +24,18 @@ bool adc_calibration_init(void);
  *
  * @param[in]  pin          ADC peripheral device
  *
- * @return                  0 When success otherwise negative
+ * @return                  ADC value
  */
-
 int adc_read(uint8_t chan);
+
+/**
+ * @brief   Convenience function for Convert an ADC reading to voltage in mV.
+ *
+ * @param[in]  pin          ADC peripheral device
+ *
+ * @return                  Voltage in mV
+ */
+int adc_read_to_voltage(uint8_t chan);
 
 #ifdef __cplusplus
 }

@@ -55,7 +55,7 @@ static void monitoring_task(void *pvParameters) {
   wifi_event_monitor_task_handle = NULL;
 }
 
-bool carete_monitoring_task(void) {
+bool create_monitoring_task(void) {
   UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
 
   if (!wifi_event_monitor_task_handle) {

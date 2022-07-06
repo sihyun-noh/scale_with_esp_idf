@@ -25,8 +25,15 @@
 #include "hal/gpio_types.h"
 #include "hal/i2c_types.h"
 
+#define OLIMEX_BOARD
+
+#if defined(TTGO_BOARD)
 #define I2C0_SDA_PIN 21
 #define I2C0_SCL_PIN 22
+#elif defined(OLIMEX_BOARD)
+#define I2C0_SDA_PIN 13
+#define I2C0_SCL_PIN 16
+#endif
 
 #define I2C1_SDA_PIN 18
 #define I2C1_SCL_PIN 19

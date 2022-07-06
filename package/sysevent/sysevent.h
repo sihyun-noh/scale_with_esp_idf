@@ -75,4 +75,14 @@ int sysevent_get(const char *event_base, int event_id, void *event_data, size_t 
  */
 int sysevent_get_with_handler(const char *event_base, int event_id, event_handler_t event_handler, void *handler_data);
 
+/**
+ * @brief Unregister the event handler used by sysevent_get_with_handler when it is no longer used.
+ *
+ * @param event_base the event base what user want to get
+ * @param event_id the event id what user want to get
+ * @param event_handler the event handler function what the user wants to unregister if it is no longer used.
+ * @return int 0 on success, -1 on failure
+ */
+int sysevent_unregister_handler(const char *event_base, int event_id, event_handler_t event_handler);
+
 #endif /* _SYSEVENT_H_ */

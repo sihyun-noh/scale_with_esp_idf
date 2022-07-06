@@ -20,8 +20,6 @@
 #include "freertos/portmacro.h"
 #include "freertos/task.h"
 
-#include "esp_log.h"
-
 #define DEBUG_PRINT(...) printf(__VA_ARGS__)
 #define DEBUG(...)            \
   do {                        \

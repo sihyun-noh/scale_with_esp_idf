@@ -67,3 +67,21 @@ int adc_hal_read(uint8_t chan) {
 
   return val;
 }
+
+int adc_hal_read_to_voltage(uint8_t chan) {
+  int val = 0;
+  uint32_t voltage;
+
+  if (chan >= ADC1_CHANNEL_MAX) {
+    printf("%s: Invalid ADC channel", __func__);
+    return 0;
+  }
+
+  adc1_config_width(ADC_WIDTH_BIT_DEFAULT);
+  adc1_config_channel_atten(chan, ADC_ATTEN);
+
+  val = adc1_get_raw(chan);
+  voltage = esp_adc_cal_raw_to_voltage(val, &adc1_chars);
+
+  return (int)voltage;
+}
