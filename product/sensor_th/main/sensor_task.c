@@ -17,14 +17,16 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
+#include "log.h"
+#include "sht3x.h"
 #include "sht3x_params.h"
 #include "scd4x.h"
 #include "utils.h"
-
 #include "syslog.h"
-#include "sysevent.h"
-#include "event_ids.h"
 #include "syscfg.h"
+#include "event_ids.h"
+#include "sysevent.h"
+#include "monitoring.h"
 
 #include <string.h>
 
@@ -41,6 +43,8 @@ void sht3x_task(void* pvParameters) {
   float sht3x_temperature;
   float sht3x_humidity;
 
+  is_run_task_monitor_alarm(i2c_handle);
+
   if ((res = sht3x_init(&dev, &sht3x_params[0])) != SHT3X_OK) {
     LOGI(TAG, "Could not initialize SHT3x sensor");
     i2c_handle = NULL;
@@ -49,6 +53,7 @@ void sht3x_task(void* pvParameters) {
   } else {
     LOGI(TAG, "i2c_task start");
     while (1) {
+      is_run_task_heart_bit(i2c_handle, true);
       // Get the values and do something with them.
       if ((res = sht3x_read(&dev, &sht3x_temperature, &sht3x_humidity)) == SHT3X_OK) {
         LOGI(TAG, "Temperature [°C]: %.2f", sht3x_temperature);

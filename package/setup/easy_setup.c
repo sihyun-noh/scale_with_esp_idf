@@ -116,7 +116,7 @@ static esp_err_t post_handler(httpd_req_t *req) {
   cJSON *ssid = cJSON_GetObjectItem(root, "SSID");
   cJSON *pw = cJSON_GetObjectItem(root, "Password");
   if (cJSON_IsString(ssid) && cJSON_IsString(pw)) {
-    // ssid pw ê²€ìƒ‰
+    // ssid pw ê²??ƒ‰
     snprintf(farmssid, sizeof(farmssid), "%s", ssid->valuestring);
     snprintf(farmpw, sizeof(farmpw), "%s", pw->valuestring);
     syscfg_set(CFG_DATA, "ssid", farmssid);
@@ -154,7 +154,7 @@ static httpd_handle_t start_webserver(void) {
 
   httpd_ssl_config_t conf = HTTPD_SSL_CONFIG_DEFAULT();
 
-  conf.port_secure = 30001;  // 30001 Port ë¡œ ì „ì†¡
+  conf.port_secure = 30001;  // 30001 Port ë¡? ? „?†¡
 
   extern const unsigned char cacert_pem_start[] asm("_binary_cacert_pem_start");
   extern const unsigned char cacert_pem_end[] asm("_binary_cacert_pem_end");

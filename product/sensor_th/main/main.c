@@ -13,6 +13,8 @@
 #include "time_api.h"
 #include <string.h>
 
+#include "monitoring.h"
+
 typedef enum {
   SYSINIT_OK,
   ERR_NVS_FLASH,
@@ -20,6 +22,7 @@ typedef enum {
   ERR_SYSCFG_INIT,
   ERR_SYSCFG_OPEN,
   ERR_SYSEVENT_CREATE,
+  ERR_MONITORING_INIT,
 } err_sysinit_t;
 
 typedef enum {
@@ -90,6 +93,11 @@ int system_init(void) {
   ret = syscfg_open();
   if (ret != 0) {
     return ERR_SYSCFG_OPEN;
+  }
+
+  ret = monitoring_init();
+  if (ret != 0) {
+    return ERR_MONITORING_INIT;
   }
 
   ret = sysevent_create();

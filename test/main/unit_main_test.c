@@ -19,6 +19,8 @@
 #include "syslog.h"
 #include "wifi_manager.h"
 
+#include "monitoring.h"
+
 static void print_banner(const char* text);
 
 const char* TAG = "unity_test_main_app";
@@ -74,6 +76,10 @@ void app_main(void) {
   if ((rc = system_init()) != SYSINIT_OK) {
     LOGE(TAG, "Failed to initialize device, error = [%d]", rc);
     return;
+  }
+
+  if (carete_monitoring_task() == false) {
+    LOGI(TAG, "Failed to network event task start");
   }
 
   print_banner("wifi_test");

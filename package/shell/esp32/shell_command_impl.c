@@ -22,6 +22,8 @@
 #include "esp_system.h"
 #include "nvs_flash.h"
 
+#include "icmp_echo_cmd.h"
+
 extern void stop_shell(void);
 extern int mqtt_start_cmd(int argc, char **argv);
 extern int mqtt_subscribe_cmd(int argc, char **argv);
@@ -189,6 +191,11 @@ static sc_cmd_t commands[] = {
       .name = "uptime",
       .help = "Device running time",
       .func = uptime_cmd,
+  },
+  {
+      .name = "ping",
+      .help = "send ICMP ECHO_REQUEST to network hosts",
+      .func = ping_cmd,
   },
 };
 

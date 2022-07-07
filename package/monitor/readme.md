@@ -16,7 +16,17 @@ WIFI_Monitoring --> STA_Connected
     STA_Disonnected --> Reason_Code_Check
     Reason_Code_Check --> Report  
     Report --> [*] 
+Heap_Monitoring --> critical_level
+Heap_Monitoring --> warning_level
+critical_level --> heap_alarm_event_set
+warning_level --> heap_alarm_event_set
+heap_alarm_event_set --> [*]
 
+is_run_task_moni_alarm --> Task_Monitoring
+is_run_task_heart_bit --> Task_Monitoring
+Task_Monitoring --> Task_run_count_check
+Task_run_count_check -->tesk_alarm_event_set
+tesk_alarm_event_set -->[*]
 ```
 
 - ### WIFI Monitoring loop
@@ -54,3 +64,11 @@ WIFI_Monitoring --> STA_Connected
             "ASSOC_FAIL"
             "HANDSHAKE_TIMEOUT"
             "CONNECTION_FAIL"
+- ### Heap Monitoring loop
+   #### 힙메모리 상태를 확인하여 Memory leck 발생시 sysevent를 발생 시킵니다.
+   EVENT : 
+   HEAP_CRITICAL_LEVEL_WARNING_EVENT(2048) HEAP_WARNING_LEVEL_WARNING_EVENT(1014)
+
+- ### Task Monitoring loop
+   #### 생성된 Task의 상태를 확인 합니다. 새로만 들어진 Task는 is_run_task_moni_alarm()통해 Task를 Task_Monitoring에 등록하고, is_run_task_heart_bit()통해 Task loop alive 상태를 보고합니다. Task loop alive 가 발생되지 않을 시 sysevent를 발생 시킵니다.
+   EVENT : TASK_MONITOR_EVENT
