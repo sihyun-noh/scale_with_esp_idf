@@ -78,7 +78,7 @@ void app_main(void) {
     return;
   }
 
-  if (carete_monitoring_task() == false) {
+  if (create_monitoring_task() == false) {
     LOGI(TAG, "Failed to network event task start");
   }
 

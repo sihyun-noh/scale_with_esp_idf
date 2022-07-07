@@ -72,7 +72,7 @@ static const char *system_event_reasons[] = { "UNSPECIFIED",
  * @return int 0 on success, -1 on failure.
  */
 
-int carete_monitoring_task(void);
+int create_monitoring_task(void);
 
 /**
  * @brief Initialize the underlying monitoring 
