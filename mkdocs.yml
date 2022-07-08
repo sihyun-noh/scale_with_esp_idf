@@ -1,0 +1,21 @@
+site_name: SmartFarm IEF Documentation
+site_description: Description of the SmartFarm IEF documentation
+repo_url: https://example.com
+
+theme:
+  name: material
+  features:
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+
+plugins:
+  - search
+
+nav:
+  - Overview: 'index.md'
+  - Basics:
+    - OTA FW Update: 'ota.md'
+
+markdown_extensions:
+  - attr_list

@@ -23,13 +23,14 @@ It should be support OTA feature to update the FW that fixes some issues or adds
     * Time & Date - Compile time and date
     * IDF version
 
+For now, we are using the ESP32 application image format to make sure the FW image matches the device type. 
 
 
 ## 3. SmartFarm OTA FW Update Process
 
 The following items are used in typical OTA FW update process.
 
-* FW download through OTA server
+* FW image file download through OTA server
 * OTA process
   * Check the validation of the downloaded FW image
   * Write FW image to the flash
@@ -39,6 +40,9 @@ The following items are used in typical OTA FW update process.
   * The ESP32 BSP provides the esp_ota_set_boot_partition() such like SetBootPartitionFromFW
   * Set which FW image to boot from the bootloader.
 * Device Reboot
+* While device is booting process, check if the applied FW image is working well, if yes, the FW image is accepted and keep running.<br>
+  If no, the FW image is rejected and it will be rollback to run previous FW image in other boot partition.
+
 
 
 ### Typical Boot Process
@@ -52,66 +56,91 @@ id2 --> |FW2| id4(FW2)
 ### OTA Process
 ```mermaid
 graph TD;
-id1([FW through OTA]) --> id2(OTA process)
-id2(OTA process) --> id3(Get FW index)
-id3(Get FW index) --> id4{Check current FW index}
-id4 --> |index == 1| id5(Set Bootloader boot from FW2)
-id4 --> |index == 2| id6(Set Bootloader boot from FW1)
-id5 --> id7(Device Reboot)
-id6 --> id7(Device Reboot)
+id1([FW image download through OTA]) --> id2{Check FW image header}
+id2 --> |FW image = yes| id3(OTA Update process)
+id2 --> |FW image = no| id4(FW Update Abort)
+id3(OTA Update process) --> id5(Get FW index)
+id5(Get FW index) --> id6{Check current FW index}
+id6 --> |index == 1| id7(Set Bootloader boot from FW2)
+id6 --> |index == 2| id8(Set Bootloader boot from FW1)
+id7 --> id9(Device Reboot)
+id8 --> id9(Device Reboot)
+id9 --> id10{Check if FW image is working well}
+id10 --> |status == yes| id11(Accepted, Keep running)
+id10 --> |status == no| id12(Rejected, Rollback previous FW image)
 ```
-
 
 ## 4. OTA FW APIs 
 
-* OTA FW image state
-```c
-typedef enum ota_image_state {
-  OTA_IMG_STATE_UNKNOWN = 0,   /*!< @breif The initial state of the OTA FW image */
-  OTA_IMG_STATE_DOWNLOAD = 1,  /*!< @breif The state of the OTA FW image post successful download and reboot */
-  OTA_IMG_STATE_ACCEPTED = 2,  /*!< @breif The state of the OTA FW image post successful download and successful self_test */
-  OTA_IMG_STATE_REJECTED = 3,  /*!< @breif The state of the OTA FW image when the FW image has been verification failed */
-  OTA_IMG_STATE_ABORTED = 4,   /*!< @breif The state of the OTA FW image when FW image downloading is failed */
-} ota_image_state_t;
-
-typedef enum fw_image_state {
-  FW_IMG_STATE_UNKNOWN = 0,
-  FW_IMG_STATE_DOWNLOADING = 1,
-  FW_IMG_STATE_DOWNLOAD_SUCCESS = 2,
-  FW_IMG_STATE_DOWNLOAD_FAILURE = 3,
-  FW_IMG_STATE_VALID = 4,
-  FW_IMG_STATE_INVALID = 5,
-} fw_image_state_t;
-```
-
 * OTA FW Generic APIs
 ```c
-1. ota_fw_abort();
+typedef enum ota_err {
+  OTA_OK = 0,
+  OTA_ERR_ABORT = -1,
+  OTA_ERR_BUFFER = -2,
+  OTA_ERR_INVALID_STATE = -3,
+  OTA_ERR_INVALID_IMAGE = -4,
+  OTA_ERR_INVALID_IMAGE_SIZE = -5,
+  OTA_ERR_WRITE_FLASH = -6,
+  OTA_ERR_DOWNLOAD_IMAGE = -7,
+  OTA_ERR_ACTIVATE_FAIL = -8,
+} ota_err_t;
 
-2. ota_fw_download();
+typedef enum ota_state {
+  OTA_STATE_IDLE = 0,      /*!< @breif The initial state of the OTA FW image */
+  OTA_STATE_DOWNLOAD = 1,  /*!< @breif The state of the OTA FW image post successful download and reboot */
+  OTA_STATE_PENDING = 2,   /*!< @breif The state of the OTA FW image to check if FW is working well */
+  OTA_STATE_ACCEPTED = 3,  /*!< @breif The state of the OTA FW image post successful download and successful self_test */
+  OTA_STATE_REJECTED = 4,  /*!< @breif The state of the OTA FW image when the FW image has been verification failed */
+  OTA_STATE_ABORTED = 5,   /*!< @breif The state of the OTA FW image when FW image downloading is failed or FW is not invalid */
+} ota_state_t;
 
-3. ota_fw_active_new_image();
+/**
+ * @brief The context of the ota fw update.
+ */
+typedef struct fw_ctx {
+  char *download_url;
+  uint8_t *ota_ctx;
+  uint8_t *certfile;
+  uint32_t image_size;
+  uint32_t image_type;
+} fw_ctx_t;
 
-4. ota_fw_reset_device();
+/**
+ * @brief Abort the OTA FW process if not needed
+ *
+ */
+ota_err_t ota_fw_abort(fw_ctx_t *fwctx);
 
-5. ota_fw_get_state();
+/**
+ * @brief Download the OTA FW image from the FW update server
+ *
+ */
+ota_err_t ota_fw_download(fw_ctx_t *fwctx);
 
-6. ota_fw_set_state();
-```
+/**
+ * @brief Set active new FW image after downloading the OTA FW image
+ *
+ */
+ota_err_t ota_fw_active_new_image(fw_ctx_t *fwctx);
 
-* OTA FW PAL APIs
-```c
-1. fw_abort();
+/**
+ * @brief Reset the ESP32 to boot the new FW image
+ *
+ */
+ota_err_t ota_fw_reset_device(fw_ctx_t *fwctx);
 
-2. fw_download();
+/**
+ * @brief Get the current OTA FW image state
+ *
+ */
+ota_state_t ota_fw_get_state(fw_ctx_t *fwctx);
 
-3. fw_active_new_image();
-
-4. fw_reset_device();
-
-5. fw_get_state();
-
-6. fw_set_state();
+/**
+ * @brief Set the current OTA FW image state
+ *
+ */
+ota_err_t ota_fw_set_state(fw_ctx_t *fwctx, ota_state_t ota_state);
 ```
 
 
