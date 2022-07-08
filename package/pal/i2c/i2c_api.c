@@ -18,8 +18,8 @@
 #include "i2c_api.h"
 #include "esp32/i2c_hal.h"
 
-int i2c_init(int dev) {
-  return i2c_hal_init(dev);
+int i2c_init(int dev, int sda, int scl) {
+  return i2c_hal_init(dev, sda, scl);
 }
 
 void i2c_lock(int dev) {

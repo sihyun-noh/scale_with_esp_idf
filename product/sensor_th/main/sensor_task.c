@@ -17,10 +17,14 @@
    CONDITIONS OF ANY KIND, either express or implied.
 */
 
+#include "config.h"
 #include "log.h"
-#include "sht3x.h"
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
 #include "sht3x_params.h"
-#include "scd4x.h"
+#endif
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+#include "scd4x_params.h"
+#endif
 #include "utils.h"
 #include "syslog.h"
 #include "syscfg.h"
@@ -30,8 +34,13 @@
 
 #include <string.h>
 
+#define MAX_BUFFER_CNT 10
+
 static const char* TAG = "sensor_task";
 static TaskHandle_t i2c_handle = NULL;
+
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
+sht3x_dev_t dev;
 
 void sht3x_task(void* pvParameters) {
   int res;
@@ -72,7 +81,9 @@ void sht3x_task(void* pvParameters) {
   }
   vTaskDelete(NULL);
 }
+#endif
 
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
 void scd4x_task(void* pvParameters) {
   int res;
   scd4x_dev_t dev;
@@ -84,7 +95,7 @@ void scd4x_task(void* pvParameters) {
   float scd41_temperature;
   float scd41_humidity;
 
-  if ((res = scd4x_init(&dev)) != 0) {
+  if ((res = scd4x_init(&dev, &scd4x_params[0])) != 0) {
     LOGI(TAG, "Could not initialize, error = %d", res);
     i2c_handle = NULL;
     vTaskDelete(NULL);
@@ -125,6 +136,7 @@ void scd4x_task(void* pvParameters) {
   }
   vTaskDelete(NULL);
 }
+#endif
 
 void create_i2c_task(uint16_t stack_size) {
   UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
@@ -134,34 +146,37 @@ void create_i2c_task(uint16_t stack_size) {
     return;
   }
 
-  if (!strncmp(FW_VERSION, "SENS_SHT3x", 10)) {
-    xTaskCreate((TaskFunction_t)sht3x_task, "sht3x_task", stack_size, NULL, task_priority, &i2c_handle);
-  } else if (!strncmp(FW_VERSION, "SENS_SCD4x", 10)) {
-    xTaskCreate((TaskFunction_t)scd4x_task, "scd4x_task", stack_size, NULL, task_priority, &i2c_handle);
-  }
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
+  xTaskCreate((TaskFunction_t)sht3x_task, "sht3x_task", stack_size, NULL, task_priority, &i2c_handle);
+#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+  xTaskCreate((TaskFunction_t)scd4x_task, "scd4x_task", stack_size, NULL, task_priority, &i2c_handle);
+#endif
 }
-
-#define MAX_BUFFER_CNT 10
-sht3x_dev_t dev;
 
 int sensor_init(void) {
   int res;
 
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
   if ((res = sht3x_init(&dev, &sht3x_params[0])) != SHT3X_OK) {
     LOGI(TAG, "Could not initialize SHT3x sensor");
     return res;
   } else {
     return 0;
   }
+#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+  // Please implement the SCD4x initialize code.
+  return 0;
+#endif
 }
 
-int read_temp_humi(void) {
+int read_temp_humidity(void) {
   int res;
   int err_cnt = 0;
 
   char s_temperature[20];
   char s_humidity[20];
 
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
   float sht3x_temperature[MAX_BUFFER_CNT];
   float sht3x_humidity[MAX_BUFFER_CNT];
 
@@ -199,6 +214,9 @@ int read_temp_humi(void) {
 
   sysevent_set(I2C_TEMPERATURE_EVENT, (char*)s_temperature);
   sysevent_set(I2C_HUMIDITY_EVENT, (char*)s_humidity);
+#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+  // Please implement the logic for reading CO2 and Temperature and Humidity
+#endif
   return 0;
 }
 

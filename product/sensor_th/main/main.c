@@ -35,7 +35,7 @@ const char* TAG = "main_app";
 
 sc_ctx_t* ctx = NULL;
 
-extern int read_temp_humi(void);
+extern int read_temp_humidity(void);
 extern int read_battery_percentage(void);
 extern int temperature_comparison(float m_temperature, float temperature);
 extern void create_mqtt_task(void);
@@ -200,7 +200,7 @@ void app_main(void) {
       } break;
       case SENSOR_READING_MODE: {
         LOGI(TAG, "SENSOR_READING_MODE");
-        if ((rc = read_temp_humi()) == CHECK_OK) {
+        if ((rc = read_temp_humidity()) == CHECK_OK) {
           if (!strncmp(power_mode, "P", 1)) {
             curr_mode = WIFI_CHECK_MODE;
           } else if (!strncmp(power_mode, "B", 1)) {

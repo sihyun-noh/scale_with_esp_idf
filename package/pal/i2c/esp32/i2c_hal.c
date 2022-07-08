@@ -25,19 +25,6 @@
 #include "hal/gpio_types.h"
 #include "hal/i2c_types.h"
 
-#define OLIMEX_BOARD
-
-#if defined(TTGO_BOARD)
-#define I2C0_SDA_PIN 21
-#define I2C0_SCL_PIN 22
-#elif defined(OLIMEX_BOARD)
-#define I2C0_SDA_PIN 13
-#define I2C0_SCL_PIN 16
-#endif
-
-#define I2C1_SDA_PIN 18
-#define I2C1_SCL_PIN 19
-
 #define I2C_MASTER_FREQ_HZ 100000 /*!< I2C master clock frequency */
 #define I2C_MASTER_RX_BUF_DISABLE 0
 #define I2C_MASTER_TX_BUF_DISABLE 0
@@ -65,7 +52,7 @@ static i2c_hal_t *get_i2c_interface(int dev) {
   return &i2c_hal_data[dev];
 }
 
-int i2c_hal_init(int dev) {
+int i2c_hal_init(int dev, int sda, int scl) {
   esp_err_t rc = ESP_FAIL;
   int bus = dev;
 
@@ -87,13 +74,13 @@ int i2c_hal_init(int dev) {
       switch (bus) {
         case 0:
           i2c_hal_data[bus].id = I2C_NUM_0;
-          i2c_hal_data[bus].config.sda_io_num = I2C0_SDA_PIN;
-          i2c_hal_data[bus].config.scl_io_num = I2C0_SCL_PIN;
+          i2c_hal_data[bus].config.sda_io_num = sda;
+          i2c_hal_data[bus].config.scl_io_num = scl;
           break;
         case 1:
           i2c_hal_data[bus].id = I2C_NUM_1;
-          i2c_hal_data[bus].config.sda_io_num = I2C1_SDA_PIN;
-          i2c_hal_data[bus].config.scl_io_num = I2C1_SCL_PIN;
+          i2c_hal_data[bus].config.sda_io_num = sda;
+          i2c_hal_data[bus].config.scl_io_num = scl;
           break;
         default: break;
       }

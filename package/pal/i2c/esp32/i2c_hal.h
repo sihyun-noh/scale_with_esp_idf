@@ -39,7 +39,7 @@ typedef enum {
  *    - HAL_I2C_NO_ERR : Success
  *    - HAL_I2C_INIT_ERR : Fail
  */
-int i2c_hal_init(int dev);
+int i2c_hal_init(int dev, int sda, int scl);
 
 /**
  * @brief Free the I2C bus and configuration

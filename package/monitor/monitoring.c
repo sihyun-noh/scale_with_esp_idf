@@ -14,13 +14,13 @@ typedef struct task_item {
   uint8_t status;
   uint32_t heart_bit_count;
   TAILQ_ENTRY(task_item) next;
-}task_item_t;
+} task_item_t;
 
 TAILQ_HEAD(task_item_head, task_item);
 typedef struct task_queue {
   uint8_t task_num;
   struct task_item_head head;
-}task_queue_t;
+} task_queue_t;
 
 SemaphoreHandle_t monitor_semaphore;
 static task_queue_t task_list;
@@ -36,7 +36,7 @@ static int add_to_task_list(task_queue_t *q, uint8_t id, char *data) {
     entry->task_id = id;
     memcpy(entry->task_name, data, strlen(data));
     TAILQ_INSERT_TAIL(&(q->head), entry, next);
-    LOGE(TAG, "register ID : %d", entry->task_id);
+    LOGI(TAG, "register ID : %d", entry->task_id);
     return 0;
   }
   return -1;
@@ -153,16 +153,16 @@ static void heap_monitoring(int warning_level, int critical_level) {
     minHeap = freeHeap;
   }
   if (minHeap <= critical_level) {
-    SLOGE(TAG, "Heap critical level reached: %d", critical_level);
-    SLOGE(TAG, "-------------------------------------------------------------");
-    SLOGE(TAG, "heap_track - total_free_bytes : %d", heap_info.total_free_bytes);
-    SLOGE(TAG, "heap_track - total_allocated_bytes : %d", heap_info.total_allocated_bytes);
-    SLOGE(TAG, "heap_track - largest_free_block : %d", heap_info.largest_free_block);
-    SLOGE(TAG, "heap_track - minimum_free_bytes : %d", heap_info.minimum_free_bytes);
-    SLOGE(TAG, "heap_track - allocated_blocks : %d", heap_info.allocated_blocks);
-    SLOGE(TAG, "heap_track - free_blocks : %d", heap_info.free_blocks);
-    SLOGE(TAG, "heap_track - total_blocks : %d", heap_info.total_blocks);
-    SLOGE(TAG, "-------------------------------------------------------------");
+    SLOGI(TAG, "Heap critical level reached: %d", critical_level);
+    SLOGI(TAG, "-------------------------------------------------------------");
+    SLOGI(TAG, "heap_track - total_free_bytes : %d", heap_info.total_free_bytes);
+    SLOGI(TAG, "heap_track - total_allocated_bytes : %d", heap_info.total_allocated_bytes);
+    SLOGI(TAG, "heap_track - largest_free_block : %d", heap_info.largest_free_block);
+    SLOGI(TAG, "heap_track - minimum_free_bytes : %d", heap_info.minimum_free_bytes);
+    SLOGI(TAG, "heap_track - allocated_blocks : %d", heap_info.allocated_blocks);
+    SLOGI(TAG, "heap_track - free_blocks : %d", heap_info.free_blocks);
+    SLOGI(TAG, "heap_track - total_blocks : %d", heap_info.total_blocks);
+    SLOGI(TAG, "-------------------------------------------------------------");
     snprintf(total_size, sizeof(total_size), "%d", heap_info.total_free_bytes);
     sysevent_set(HEAP_CRITICAL_LEVEL_WARNING_EVENT, (char *)total_size);
 
@@ -218,7 +218,7 @@ static void monitoring_task(void *pvParameters) {
   while (1) {
     is_run_task_heart_bit(wifi_event_monitor_task_handle, true);
 
-    wifi_monitoring();
+    // wifi_monitoring();
 
     heap_monitoring(HEAP_MONITOR_WARNING, HEAP_MONITOR_CRITICAL);
 

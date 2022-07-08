@@ -69,6 +69,8 @@ typedef enum {
 typedef struct {
   uint8_t bus;           /**< I2C bus at which sensor is connected */
   uint8_t addr;          /**< I2C slave address of the sensor */
+  int sda_pin;           /**< I2C SDA Pin number */
+  int scl_pin;           /**< I2C SCL Pin number */
   sht3x_mode_t mode;     /**< used measurement mode */
   sht3x_repeat_t repeat; /**< used repeatability */
 } sht3x_params_t;
@@ -79,6 +81,8 @@ typedef struct {
 typedef struct {
   uint8_t bus;  /**< I2C bus at which sensor is connected */
   uint8_t addr; /**< I2C slave address of the sensor */
+  int sda_pin;  /**< I2C SDA Pin number */
+  int scl_pin;  /**< I2C SCL Pin number */
 
   sht3x_mode_t mode;     /**< used measurement mode */
   sht3x_repeat_t repeat; /** used repeatability */

@@ -79,20 +79,15 @@ static uint8_t crc8(uint8_t* data, size_t len);
 
 static const char* TAG = "scd4x";
 
-#ifndef SCD4X_PARAM_I2C_BUS
-#define SCD4X_PARAM_I2C_BUS (0)
-#endif
-#ifndef SCD4X_PARAM_I2C_ADDR
-#define SCD4X_PARAM_I2C_ADDR (0x62)
-#endif
-
-int scd4x_init(scd4x_dev_t* dev) {
+int scd4x_init(scd4x_dev_t* dev, const scd4x_params_t* params) {
   int ret = 0;
 
-  dev->bus = SCD4X_PARAM_I2C_BUS;
-  dev->addr = SCD4X_PARAM_I2C_ADDR;
+  dev->bus = params->bus;
+  dev->addr = params->addr;
+  dev->sda_pin = params->sda_pin;
+  dev->scl_pin = params->scl_pin;
 
-  if ((ret = i2c_init(dev->bus)) != 0) {
+  if ((ret = i2c_init(dev->bus, dev->sda_pin, dev->scl_pin)) != 0) {
     LOGI(TAG, "Could not initialize, error = %d\n", ret);
     goto _exit;
   }

@@ -16,7 +16,7 @@ extern "C" {
  *
  * @param[in] dev       I2C device port number to initialize
  */
-int i2c_init(int dev);
+int i2c_init(int dev, int sda, int scl);
 
 /**
  * @brief   Get mutually exclusive access to the given I2C bus

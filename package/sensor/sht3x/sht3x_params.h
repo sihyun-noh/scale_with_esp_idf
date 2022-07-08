@@ -39,6 +39,12 @@ extern "C" {
 #ifndef SHT3X_PARAM_I2C_ADDR
 #define SHT3X_PARAM_I2C_ADDR (SHT3X_I2C_ADDR_1)
 #endif
+#ifndef SHT3X_PARAM_I2C_SDA
+#define SHT3X_PARAM_I2C_SDA (SHT3X_I2C_SDA_PIN)
+#endif
+#ifndef SHT3X_PARAM_I2C_SCL
+#define SHT3X_PARAM_I2C_SCL (SHT3X_I2C_SCL_PIN)
+#endif
 #ifndef SHT3X_PARAM_MODE
 #define SHT3X_PARAM_MODE (SHT3X_PERIODIC_1MPS)
 #endif
@@ -47,8 +53,11 @@ extern "C" {
 #endif
 
 #ifndef SHT3X_PARAMS
-#define SHT3X_PARAMS \
-  { .bus = SHT3X_PARAM_I2C_BUS, .addr = SHT3X_PARAM_I2C_ADDR, .mode = SHT3X_PARAM_MODE, .repeat = SHT3X_PARAM_REPEAT }
+#define SHT3X_PARAMS                                                                          \
+  {                                                                                           \
+    .bus = SHT3X_PARAM_I2C_BUS, .addr = SHT3X_PARAM_I2C_ADDR, .sda_pin = SHT3X_PARAM_I2C_SDA, \
+    .scl_pin = SHT3X_PARAM_I2C_SCL, .mode = SHT3X_PARAM_MODE, .repeat = SHT3X_PARAM_REPEAT    \
+  }
 #endif
 /**@}*/
 

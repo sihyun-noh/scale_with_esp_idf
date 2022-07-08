@@ -36,14 +36,6 @@
     }                                                                                               \
   } while (0)
 
-#define I2C_MASTER_SDA_IO 21 /*!< GPIO number used for I2C master data  */
-#define I2C_MASTER_SCL_IO 22 /*!< GPIO number used for I2C master clock */
-#define I2C_MASTER_NUM \
-  0 /*!< I2C master i2c port number, the number of i2c peripheral interfaces available will depend on the chip */
-#define I2C_MASTER_TX_BUF_DISABLE 0 /*!< I2C master doesn't need buffer */
-#define I2C_MASTER_RX_BUF_DISABLE 0 /*!< I2C master doesn't need buffer */
-#define I2C_MASTER_TIMEOUT_MS 1000
-
 #define I2C_ACK_VAL 0x0
 #define I2C_NACK_VAL 0x1
 
@@ -138,6 +130,8 @@ static uint8_t crc8(uint8_t* data, size_t len) {
 
 #define DEV_I2C (dev->bus)
 #define DEV_ADDR (dev->addr)
+#define DEV_I2C_SDA (dev->sda_pin)
+#define DEV_I2C_SCL (dev->scl_pin)
 
 int sht3x_init(sht3x_dev_t* dev, const sht3x_params_t* params) {
   CHECK_PARAM(dev != NULL);
@@ -149,6 +143,8 @@ int sht3x_init(sht3x_dev_t* dev, const sht3x_params_t* params) {
   /* Initialize sensor data structure */
   dev->bus = params->bus;
   dev->addr = params->addr;
+  dev->sda_pin = params->sda_pin;
+  dev->scl_pin = params->scl_pin;
   dev->mode = params->mode;
   dev->repeat = params->repeat;
 
@@ -157,7 +153,7 @@ int sht3x_init(sht3x_dev_t* dev, const sht3x_params_t* params) {
   dev->meas_duration = 0;
 
   /* TODO : Need to initialize the i2c driver */
-  if ((res = i2c_init(DEV_I2C)) != 0) {
+  if ((res = i2c_init(DEV_I2C, DEV_I2C_SDA, DEV_I2C_SCL)) != 0) {
     DEBUG("Could not initialize, error = %d\n", res);
     return SHT3X_ERR_I2C;
   }

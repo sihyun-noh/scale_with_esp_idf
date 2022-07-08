@@ -15,12 +15,27 @@
 
 #include <stdio.h>
 
+// Possible I2C slave address
+#define SCD4X_I2C_ADDR_1 (0x62)
+
+/**
+ * @brief SCD4x device initialization parameters
+ */
+typedef struct {
+  uint8_t bus;  /**< I2C bus at which sensor is connected */
+  uint8_t addr; /**< I2C slave address of the sensor */
+  int sda_pin;  /**< I2C SDA Pin number */
+  int scl_pin;  /**< I2C SCL Pin number */
+} scd4x_params_t;
+
 /**
  * @brief SCD4x sensor device data structure type
  */
 typedef struct {
   uint8_t bus;        /**< I2C bus at which sensor is connected */
   uint8_t addr;       /**< I2C slave address of the sensor */
+  int sda_pin;        /**< I2C sda pin number */
+  int scl_pin;        /**< I2C scl pin number */
   uint16_t serial[3]; /**< sensor serial Address */
 } scd4x_dev_t;
 
@@ -32,7 +47,7 @@ typedef struct {
  *
  * @return 0 on success , otherwise negative error code
  */
-int scd4x_init(scd4x_dev_t* dev);
+int scd4x_init(scd4x_dev_t* dev, const scd4x_params_t* params);
 
 /**
  * @brief get_data_ready_status I2C sequence description
