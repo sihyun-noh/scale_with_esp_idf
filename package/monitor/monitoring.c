@@ -25,6 +25,10 @@ typedef struct task_queue {
 SemaphoreHandle_t monitor_semaphore;
 static task_queue_t task_list;
 
+static int get_task_count(void) {
+  return task_list.task_num;
+}
+
 static void init_inked_list(void) {
   TAILQ_INIT(&(task_list.head));
   task_list.task_num = 0;
@@ -93,8 +97,9 @@ int is_run_task_monitor_alarm(TaskHandle_t task_handle) {
     char *task_name = pcTaskGetName(task_handle);
     if (eTaskGetState(task_handle) == eRunning) {
       LOGI(TAG, "curr_tasK_alarm : %s", task_name);
-      if (!add_to_task_list(&task_list, task_list.task_num, task_name)) {
-        task_list.task_num++;
+      task_list.task_num++;
+      if (add_to_task_list(&task_list, task_list.task_num, task_name) == -1) {
+        task_list.task_num--;
       }
     }
     xSemaphoreGive(monitor_semaphore);
@@ -115,7 +120,7 @@ void is_run_task_heart_bit(TaskHandle_t task_handle, uint8_t status) {
 
 static void task_monitoring(int8_t entry_num) {
   task_item_t *entry = NULL;
-  while (entry_num >= 0) {
+  while (entry_num > 0) {
     entry = get_task_item(&task_list, entry_num);
     if (entry == NULL) {
       LOGI(TAG, "invalid ID : %d", entry_num);
@@ -211,10 +216,11 @@ static void wifi_monitoring(void) {
 }
 
 static void monitoring_task(void *pvParameters) {
-  is_run_task_monitor_alarm(wifi_event_monitor_task_handle);
-  uint8_t list_count = 0;
+  uint8_t task_count = 0;
   int ret = -1;
   char res_event_msg[50] = { 0 };
+  is_run_task_monitor_alarm(wifi_event_monitor_task_handle);
+  task_count = get_task_count();
   while (1) {
     is_run_task_heart_bit(wifi_event_monitor_task_handle, true);
 
@@ -222,13 +228,11 @@ static void monitoring_task(void *pvParameters) {
 
     heap_monitoring(HEAP_MONITOR_WARNING, HEAP_MONITOR_CRITICAL);
 
-    task_monitoring(list_count);
+    task_monitoring(task_count);
 
-    if (list_count == 0) {
-      if (xSemaphoreTake(monitor_semaphore, portMAX_DELAY) == pdTRUE) {
-        list_count = task_list.task_num;
-        xSemaphoreGive(monitor_semaphore);
-      }
+    if (xSemaphoreTake(monitor_semaphore, portMAX_DELAY) == pdTRUE) {
+      task_count = task_list.task_num;
+      xSemaphoreGive(monitor_semaphore);
     }
 
     ret = sysevent_get(SYSEVENT_BASE, TASK_MONITOR_EVENT, &res_event_msg, sizeof(res_event_msg));
