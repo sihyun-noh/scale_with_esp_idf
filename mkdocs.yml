@@ -23,6 +23,8 @@ nav:
     - OTA FW Update: 'ota.md'
     - Manufacturing: 'manufacturing.md'
     - Unit test: 'unittest.md'
+    - Monitor: 'monitor.md'
+    - MQTT: 'mqtt.md'
 
 markdown_extensions:
   - attr_list

@@ -15,7 +15,8 @@ uinty 라이브러를 사용하여 unit test를 진행하는 과정을 설명 �
 **test 프로젝트는 unit 테스트만 실행하는 간단한 애플리케이션입니다.**
 
 ## Unit tests for a component
-현재 진행하고 있는 프로젝트의 package에서 wifi_manager의 unit test를 진행하는 과정을 설명합니다. 
+현재 진행하고 있는 프로젝트의 package에서 wifi_manager의 unit test를 진행하는 과정을 설명합니다.
+
 - SMARTFARM-IEF
   - package                              
     - wifi_manager---------------------------- Components of the application project

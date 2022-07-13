@@ -1,6 +1,6 @@
 # Monitoring Task
- #####  WIFI »óÅÂ, heap_memory »óÅÂ, Task »óÅÂ µî ¸ğ´ÏÅÍ¸µ ÇÏ¿© ½Ã½ºÅÛ µ¿ÀÛ ÀÌ½´¿¡ µû¸¥ ´ëÀÀ ¹× º¸°í¸¦ À§ÇÑ ½Ã½ºÅÛ ±¸¼º¿ä¼Ò ÀÔ´Ï´Ù.
- ##### ±¸¼ºµµ´Â ´ÙÀ½°ú °°½À´Ï´Ù.  
+ ##### WIFI ìƒíƒœ, heap_memory ìƒíƒœ, Task ìƒíƒœ ë“± ëª¨ë‹ˆí„°ë§ í•˜ì—¬ ì‹œìŠ¤í…œ ë™ì‘ ì´ìŠˆì— ë”°ë¥¸ ëŒ€ì‘ ë° ë³´ê³ ë¥¼ ìœ„í•œ ì‹œìŠ¤í…œ êµ¬ì„±ìš”ì†Œ ì…ë‹ˆë‹¤.
+ ##### êµ¬ì„±ë„ëŠ” ë‹¤ìŒê³¼ ê°™ìŠµë‹ˆë‹¤.  
 ```mermaid
 stateDiagram
 [*] --> Monitoring_Task
@@ -30,10 +30,10 @@ tesk_alarm_event_set -->[*]
 ```
 
 - ### WIFI Monitoring loop
-   #### Wifi ¸ğ¸®ÅÍ¸µÀº STA Connected ¿Í STA Disconnected¸¦ È®ÀÎÇÏ¿© ¸¦ WIFI »óÅÂ¸¦ º¸¿©Áİ´Ï´Ù. 
-   * #### STA Connected ÀÏ¶§ Report message.
+   #### Wifi ëª¨ë¦¬í„°ë§ì€ STA Connected ì™€ STA Disconnectedë¥¼ í™•ì¸í•˜ì—¬ WIFI ìƒíƒœë¥¼ ë³´ì—¬ì¤ë‹ˆë‹¤. 
+   * #### STA Connected ì¼ë•Œ Report message.
             "Conneted SSID" 
-   * #### STA Disonnected ÀÏ¶§ Report message.
+   * #### STA Disonnected ì¼ë•Œ Report message.
             "UNSPECIFIED"
             "AUTH_EXPIRE"
             "AUTH_LEAVE"
@@ -65,10 +65,10 @@ tesk_alarm_event_set -->[*]
             "HANDSHAKE_TIMEOUT"
             "CONNECTION_FAIL"
 - ### Heap Monitoring loop
-   #### Èü¸Ş¸ğ¸® »óÅÂ¸¦ È®ÀÎÇÏ¿© Memory leck ¹ß»ı½Ã sysevent¸¦ ¹ß»ı ½ÃÅµ´Ï´Ù.
+   #### í™ë©”ëª¨ë¦¬ ìƒíƒœë¥¼ í™•ì¸í•˜ì—¬ Memory leck ë°œìƒì‹œ syseventë¥¼ ë°œìƒ ì‹œí‚µë‹ˆë‹¤.
    EVENT : 
    HEAP_CRITICAL_LEVEL_WARNING_EVENT(2048) HEAP_WARNING_LEVEL_WARNING_EVENT(1014)
 
 - ### Task Monitoring loop
-   #### »ı¼ºµÈ TaskÀÇ »óÅÂ¸¦ È®ÀÎ ÇÕ´Ï´Ù. »õ·Î¸¸ µé¾îÁø Task´Â is_run_task_moni_alarm()ÅëÇØ Task¸¦ Task_Monitoring¿¡ µî·ÏÇÏ°í, is_run_task_heart_bit()ÅëÇØ Task loop alive »óÅÂ¸¦ º¸°íÇÕ´Ï´Ù. Task loop alive °¡ ¹ß»ıµÇÁö ¾ÊÀ» ½Ã sysevent¸¦ ¹ß»ı ½ÃÅµ´Ï´Ù.
+   #### ìƒì„±ëœ Taskì˜ ìƒíƒœë¥¼ í™•ì¸ í•©ë‹ˆë‹¤. ìƒˆë¡œë§Œ ë“¤ì–´ì§„ TaskëŠ” is_run_task_moni_alarm()í†µí•´ Taskë¥¼ Task_Monitoringì— ë“±ë¡í•˜ê³ , is_run_task_heart_bit()í†µí•´ Task loop alive ìƒíƒœë¥¼ ë³´ê³ í•©ë‹ˆë‹¤. Task loop alive ê°€ ë°œìƒë˜ì§€ ì•Šì„ ì‹œ syseventë¥¼ ë°œìƒ ì‹œí‚µë‹ˆë‹¤.
    EVENT : TASK_MONITOR_EVENT
