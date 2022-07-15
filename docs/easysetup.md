@@ -64,7 +64,7 @@ SensorNode->>Server: 주기마다 센서값 전달
 end
 ```
 
-## 3. Easy Setup Library API
+## 4. Easy Setup Library API
 
 * create_easy_setup_task(void)
   
