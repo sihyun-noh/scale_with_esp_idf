@@ -1,21 +1,30 @@
 #ifndef _WIFI_MANAGER_H_
 #define _WIFI_MANAGER_H_
 
+#include "wifi_manager_private.h"
+
 #include <stdbool.h>
+
+#define MAX_SSID 64
+
+typedef struct {
+  char ssid[MAX_SSID];
+  int rssi;
+} ap_info_t;
 
 /**
  * @brief Initialize the underlying Wi-fi
  *
  * @return int 0 on success, -1 on failure
  */
-int wifi_user_init();
+int wifi_user_init(void);
 
 /**
  * @brief Deinitialize the Wi-fi component
  *
  * @return int 0 on success, -1 on failure
  */
-int wifi_user_deinit();
+int wifi_user_deinit(void);
 
 /**
  * @brief Set the Wi-Fi AP operating mode
@@ -31,7 +40,7 @@ int wifi_ap_mode(const char *ssid, const char *password);
  *
  * @return int 0 on success, -1 on failure
  */
-int wifi_sta_mode();
+int wifi_sta_mode(void);
 
 /**
  * @brief Stop WiFi If mode is WIFI_MODE_STA, it stop station and free station control block If mode is WIFI_MODE_AP, it
@@ -40,7 +49,7 @@ int wifi_sta_mode();
  *
  * @return int 0 on success, -1 on failure
  */
-int wifi_stop_mode();
+int wifi_stop_mode(void);
 
 /**
  * @brief Set the Wi-Fi AP connect operating mode
@@ -56,20 +65,7 @@ int wifi_connect_ap(const char *ssid, const char *password);
  *
  * @return int 0 on success, -1 on failure
  */
-int wifi_disconnect_ap();
-
-typedef void (*scan_done_handler_t)(void *userdata);
-
-/**
- * @brief The context of the Wi-Fi Network Scan
- */
-typedef struct scan_network_result {
-  int scan_done;
-  int scan_ap_num;
-  int scan_ap_req_count;
-  void *scan_ap_list;
-  scan_done_handler_t scan_done_handler;
-} scan_network_result_t;
+int wifi_disconnect_ap(void);
 
 /**
  * @brief Scan all available APs.
@@ -81,5 +77,41 @@ typedef struct scan_network_result {
  * @return int 0 on success, -1 on failure
  */
 int wifi_scan_network(scan_network_result_t *userdata, bool block, int waitSec);
+
+/**
+ * @brief Get current wifi mode (AP or Station)
+ *
+ * @return WIFI_MODE_STA on station mode, WIFI_MODE_AP on ap mode.
+ */
+int wifi_get_current_mode(void);
+
+/**
+ * @brief Get device(station) ip address
+ *
+ * @param buffer of device's ip address
+ * @param length of ip address buffer
+ *
+ * @return int 0 on success, -1 on failure
+ */
+int get_sta_ipaddr(char *ip_addr, int addr_len);
+
+/**
+ * @brief Get router ip address
+ *
+ * @param buffer of router's ip address
+ * @param length of ip address buffer
+ *
+ * @return int 0 on success, -1 on failure
+ */
+int get_router_ipaddr(char *ip_addr, int addr_len);
+
+/**
+ * @brief Get router information (ssid, rssi)
+ *
+ * @param router information structure (ssid, rssi)
+ *
+ * @return int 0 on success, -1 on failure
+ */
+int get_ap_info(ap_info_t *ap_info);
 
 #endif /* _WIFI_MANAGER_H_ */

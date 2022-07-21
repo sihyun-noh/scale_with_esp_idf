@@ -1,7 +1,8 @@
 #ifndef _WIFI_MANAGER_IMPL_H_
 #define _WIFI_MANAGER_IMPL_H_
 
-#include "wifi_manager.h"
+#include "esp_wifi.h"
+#include "wifi_manager_private.h"
 
 #define AP_MODE 1
 #define STA_MODE 2
@@ -78,5 +79,45 @@ int wifi_disconnect_ap_impl(wifi_context_t *ctx);
  * @return int 0 on success, -1 on failure
  */
 int wifi_scan_network_impl(wifi_context_t *ctx, scan_network_result_t *userdata, bool block, int waitSec);
+
+/**
+ * @brief Get current wifi mode (AP or Station)
+ *
+ * @param ctx the context of the Wi-Fi
+ * @return WIFI_MODE_STA on station mode, WIFI_MODE_AP on ap mode.
+ */
+int wifi_get_current_mode_impl(wifi_context_t *ctx);
+
+/**
+ * @brief Get device(station) ip address
+ *
+ * @param ctx the context of the Wi-Fi
+ * @param buffer of device's ip address
+ * @param length of ip address buffer
+ *
+ * @return int 0 on success, -1 on failure
+ */
+int get_sta_ipaddr_impl(wifi_context_t *ctx, char *ip_addr, int addr_len);
+
+/**
+ * @brief Get router ip address
+ *
+ * @param ctx the context of the Wi-Fi
+ * @param buffer of router's ip address
+ * @param length of ip address buffer
+ *
+ * @return int 0 on success, -1 on failure
+ */
+int get_router_ipaddr_impl(wifi_context_t *ctx, char *ip_addr, int addr_len);
+
+/**
+ * @brief Get router(ap) information
+ *
+ * @param ctx the context of the Wi-Fi
+ * @param router(ap) information structure, wifi_ap_record_t
+ *
+ * @return int 0 on success, -1 on failure
+ */
+int get_ap_info_impl(wifi_context_t *ctx, wifi_ap_record_t *ap_info);
 
 #endif /* _WIFI_MANAGER_IMPL_H_ */

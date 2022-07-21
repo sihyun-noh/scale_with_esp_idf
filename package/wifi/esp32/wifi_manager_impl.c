@@ -13,7 +13,7 @@
  * IMPLIED, OR STATUTORY, INCLUDING THE IMPLIED WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
-#include "esp32/wifi_manager_impl.h"
+#include "wifi_manager_impl.h"
 
 #include <string.h>
 #include <stdbool.h>
@@ -347,4 +347,59 @@ scan_exit:
   // mutex unlock
   xSemaphoreGive(ctx->wifi_mutex);
   return ret;
+}
+
+int wifi_get_current_mode_impl(wifi_context_t *ctx) {
+  wifi_mode_t wifi_mode = WIFI_MODE_NULL;
+  if (ctx == NULL) {
+    return wifi_mode;
+  }
+
+  // mutex lock
+  xSemaphoreTake(ctx->wifi_mutex, portMAX_DELAY);
+  esp_err_t rc = esp_wifi_get_mode(&wifi_mode);
+  if (rc != ESP_OK) {
+    LOGI(TAG, "Failed to get current wifi mode, rc = %d", rc);
+  }
+  xSemaphoreGive(ctx->wifi_mutex);
+  return wifi_mode;
+}
+
+int get_sta_ipaddr_impl(wifi_context_t *ctx, char *ip_addr, int addr_len) {
+  if (ctx == NULL || ip_addr == NULL || addr_len == 0) {
+    return -1;
+  }
+  if (ctx->sta_netif == NULL) {
+    return -1;
+  }
+
+  esp_netif_ip_info_t ip_info;
+  esp_netif_get_ip_info(ctx->sta_netif, &ip_info);
+
+  snprintf(ip_addr, addr_len, IPSTR, IP2STR(&ip_info.ip));
+  return 0;
+}
+
+int get_router_ipaddr_impl(wifi_context_t *ctx, char *ip_addr, int addr_len) {
+  if (ctx == NULL || ip_addr == NULL || addr_len == 0) {
+    return -1;
+  }
+  if (ctx->sta_netif == NULL) {
+    return -1;
+  }
+
+  esp_netif_ip_info_t ip_info;
+  esp_netif_get_ip_info(ctx->sta_netif, &ip_info);
+
+  snprintf(ip_addr, addr_len, IPSTR, IP2STR(&ip_info.gw));
+  return 0;
+}
+
+int get_ap_info_impl(wifi_context_t *ctx, wifi_ap_record_t *ap_info) {
+  if (ctx == NULL || ap_info == NULL) {
+    return -1;
+  }
+
+  esp_err_t rc = esp_wifi_sta_get_ap_info(ap_info);
+  return (rc == ESP_OK) ? 0 : -1;
 }

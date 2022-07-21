@@ -14,8 +14,10 @@
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
 #include "esp32/wifi_manager_impl.h"
+#include "wifi_manager.h"
 
 #include <stddef.h>
+#include <stdio.h>
 
 static wifi_context_t *ctx = NULL;
 
@@ -56,4 +58,28 @@ int wifi_disconnect_ap() {
 
 int wifi_scan_network(scan_network_result_t *userdata, bool block, int waitSec) {
   return wifi_scan_network_impl(ctx, userdata, block, waitSec);
+}
+
+int wifi_get_current_mode() {
+  return wifi_get_current_mode_impl(ctx);
+}
+
+int get_sta_ipaddr(char *ip_addr, int addr_len) {
+  return get_sta_ipaddr_impl(ctx, ip_addr, addr_len);
+}
+
+int get_router_ipaddr(char *ip_addr, int addr_len) {
+  return get_router_ipaddr_impl(ctx, ip_addr, addr_len);
+}
+
+int get_ap_info(ap_info_t *ap_info) {
+  wifi_ap_record_t ap_record = { 0 };
+
+  esp_err_t rc = get_ap_info_impl(ctx, &ap_record);
+
+  if (rc == ESP_OK) {
+    snprintf(ap_info->ssid, sizeof(ap_info->ssid), "%s", ap_record.ssid);
+    ap_info->rssi = ap_record.rssi;
+  }
+  return rc;
 }
