@@ -15,57 +15,47 @@
  */
 #include "syscfg.h"
 #include "sysevent.h"
-#include "syslog.h"
 #include "event_ids.h"
-#include "wifi_manager.h"
+#include "syslog.h"
 
 #include <sys/param.h>
 #include <freertos/FreeRTOS.h>
-#include <freertos/event_groups.h>
+#include "freertos/event_groups.h"
 #include <esp_https_server.h>
 
-#include "time_api.h"
 #include "cJSON.h"
 #include "mdns.h"
-
-#define WIFI_PASS "!ALfE42vcchYpFQyPuCN*v_w"
+#include "ethernet_manager.h"
 
 /* The event group allows multiple bits for each event, but we only care about two events:
  * - we are connected to the AP with an IP
  * - we failed to connect after the maximum amount of retries */
-#define WIFI_CONNECTED BIT0
-#define WIFI_DISCONNECT BIT1
-
+#define ETHERNET_CONNECTED BIT0
+#define ETHERNET_DISCONNECT BIT1
 #define MAX_RETRY_CONNECT 5
 
 typedef enum {
   UNCONFIGURED_MODE = 0,
-  PAIRING_MODE,
-  CONFIRM_MODE,
-  STA_CONNECT_MODE,
   PAIRED_MODE,
   UNPAIRED_MODE,
-  SERVER_GET_MODE
+  SERVER_GET_MODE,
+  ETHERNET_SET_MODE,
+  ETHERNET_CONFIRM_MODE
 } setup_mode_t;
 
 static const char *TAG = "easy_setup";
 
 static TaskHandle_t easy_setup_handle = NULL;
-static httpd_handle_t httpd_handle = NULL;
+static httpd_handle_t httpd_hanlde = NULL;
 
-static int ap_mode_running = 0;
 static int s_retry_connect = 0;
-
 static int router_connect = 0;
 
 /* FreeRTOS event group to signal when we are connected*/
-static EventGroupHandle_t s_wifi_event_group;
+static EventGroupHandle_t s_ethernet_event_group;
 
 extern void initialise_mdns(void);
 
-char AP_SSID[30] = { 0 };
-char farmssid[50] = { 0 };
-char farmpw[50] = { 0 };
 char farmip[30] = { 0 };
 
 /**
@@ -112,17 +102,6 @@ static esp_err_t post_handler(httpd_req_t *req) {
   LOGI(TAG, "%s ", content);
 
   cJSON *root = cJSON_Parse(content);
-
-  cJSON *ssid = cJSON_GetObjectItem(root, "SSID");
-  cJSON *pw = cJSON_GetObjectItem(root, "Password");
-  if (cJSON_IsString(ssid) && cJSON_IsString(pw)) {
-    // ssid pw
-    snprintf(farmssid, sizeof(farmssid), "%s", ssid->valuestring);
-    snprintf(farmpw, sizeof(farmpw), "%s", pw->valuestring);
-    syscfg_set(CFG_DATA, "ssid", farmssid);
-    syscfg_set(CFG_DATA, "password", farmpw);
-    LOGI(TAG, "Got SSID = [%s] password = [%s]", farmssid, farmpw);
-  }
 
   cJSON *Server = cJSON_GetObjectItem(root, "Server");
   if (cJSON_IsString(Server)) {
@@ -185,125 +164,58 @@ static httpd_handle_t start_webserver(void) {
  * @param httpd_req_t HTTP Request Data Structure
  */
 static void stop_webserver(httpd_handle_t server) {
-  if (server) {
-    // Un-register uri handler
-    httpd_unregister_uri_handler(server, "/", HTTP_GET);
-    httpd_unregister_uri_handler(server, "/", HTTP_POST);
-    // Stop the httpd server
-    httpd_ssl_stop(server);
-  }
-}
-
-int ap_connect_handler(void *arg) {
-  if (httpd_handle == NULL) {
-    LOGI(TAG, "Start Webserver in ap_connect_handler...");
-    httpd_handle = start_webserver();
-  }
-  return 0;
-}
-
-int ap_disconnect_handler(void *arg) {
-  if (httpd_handle) {
-    LOGI(TAG, "Stop Webserver in ap_disconnect_handler...");
-    stop_webserver(httpd_handle);
-    httpd_handle = NULL;
-  }
-  return 0;
+  // Stop the httpd server
+  httpd_ssl_stop(server);
 }
 
 int sta_disconnect_handler(void *arg) {
-  if (httpd_handle) {
-    LOGI(TAG, "Stop Webserver in sta_disconnect_handler...");
-    stop_webserver(httpd_handle);
-    httpd_handle = NULL;
+  if (httpd_hanlde) {
+    stop_webserver(httpd_hanlde);
+    httpd_hanlde = NULL;
   }
-  xEventGroupSetBits(s_wifi_event_group, WIFI_DISCONNECT);
+  xEventGroupSetBits(s_ethernet_event_group, ETHERNET_DISCONNECT);
   return 0;
 }
 
 int sta_ip_handler(void *arg) {
-  if (httpd_handle == NULL) {
-    LOGI(TAG, "Start Webserver in sta_ip_handler...");
-    httpd_handle = start_webserver();
+  if (httpd_hanlde == NULL) {
+    httpd_hanlde = start_webserver();
   }
-  xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED);
+  xEventGroupSetBits(s_ethernet_event_group, ETHERNET_CONNECTED);
   return 0;
 }
 
-void easy_setup_task(void *pvParameters) {
+void ethernet_easy_setup_task(void *pvParameters) {
   int exit = 0;
-  uint8_t mac[6] = { 0 };
-  char model_name[10] = { 0 };
-
   setup_mode_t curr_mode = UNCONFIGURED_MODE;
-
-  syscfg_get(CFG_DATA, "ssid", farmssid, sizeof(farmssid));
-  syscfg_get(CFG_DATA, "password", farmpw, sizeof(farmpw));
-  syscfg_get(CFG_DATA, "farmip", farmip, sizeof(farmip));
-  syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
-
-  if (farmssid[0] && farmpw[0]) {
-    if (farmip[0]) {
-      curr_mode = STA_CONNECT_MODE;
-    }
-    curr_mode = PAIRING_MODE;
-  } else {
-    curr_mode = UNCONFIGURED_MODE;
-  }
 
   while (1) {
     switch (curr_mode) {
       case UNCONFIGURED_MODE: {
-        if (ap_mode_running == 0) {
-          esp_read_mac(mac, ESP_MAC_WIFI_STA);
-          /* snprintf() is more secure than sprintf() */
-          snprintf(AP_SSID, sizeof(AP_SSID), "%s-%02X%02X%02X%02X%02X%02X", model_name, mac[0], mac[1], mac[2], mac[3],
-                   mac[4], mac[5]);
-
-          wifi_ap_mode(AP_SSID, WIFI_PASS);
-
-          sysevent_get_with_handler(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, ap_connect_handler, NULL);
-          sysevent_get_with_handler(WIFI_EVENT, WIFI_EVENT_AP_STOP, ap_disconnect_handler, NULL);
-
-          ap_mode_running = 1;
-        } else {
-          syscfg_get(CFG_DATA, "ssid", farmssid, sizeof(farmssid));
-          syscfg_get(CFG_DATA, "password", farmpw, sizeof(farmpw));
-          if (farmssid[0] && farmpw[0]) {
-            sysevent_unregister_handler(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, ap_connect_handler);
-            sysevent_unregister_handler(WIFI_EVENT, WIFI_EVENT_AP_STOP, ap_disconnect_handler);
-            curr_mode = PAIRING_MODE;
-          }
-        }
+        syscfg_get(CFG_DATA, "farmip", farmip, sizeof(farmip));
+        curr_mode = ETHERNET_SET_MODE;
       } break;
-      case PAIRING_MODE: {
-        sysevent_get_with_handler(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, sta_disconnect_handler, NULL);
-        sysevent_get_with_handler(IP_EVENT, IP_EVENT_STA_GOT_IP, sta_ip_handler, NULL);
-        wifi_stop_mode();
-        vTaskDelay(500 / portTICK_PERIOD_MS);
-        curr_mode = STA_CONNECT_MODE;
+      case ETHERNET_SET_MODE: {
+        sysevent_get_with_handler(IP_EVENT, IP_EVENT_ETH_LOST_IP, sta_disconnect_handler, NULL);
+        sysevent_get_with_handler(IP_EVENT, IP_EVENT_ETH_GOT_IP, sta_ip_handler, NULL);
+        ethernet_init();
+        LOGI(TAG, "Connecting to Ethernet");
+        curr_mode = ETHERNET_CONFIRM_MODE;
       } break;
-      case STA_CONNECT_MODE: {
-        wifi_sta_mode();
-        wifi_connect_ap(farmssid, farmpw);
-        LOGI(TAG, "Connecting to AP with SSID:%s password:%s", farmssid, farmpw);
-        curr_mode = CONFIRM_MODE;
-      } break;
-      case CONFIRM_MODE: {
+      case ETHERNET_CONFIRM_MODE: {
         // Waiting for event message to check if the connection is success.
-        /* Waiting until either the connection is established (WIFI_CONNECTED) or connection failed (WIFI_DISCONNECT)
-         * The bits are set by event handler (see above) */
-        EventBits_t bits =
-            xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED | WIFI_DISCONNECT, pdFALSE, pdFALSE, portMAX_DELAY);
-        if (bits & WIFI_CONNECTED) {
-          LOGI(TAG, "connected to ap SSID:%s password:%s", farmssid, farmpw);
+        /* Waiting until either the connection is established (ETHERNET_CONNECTED) or connection failed
+         * (ETHERNET_DISCONNECT) The bits are set by event handler (see above) */
+        EventBits_t bits = xEventGroupWaitBits(s_ethernet_event_group, ETHERNET_CONNECTED | ETHERNET_DISCONNECT,
+                                               pdFALSE, pdFALSE, portMAX_DELAY);
+        if (bits & ETHERNET_CONNECTED) {
+          LOGI(TAG, "connected to Ethernet");
           curr_mode = PAIRED_MODE;
-          xEventGroupClearBits(s_wifi_event_group, WIFI_CONNECTED);
-        } else if (bits & WIFI_DISCONNECT) {
-          LOGI(TAG, "Failed to connect to SSID:%s, password:%s", farmssid, farmpw);
-          curr_mode = PAIRING_MODE;
+        } else if (bits & ETHERNET_DISCONNECT) {
+          LOGI(TAG, "Failed to connect to Ethernet");
+          curr_mode = ETHERNET_SET_MODE;
           s_retry_connect++;
-          xEventGroupClearBits(s_wifi_event_group, WIFI_DISCONNECT);
+          xEventGroupClearBits(s_ethernet_event_group, ETHERNET_DISCONNECT);
           vTaskDelay(500 / portTICK_PERIOD_MS);
           if (s_retry_connect >= MAX_RETRY_CONNECT) {
             curr_mode = UNPAIRED_MODE;
@@ -327,17 +239,13 @@ void easy_setup_task(void *pvParameters) {
       case SERVER_GET_MODE: {
         if (farmip[0]) {
           LOGI(TAG, "!!! EasySetup is DONE !!!");
-          ap_disconnect_handler(NULL);
+          sta_disconnect_handler(NULL);
           mdns_free();
           exit = 1;
         }
       } break;
       case UNPAIRED_MODE: {
         LOGI(TAG, "!!! UNPAIRED MODE !!!");
-        ap_mode_running = 0;
-        wifi_stop_mode();
-        syscfg_unset(CFG_DATA, "ssid");
-        syscfg_unset(CFG_DATA, "password");
         curr_mode = UNCONFIGURED_MODE;
         router_connect = 0;
       } break;
@@ -350,15 +258,15 @@ void easy_setup_task(void *pvParameters) {
   }
 
   SLOGI(TAG, "Exit EasySetup Task!!!");
-  sysevent_unregister_handler(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, sta_disconnect_handler);
+  sysevent_unregister_handler(IP_EVENT, IP_EVENT_ETH_LOST_IP, sta_disconnect_handler);
   sysevent_unregister_handler(IP_EVENT, IP_EVENT_STA_GOT_IP, sta_ip_handler);
   easy_setup_handle = NULL;
 
-  vEventGroupDelete(s_wifi_event_group);
+  vEventGroupDelete(s_ethernet_event_group);
   vTaskDelete(NULL);
 }
 
-void create_easy_setup_task(void) {
+void create_ethernet_easy_setup_task(void) {
   uint16_t stack_size = 4096;
   UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
 
@@ -367,10 +275,10 @@ void create_easy_setup_task(void) {
     return;
   }
 
-  ap_mode_running = 0;
-  s_wifi_event_group = xEventGroupCreate();
+  s_ethernet_event_group = xEventGroupCreate();
 
-  xTaskCreate((TaskFunction_t)easy_setup_task, "easy_setup", stack_size, NULL, task_priority, &easy_setup_handle);
+  xTaskCreate((TaskFunction_t)ethernet_easy_setup_task, "easy_setup", stack_size, NULL, task_priority,
+              &easy_setup_handle);
 }
 
 int is_router_connect(void) {
