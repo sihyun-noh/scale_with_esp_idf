@@ -1,13 +1,52 @@
-#include <freertos/FreeRTOS.h>
-#include <freertos/event_groups.h>
-#include "sysevent.h"
+#include "syscfg.h"
 #include "syslog.h"
+#include "sysevent.h"
+#include "wifi_manager.h"
 #include "monitoring.h"
 #include "icmp_echo_api.h"
 #include "event_ids.h"
 
+#include <freertos/FreeRTOS.h>
+#include <freertos/event_groups.h>
+
+#define CHECK_SUCCESS 0
+#define CHECK_FAILURE -1
+
+#define READY 1
+#define NOT_READY 0
+
+#define PING_ADDR_NUMBER 1          /* the number of ping address */
+#define PING_FAIL_COUNT_EACH_ADDR 3 /* the fail times for each ping address */
+
+#define MAX_INTERNET_CHECK_TIME 180  // 3 min
+#define MIN_INTERNET_CHECK_TIME 30   // 30 sec
+
+#define ROUTER_CHECK_TIME 30  // 30 sec
+
 static const char *TAG = "MONITOR";
 static TaskHandle_t wifi_event_monitor_task_handle = NULL;
+
+static TickType_t g_last_router_check_time = 0;
+static TickType_t g_last_internet_check_time = 0;
+
+static int g_internet_check_time = MAX_INTERNET_CHECK_TIME;
+
+static int g_farmnet_ready = 0;
+static int g_internet_ready = 0;
+
+static int g_network_state;
+static int g_rssi;
+static int g_ping_cnt;
+
+char *g_ping_addr[PING_ADDR_NUMBER] = { "8.8.8.8" };
+
+typedef enum {
+  ON_NETWORK = 0,
+  ON_INTERNET,
+  NO_ROUTER_CONNECTION,
+  NO_INTERNET_CONNECTION,
+} network_status_t;
+
 typedef struct task_item {
   uint8_t task_id;
   char task_name[16];
@@ -187,6 +226,148 @@ static void heap_monitoring(int warning_level, int critical_level) {
   }
 }
 
+// Monitoring internal functions for network connection status
+
+static void set_wifi_state(int network_state) {
+  g_network_state = network_state;
+}
+
+static void set_wifi_led(int led_mode) {
+  // TODO : Call HAL API for controlling LED status
+}
+
+static int get_farmnet_state(void) {
+  return g_farmnet_ready;
+}
+
+static int get_internet_state(void) {
+  return g_internet_ready;
+}
+
+static void set_farmnet_state(int ready) {
+  g_farmnet_ready = ready;
+}
+
+static void set_internet_state(int ready) {
+  g_internet_ready = ready;
+}
+
+static bool check_ip_ready(void) {
+  int ret = 0;
+  char ip_addr[20] = { 0 };
+
+  ret = get_sta_ipaddr(ip_addr, sizeof(ip_addr));
+  if (ret == 0 && ip_addr[0]) {
+    LOGI(TAG, "station ip addr = %s", ip_addr);
+    return true;
+  }
+  return false;
+}
+
+static int get_easy_setup_result(void) {
+  char result[10] = { 0 };
+
+  int rc = syscfg_get(CFG_DATA, "easy_setup", result, sizeof(result));
+  if (rc == 0 && strcmp(result, "done") == 0) {
+    LOGI(TAG, "easy setup is DONE...");
+    return CHECK_SUCCESS;
+  }
+  LOGI(TAG, "easy setup is PROGRESS...");
+  return CHECK_FAILURE;
+}
+
+/*
+ * Is it need to check router connection status
+ * Returns true, if it need to check router connection, there are two cases,
+ *               (1) first time, (2) after some mins (ROUTER_CHECK_TIME * 1000)
+ * Returns false, otherwise
+ *
+ */
+static bool need_to_check_router(void) {
+  if (!g_last_router_check_time ||
+      (xTaskGetTickCount() >= g_last_router_check_time + pdMS_TO_TICKS(ROUTER_CHECK_TIME * 1000))) {
+    return true;
+  }
+  return false;
+}
+
+/*
+ * Function that checking if farm network is alive or not using wifi api or ping command.
+ * (1) Check if the sensor node is connected to the router every 30 seconds.
+ * (2) Return the cached g_farmnet_ready value not actual data until the checking time 30 seconds is reached.
+ */
+static int check_farmnet(void) {
+  int farmnet_ready = NOT_READY;
+
+  ap_info_t ap_info = { 0 };
+  int rc = get_ap_info(&ap_info);
+  LOGI(TAG, "get_ap_info , rc = %d, ssid = %s", rc, ap_info.ssid);
+  if (rc == 0 && check_ip_ready()) {
+    g_rssi = ap_info.rssi;
+    farmnet_ready = READY;
+  } else {
+    farmnet_ready = NOT_READY;
+  }
+
+  set_farmnet_state(farmnet_ready);
+
+  g_last_router_check_time = xTaskGetTickCount();
+
+  return farmnet_ready;
+}
+
+/*
+ * Is it need to check internet connection status ?
+ * Returns true, if it need to check internet connection, there are two cases,
+ *               (1) first time, (2) after some mins (MIN/MAX_INTERNET_CHECK_TIME * 1000)
+ * Returns false, otherwise.
+ *
+ */
+static bool need_to_check_internet(void) {
+  if (!g_last_internet_check_time ||
+      (xTaskGetTickCount() >= g_last_internet_check_time + pdMS_TO_TICKS(g_internet_check_time * 1000))) {
+    return true;
+  }
+  return false;
+}
+
+/*
+ * Function that checking if the internet connection is alive or not using ping command
+ * (1) Check if the internet connection status is OK every 3 min(180 sec) in normal state mode.
+ * (2) If the internet connetion is lost, adjust the interval time (30 sec) which checking the connection status to
+ * detect the recovery status rapidlly.
+ */
+static int check_internet(void) {
+  int internet_ready = NOT_READY;
+
+  if (get_farmnet_state() == READY) {
+    for (;;) {
+      if (do_ping(g_ping_addr[0], 3) == PING_OK) {
+        internet_ready = READY;
+        g_ping_cnt = 0;
+        g_internet_check_time = MAX_INTERNET_CHECK_TIME;
+        LOGI(TAG, "Internet Ping Success...");
+        break;
+      } else {
+        g_ping_cnt++;
+        if (g_ping_cnt >= (PING_ADDR_NUMBER * PING_FAIL_COUNT_EACH_ADDR)) {
+          internet_ready = NOT_READY;
+          g_ping_cnt = 0;
+          g_internet_check_time = MIN_INTERNET_CHECK_TIME;
+          LOGI(TAG, "Internet Ping Failure...");
+          break;
+        }
+      }
+      vTaskDelay(pdMS_TO_TICKS(500));
+    }
+    g_last_internet_check_time = xTaskGetTickCount();
+  }
+
+  set_internet_state(internet_ready);
+
+  return internet_ready;
+}
+
 static void wifi_monitoring(void) {
   char res_event_msg[50] = { 0 };
   int ret = -1;
@@ -216,15 +397,75 @@ static void wifi_monitoring(void) {
 }
 
 static void monitoring_task(void *pvParameters) {
-  uint8_t task_count = 0;
   int ret = -1;
+  uint8_t task_count = 0;
   char res_event_msg[50] = { 0 };
+
   is_run_task_monitor_alarm(wifi_event_monitor_task_handle);
   task_count = get_task_count();
-  while (1) {
-    is_run_task_heart_bit(wifi_event_monitor_task_handle, true);
 
+  syscfg_set(CFG_DATA, "easy_setup", "start");
+
+  while (1) {
+    // Do not need to check if the device's wifi connection status during the easy setup progress.
+    // Only check if connection status of farm network or internet after device is onboarding on the network.
     // wifi_monitoring();
+    ret = get_easy_setup_result();
+    if ((ret == CHECK_SUCCESS) && (wifi_get_current_mode() == WIFI_MODE_STA)) {
+      if (need_to_check_router() == true) {
+        // First, check to see if the farmnet wifi connection status.
+        if (check_farmnet() == READY) {
+          // One more check if the router is alive using ping command.
+          char router_ip[20] = { 0 };
+          get_router_ipaddr(router_ip, sizeof(router_ip));
+          LOGI(TAG, "router ip addr = %s", router_ip);
+          if (do_ping(router_ip, 3) == PING_OK) {
+            set_farmnet_state(READY);
+            set_wifi_state(ON_NETWORK);
+            SLOGI(TAG, "Success ping to farmnet");
+          } else {
+            set_farmnet_state(NOT_READY);
+          }
+        }
+        if (get_farmnet_state() == NOT_READY) {
+          // Set internet connection flag as lost
+          // Reset g_last_internet_check_time
+          set_internet_state(NOT_READY);
+          g_last_internet_check_time = 0;
+
+          // Check if previous internet connection status is available(OK), if OK, set internet check time as minimum
+          // value.
+
+          // Reset g_last_router_check_time
+          g_last_router_check_time = 0;
+
+          SLOGI(TAG, "Failure ping to farmnet");
+
+          set_wifi_state(NO_ROUTER_CONNECTION);
+          set_wifi_led(NO_ROUTER_CONNECTION);
+
+          // TODO: Run easy_setup task to connect to the router
+          // The most of this case is caused by router is dead.
+        }
+      }
+      if (need_to_check_internet() == true) {
+        // Second, check to see if internet connection status after router status is OK
+        if (check_internet() == READY) {
+          // Internet is available, check NTP for local time and other stuff
+          // Check if NTP is activated, if not, do NTP process
+
+          // Check the network connection and signal strength
+          set_wifi_state(ON_INTERNET);
+        } else {
+          // Internet is not available, nothing to do
+          // Set the flag as internet connection lost and blink LED as defined color.
+          set_wifi_state(NO_INTERNET_CONNECTION);
+          set_wifi_led(NO_INTERNET_CONNECTION);
+        }
+      }
+    }
+
+    is_run_task_heart_bit(wifi_event_monitor_task_handle, true);
 
     heap_monitoring(HEAP_MONITOR_WARNING, HEAP_MONITOR_CRITICAL);
 

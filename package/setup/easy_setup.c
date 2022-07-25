@@ -344,6 +344,7 @@ void easy_setup_task(void *pvParameters) {
     }
     if (exit) {
       sysevent_set(EASY_SETUP_DONE, "OK");
+      syscfg_set(CFG_DATA, "easy_setup", "done");
       break;
     }
     vTaskDelay(500 / portTICK_PERIOD_MS);

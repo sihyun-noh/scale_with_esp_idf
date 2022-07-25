@@ -24,10 +24,10 @@
 #include <string.h>
 
 #include "sys/queue.h"
-#include "esp_wifi_types.h"
 
 #define reason2str(r) ((r > 176) ? system_event_reasons[r - 176] : system_event_reasons[r - 1])
-#define MONITOR_QUEUE_SIZE  32
+
+#define MONITOR_QUEUE_SIZE 32
 #define TASK_MAX_COUNT 100
 
 #define HEAP_MONITOR_CRITICAL 1024
@@ -64,26 +64,24 @@ static const char *system_event_reasons[] = { "UNSPECIFIED",
                                               "HANDSHAKE_TIMEOUT",
                                               "CONNECTION_FAIL" };
 
-
-
 /**
  * @brief Create task that will be monitoring for wifi, heap, task.
- * 
+ *
  * @return int 0 on success, -1 on failure.
  */
 
 int create_monitoring_task(void);
 
 /**
- * @brief Initialize the underlying monitoring 
- * 
+ * @brief Initialize the underlying monitoring
+ *
  * @return int 0 on success, -1 on failure.
  */
 int monitoring_init(void);
 
 /**
  * @brief send to monitoring task the alarm signal of start task from current task.
- * 
+ *
  * @param task_handle send to current tesk handle
  * @return int 0 on success, -1 on failure.
  */
@@ -91,16 +89,16 @@ int is_run_task_monitor_alarm(TaskHandle_t task_handle);
 
 /**
  * @brief send to monitoring task the alarm signal of end task from current task.
- * 
+ *
  * @param task_handle send to current tesk handle
- * @return int 0 on success, -1 on failure. 
+ * @return int 0 on success, -1 on failure.
  */
 int is_run_task_monitor_remove(TaskHandle_t task_handle);
 
 /**
  * @brief send to monitoring task the run signal from current task.
  *        checking loop status.
- * 
+ *
  * @param task_handle send to current tesk handle
  * @param status run signal is ture.
  */
