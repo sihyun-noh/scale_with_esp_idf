@@ -1,0 +1,5 @@
+config SMARTFARM_PING_FEATURE
+  bool "SmartFarm ping command"
+  default "y"
+  help
+    Ping api and command tool

@@ -1,8 +1,8 @@
 /**
  * @file icmp_echo_impl.h
- * 
+ *
  * @brief Type of ¡°ping¡± callback functions is provided by espressif.
- * 
+ *
  * Created by Greenlabs, Smartfarm Team.
  * Copyright (c) 2022 Greenlabs Co. and/or its affiliates. All rights reserved.
 
@@ -24,6 +24,11 @@ enum {
   PING_ERR_NOT_COUNT,
   PING_ERR_UNKNOWN_HOST,
 };
+
+/**
+ *
+ */
+int do_ping_impl(char *host, uint8_t ping_count);
 
 /**
  * @brief Invoked by internal ping thread when received ICMP echo reply packet.

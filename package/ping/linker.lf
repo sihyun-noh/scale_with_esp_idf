@@ -1,0 +1,4 @@
+[mapping:ping]
+archive: libping.a
+entries:
+  * (noflash)
