@@ -1,6 +1,7 @@
 #include "syscfg.h"
 #include "syslog.h"
 #include "sysevent.h"
+#include "sys_status.h"
 #include "wifi_manager.h"
 #include "monitoring.h"
 #include "icmp_echo_api.h"
@@ -18,10 +19,10 @@
 #define PING_ADDR_NUMBER 1          /* the number of ping address */
 #define PING_FAIL_COUNT_EACH_ADDR 3 /* the fail times for each ping address */
 
-#define MAX_INTERNET_CHECK_TIME 180  // 3 min
-#define MIN_INTERNET_CHECK_TIME 30   // 30 sec
+#define MAX_INTERNET_CHECK_TIME 300  // 5 min
+#define MIN_INTERNET_CHECK_TIME 60   // 1 min
 
-#define ROUTER_CHECK_TIME 30  // 30 sec
+#define ROUTER_CHECK_TIME 120  // 2 min
 
 static const char *TAG = "MONITOR";
 static TaskHandle_t wifi_event_monitor_task_handle = NULL;
@@ -264,18 +265,6 @@ static bool check_ip_ready(void) {
   return false;
 }
 
-static int get_easy_setup_result(void) {
-  char result[10] = { 0 };
-
-  int rc = syscfg_get(CFG_DATA, "easy_setup", result, sizeof(result));
-  if (rc == 0 && strcmp(result, "done") == 0) {
-    LOGI(TAG, "easy setup is DONE...");
-    return CHECK_SUCCESS;
-  }
-  LOGI(TAG, "easy setup is PROGRESS...");
-  return CHECK_FAILURE;
-}
-
 /*
  * Is it need to check router connection status
  * Returns true, if it need to check router connection, there are two cases,
@@ -404,14 +393,11 @@ static void monitoring_task(void *pvParameters) {
   is_run_task_monitor_alarm(wifi_event_monitor_task_handle);
   task_count = get_task_count();
 
-  syscfg_set(CFG_DATA, "easy_setup", "start");
-
   while (1) {
     // Do not need to check if the device's wifi connection status during the easy setup progress.
     // Only check if connection status of farm network or internet after device is onboarding on the network.
     // wifi_monitoring();
-    ret = get_easy_setup_result();
-    if ((ret == CHECK_SUCCESS) && (wifi_get_current_mode() == WIFI_MODE_STA)) {
+    if (is_device_configured() && (wifi_get_current_mode() == WIFI_MODE_STA)) {
       if (need_to_check_router() == true) {
         // First, check to see if the farmnet wifi connection status.
         if (check_farmnet() == READY) {

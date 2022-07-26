@@ -21,6 +21,7 @@
 
 enum {
   PING_OK = 0,
+  PING_FAIL,
   PING_ERR_NOT_COUNT,
   PING_ERR_UNKNOWN_HOST,
 };

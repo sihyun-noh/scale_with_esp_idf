@@ -15,6 +15,7 @@
  */
 #include "syscfg.h"
 #include "sysevent.h"
+#include "sys_status.h"
 #include "syslog.h"
 #include "event_ids.h"
 #include "wifi_manager.h"
@@ -340,11 +341,12 @@ void easy_setup_task(void *pvParameters) {
         syscfg_unset(CFG_DATA, "password");
         curr_mode = UNCONFIGURED_MODE;
         router_connect = 0;
+        set_device_configured(0);
       } break;
     }
     if (exit) {
       sysevent_set(EASY_SETUP_DONE, "OK");
-      syscfg_set(CFG_DATA, "easy_setup", "done");
+      set_device_configured(1);
       break;
     }
     vTaskDelay(500 / portTICK_PERIOD_MS);

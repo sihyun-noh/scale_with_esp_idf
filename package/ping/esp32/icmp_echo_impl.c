@@ -160,8 +160,10 @@ int do_ping_impl(char *host, uint8_t ping_count) {
   if (recv_ping_event(&event_id) == EVENT_OK) {
     if (event_id == EV_PING_SUCCESS) {
       printf("ping command success...\n");
+      rc = PING_OK;
     } else {
       printf("ping command failure...\n");
+      rc = PING_FAIL;
     }
   }
 
@@ -224,5 +226,11 @@ void cmd_ping_on_ping_end(esp_ping_handle_t hdl, void *args) {
   esp_ping_delete_session(hdl);
 
   // send event message which ping command is done to the do_ping command api, do_ping api should be blocking function
-  send_ping_event(EV_PING_SUCCESS);
+  if (loss == 100) {
+    // 100% packet loss, the ping command is failed.
+    send_ping_event(EV_PING_FAILURE);
+  } else {
+    // Otherwise, ping command is success.
+    send_ping_event(EV_PING_SUCCESS);
+  }
 }
