@@ -13,6 +13,7 @@
 #include "gpio_api.h"
 #include "time_api.h"
 #include "monitoring.h"
+#include "sysfile.h"
 
 #include <string.h>
 
@@ -25,6 +26,7 @@ typedef enum {
   ERR_SYSEVENT_CREATE,
   ERR_SYS_STATUS_INIT,
   ERR_MONITORING_INIT,
+  ERR_SPIFFS_INIT,
 } err_sysinit_t;
 
 typedef enum {
@@ -42,6 +44,8 @@ extern int read_battery_percentage(void);
 extern int temperature_comparison(float m_temperature, float temperature);
 extern void create_mqtt_task(void);
 extern int sensor_init(void);
+
+extern int create_log_file_server_task(void);
 
 static void generate_default_sysmfg(void);
 
@@ -67,7 +71,8 @@ static void generate_default_sysmfg(void) {
   }
   syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
   if (power_mode[0] == 0) {
-    syscfg_set(MFG_DATA, "power_mode", "B");
+    // syscfg_set(MFG_DATA, "power_mode", "B");
+    syscfg_set(MFG_DATA, "power_mode", "P");
   }
 }
 
@@ -115,6 +120,14 @@ int system_init(void) {
   syslog_init();
 
   // Generate the default manufacturing data if there is no data in mfg partition.
+
+  ret = init_sysfile();
+  if (ret != 0) {
+    return ERR_SPIFFS_INIT;
+  }
+
+  create_log_file_server_task();
+
   generate_default_sysmfg();
 
   return SYSINIT_OK;

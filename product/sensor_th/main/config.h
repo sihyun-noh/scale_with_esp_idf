@@ -8,12 +8,12 @@
 #define SENS_TTGO_HW3 (SENS_TTGO_HW1 + 2)
 #define SENS_OLIMEX_HW 10
 
-#define SENS_GLS_HW    20   /* Greenlabs HW */
+#define SENS_GLS_HW 20 /* Greenlabs HW */
 
 #define SENS_BOARD_VER SENS_TTGO_HW1
 
-#define SHT3X     1   /* Temperature and Humidity Sensor */
-#define SCD4X     2   /* CO2 and Temperature and Humidity */
+#define SHT3X 1 /* Temperature and Humidity Sensor */
+#define SCD4X 2 /* CO2 and Temperature and Humidity */
 
 #ifndef SENSOR_TYPE
 #define SENSOR_TYPE SHT3X

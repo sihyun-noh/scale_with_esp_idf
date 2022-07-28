@@ -1248,6 +1248,8 @@ CONFIG_DAC_FEATURE=y
 # end of DAC feature
 # end of SmartFarm PAL Configuration
 
+CONFIG_SMARTFARM_PING_FEATURE=y
+
 #
 # SmartFarm Sensors Configuration
 #
