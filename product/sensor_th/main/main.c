@@ -3,6 +3,7 @@
 #include "shell_console.h"
 #include "syscfg.h"
 #include "sysevent.h"
+#include "sys_status.h"
 #include "syslog.h"
 #include "wifi_manager.h"
 #include "esp_sleep.h"
@@ -11,9 +12,9 @@
 #include "syscfg.h"
 #include "gpio_api.h"
 #include "time_api.h"
-#include <string.h>
-
 #include "monitoring.h"
+
+#include <string.h>
 
 typedef enum {
   SYSINIT_OK,
@@ -22,6 +23,7 @@ typedef enum {
   ERR_SYSCFG_INIT,
   ERR_SYSCFG_OPEN,
   ERR_SYSEVENT_CREATE,
+  ERR_SYS_STATUS_INIT,
   ERR_MONITORING_INIT,
 } err_sysinit_t;
 
@@ -93,6 +95,11 @@ int system_init(void) {
   ret = syscfg_open();
   if (ret != 0) {
     return ERR_SYSCFG_OPEN;
+  }
+
+  ret = sys_stat_init();
+  if (ret != 0) {
+    return ERR_SYS_STATUS_INIT;
   }
 
   ret = monitoring_init();
