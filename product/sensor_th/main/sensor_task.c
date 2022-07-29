@@ -138,7 +138,8 @@ void scd4x_task(void* pvParameters) {
 }
 #endif
 
-void create_i2c_task(uint16_t stack_size) {
+void create_i2c_task(void) {
+  uint16_t stack_size = 4096;
   UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
 
   if (i2c_handle) {

@@ -43,6 +43,7 @@ extern int read_temp_humidity(void);
 extern int read_battery_percentage(void);
 extern int temperature_comparison(float m_temperature, float temperature);
 extern void create_mqtt_task(void);
+extern void create_i2c_task(void);
 extern int sensor_init(void);
 
 extern int create_log_file_server_task(void);
@@ -52,6 +53,9 @@ extern void create_led_task(void);
 #endif
 
 static void generate_default_sysmfg(void);
+
+void PLUG_SYSTEM_OPERATION(void);
+void BATTERY_SYSTEM_OPERATION(void);
 
 /**
  * @brief Handler function to stop interactive command shell
@@ -130,28 +134,29 @@ int system_init(void) {
     return ERR_SPIFFS_INIT;
   }
 
-  create_log_file_server_task();
+  // create_log_file_server_task();
 
   generate_default_sysmfg();
 
   return SYSINIT_OK;
 }
 
+typedef enum { SYSTEM_INIT_MODE = 0, MODEL_CHECK_MODE, SYSTEM_OPERATION } operation_mode_t;
+
 typedef enum {
-  SYSTEM_INIT_MODE = 0,
+  START_MODE = 0,
   SENSOR_INIT_MODE,
   SENSOR_READING_MODE,
-  MODEL_CHECK_MODE,
   COMPARISON_MODE,
   BATTERY_CHECK_MODE,
   ALIVE_CHECK_MODE,
   EASY_SETUP_MODE,
   TIME_ZONE_SET_MODE,
-  WIFI_CHECK_MODE,
   MQTT_TASK_MODE,
   WAITING_MODE,
-  SLEEP_MODE
-} operation_mode_t;
+  SLEEP_MODE,
+  MONITORING_MODE
+} sensor_mode_t;
 
 RTC_DATA_ATTR float m_temperature;
 RTC_DATA_ATTR float m_humidity;
@@ -184,11 +189,6 @@ void app_main(void) {
   operation_mode_t curr_mode = SYSTEM_INIT_MODE;
   char model_name[10] = { 0 };
   char power_mode[10] = { 0 };
-  char s_easy_setup[10] = { 0 };
-  float temperature;
-  float humidity;
-  char s_temperature[20];
-  char s_humidity[20];
 
   while (1) {
     switch (curr_mode) {
@@ -214,124 +214,170 @@ void app_main(void) {
         syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
         LOGI(TAG, "MODEL_CHECK_MODE");
         LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
-        curr_mode = SENSOR_INIT_MODE;
+        curr_mode = SYSTEM_OPERATION;
       } break;
-      case SENSOR_INIT_MODE: {
-        LOGI(TAG, "SENSOR_INIT_MODE");
-        if ((rc = sensor_init()) != SYSINIT_OK) {
-          LOGI(TAG, "Could not initialize SHT3x sensor");
-          curr_mode = SLEEP_MODE;
-        } else {
-          curr_mode = SENSOR_READING_MODE;
-        }
-      } break;
-      case SENSOR_READING_MODE: {
-        LOGI(TAG, "SENSOR_READING_MODE");
-        if ((rc = read_temp_humidity()) == CHECK_OK) {
-          if (!strncmp(power_mode, "P", 1)) {
-            curr_mode = WIFI_CHECK_MODE;
-          } else if (!strncmp(power_mode, "B", 1)) {
-            curr_mode = COMPARISON_MODE;
-          }
-        } else {
-          rc = ERR_SENSOR_READ;
-          LOGE(TAG, "sensor read, error = [%d]", rc);
-          curr_mode = SLEEP_MODE;
-        }
-      } break;
-      case COMPARISON_MODE: {
-        LOGI(TAG, "COMPARISON_MODE");
-        sysevent_get("SYSEVENT_BASE", I2C_HUMIDITY_EVENT, &s_humidity, sizeof(s_humidity));
-        sysevent_get("SYSEVENT_BASE", I2C_TEMPERATURE_EVENT, &s_temperature, sizeof(s_temperature));
-        humidity = atof(s_humidity);
-        temperature = atof(s_temperature);
-        if ((rc = temperature_comparison(m_temperature, temperature)) == CHECK_OK) {
-          curr_mode = ALIVE_CHECK_MODE;
-        } else {
-          curr_mode = BATTERY_CHECK_MODE;
-        }
-      } break;
-      case BATTERY_CHECK_MODE: {
-        m_alive_count = 0;
-        sysevent_set(I2C_TEMPERATURE_EVENT, (char*)s_temperature);
-        sysevent_set(I2C_HUMIDITY_EVENT, (char*)s_humidity);
-        LOGI(TAG, "BATTERY_CHECK_MODE");
-        m_temperature = temperature;
-        m_humidity = humidity;
-        if ((rc = read_battery_percentage()) == CHECK_OK) {
-          curr_mode = EASY_SETUP_MODE;
-        } else {
-          rc = ERR_BATTERY_READ;
-          LOGE(TAG, "battery read, error = [%d]", rc);
-          curr_mode = SLEEP_MODE;
-        }
-      } break;
-      case ALIVE_CHECK_MODE: {
-        LOGI(TAG, "ALIVE_CHECK_MODE");
-        if ((rc = alive_check_task()) == CHECK_OK) {
-          curr_mode = BATTERY_CHECK_MODE;
-        } else {
-          curr_mode = SLEEP_MODE;
-        }
-      } break;
-      case EASY_SETUP_MODE: {
-        LOGI(TAG, "EASY_SETUP_MODE");
-        create_easy_setup_task();
-        curr_mode = TIME_ZONE_SET_MODE;
-      } break;
-      case TIME_ZONE_SET_MODE: {
-        LOGI(TAG, "TIME_ZONE_SET_MODE");
-        if (sysevent_get("SYSEVENT_BASE", EASY_SETUP_DONE, &s_easy_setup, sizeof(s_easy_setup)) == 0) {
-          if (!strncmp(s_easy_setup, "OK", 2)) {
-            if (!m_timezone_set) {
-              if (tm_is_timezone_set() == false) {
-                tm_init_sntp();
-                tm_apply_timesync();
-                // TODO : Get the timezone using the region code of the manufacturing data.
-                // Currently hardcoding the timezone to be KST-9
-                tm_set_timezone("Asia/Seoul");
-              }
-              m_timezone_set = 1;
-            } else {
-              tm_set_timezone("Asia/Seoul");
-            }
-            sysevent_set(EASY_SETUP_DONE, "OK");
-            curr_mode = MQTT_TASK_MODE;
-          }
-        }
-      } break;
-      case WIFI_CHECK_MODE: {
-        LOGI(TAG, "WIFI_CHECK_MODE");
-        if (sysevent_get("SYSEVENT_BASE", EASY_SETUP_DONE, &s_easy_setup, sizeof(s_easy_setup)) == 0) {
-          if (!strncmp(s_easy_setup, "OK", 2)) {
-            sysevent_set(EASY_SETUP_DONE, "OK");
-            curr_mode = SENSOR_READING_MODE;
-          } else {
-            curr_mode = EASY_SETUP_MODE;
-          }
-        } else {
-          curr_mode = EASY_SETUP_MODE;
-        }
-      } break;
-      case MQTT_TASK_MODE: {
-        LOGI(TAG, "MQTT_TASK_MODE");
-        create_mqtt_task();
-        curr_mode = WAITING_MODE;
-      } break;
-      case WAITING_MODE: {
-        LOGI(TAG, "WAITING_MODE");
+      case SYSTEM_OPERATION: {
         if (!strncmp(power_mode, "P", 1)) {
-          curr_mode = SENSOR_READING_MODE;
+          PLUG_SYSTEM_OPERATION();
         } else if (!strncmp(power_mode, "B", 1)) {
-          vTaskDelay(10000 / portTICK_PERIOD_MS);
-          curr_mode = SLEEP_MODE;
+          BATTERY_SYSTEM_OPERATION();
         }
-      } break;
-      case SLEEP_MODE: {
-        LOGI(TAG, "SLEEP_MODE");
-        sleep_timer_wakeup(60);
-      } break;
+        break;
+      }
     }
     vTaskDelay(500 / portTICK_PERIOD_MS);
+  }
+}
+
+void BATTERY_SYSTEM_OPERATION(void) {
+  int rc = SYSINIT_OK;
+  static sensor_mode_t curr_mode = START_MODE;
+  char s_easy_setup[10] = { 0 };
+  static float temperature;
+  static float humidity;
+  char s_temperature[20];
+  char s_humidity[20];
+
+  switch (curr_mode) {
+    case START_MODE: {
+      if (m_timezone_set) {
+        tm_set_timezone("Asia/Seoul");
+      }
+      curr_mode = SENSOR_INIT_MODE;
+      break;
+    }
+    case SENSOR_INIT_MODE: {
+      LOGI(TAG, "SENSOR_INIT_MODE");
+      if ((rc = sensor_init()) != SYSINIT_OK) {
+        LOGI(TAG, "Could not initialize SHT3x sensor");
+        curr_mode = SLEEP_MODE;
+      } else {
+        curr_mode = SENSOR_READING_MODE;
+      }
+    } break;
+    case SENSOR_READING_MODE: {
+      LOGI(TAG, "SENSOR_READING_MODE");
+      if ((rc = read_temp_humidity()) == CHECK_OK) {
+        curr_mode = COMPARISON_MODE;
+      } else {
+        rc = ERR_SENSOR_READ;
+        LOGE(TAG, "sensor read, error = [%d]", rc);
+        curr_mode = SLEEP_MODE;
+      }
+    } break;
+    case COMPARISON_MODE: {
+      LOGI(TAG, "COMPARISON_MODE");
+      sysevent_get("SYSEVENT_BASE", I2C_HUMIDITY_EVENT, &s_humidity, sizeof(s_humidity));
+      sysevent_get("SYSEVENT_BASE", I2C_TEMPERATURE_EVENT, &s_temperature, sizeof(s_temperature));
+      humidity = atof(s_humidity);
+      temperature = atof(s_temperature);
+      if ((rc = temperature_comparison(m_temperature, temperature)) == CHECK_OK) {
+        curr_mode = ALIVE_CHECK_MODE;
+      } else {
+        curr_mode = BATTERY_CHECK_MODE;
+      }
+    } break;
+    case BATTERY_CHECK_MODE: {
+      m_alive_count = 0;
+      sysevent_set(I2C_TEMPERATURE_EVENT, (char*)s_temperature);
+      sysevent_set(I2C_HUMIDITY_EVENT, (char*)s_humidity);
+      LOGI(TAG, "BATTERY_CHECK_MODE");
+      m_temperature = temperature;
+      m_humidity = humidity;
+      if ((rc = read_battery_percentage()) == CHECK_OK) {
+        curr_mode = EASY_SETUP_MODE;
+      } else {
+        rc = ERR_BATTERY_READ;
+        LOGE(TAG, "battery read, error = [%d]", rc);
+        curr_mode = SLEEP_MODE;
+      }
+    } break;
+    case ALIVE_CHECK_MODE: {
+      LOGI(TAG, "ALIVE_CHECK_MODE");
+      if ((rc = alive_check_task()) == CHECK_OK) {
+        curr_mode = BATTERY_CHECK_MODE;
+      } else {
+        curr_mode = SLEEP_MODE;
+      }
+    } break;
+    case EASY_SETUP_MODE: {
+      LOGI(TAG, "EASY_SETUP_MODE");
+      create_easy_setup_task();
+      curr_mode = TIME_ZONE_SET_MODE;
+    } break;
+    case TIME_ZONE_SET_MODE: {
+      LOGI(TAG, "TIME_ZONE_SET_MODE");
+      if (sysevent_get("SYSEVENT_BASE", EASY_SETUP_DONE, &s_easy_setup, sizeof(s_easy_setup)) == 0) {
+        if (!strncmp(s_easy_setup, "OK", 2)) {
+          if (!m_timezone_set) {
+            if (tm_is_timezone_set() == false) {
+              tm_init_sntp();
+              tm_apply_timesync();
+              // TODO : Get the timezone using the region code of the manufacturing data.
+              // Currently hardcoding the timezone to be KST-9
+              tm_set_timezone("Asia/Seoul");
+            }
+            m_timezone_set = 1;
+          }
+          sysevent_set(EASY_SETUP_DONE, "OK");
+          curr_mode = MQTT_TASK_MODE;
+        }
+      }
+    } break;
+    case MQTT_TASK_MODE: {
+      LOGI(TAG, "MQTT_TASK_MODE");
+      create_mqtt_task();
+      curr_mode = WAITING_MODE;
+    } break;
+    case WAITING_MODE: {
+      LOGI(TAG, "WAITING_MODE");
+      vTaskDelay(10000 / portTICK_PERIOD_MS);
+      curr_mode = SLEEP_MODE;
+    } break;
+    case SLEEP_MODE: {
+      LOGI(TAG, "SLEEP_MODE");
+      sleep_timer_wakeup(60);
+    } break;
+    default: break;
+  }
+}
+
+void PLUG_SYSTEM_OPERATION(void) {
+  static sensor_mode_t curr_mode = START_MODE;
+  char s_easy_setup[10] = { 0 };
+
+  switch (curr_mode) {
+    case START_MODE: {
+      create_i2c_task();
+      curr_mode = EASY_SETUP_MODE;
+    } break;
+    case EASY_SETUP_MODE: {
+      LOGI(TAG, "EASY_SETUP_MODE");
+      create_easy_setup_task();
+      curr_mode = TIME_ZONE_SET_MODE;
+    } break;
+    case TIME_ZONE_SET_MODE: {
+      LOGI(TAG, "TIME_ZONE_SET_MODE");
+      if (sysevent_get("SYSEVENT_BASE", EASY_SETUP_DONE, &s_easy_setup, sizeof(s_easy_setup)) == 0) {
+        if (!strncmp(s_easy_setup, "OK", 2)) {
+          if (tm_is_timezone_set() == false) {
+            tm_init_sntp();
+            tm_apply_timesync();
+            // TODO : Get the timezone using the region code of the manufacturing data.
+            // Currently hardcoding the timezone to be KST-9
+            tm_set_timezone("Asia/Seoul");
+          }
+          curr_mode = MQTT_TASK_MODE;
+        }
+      }
+    } break;
+    case MQTT_TASK_MODE: {
+      LOGI(TAG, "MQTT_TASK_MODE");
+      create_mqtt_task();
+      curr_mode = MONITORING_MODE;
+    } break;
+    case MONITORING_MODE: {
+    } break;
+    default: break;
   }
 }

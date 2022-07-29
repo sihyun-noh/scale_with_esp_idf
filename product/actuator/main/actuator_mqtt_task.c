@@ -94,6 +94,9 @@ static int init_mqtt() {
   syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
   syscfg_get(CFG_DATA, "farmip", farmip, sizeof(farmip));
 
+  if (!farmip[0]) {
+    return -1;
+  }
   char *s_host = strtok(farmip, ":");  //공백을 기준으로 문자열 자르기
   char *s_port = strtok(NULL, " ");    //널문자를 기준으로 다시 자르기
   int n_port = atoi(s_port);
@@ -120,6 +123,7 @@ static int init_mqtt() {
   vTaskDelay(3000 / portTICK_PERIOD_MS);
 
   free(hostname);
+
   return ret;
 }
 
@@ -455,7 +459,6 @@ static char *create_json_resp(char *type) {
 
   cJSON_AddItemToObject(root, "type", cJSON_CreateString(type));
   cJSON_AddItemToObject(root, "id", cJSON_CreateString(hostname));
-  cJSON_AddItemToObject(root, "state", cJSON_CreateString("success"));
   cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
   /* print everything */
   p_out = cJSON_Print(root);
@@ -649,11 +652,7 @@ static int passing_payload(int payload_len, char *payload) {
   cJSON *get = cJSON_GetObjectItem(root, "type");
   if (cJSON_IsString(get)) {
     if (!strncmp(get->valuestring, "devinfo", 7)) {
-      if (!strncmp(power_mode, "P", 1)) {
-        mqtt_publish(mqtt_response, create_json_info(power_mode), 0);
-      } else if (!strncmp(power_mode, "B", 1)) {
-        mqtt_publish(mqtt_response, create_json_info(power_mode), 0);
-      }
+      mqtt_publish(mqtt_response, create_json_info(power_mode), 0);
     } else if (!strncmp(get->valuestring, "update", 6)) {
       mqtt_publish(mqtt_response, create_json_resp("update"), 0);
       actuator_data_mqtt_send();
