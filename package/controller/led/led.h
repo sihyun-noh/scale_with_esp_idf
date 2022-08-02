@@ -33,7 +33,7 @@ typedef enum {
   LED_ERR_GPIO = -1,
 } led_err_code;
 
-int led_init(void);
+int led_init(uint8_t pin);
 
 int led_on(uint8_t pin);
 

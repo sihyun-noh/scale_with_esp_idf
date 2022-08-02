@@ -22,27 +22,6 @@
 extern "C" {
 #endif
 
-/**
- * @brief Default GPIO device access macro
- */
-#ifndef GPIO_NUM
-#define GPIO_NUM(x) (x)
-#endif
-
-/**
- * @name    LED default configuration parameters
- * @{
- */
-#ifndef LED_PARAM_RED1
-#define LED_PARAM_RED1 (GPIO_NUM(18))
-#endif
-#ifndef LED_PARAM_RED2
-#define LED_PARAM_RED2 (GPIO_NUM(5))
-#endif
-#ifndef LED_PARAM_WHITE
-#define LED_PARAM_WHITE (GPIO_NUM(19))
-#endif
-
 typedef enum {
   INPUT = 0,
   INPUT_PULLUP = 1,
