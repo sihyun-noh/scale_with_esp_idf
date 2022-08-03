@@ -1,0 +1,8 @@
+menu "SmartFarm Controller Configuration"
+  config LED_FEATURE
+    bool "LED feature"
+    default "y"
+    help
+      LED feature to set led status
+
+endmenu # Controllers
