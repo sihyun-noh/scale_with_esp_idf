@@ -37,6 +37,10 @@
 #endif
 #endif
 
+#define LED_RED   33
+#define LED_GREEN 26
+#define LED_BLUE  25
+
 /*****************************************
  * Config
  ****************************************/

@@ -47,6 +47,10 @@ extern int sensor_init(void);
 
 extern int create_log_file_server_task(void);
 
+#if defined (CONFIG_LED_FEATURE)
+extern void create_led_task(void);
+#endif
+
 static void generate_default_sysmfg(void);
 
 /**
@@ -201,6 +205,9 @@ void app_main(void) {
           }
           curr_mode = MODEL_CHECK_MODE;
         }
+#if defined (CONFIG_LED_FEATURE)
+        create_led_task();
+#endif
       } break;
       case MODEL_CHECK_MODE: {
         syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
