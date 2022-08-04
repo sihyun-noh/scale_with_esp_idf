@@ -6,6 +6,7 @@
 #include "monitoring.h"
 #include "icmp_echo_api.h"
 #include "event_ids.h"
+#include "easy_setup.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>
@@ -385,6 +386,16 @@ static void wifi_monitoring(void) {
   }
 }
 
+static int get_gateway_address(char *ip_addr, size_t ip_addr_len) {
+  char gateway_addr[20] = { 0 };
+  syscfg_get(CFG_DATA, "gateway", gateway_addr, sizeof(gateway_addr));
+  if (gateway_addr[0]) {
+    snprintf(ip_addr, ip_addr_len, "%s", gateway_addr);
+    return 0;
+  }
+  return -1;
+}
+
 static void monitoring_task(void *pvParameters) {
   int ret = -1;
   uint8_t task_count = 0;
@@ -403,14 +414,17 @@ static void monitoring_task(void *pvParameters) {
         if (check_farmnet() == READY) {
           // One more check if the router is alive using ping command.
           char router_ip[20] = { 0 };
-          get_router_ipaddr(router_ip, sizeof(router_ip));
-          LOGI(TAG, "router ip addr = %s", router_ip);
-          if (do_ping(router_ip, 3) == PING_OK) {
-            set_farmnet_state(READY);
-            set_wifi_state(ON_NETWORK);
-            SLOGI(TAG, "Success ping to farmnet");
+          if (get_gateway_address(router_ip, sizeof(router_ip)) == 0) {
+            LOGI(TAG, "gateway router ip addr = %s", router_ip);
+            if (do_ping(router_ip, 3) == PING_OK) {
+              set_farmnet_state(READY);
+              set_wifi_state(ON_NETWORK);
+              SLOGI(TAG, "Success ping to farmnet");
+            } else {
+              set_farmnet_state(NOT_READY);
+            }
           } else {
-            set_farmnet_state(NOT_READY);
+            SLOGI(TAG, "Not found gateway router ip address!!!");
           }
         }
         if (get_farmnet_state() == NOT_READY) {
@@ -432,6 +446,7 @@ static void monitoring_task(void *pvParameters) {
 
           // TODO: Run easy_setup task to connect to the router
           // The most of this case is caused by router is dead.
+          set_device_onboard(0);
         }
       }
       if (need_to_check_internet() == true) {
@@ -449,6 +464,11 @@ static void monitoring_task(void *pvParameters) {
           set_wifi_led(NO_INTERNET_CONNECTION);
         }
       }
+    }
+
+    if (is_device_configured() && !is_device_onboard()) {
+      LOGI(TAG, "Device is disconnected from the farm network!!!");
+      vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
 
     is_run_task_heart_bit(wifi_event_monitor_task_handle, true);

@@ -15,7 +15,8 @@
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
 
-#include "esp32/icmp_echo_impl.h"
+// #include "esp32/icmp_echo_impl.h"
+#include "esp32/lwip_ping_impl.h"
 
 /**
  * @brief Ping operates by sending Internet Control Message Protocol (ICMP) echo request packets to the target host and

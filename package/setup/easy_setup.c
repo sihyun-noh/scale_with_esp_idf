@@ -69,6 +69,14 @@ char farmssid[50] = { 0 };
 char farmpw[50] = { 0 };
 char farmip[30] = { 0 };
 
+static void set_gateway_address(void) {
+  char router_ip[20] = { 0 };
+
+  get_router_ipaddr(router_ip, sizeof(router_ip));
+  if (router_ip[0]) {
+    syscfg_set(CFG_DATA, "gateway", router_ip);
+  }
+}
 /**
  * @brief An HTTP GET handler
  *
@@ -218,16 +226,20 @@ int sta_disconnect_handler(void *arg) {
     stop_webserver(httpd_handle);
     httpd_handle = NULL;
   }
-  xEventGroupSetBits(s_wifi_event_group, WIFI_DISCONNECT);
+  if (s_wifi_event_group) {
+    xEventGroupSetBits(s_wifi_event_group, WIFI_DISCONNECT);
+  }
   return 0;
 }
 
 int sta_ip_handler(void *arg) {
-  if (httpd_handle == NULL) {
+  if (httpd_handle == NULL && farmip[0] == 0) {
     LOGI(TAG, "Start Webserver in sta_ip_handler...");
     httpd_handle = start_webserver();
   }
-  xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED);
+  if (s_wifi_event_group) {
+    xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED);
+  }
   return 0;
 }
 
@@ -244,12 +256,10 @@ void easy_setup_task(void *pvParameters) {
   syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
 
   if (farmssid[0] && farmpw[0]) {
-    if (farmip[0]) {
-      curr_mode = STA_CONNECT_MODE;
-    }
     curr_mode = PAIRING_MODE;
   } else {
     curr_mode = UNCONFIGURED_MODE;
+    set_device_configured(0);
   }
 
   while (1) {
@@ -345,7 +355,8 @@ void easy_setup_task(void *pvParameters) {
       } break;
     }
     if (exit) {
-      sysevent_set(EASY_SETUP_DONE, "OK");
+      set_gateway_address();
+      set_device_onboard(1);
       set_device_configured(1);
       break;
     }
@@ -358,6 +369,7 @@ void easy_setup_task(void *pvParameters) {
   easy_setup_handle = NULL;
 
   vEventGroupDelete(s_wifi_event_group);
+  s_wifi_event_group = NULL;
   vTaskDelete(NULL);
 }
 

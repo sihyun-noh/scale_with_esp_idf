@@ -14,6 +14,7 @@
 #include "time_api.h"
 #include "monitoring.h"
 #include "sysfile.h"
+#include "config.h"
 
 #include <string.h>
 
@@ -31,31 +32,61 @@ typedef enum {
 
 typedef enum {
   CHECK_OK,
+  SENSOR_PUB,
   ERR_SENSOR_READ,
   ERR_BATTERY_READ,
 } err_system_t;
+
+typedef enum {
+  SENSOR_INIT_MODE = 0,
+  SENSOR_READ_MODE,
+  EASY_SETUP_MODE,
+  TIME_ZONE_SET_MODE,
+  MQTT_START_MODE,
+  SENSOR_PUB_MODE,
+  SLEEP_MODE
+} operation_mode_t;
 
 const char* TAG = "main_app";
 
 sc_ctx_t* ctx = NULL;
 
-extern int read_temp_humidity(void);
+static bool b_sensor_pub;
+
+extern int sensor_init(void);
+extern int read_temperature_humidity(char* temperature, char* humidity);
 extern int read_battery_percentage(void);
 extern int temperature_comparison(float m_temperature, float temperature);
-extern void create_mqtt_task(void);
-extern void create_i2c_task(void);
-extern int sensor_init(void);
 
-extern int create_log_file_server_task(void);
+extern int start_mqttc(void);
+extern void stop_mqttc(void);
+extern void mqtt_publish_sensor_data(void);
 
-#if defined (CONFIG_LED_FEATURE)
+#if defined(CONFIG_LED_FEATURE)
 extern void create_led_task(void);
 #endif
 
+extern int create_log_file_server_task(void);
+extern void create_led_task(void);
+
 static void generate_default_sysmfg(void);
 
-void PLUG_SYSTEM_OPERATION(void);
-void BATTERY_SYSTEM_OPERATION(void);
+RTC_DATA_ATTR float m_temperature;
+RTC_DATA_ATTR float m_humidity;
+RTC_DATA_ATTR uint8_t m_alive_count;
+RTC_DATA_ATTR uint8_t m_timezone_set;
+
+static operation_mode_t s_curr_mode;
+
+#define SENSOR_TEST 0
+
+void set_operation_mode(operation_mode_t mode) {
+  s_curr_mode = mode;
+}
+
+operation_mode_t get_operation_mode(void) {
+  return s_curr_mode;
+}
 
 /**
  * @brief Handler function to stop interactive command shell
@@ -77,10 +108,11 @@ static void generate_default_sysmfg(void) {
   if (model_name[0] == 0) {
     syscfg_set(MFG_DATA, "model_name", "GLSTH");
   }
+
   syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
   if (power_mode[0] == 0) {
-    // syscfg_set(MFG_DATA, "power_mode", "B");
-    syscfg_set(MFG_DATA, "power_mode", "P");
+    syscfg_set(MFG_DATA, "power_mode", "B");
+    // syscfg_set(MFG_DATA, "power_mode", "P");
   }
 }
 
@@ -127,41 +159,20 @@ int system_init(void) {
 
   syslog_init();
 
-  // Generate the default manufacturing data if there is no data in mfg partition.
-
+#if 0
   ret = init_sysfile();
   if (ret != 0) {
     return ERR_SPIFFS_INIT;
   }
 
-  // create_log_file_server_task();
+  create_log_file_server_task();
+#endif
 
+  // Generate the default manufacturing data if there is no data in mfg partition.
   generate_default_sysmfg();
 
   return SYSINIT_OK;
 }
-
-typedef enum { SYSTEM_INIT_MODE = 0, MODEL_CHECK_MODE, SYSTEM_OPERATION } operation_mode_t;
-
-typedef enum {
-  START_MODE = 0,
-  SENSOR_INIT_MODE,
-  SENSOR_READING_MODE,
-  COMPARISON_MODE,
-  BATTERY_CHECK_MODE,
-  ALIVE_CHECK_MODE,
-  EASY_SETUP_MODE,
-  TIME_ZONE_SET_MODE,
-  MQTT_TASK_MODE,
-  WAITING_MODE,
-  SLEEP_MODE,
-  MONITORING_MODE
-} sensor_mode_t;
-
-RTC_DATA_ATTR float m_temperature;
-RTC_DATA_ATTR float m_humidity;
-RTC_DATA_ATTR uint8_t m_alive_count;
-RTC_DATA_ATTR uint8_t m_timezone_set;
 
 int alive_check_task() {
   int ret = 0;
@@ -184,131 +195,82 @@ int sleep_timer_wakeup(int wakeup_time_sec) {
   return ret;
 }
 
-void app_main(void) {
-  int rc = SYSINIT_OK;
-  operation_mode_t curr_mode = SYSTEM_INIT_MODE;
-  char model_name[10] = { 0 };
-  char power_mode[10] = { 0 };
+void battery_loop_task(void) {
+#if defined(SENSOR_TEST) && SENSOR_TEST == 1
+  float random = 0;
+  char buf[20] = { 0 };
+#else
+  int rc = 0;
+  float temperature = 0;
+  float humidity = 0;
+  char s_temperature[20] = { 0 };
+  char s_humidity[20] = { 0 };
+#endif
+
+  set_operation_mode(SENSOR_INIT_MODE);
 
   while (1) {
-    switch (curr_mode) {
-      case SYSTEM_INIT_MODE: {
-        LOGI(TAG, "SYSTEM_INIT_MODE");
-        if ((rc = system_init()) != SYSINIT_OK) {
-          LOGE(TAG, "Failed to initialize device, error = [%d]", rc);
-          return;
+    switch (get_operation_mode()) {
+      case SENSOR_INIT_MODE: {
+        LOGI(TAG, "SENSOR_INIT_MODE");
+#if defined(SENSOR_TEST) && SENSOR_TEST == 1
+        set_operation_mode(SENSOR_READ_MODE);
+#else
+        if ((rc = sensor_init()) != SYSINIT_OK) {
+          LOGI(TAG, "Could not initialize SHT3x sensor");
+          set_operation_mode(SLEEP_MODE);
         } else {
-          // Start interactive shell command line
-          ctx = sc_init();
-          if (ctx) {
-            sc_start(ctx);
-          }
-          curr_mode = MODEL_CHECK_MODE;
+          set_operation_mode(SENSOR_READ_MODE);
         }
-#if defined (CONFIG_LED_FEATURE)
-        create_led_task();
 #endif
       } break;
-      case MODEL_CHECK_MODE: {
-        syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
-        syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
-        LOGI(TAG, "MODEL_CHECK_MODE");
-        LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
-        curr_mode = SYSTEM_OPERATION;
-      } break;
-      case SYSTEM_OPERATION: {
-        if (!strncmp(power_mode, "P", 1)) {
-          PLUG_SYSTEM_OPERATION();
-        } else if (!strncmp(power_mode, "B", 1)) {
-          BATTERY_SYSTEM_OPERATION();
+      case SENSOR_READ_MODE: {
+        LOGI(TAG, "SENSOR_READ_MODE");
+        b_sensor_pub = false;
+#if defined(SENSOR_TEST) && SENSOR_TEST == 1
+        random = (float)(rand() % 10000) / 100;  // 난수 생성
+        snprintf(buf, sizeof(buf), "%f", random);
+        sysevent_set(I2C_TEMPERATURE_EVENT, buf);
+        sysevent_set(I2C_HUMIDITY_EVENT, buf);
+        sysevent_set(ADC_BATTERY_EVENT, buf);
+        set_operation_mode(EASY_SETUP_MODE);
+#else
+        if ((rc = read_temperature_humidity(s_temperature, s_humidity)) == CHECK_OK) {
+          temperature = atof(s_temperature);
+          humidity = atof(s_humidity);
+          if ((rc = alive_check_task()) == CHECK_OK) {
+            b_sensor_pub = true;
+          }
+          if ((rc = temperature_comparison(m_temperature, temperature)) == SENSOR_PUB) {
+            b_sensor_pub = true;
+          }
+          if (b_sensor_pub) {
+            m_temperature = temperature;
+            m_humidity = humidity;
+            sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
+            sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
+            if ((rc = read_battery_percentage()) != CHECK_OK) {
+              // Failed to read battery percentage, it will be set 0
+              sysevent_set(ADC_BATTERY_EVENT, "0");
+            }
+            set_operation_mode(EASY_SETUP_MODE);
+          } else {
+            set_operation_mode(SLEEP_MODE);
+          }
+        } else {
+          rc = ERR_SENSOR_READ;
+          LOGE(TAG, "sensor read, error = [%d]", rc);
+          set_operation_mode(SLEEP_MODE);
         }
-        break;
-      }
-    }
-    vTaskDelay(500 / portTICK_PERIOD_MS);
-  }
-}
-
-void BATTERY_SYSTEM_OPERATION(void) {
-  int rc = SYSINIT_OK;
-  static sensor_mode_t curr_mode = START_MODE;
-  char s_easy_setup[10] = { 0 };
-  static float temperature;
-  static float humidity;
-  char s_temperature[20];
-  char s_humidity[20];
-
-  switch (curr_mode) {
-    case START_MODE: {
-      if (m_timezone_set) {
-        tm_set_timezone("Asia/Seoul");
-      }
-      curr_mode = SENSOR_INIT_MODE;
-      break;
-    }
-    case SENSOR_INIT_MODE: {
-      LOGI(TAG, "SENSOR_INIT_MODE");
-      if ((rc = sensor_init()) != SYSINIT_OK) {
-        LOGI(TAG, "Could not initialize SHT3x sensor");
-        curr_mode = SLEEP_MODE;
-      } else {
-        curr_mode = SENSOR_READING_MODE;
-      }
-    } break;
-    case SENSOR_READING_MODE: {
-      LOGI(TAG, "SENSOR_READING_MODE");
-      if ((rc = read_temp_humidity()) == CHECK_OK) {
-        curr_mode = COMPARISON_MODE;
-      } else {
-        rc = ERR_SENSOR_READ;
-        LOGE(TAG, "sensor read, error = [%d]", rc);
-        curr_mode = SLEEP_MODE;
-      }
-    } break;
-    case COMPARISON_MODE: {
-      LOGI(TAG, "COMPARISON_MODE");
-      sysevent_get("SYSEVENT_BASE", I2C_HUMIDITY_EVENT, &s_humidity, sizeof(s_humidity));
-      sysevent_get("SYSEVENT_BASE", I2C_TEMPERATURE_EVENT, &s_temperature, sizeof(s_temperature));
-      humidity = atof(s_humidity);
-      temperature = atof(s_temperature);
-      if ((rc = temperature_comparison(m_temperature, temperature)) == CHECK_OK) {
-        curr_mode = ALIVE_CHECK_MODE;
-      } else {
-        curr_mode = BATTERY_CHECK_MODE;
-      }
-    } break;
-    case BATTERY_CHECK_MODE: {
-      m_alive_count = 0;
-      sysevent_set(I2C_TEMPERATURE_EVENT, (char*)s_temperature);
-      sysevent_set(I2C_HUMIDITY_EVENT, (char*)s_humidity);
-      LOGI(TAG, "BATTERY_CHECK_MODE");
-      m_temperature = temperature;
-      m_humidity = humidity;
-      if ((rc = read_battery_percentage()) == CHECK_OK) {
-        curr_mode = EASY_SETUP_MODE;
-      } else {
-        rc = ERR_BATTERY_READ;
-        LOGE(TAG, "battery read, error = [%d]", rc);
-        curr_mode = SLEEP_MODE;
-      }
-    } break;
-    case ALIVE_CHECK_MODE: {
-      LOGI(TAG, "ALIVE_CHECK_MODE");
-      if ((rc = alive_check_task()) == CHECK_OK) {
-        curr_mode = BATTERY_CHECK_MODE;
-      } else {
-        curr_mode = SLEEP_MODE;
-      }
-    } break;
-    case EASY_SETUP_MODE: {
-      LOGI(TAG, "EASY_SETUP_MODE");
-      create_easy_setup_task();
-      curr_mode = TIME_ZONE_SET_MODE;
-    } break;
-    case TIME_ZONE_SET_MODE: {
-      LOGI(TAG, "TIME_ZONE_SET_MODE");
-      if (sysevent_get("SYSEVENT_BASE", EASY_SETUP_DONE, &s_easy_setup, sizeof(s_easy_setup)) == 0) {
-        if (!strncmp(s_easy_setup, "OK", 2)) {
+#endif
+      } break;
+      case EASY_SETUP_MODE: {
+        LOGI(TAG, "EASY_SETUP_MODE");
+        create_easy_setup_task();
+        set_operation_mode(TIME_ZONE_SET_MODE);
+      } break;
+      case TIME_ZONE_SET_MODE: {
+        if (is_device_configured() && is_device_onboard()) {
           if (!m_timezone_set) {
             if (tm_is_timezone_set() == false) {
               tm_init_sntp();
@@ -318,66 +280,163 @@ void BATTERY_SYSTEM_OPERATION(void) {
               tm_set_timezone("Asia/Seoul");
             }
             m_timezone_set = 1;
+          } else {
+            tm_set_timezone("Asia/Seoul");
           }
-          sysevent_set(EASY_SETUP_DONE, "OK");
-          curr_mode = MQTT_TASK_MODE;
+          set_operation_mode(MQTT_START_MODE);
+        } else {
+          set_operation_mode(TIME_ZONE_SET_MODE);
         }
-      }
-    } break;
-    case MQTT_TASK_MODE: {
-      LOGI(TAG, "MQTT_TASK_MODE");
-      create_mqtt_task();
-      curr_mode = WAITING_MODE;
-    } break;
-    case WAITING_MODE: {
-      LOGI(TAG, "WAITING_MODE");
-      vTaskDelay(10000 / portTICK_PERIOD_MS);
-      curr_mode = SLEEP_MODE;
-    } break;
-    case SLEEP_MODE: {
-      LOGI(TAG, "SLEEP_MODE");
-      sleep_timer_wakeup(60);
-    } break;
-    default: break;
+      } break;
+      case MQTT_START_MODE: {
+        start_mqttc();
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        set_operation_mode(SENSOR_PUB_MODE);
+      } break;
+      case SENSOR_PUB_MODE: {
+        mqtt_publish_sensor_data();
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
+        stop_mqttc();
+        set_operation_mode(SLEEP_MODE);
+      } break;
+      case SLEEP_MODE: {
+        LOGI(TAG, "SLEEP_MODE");
+        sleep_timer_wakeup(60);
+      } break;
+    }
+    vTaskDelay(500 / portTICK_PERIOD_MS);
   }
 }
 
-void PLUG_SYSTEM_OPERATION(void) {
-  static sensor_mode_t curr_mode = START_MODE;
-  char s_easy_setup[10] = { 0 };
+void plugged_loop_task(void) {
+#if defined(SENSOR_TEST) && SENSOR_TEST == 1
+  float random = 0;
+  char buf[20] = { 0 };
+#else
+  int rc = 0;
+  char s_temperature[20] = { 0 };
+  char s_humidity[20] = { 0 };
+#endif
 
-  switch (curr_mode) {
-    case START_MODE: {
-      create_i2c_task();
-      curr_mode = EASY_SETUP_MODE;
-    } break;
-    case EASY_SETUP_MODE: {
-      LOGI(TAG, "EASY_SETUP_MODE");
-      create_easy_setup_task();
-      curr_mode = TIME_ZONE_SET_MODE;
-    } break;
-    case TIME_ZONE_SET_MODE: {
-      LOGI(TAG, "TIME_ZONE_SET_MODE");
-      if (sysevent_get("SYSEVENT_BASE", EASY_SETUP_DONE, &s_easy_setup, sizeof(s_easy_setup)) == 0) {
-        if (!strncmp(s_easy_setup, "OK", 2)) {
+  set_operation_mode(SENSOR_INIT_MODE);
+
+  while (1) {
+    switch (get_operation_mode()) {
+      case SENSOR_INIT_MODE: {
+#if defined(SENSOR_TEST) && SENSOR_TEST == 1
+        set_operation_mode(EASY_SETUP_MODE);
+#else
+        if ((rc = sensor_init()) != SYSINIT_OK) {
+          LOGI(TAG, "Could not initialize SHT3x sensor");
+        } else {
+          set_operation_mode(EASY_SETUP_MODE);
+        }
+#endif
+      } break;
+      case EASY_SETUP_MODE: {
+        LOGI(TAG, "EASY_SETUP_MODE");
+        create_easy_setup_task();
+        set_operation_mode(TIME_ZONE_SET_MODE);
+      } break;
+      case TIME_ZONE_SET_MODE: {
+        if (is_device_configured() && is_device_onboard()) {
+          // If sensor node onboarded on the network after finishing easy setup.
+          // It need to sync the time zone and current time from the ntp server
           if (tm_is_timezone_set() == false) {
             tm_init_sntp();
             tm_apply_timesync();
             // TODO : Get the timezone using the region code of the manufacturing data.
             // Currently hardcoding the timezone to be KST-9
             tm_set_timezone("Asia/Seoul");
+          } else {
+            tm_apply_timesync();
+            tm_set_timezone("Asia/Seoul");
           }
-          curr_mode = MQTT_TASK_MODE;
+          set_operation_mode(MQTT_START_MODE);
+        } else {
+          // If the sensor is not connected to the farm network router, it should continuously try to connect.
+          set_operation_mode(TIME_ZONE_SET_MODE);
         }
-      }
-    } break;
-    case MQTT_TASK_MODE: {
-      LOGI(TAG, "MQTT_TASK_MODE");
-      create_mqtt_task();
-      curr_mode = MONITORING_MODE;
-    } break;
-    case MONITORING_MODE: {
-    } break;
-    default: break;
+      } break;
+      case MQTT_START_MODE: {
+        if (is_device_onboard()) {
+          start_mqttc();
+        }
+        set_operation_mode(SENSOR_READ_MODE);
+      } break;
+      case SENSOR_READ_MODE: {
+        if (is_device_onboard()) {
+#if defined(SENSOR_TEST) && SENSOR_TEST == 1
+          random = (float)(rand() % 10000) / 100;  // 난수 생성
+          snprintf(buf, sizeof(buf), "%f", random);
+          sysevent_set(I2C_TEMPERATURE_EVENT, buf);
+          sysevent_set(I2C_HUMIDITY_EVENT, buf);
+          set_operation_mode(SENSOR_PUB_MODE);
+#else
+          if ((rc = read_temperature_humidity(s_temperature, s_humidity)) == CHECK_OK) {
+            sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
+            sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
+            set_operation_mode(SENSOR_PUB_MODE);
+          } else {
+            rc = ERR_SENSOR_READ;
+            LOGE(TAG, "sensor read, error = [%d]", rc);
+            vTaskDelay(5000 / portTICK_PERIOD_MS);
+            set_operation_mode(SENSOR_READ_MODE);
+          }
+#endif
+        } else {
+          set_operation_mode(SLEEP_MODE);
+        }
+      } break;
+      case SENSOR_PUB_MODE: {
+        if (is_device_onboard()) {
+          mqtt_publish_sensor_data();
+          set_operation_mode(SENSOR_READ_MODE);
+        } else {
+          set_operation_mode(SLEEP_MODE);
+        }
+        vTaskDelay(MQTT_SEND_INTERVAL * 1000 / portTICK_PERIOD_MS);
+      } break;
+      case SLEEP_MODE: {
+        stop_mqttc();
+        vTaskDelay(5000 / portTICK_RATE_MS);
+        sleep_timer_wakeup(30);
+        set_operation_mode(SENSOR_INIT_MODE);
+      } break;
+    }
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+  }
+}
+
+void app_main(void) {
+  int rc = SYSINIT_OK;
+  char model_name[10] = { 0 };
+  char power_mode[10] = { 0 };
+
+  if ((rc = system_init()) != SYSINIT_OK) {
+    LOGE(TAG, "Failed to initialize device, error = [%d]", rc);
+    return;
+  }
+
+  // Start interactive shell command line
+  ctx = sc_init();
+  if (ctx) {
+    sc_start(ctx);
+  }
+
+  set_device_onboard(0);
+
+  syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
+  syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
+  LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
+
+#if defined(CONFIG_LED_FEATURE)
+  create_led_task();
+#endif
+
+  if (strcmp(power_mode, "B") == 0) {
+    battery_loop_task();
+  } else if (strcmp(power_mode, "P") == 0) {
+    plugged_loop_task();
   }
 }

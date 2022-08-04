@@ -15,6 +15,8 @@
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
 #include "sysevent_impl.h"
+#include "monitoring.h"
+#include "sys_status.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -30,8 +32,6 @@
 
 #include "esp_log.h"
 #include "sys/queue.h"
-
-#include "monitoring.h"
 
 /**
  * @brief Define of Sysevent base
@@ -274,6 +274,7 @@ static void sysevent_handler(void *handler_arg, esp_event_base_t event_base, int
         }
       }
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_CONNECTED) {
+      set_device_onboard(1);
       wifi_event_sta_connected_t *event = (wifi_event_sta_connected_t *)event_data;
       snprintf(buf_monitor, sizeof(buf_monitor), "%s", event->ssid);
       event_msg.event_data_len = strlen(buf_monitor);
@@ -285,6 +286,7 @@ static void sysevent_handler(void *handler_arg, esp_event_base_t event_base, int
         }
       }
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
+      set_device_onboard(0);
       wifi_event_sta_disconnected_t *event = (wifi_event_sta_disconnected_t *)event_data;
       uint8_t reason = event->reason;
       snprintf(buf_monitor, sizeof(buf_monitor), "%u - %s", reason, reason2str(reason));

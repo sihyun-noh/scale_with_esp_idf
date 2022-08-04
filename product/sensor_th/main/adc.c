@@ -6,6 +6,7 @@
    The BATTERY used in this example is a simple BATTERY unit.
 */
 
+#include "config.h"
 #include "battery.h"
 #include "utils.h"
 
@@ -15,8 +16,6 @@
 #include "sysevent.h"
 #include "event_ids.h"
 
-#define BATTERY_PORT 6        // GPIO34
-#define BATTERY_GPIO_PORT 17  // GPIO17
 #define MAX_BUFFER_CNT 10
 
 static float battery_calculate_percentage(uint16_t voltage);
@@ -43,7 +42,7 @@ int read_battery_percentage(void) {
     return -1;
   }
   // Create a user task that uses the sensors.
-  battery_read_on(BATTERY_GPIO_PORT);
+  battery_read_on();
   vTaskDelay(500 / portTICK_PERIOD_MS);
   for (int i = 0; i < MAX_BUFFER_CNT; i++) {
     // Get the values and do something with them.
@@ -53,7 +52,7 @@ int read_battery_percentage(void) {
     // Wait until 50 msec (cycle time) are over.
     vTaskDelay(50 / portTICK_PERIOD_MS);
   }
-  battery_read_off(BATTERY_GPIO_PORT);
+  battery_read_off();
 
   qsort(battery_voltage, MAX_BUFFER_CNT, sizeof(uint16_t), uint16_compare);
   voltage = uint16_average(&battery_voltage[1], MAX_BUFFER_CNT - 2);

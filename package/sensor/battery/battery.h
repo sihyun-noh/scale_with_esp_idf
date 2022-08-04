@@ -54,20 +54,16 @@ int read_battery_voltage(uint8_t chan, float ratio);
 /**
  * @brief   Convenience function for turn on battery gpio
  *
- * @param[in]  pin          GPIO peripheral device
- *
  * @return                  0 When success otherwise negative
  */
-int battery_read_on(uint8_t pin);
+int battery_read_on();
 
 /**
  * @brief   Convenience function for turn off battery gpio
  *
- * @param[in]  pin          GPIO peripheral device
- *
  * @return                  0 When success otherwise negative
  */
-int battery_read_off(uint8_t pin);
+int battery_read_off();
 
 #ifdef __cplusplus
 }

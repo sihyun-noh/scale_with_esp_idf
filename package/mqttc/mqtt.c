@@ -45,30 +45,51 @@ void mqtt_client_deinit(mqtt_ctx_t *ctx) {
 }
 
 int mqtt_client_start(mqtt_ctx_t *ctx) {
+  if (!ctx) {
+    return -1;
+  }
   return mqtt_client_start_impl(ctx->client);
 }
 
 int mqtt_client_stop(mqtt_ctx_t *ctx) {
+  if (!ctx) {
+    return -1;
+  }
   return mqtt_client_stop_impl(ctx->client);
 }
 
 int mqtt_client_subscribe(mqtt_ctx_t *ctx, const char *topic, uint8_t qos) {
+  if (!ctx || !topic) {
+    return -1;
+  }
   return mqtt_client_subscribe_impl(ctx->client, topic, qos);
 }
 
 int mqtt_client_unsubscribe(mqtt_ctx_t *ctx, const char *topic) {
+  if (!ctx || !topic) {
+    return -1;
+  }
   return mqtt_client_unsubscribe_impl(ctx->client, topic);
 }
 
 int mqtt_client_publish(mqtt_ctx_t *ctx, const char *topic, const char *data, uint16_t len, uint8_t qos,
                         uint8_t retain) {
+  if (!ctx || !topic || !data || !len) {
+    return -1;
+  }
   return mqtt_client_publish_impl(ctx->client, topic, data, len, qos, retain);
 }
 
 int mqtt_client_reconnect(mqtt_ctx_t *ctx) {
+  if (!ctx) {
+    return -1;
+  }
   return mqtt_client_reconnect_impl(ctx->client);
 }
 
 int mqtt_client_disconnect(mqtt_ctx_t *ctx) {
+  if (!ctx) {
+    return -1;
+  }
   return mqtt_client_disconnect_impl(ctx->client);
 }

@@ -37,152 +37,45 @@
 #define MAX_BUFFER_CNT 10
 
 static const char* TAG = "sensor_task";
-static TaskHandle_t i2c_handle = NULL;
 
 #if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
 sht3x_dev_t dev;
-
-void sht3x_task(void* pvParameters) {
-  int res;
-  sht3x_dev_t dev;
-
-  char s_temperature[20];
-  char s_humidity[20];
-
-  float sht3x_temperature;
-  float sht3x_humidity;
-
-  is_run_task_monitor_alarm(i2c_handle);
-
-  if ((res = sht3x_init(&dev, &sht3x_params[0])) != SHT3X_OK) {
-    LOGI(TAG, "Could not initialize SHT3x sensor");
-    i2c_handle = NULL;
-    vTaskDelete(NULL);
-    return;
-  } else {
-    LOGI(TAG, "i2c_task start");
-    while (1) {
-      is_run_task_heart_bit(i2c_handle, true);
-      // Get the values and do something with them.
-      if ((res = sht3x_read(&dev, &sht3x_temperature, &sht3x_humidity)) == SHT3X_OK) {
-        LOGI(TAG, "Temperature [°C]: %.2f", sht3x_temperature);
-        LOGI(TAG, "Relative Humidity [%%]: %.2f", sht3x_humidity);
-
-        memset(s_temperature, 0, sizeof(s_temperature));
-        snprintf(s_temperature, sizeof(s_temperature), "%.2f", sht3x_temperature);
-        memset(s_humidity, 0, sizeof(s_humidity));
-        snprintf(s_humidity, sizeof(s_humidity), "%.2f", sht3x_humidity);
-        sysevent_set(I2C_TEMPERATURE_EVENT, (char*)s_temperature);
-        sysevent_set(I2C_HUMIDITY_EVENT, (char*)s_humidity);
-      }
-      // Wait until 2000 msec (cycle time) are over.
-      vTaskDelay(2000 / portTICK_PERIOD_MS);
-    }
-  }
-  vTaskDelete(NULL);
-}
-#endif
-
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
-void scd4x_task(void* pvParameters) {
-  int res;
-  scd4x_dev_t dev;
-  char s_co2[20];
-  char s_temperature[20];
-  char s_humidity[20];
-
-  uint16_t scd41_co2;
-  float scd41_temperature;
-  float scd41_humidity;
-
-  if ((res = scd4x_init(&dev, &scd4x_params[0])) != 0) {
-    LOGI(TAG, "Could not initialize, error = %d", res);
-    i2c_handle = NULL;
-    vTaskDelete(NULL);
-    return;
-  } else {
-    LOGI(TAG, "Waiting for first measurement... (5 sec)");
-
-    while (1) {
-      vTaskDelay(5000 / portTICK_PERIOD_MS);
-      res = scd4x_get_data_ready_flag(&dev);
-      if (!res) {
-        LOGI(TAG, "scd4x get data ready");
-        continue;
-      }
-
-      res = scd4x_read_measurement(&dev, &scd41_co2, &scd41_temperature, &scd41_humidity);
-      if (res) {
-        LOGI(TAG, "Error executing scd4x_read_measurement(): %i", res);
-      } else if (scd41_co2 == 0) {
-        LOGI(TAG, "Invalid sample detected, skipping.");
-      } else {
-        LOGI(TAG, "CO2: %u ppm", scd41_co2);
-        LOGI(TAG, "Temperature [°C]: %.2f", scd41_temperature);
-        LOGI(TAG, "Relative Humidity [%%]: %.2f", scd41_humidity);
-
-        memset(s_co2, 0, sizeof(s_co2));
-        snprintf(s_co2, sizeof(s_co2), "%d", scd41_co2);
-        memset(s_temperature, 0, sizeof(s_temperature));
-        snprintf(s_temperature, sizeof(s_temperature), "%.2f", scd41_temperature);
-        memset(s_humidity, 0, sizeof(s_humidity));
-        snprintf(s_humidity, sizeof(s_humidity), "%.2f", scd41_humidity);
-
-        sysevent_set(I2C_CO2_EVENT, (char*)s_co2);
-        sysevent_set(I2C_TEMPERATURE_EVENT, (char*)s_temperature);
-        sysevent_set(I2C_HUMIDITY_EVENT, (char*)s_humidity);
-      }
-    }
-  }
-  vTaskDelete(NULL);
-}
-#endif
-
-void create_i2c_task(void) {
-  uint16_t stack_size = 4096;
-  UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
-
-  if (i2c_handle) {
-    LOGI(TAG, "i2c task is alreay created");
-    return;
-  }
-
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
-  xTaskCreate((TaskFunction_t)sht3x_task, "sht3x_task", stack_size, NULL, task_priority, &i2c_handle);
 #elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
-  xTaskCreate((TaskFunction_t)scd4x_task, "scd4x_task", stack_size, NULL, task_priority, &i2c_handle);
+scd4x_dev_t dev;
 #endif
-}
 
 int sensor_init(void) {
   int res;
 
 #if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
   if ((res = sht3x_init(&dev, &sht3x_params[0])) != SHT3X_OK) {
-    LOGI(TAG, "Could not initialize SHT3x sensor");
+    LOGI(TAG, "Could not initialize SHT3x sensor = %d", res);
     return res;
-  } else {
-    return 0;
   }
 #elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
   // Please implement the SCD4x initialize code.
-  return 0;
+  if ((res = scd4x_init(&dev, &scd4x_params[0])) != 0) {
+    LOGI(TAG, "Could not initialize SCD4X sensor = %d", res);
+    return res;
+  }
 #endif
+
+  return 0;
 }
 
-int read_temp_humidity(void) {
-  int res;
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
+int read_temperature_humidity(char* temperature, char* humidity) {
+  int res = 0;
   int err_cnt = 0;
 
-  char s_temperature[20];
-  char s_humidity[20];
+  char s_temperature[20] = { 0 };
+  char s_humidity[20] = { 0 };
 
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
-  float sht3x_temperature[MAX_BUFFER_CNT];
-  float sht3x_humidity[MAX_BUFFER_CNT];
+  float sht3x_temperature[MAX_BUFFER_CNT] = { 0 };
+  float sht3x_humidity[MAX_BUFFER_CNT] = { 0 };
 
-  float sht3x_temperature_i2c;
-  float sht3x_humidity_i2c;
+  float sht3x_temperature_i2c = 0;
+  float sht3x_humidity_i2c = 0;
 
   for (int i = 0; i < MAX_BUFFER_CNT;) {
     // Get the values and do something with them.
@@ -213,13 +106,58 @@ int read_temp_humidity(void) {
   memset(s_humidity, 0, sizeof(s_humidity));
   snprintf(s_humidity, sizeof(s_humidity), "%.2f", sht3x_humidity_i2c);
 
-  sysevent_set(I2C_TEMPERATURE_EVENT, (char*)s_temperature);
-  sysevent_set(I2C_HUMIDITY_EVENT, (char*)s_humidity);
-#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
-  // Please implement the logic for reading CO2 and Temperature and Humidity
-#endif
+  memcpy(temperature, s_temperature, sizeof(s_temperature));
+  memcpy(humidity, s_humidity, sizeof(s_humidity));
+
   return 0;
 }
+#endif
+
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+int read_co2_temperature_humidity(char* co2, char* temperature, char* humidity) {
+  int res = 0;
+
+  char s_co2[20] = { 0 };
+  char s_temperature[20] = { 0 };
+  char s_humidity[20] = { 0 };
+
+  uint16_t scd41_co2 = 0;
+  float scd41_temperature = 0;
+  float scd41_humidity = 0;
+
+  res = scd4x_get_data_ready_flag(&dev);
+  if (res == -1) {
+    LOGI(TAG, "scd4x is not data ready !!!");
+    return res;
+  }
+
+  res = scd4x_read_measurement(&dev, &scd41_co2, &scd41_temperature, &scd41_humidity);
+
+  if (res) {
+    LOGI(TAG, "Error executing scd4x_read_measurement(): %i", res);
+  } else if (scd41_co2 == 0) {
+    LOGI(TAG, "Invalid sample detected, skipping.");
+    res = -1;
+  } else {
+    LOGI(TAG, "CO2: %u ppm", scd41_co2);
+    LOGI(TAG, "Temperature [°C]: %.2f", scd41_temperature);
+    LOGI(TAG, "Relative Humidity [%%]: %.2f", scd41_humidity);
+
+    memset(s_co2, 0, sizeof(s_co2));
+    snprintf(s_co2, sizeof(s_co2), "%d", scd41_co2);
+    memset(s_temperature, 0, sizeof(s_temperature));
+    snprintf(s_temperature, sizeof(s_temperature), "%.2f", scd41_temperature);
+    memset(s_humidity, 0, sizeof(s_humidity));
+    snprintf(s_humidity, sizeof(s_humidity), "%.2f", scd41_humidity);
+
+    memcpy(co2, s_co2, sizeof(s_co2));
+    memcpy(temperature, s_temperature, sizeof(s_temperature));
+    memcpy(humidity, s_humidity, sizeof(s_humidity));
+  }
+
+  return res;
+}
+#endif
 
 int temperature_comparison(float m_temperature, float temperature) {
   float comparison;

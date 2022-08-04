@@ -21,7 +21,7 @@
 
 enum { INPUT = 0, INPUT_PULLUP = 1, OUTPUT = 2 };
 
-#define BATTERY_GPIO_PORT 17  // GPIO17
+#define BATTERY_GPIO_PORT 5  // GPIO5
 
 static const char *TAG = "battery";
 
@@ -51,18 +51,18 @@ int read_battery_voltage(uint8_t chan, float ratio) {
   return val;
 }
 
-int battery_read_on(uint8_t pin) {
+int battery_read_on() {
   int res = 0;
 
-  res = gpio_write(pin, 1);
+  res = gpio_write(BATTERY_GPIO_PORT, 1);
 
   return res;
 }
 
-int battery_read_off(uint8_t pin) {
+int battery_read_off() {
   int res = 0;
 
-  res = gpio_write(pin, 0);
+  res = gpio_write(BATTERY_GPIO_PORT, 0);
 
   return res;
 }

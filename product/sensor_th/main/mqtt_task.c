@@ -4,19 +4,20 @@
 #include "freertos/FreeRTOS.h"
 #include "esp_wifi.h"
 #include "sysevent.h"
+#include "sys_status.h"
 #include "event_ids.h"
 #include "mqtt.h"
 #include "syscfg.h"
+#include "config.h"
 
 #include <math.h>
 #include <stdlib.h>
 
 extern char *uptime(void);
 extern char *generate_hostname(void);
+extern void mqtt_publish_sensor_data(void);
 
-static int passing_payload(int payload_len, char *payload);
-
-#define SEND_INTERVAL 15
+static int process_payload(int payload_len, char *payload);
 
 #define HEAP_MONITOR_CRITICAL 1024
 #define HEAP_MONITOR_WARNING 4096
@@ -24,12 +25,11 @@ static int passing_payload(int payload_len, char *payload);
 static const char *TAG = "MQTT";
 
 static mqtt_ctx_t *mqtt_ctx;
-static TaskHandle_t mqtt_handle = NULL;
 static char jsonBuffer[400];
+static char power_mode[10];
 
-char mqtt_request[50] = { 0 };
-char mqtt_response[50] = { 0 };
-char power_mode[10] = { 0 };
+char mqtt_request[80] = { 0 };
+char mqtt_response[80] = { 0 };
 
 static int minHeap = 0;
 static void heap_monitor_func(int warning_level, int critical_level) {
@@ -79,50 +79,10 @@ static void mqtt_event_callback(void *handler_args, int32_t event_id, void *even
       printf("event MQTT_EVT_DATA\n");
       printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
       printf("PAYLOAD=%.*s\r\n", event->payload_len, event->payload);
-      passing_payload(event->payload_len, event->payload);
+      process_payload(event->payload_len, event->payload);
       break;
     default: break;
   }
-}
-
-static int init_mqtt() {
-  int ret = 0;
-  char farmip[30] = { 0 };
-
-  syscfg_get(CFG_DATA, "farmip", farmip, sizeof(farmip));
-  syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
-
-  if (!farmip[0]) {
-    return -1;
-  }
-  char *s_host = strtok(farmip, ":");  //공백을 기준으로 문자열 자르기
-  char *s_port = strtok(NULL, " ");    //널문자를 기준으로 다시 자르기
-  int n_port = atoi(s_port);
-
-  mqtt_config_t config = {
-    .transport = MQTT_TCP,
-    .event_cb_fn = mqtt_event_callback,
-    // .uri = "mqtt://mqtt.eclipseprojects.io",
-    .host = s_host,
-    .port = n_port,
-  };
-
-  char *hostname = generate_hostname();
-
-  snprintf(mqtt_request, sizeof(mqtt_request), "cmd/%s/req", hostname);
-  snprintf(mqtt_response, sizeof(mqtt_response), "cmd/%s/resp", hostname);
-
-  mqtt_ctx = mqtt_client_init(&config);
-
-  ret = mqtt_client_start(mqtt_ctx);
-  if (ret != 0) {
-    LOGE(TAG, "Failed to mqtt start");
-  }
-  vTaskDelay(3000 / portTICK_PERIOD_MS);
-
-  free(hostname);
-
-  return ret;
 }
 
 static double round_(float var) {
@@ -220,7 +180,7 @@ static char *create_json_info(char *power) {
   cJSON_AddItemToObject(farm_network, "channel", cJSON_CreateNumber(ap_info.primary));
   cJSON_AddItemToObject(root, "ip_address", cJSON_CreateString((char *)ip_addr));
   cJSON_AddItemToObject(root, "rssi", cJSON_CreateNumber(ap_info.rssi));
-  cJSON_AddItemToObject(root, "send_interval", cJSON_CreateNumber(SEND_INTERVAL));
+  cJSON_AddItemToObject(root, "send_interval", cJSON_CreateNumber(MQTT_SEND_INTERVAL));
   if (!strncmp(power, "P", 1)) {
     cJSON_AddItemToObject(root, "power", cJSON_CreateString("plug"));
   } else if (!strncmp(power, "B", 1)) {
@@ -275,31 +235,126 @@ static char *create_json_resp(char *type) {
   return jsonBuffer;
 }
 
-#define MQTT_API_TEST 0
-static int sensor_data_mqtt_send() {
-  char mqtt_temp[50] = { 0 };
-  char mqtt_humi[50] = { 0 };
+static int process_payload(int payload_len, char *payload) {
+  char content[100] = { 0 };
+  snprintf(content, payload_len + 1, "%s", payload);
+  cJSON *root = cJSON_Parse(content);
+  cJSON *get = cJSON_GetObjectItem(root, "type");
+  if (cJSON_IsString(get)) {
+    if (!strncmp(get->valuestring, "devinfo", 7)) {
+      mqtt_publish(mqtt_response, create_json_info(power_mode), 0);
+    } else if (!strncmp(get->valuestring, "update", 6)) {
+      mqtt_publish(mqtt_response, create_json_resp("update"), 0);
+      mqtt_publish_sensor_data();
+    } else if (!strncmp(get->valuestring, "reset", 5)) {
+      mqtt_publish(mqtt_response, create_json_resp("reset"), 0);
+      SLOGI(TAG, "Resetting...");
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      esp_restart();
+    } else if (!strncmp(get->valuestring, "factory_reset", 13)) {
+      syscfg_unset(CFG_DATA, "ssid");
+      syscfg_unset(CFG_DATA, "password");
+      syscfg_unset(CFG_DATA, "farmip");
+      mqtt_publish(mqtt_response, create_json_resp("factory_reset"), 0);
+      SLOGI(TAG, "Resetting...");
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      esp_restart();
+    } else if (!strncmp(get->valuestring, "wifi_change", 11)) {
+      char farmssid[50] = { 0 };
+      char farmpw[50] = { 0 };
+      cJSON *ssid = cJSON_GetObjectItem(root, "SSID");
+      cJSON *pw = cJSON_GetObjectItem(root, "Password");
+      // ssid pw
+      if (cJSON_IsString(ssid) && cJSON_IsString(pw)) {
+        snprintf(farmssid, sizeof(farmssid), "%s", ssid->valuestring);
+        snprintf(farmpw, sizeof(farmpw), "%s", pw->valuestring);
+        syscfg_set(CFG_DATA, "ssid", farmssid);
+        syscfg_set(CFG_DATA, "password", farmpw);
+        LOGI(TAG, "Got SSID = [%s] password = [%s]", farmssid, farmpw);
+      }
+      SLOGI(TAG, "Resetting...");
+      mqtt_publish(mqtt_response, create_json_resp("wifi_change"), 0);
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      esp_restart();
+    } else if (!strncmp(get->valuestring, "server_change", 13)) {
+      char farmip[30] = { 0 };
+      cJSON *Server = cJSON_GetObjectItem(root, "Server");
+      if (cJSON_IsString(Server)) {
+        snprintf(farmip, sizeof(farmip), "%s", Server->valuestring);
+        syscfg_set(CFG_DATA, "farmip", farmip);
+        LOGI(TAG, "Got server url = %s ", Server->valuestring);
+      }
+      SLOGI(TAG, "Resetting...");
+      mqtt_publish(mqtt_response, create_json_resp("server_change"), 0);
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      esp_restart();
+    } else if (!strncmp(get->valuestring, "search", 6)) {
+      set_identification(1);
+      mqtt_publish(mqtt_response, create_json_resp("search"), 0);
+    }
+  }
+  cJSON_Delete(root);
+  return 0;
+}
+
+int start_mqttc(void) {
+  int ret = 0;
+  char farmip[30] = { 0 };
+
+  syscfg_get(CFG_DATA, "farmip", farmip, sizeof(farmip));
+  syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
+
+  if (!farmip[0]) {
+    return -1;
+  }
+
+  char *s_host = strtok(farmip, ":");  //공백을 기준으로 문자열 자르기
+  char *s_port = strtok(NULL, " ");    //널문자를 기준으로 다시 자르기
+
+  if (s_host == NULL || s_port == NULL) {
+    return -1;
+  }
+
+  int n_port = atoi(s_port);
+
+  mqtt_config_t config = {
+    .transport = MQTT_TCP,
+    .event_cb_fn = mqtt_event_callback,
+    // .uri = "mqtt://mqtt.eclipseprojects.io",
+    .host = s_host,
+    .port = n_port,
+  };
 
   char *hostname = generate_hostname();
 
-  snprintf(mqtt_temp, sizeof(mqtt_temp), "value/%s/temperature", hostname);
-  snprintf(mqtt_humi, sizeof(mqtt_humi), "value/%s/humidity", hostname);
+  snprintf(mqtt_request, sizeof(mqtt_request), "cmd/%s/req", hostname);
+  snprintf(mqtt_response, sizeof(mqtt_response), "cmd/%s/resp", hostname);
 
-#if defined(MQTT_API_TEST) && MQTT_API_TEST == 1
-  float random = 0;
-  char buf[20] = { 0 };
+  mqtt_ctx = mqtt_client_init(&config);
+  ret = mqtt_client_start(mqtt_ctx);
 
-  random = (float)(rand() % 10000) / 100;  // 난수 생성
-  snprintf(buf, sizeof(buf), "%f", random);
-  if (!strncmp(power_mode, "P", 1)) {
-    mqtt_publish(mqtt_temp, create_json_sensor("air", buf, "-1"), 0);
-    mqtt_publish(mqtt_humi, create_json_sensor("air", buf, "-1"), 0);
-  } else if (!strncmp(power_mode, "B", 1)) {
-    mqtt_publish(mqtt_temp, create_json_sensor("air", buf, "100"), 0);
-    mqtt_publish(mqtt_humi, create_json_sensor("air", buf, "100"), 0);
+  free(hostname);
+  return ret;
+}
+
+void stop_mqttc(void) {
+  if (mqtt_ctx) {
+    mqtt_client_disconnect(mqtt_ctx);
+    mqtt_client_stop(mqtt_ctx);
+    mqtt_client_deinit(mqtt_ctx);
+    mqtt_ctx = NULL;
   }
+}
 
-#else
+void mqtt_publish_sensor_data(void) {
+  char mqtt_temperature[80] = { 0 };
+  char mqtt_humidity[80] = { 0 };
+
+  char *hostname = generate_hostname();
+
+  snprintf(mqtt_temperature, sizeof(mqtt_temperature), "value/%s/temperature", hostname);
+  snprintf(mqtt_humidity, sizeof(mqtt_humidity), "value/%s/humidity", hostname);
+
   char s_temperature[20] = { 0 };
   char s_humidity[20] = { 0 };
   char s_battery[20] = { 0 };
@@ -314,79 +369,13 @@ static int sensor_data_mqtt_send() {
   }
 
   if (s_temperature[0] && s_humidity[0]) {
-    mqtt_publish(mqtt_temp, create_json_sensor("air", s_temperature, s_battery), 0);
-    mqtt_publish(mqtt_humi, create_json_sensor("air", s_humidity, s_battery), 0);
+    mqtt_publish(mqtt_temperature, create_json_sensor("air", s_temperature, s_battery), 0);
+    mqtt_publish(mqtt_humidity, create_json_sensor("air", s_humidity, s_battery), 0);
   } else {
-    mqtt_publish(mqtt_temp, create_json_sensor("air", "", s_battery), 0);
-    mqtt_publish(mqtt_humi, create_json_sensor("air", "", s_battery), 0);
+    mqtt_publish(mqtt_temperature, create_json_sensor("air", "", s_battery), 0);
+    mqtt_publish(mqtt_humidity, create_json_sensor("air", "", s_battery), 0);
   }
-#endif  // MQTT_API_TEST
   free(hostname);
-  return 0;
-}
 
-static void mqtt_task(void *pvParameters) {
-  int ret = 0;
-  int interval_cnt = SEND_INTERVAL;
-
-  ret = init_mqtt();
-  if (ret != 0) {
-    LOGI(TAG, "Failed to create mqtt init");
-    mqtt_handle = NULL;
-    vTaskDelete(NULL);
-    return;
-  }
-
-  while (1) {
-    if (interval_cnt >= SEND_INTERVAL) {
-      interval_cnt = 0;
-      sensor_data_mqtt_send();
-    } else {
-      interval_cnt++;
-    }
-    heap_monitor_func(HEAP_MONITOR_WARNING, HEAP_MONITOR_CRITICAL);
-    if (!strncmp(power_mode, "P", 1)) {
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
-    } else if (!strncmp(power_mode, "B", 1)) {
-      LOGI(TAG, "Exit MQTT Task!!!");
-      mqtt_handle = NULL;
-      vTaskDelete(NULL);
-    }
-  }
-}
-
-static int passing_payload(int payload_len, char *payload) {
-  char content[100] = { 0 };
-  snprintf(content, payload_len + 1, "%s", payload);
-  cJSON *root = cJSON_Parse(content);
-  cJSON *get = cJSON_GetObjectItem(root, "type");
-  if (cJSON_IsString(get)) {
-    if (!strncmp(get->valuestring, "devinfo", 7)) {
-      mqtt_publish(mqtt_response, create_json_info(power_mode), 0);
-    } else if (!strncmp(get->valuestring, "update", 6)) {
-      mqtt_publish(mqtt_response, create_json_resp("update"), 0);
-      sensor_data_mqtt_send();
-    } else if (!strncmp(get->valuestring, "reset", 5)) {
-      SLOGI(TAG, "Resetting...");
-      mqtt_publish(mqtt_response, create_json_resp("reset"), 0);
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
-      esp_restart();
-    } else if (!strncmp(get->valuestring, "fw_update", 9)) {
-      // 기능 구현 보류
-    }
-  }
-  cJSON_Delete(root);
-  return 0;
-}
-
-void create_mqtt_task(void) {
-  uint16_t stack_size = 8192;
-  UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
-
-  if (mqtt_handle) {
-    LOGI(TAG, "MQTT task is alreay created");
-    return;
-  }
-
-  xTaskCreate((TaskFunction_t)mqtt_task, "MQTT", stack_size, NULL, task_priority, &mqtt_handle);
+  heap_monitor_func(8092, 4096);
 }

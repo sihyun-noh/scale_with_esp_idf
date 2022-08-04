@@ -175,10 +175,6 @@ static int scd4x_get_serial_number(scd4x_dev_t* dev) {
   }
   i2c_unlock(dev->bus);
 
-  dev->serial[0] = (uint16_t)read[0] << 8 | (uint16_t)read[1];
-  dev->serial[1] = (uint16_t)read[3] << 8 | (uint16_t)read[4];
-  dev->serial[2] = (uint16_t)read[6] << 8 | (uint16_t)read[7];
-
   /* Check crc */
   for (uint i = 0; i < sizeof(read); i += 3) {
     if (crc8(&read[i], 2) != read[i + 2]) {
@@ -186,6 +182,12 @@ static int scd4x_get_serial_number(scd4x_dev_t* dev) {
       ret = -1;
       break;
     }
+  }
+
+  if (ret == 0) {
+    dev->serial[0] = (uint16_t)read[0] << 8 | (uint16_t)read[1];
+    dev->serial[1] = (uint16_t)read[3] << 8 | (uint16_t)read[4];
+    dev->serial[2] = (uint16_t)read[6] << 8 | (uint16_t)read[7];
   }
 
   return ret;
@@ -222,13 +224,15 @@ int scd4x_get_data_ready_flag(scd4x_dev_t* dev) {
   }
   i2c_unlock(dev->bus);
 
-  local_data_ready = (uint16_t)read[0] << 8 | (uint16_t)read[1];
-  ret = (local_data_ready & 0x7FF) != 0;
-
   /* Check crc */
   if (crc8(read, 2) != read[2]) {
     LOGI(TAG, "CRC check failed for serial data");
     ret = -1;
+  }
+
+  if (ret == 0) {
+    local_data_ready = (uint16_t)read[0] << 8 | (uint16_t)read[1];
+    ret = (local_data_ready & 0x7FF) != 0;
   }
 
   return ret;
@@ -251,13 +255,6 @@ int scd4x_read_measurement(scd4x_dev_t* dev, uint16_t* co2, float* temperature_d
   }
   i2c_unlock(dev->bus);
 
-  *co2 = (uint16_t)read[0] << 8 | (uint16_t)read[1];
-  temperature = (uint16_t)read[3] << 8 | (uint16_t)read[4];
-  humidity = (uint16_t)read[6] << 8 | (uint16_t)read[7];
-
-  *temperature_deg_c = (float)temperature * 175.0f / 65536.0f - 45.0f;
-  *humidity_percent_rh = (float)humidity * 100.0f / 65536.0f;
-
   /* Check crc */
   for (uint i = 0; i < sizeof(read); i += 3) {
     if (crc8(&read[i], 2) != read[i + 2]) {
@@ -265,6 +262,15 @@ int scd4x_read_measurement(scd4x_dev_t* dev, uint16_t* co2, float* temperature_d
       ret = -1;
       break;
     }
+  }
+
+  if (ret == 0) {
+    *co2 = (uint16_t)read[0] << 8 | (uint16_t)read[1];
+    temperature = (uint16_t)read[3] << 8 | (uint16_t)read[4];
+    humidity = (uint16_t)read[6] << 8 | (uint16_t)read[7];
+
+    *temperature_deg_c = (float)temperature * 175.0f / 65536.0f - 45.0f;
+    *humidity_percent_rh = (float)humidity * 100.0f / 65536.0f;
   }
 
   return ret;

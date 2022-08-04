@@ -37,13 +37,16 @@
 #endif
 #endif
 
-#define LED_RED   33
+#define BATTERY_PORT 6  // GPIO34
+
+#define LED_RED 33
 #define LED_GREEN 26
-#define LED_BLUE  25
+#define LED_BLUE 25
 
 /*****************************************
  * Config
  ****************************************/
+#define MQTT_SEND_INTERVAL 30
 
 /*****************************************
  * Task Priority / Stack size

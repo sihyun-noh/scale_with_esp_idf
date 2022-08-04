@@ -14,6 +14,7 @@
 
 /* Service Status */
 #define STATUS_CONFIGURED (1 << 0) /* Device is configured after finishing easy setup progress */
+#define STATUS_ONBOARD (1 << 1)    /* Device onboard on the network */
 
 /* Hardware Status */
 #define STATUS_RESET (1 << 0)    /* HW reset (factory reset) */
@@ -46,6 +47,19 @@ void sys_stat_set_configured(uint8_t status) {
     xEventGroupSetBits(sw_status_events, STATUS_CONFIGURED);
   } else {
     xEventGroupClearBits(sw_status_events, STATUS_CONFIGURED);
+  }
+}
+
+int sys_stat_get_onboard(void) {
+  EventBits_t bits = xEventGroupGetBits(sw_status_events);
+  return ((bits & STATUS_ONBOARD) == STATUS_ONBOARD);
+}
+
+void sys_stat_set_onboard(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(sw_status_events, STATUS_ONBOARD);
+  } else {
+    xEventGroupClearBits(sw_status_events, STATUS_ONBOARD);
   }
 }
 
