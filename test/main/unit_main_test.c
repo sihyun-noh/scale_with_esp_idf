@@ -16,10 +16,17 @@
 #include "shell_console.h"
 #include "syscfg.h"
 #include "sysevent.h"
+#include "sys_status.h"
 #include "syslog.h"
 #include "wifi_manager.h"
-
+#include "esp_sleep.h"
+#include "sysevent.h"
+#include "event_ids.h"
+#include "syscfg.h"
+#include "gpio_api.h"
+#include "time_api.h"
 #include "monitoring.h"
+#include "sysfile.h"
 
 static void print_banner(const char* text);
 
@@ -32,6 +39,9 @@ typedef enum {
   ERR_SYSCFG_INIT,
   ERR_SYSCFG_OPEN,
   ERR_SYSEVENT_CREATE,
+  ERR_SYS_STATUS_INIT,
+  ERR_MONITORING_INIT,
+  ERR_SPIFFS_INIT,
 } err_sysinit_t;
 
 int system_init(void) {
@@ -60,12 +70,33 @@ int system_init(void) {
     return ERR_SYSCFG_OPEN;
   }
 
+  ret = sys_stat_init();
+  if (ret != 0) {
+    return ERR_SYS_STATUS_INIT;
+  }
+
+  ret = monitoring_init();
+  if (ret != 0) {
+    return ERR_MONITORING_INIT;
+  }
+
   ret = sysevent_create();
   if (ret != 0) {
     return ERR_SYSEVENT_CREATE;
   }
 
   syslog_init();
+
+  // Generate the default manufacturing data if there is no data in mfg partition.
+
+  // ret = init_sysfile();
+  // if (ret != 0) {
+  //   return ERR_SPIFFS_INIT;
+  // }
+
+  //  create_log_file_server_task();
+
+  //  generate_default_sysmfg();
 
   return SYSINIT_OK;
 }
@@ -78,14 +109,10 @@ void app_main(void) {
     return;
   }
 
-  if (create_monitoring_task() == false) {
-    LOGI(TAG, "Failed to network event task start");
-  }
-
-  print_banner("wifi_test");
-  UNITY_BEGIN();
-  unity_run_test_by_name("the test to wifi_init() and wifi_deinit() flow");
-  UNITY_END();
+  print_banner("component_test");
+  // UNITY_BEGIN();
+  // unity_run_test_by_name("the test to wifi_init() and wifi_deinit() flow");
+  // UNITY_END();
 
   // print_banner("Running all the registered tests");
   // UNITY_BEGIN();
