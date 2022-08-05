@@ -1,0 +1,54 @@
+name: Release actuator
+
+on:
+  push:
+    tags:
+    - 'actuator/*'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout smartfarm-ief repo
+      uses: actions/checkout@v2
+
+    - name: esp-idf build
+      uses: espressif/esp-idf-ci-action@main
+      with:
+        esp_idf_version: v4.4
+        target: esp32
+        path: './product/actuator'
+
+    - name: Get lastest tag name
+      run: echo "TAG=${GITHUB_REF/refs\/tags\/actuator\//}" >> $GITHUB_ENV
+
+    - name: Get current date info
+      run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
+    - name: Copy file
+      run: cp product/actuator/build/ACT_MOTOR*.bin ACT_MOTOR_${{ env.TAG }}_${{ env.DATE }}.bin
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: binary_file
+        path: ./*.bin
+
+  release:
+
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Download a single artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: binary_file
+
+    - name: Upload Release
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: '*.bin'
+        token: ${{ secrets.GITHUB_TOKEN }}
