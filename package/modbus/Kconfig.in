@@ -1,0 +1,5 @@
+config SMARTFARM_MODBUS_FEATURE
+  bool "SmartFarm Modbus feature"
+  default "y"
+  help
+    Modbus feature for RS485 Sensors 
