@@ -1,3 +1,11 @@
+#include <stdio.h>
+#include <string.h>
+
+#include "syslog.h"
+#include "mb_master_rtu.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 // Olimex Board PIN numbers for U1RX and U1TX
 #define MB_RX_PIN 36
 #define MB_TX_PIN 4
@@ -7,6 +15,8 @@
 
 #define UART_PORT_NUM 1
 
+const static char *TAG = "modbus_sensor";
+
 void modbus_sensor_test(void) {
   uint8_t value[30] = { 0 };
   int data_len = 0;
@@ -14,8 +24,11 @@ void modbus_sensor_test(void) {
   // Refer to the modbus function code and register in EC Water RK500-13.pdf
   // Slave ID = 0x07, Function Code = 0x03, Start Address = 0x0000, Read Register Len = 0x000A
   // Data type = Binary Data, Data Len = 20 bytes
-  mb_characteristic_info_t mb_characteristic[1] = { { 0, "Data", "Binary", DATA_BINARY, 20, 0x07, MB_HOLDING_REG,
-                                                      0x0000, 0x000A } };
+  // mb_characteristic_info_t mb_characteristic[1] = { { 0, "Data", "Binary", DATA_BINARY, 20, 0x07, MB_HOLDING_REG,
+  // 0x0000,
+  //                                                    0x000A } };
+  mb_characteristic_info_t mb_characteristic[1] = { { 0, "Data", "Binary", DATA_BINARY, 6, 0x05, MB_HOLDING_REG, 0x0000,
+                                                      0x0003 } };
 
   mb_set_uart_config(MB_RX_PIN, MB_TX_PIN, RTS_UNCHANGED, CTS_UNCHANGED);
   if (mb_master_init(UART_PORT_NUM, 9600) == -1) {
@@ -43,7 +56,7 @@ void modbus_sensor_test(void) {
   // Or, you can read the modbus register directly using mb_master_send_request() command.
 #if 0
   for (int i = 0; i < 10; i++) {
-    if (mb_master_send_request(0x07, 0x03, 0x0000, 0x000A, value) == -1) {
+    if (mb_master_send_request(0x05, 0x03, 0x0000, 0x0003, value) == -1) {
       LOGE(TAG, "Failed to send_request");
     } else {
       for (int j = 0; j < 20; j++) {

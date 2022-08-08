@@ -53,6 +53,8 @@ sc_ctx_t* ctx = NULL;
 
 static bool b_sensor_pub;
 
+extern void modbus_sensor_test(void);
+
 extern int sensor_init(void);
 extern int read_temperature_humidity(char* temperature, char* humidity);
 extern int read_battery_percentage(void);
@@ -423,6 +425,10 @@ void app_main(void) {
   if (ctx) {
     sc_start(ctx);
   }
+
+#if defined(MODBUS_SENSOR_TEST)
+  modbus_sensor_test();
+#endif
 
   set_device_onboard(0);
 
