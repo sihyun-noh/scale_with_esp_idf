@@ -97,7 +97,7 @@ static int file_status_check(const char *dirpath) {
       strlcpy(filepath, dirpath, strlen(dirpath) + 1);
       strncat(filepath, "/", 2);
       strncat(filepath, entry->d_name, strlen(entry->d_name));
-      LOGE(TAG, "filepath : %s", filepath);
+      //      LOGE(TAG, "filepath : %s", filepath);
 
       if (stat(filepath, &file_stat) == -1) {
         LOGE(TAG, "stat error. file path : %s", filepath);
@@ -109,10 +109,10 @@ static int file_status_check(const char *dirpath) {
     file_count++;
   }
   file_ctx.file_num = file_count;
-  LOGI(TAG, "latest file : %s", file_ctx.latest_file);
-  LOGI(TAG, "oldest file : %s", file_ctx.oldest_file);
-  LOGI(TAG, "file_num : %d", file_ctx.file_num);
-  LOGI(TAG, "file_path : %s", file_ctx.filepath);
+  // LOGI(TAG, "latest file : %s", file_ctx.latest_file);
+  // LOGI(TAG, "oldest file : %s", file_ctx.oldest_file);
+  // LOGI(TAG, "file_num : %d", file_ctx.file_num);
+  // LOGI(TAG, "file_path : %s", file_ctx.filepath);
 
   closedir(dir);
   return 0;

@@ -68,7 +68,8 @@ extern void mqtt_publish_sensor_data(void);
 extern void create_led_task(void);
 #endif
 
-extern int create_log_file_server_task(void);
+extern int start_file_server(uint32_t port);
+
 extern void create_led_task(void);
 
 static void generate_default_sysmfg(void);
@@ -113,8 +114,8 @@ static void generate_default_sysmfg(void) {
 
   syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
   if (power_mode[0] == 0) {
-    syscfg_set(MFG_DATA, "power_mode", "B");
-    // syscfg_set(MFG_DATA, "power_mode", "P");
+    // syscfg_set(MFG_DATA, "power_mode", "B");
+    syscfg_set(MFG_DATA, "power_mode", "P");
   }
 }
 
@@ -161,13 +162,13 @@ int system_init(void) {
 
   syslog_init();
 
-#if 0
+#if 1
   ret = init_sysfile();
   if (ret != 0) {
     return ERR_SPIFFS_INIT;
   }
 
-  create_log_file_server_task();
+  // create_log_file_server_task();
 #endif
 
   // Generate the default manufacturing data if there is no data in mfg partition.
@@ -355,6 +356,9 @@ void plugged_loop_task(void) {
             tm_set_timezone("Asia/Seoul");
           }
           set_operation_mode(MQTT_START_MODE);
+          /* Add file log tesk. */
+          start_file_server(8001);
+
         } else {
           // If the sensor is not connected to the farm network router, it should continuously try to connect.
           set_operation_mode(TIME_ZONE_SET_MODE);

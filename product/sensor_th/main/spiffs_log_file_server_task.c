@@ -241,7 +241,7 @@ static esp_err_t download_get_handler(httpd_req_t *req) {
 }
 
 /* Function to start the file server */
-esp_err_t start_file_server_impl(const char *base_path) {
+esp_err_t start_file_server_impl(const char *base_path, uint32_t port) {
   static struct file_server_data *server_data = NULL;
 
   /* Validate file storage base path */
@@ -270,7 +270,7 @@ esp_err_t start_file_server_impl(const char *base_path) {
    * allow the same handler to respond to multiple different
    * target URIs which match the wildcard scheme */
   config.uri_match_fn = httpd_uri_match_wildcard;
-  config.server_port = 8000;
+  config.server_port = port;
 
   LOGI(TAG, "Starting HTTP Server on port: '%d'", config.server_port);
   if (httpd_start(&file_log_server, &config) != ESP_OK) {
@@ -290,25 +290,17 @@ esp_err_t start_file_server_impl(const char *base_path) {
   return ESP_OK;
 }
 
-int start_file_server(void) {
-  return start_file_server_impl(BASE_PATH);
+int start_file_server(uint32_t port) {
+  return start_file_server_impl(BASE_PATH, port);
 }
 
 static void log_file_server_task(void *pvParameters) {
   is_run_task_monitor_alarm(log_file_server_task_handle);
   /*  log file server start! */
-  start_file_server();
-  //  char s_file_log_temp[10] = { 0 };
+  start_file_server(8000);
   while (1) {
     is_run_task_heart_bit(log_file_server_task_handle, true);
-    // if (sysevent_get("SYSEVENT_BASE", FILE_SERVER_START_EVENT, &s_file_log_temp, sizeof(s_file_log_temp)) == 0) {
-    //   if (!strncmp(s_file_log_temp, "OK", 2)) {
-    //     start_file_server();
-    //   }
-    // }
-    FLOGI(TAG, "TEST_greenlabs_smartfarm!");
-    FLOGI(TAG, "TEST_greenlabs_smartfarm!");
-    FLOGI(TAG, "TEST_greenlabs_smartfarm!");
+    // FLOGI(TAG, "TEST_greenlabs_smartfarm!");
     vTaskDelay(2000 / portTICK_PERIOD_MS);
   }
 }

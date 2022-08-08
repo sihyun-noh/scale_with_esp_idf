@@ -1,5 +1,6 @@
 #include <string.h>
 #include "cJSON.h"
+#include "filelog.h"
 #include "syslog.h"
 #include "freertos/FreeRTOS.h"
 #include "esp_wifi.h"
@@ -9,6 +10,7 @@
 #include "mqtt.h"
 #include "syscfg.h"
 #include "config.h"
+#include "sysfile.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -134,6 +136,7 @@ static char *create_json_sensor(char *type, char *value, char *bat) {
   cJSON_Delete(root);
 
   printf("%s\r\n", jsonBuffer);
+  FLOGI(TAG, "json_payload : %s", jsonBuffer);
 
   return jsonBuffer;
 }
