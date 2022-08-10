@@ -7,11 +7,24 @@
 #include "freertos/task.h"
 
 typedef enum {
-  SOIL_EC_SENSOR = 0,
-  WATER_EC_SENSOR,
-  WATER_PH_SENSOR,
-  SOLAR_SENSOR,
+  RK_SEC_SENSOR = 0,  // RK520 Soil EC sensor
+  RK_WEC_SENSOR,      // RK500 Water EC sensor
+  RK_WPH_SENSOR,      // RK500 Water PH sensor
+  KD_SOLAR_SENSOR,    // KD SWSR7500 Solar sensor
+  KD_CO2_SENSOR,      // KD KCD-HP CO2 sensor
 } MB_SENSOR;
+
+typedef enum {
+  RK_TH_SLAVE_ID = 0x01,     // Rika Temperature/Humidity sensor
+  RK_WD_SLAVE_ID = 0x02,     // Rika Wind direction sensor
+  RK_WS_SLAVE_ID = 0x03,     // Rika Wind speed sensor
+  RK_WPH_SLAVE_ID = 0x04,    // Rika Water PH sensor
+  RK_SEC_SLAVE_ID = 0x05,    // Rika Soil EC sensor
+  RK_SPH_SLAVE_ID = 0x06,    // Rika Soil PH sensor
+  RK_WEC_SLAVE_ID = 0x07,    // Rika Water EC sensor
+  KD_SOLAR_SLAVE_ID = 0x1F,  // Korea Digital Solar sensor
+  KD_CO2_SLAVE_ID = 0x1F,    // Korea Digitial Co2 sensor
+} MB_SLAVE_ADDR;
 
 // Olimex Board PIN numbers for U1RX and U1TX
 #define MB_RX_PIN 36
@@ -34,6 +47,7 @@ float convert_uint32_to_float(uint16_t low, uint16_t high) {
 void modbus_sensor_test(int mb_sensor) {
   uint8_t value[30] = { 0 };
   int data_len = 0;
+  int num_characteristic = 0;
   mb_characteristic_info_t mb_characteristic[3] = { 0 };
 
   // Refer to the modbus function code and register in EC Water RK500-13.pdf
@@ -54,22 +68,47 @@ void modbus_sensor_test(int mb_sensor) {
   //  { 2, "EC", "mS", DATA_U16, 2, 0x05, MB_HOLDING_REG, 0x0002, 0x0001 },
   // };
 
-  if (mb_sensor == SOIL_EC_SENSOR) {
+  if (mb_sensor == RK_SEC_SENSOR) {
     mb_characteristic_info_t mb_soil_ec[3] = {
-      { 0, "Temperature", "C", DATA_U16, 2, 0x05, MB_HOLDING_REG, 0x0000, 0x0001 },
-      { 1, "Moisture", "%", DATA_U16, 2, 0x05, MB_HOLDING_REG, 0x0001, 0x0001 },
-      { 2, "EC", "mS", DATA_U16, 2, 0x05, MB_HOLDING_REG, 0x0002, 0x0001 },
+      { 0, "Temperature", "C", DATA_U16, 2, RK_SEC_SLAVE_ID, MB_HOLDING_REG, 0x0000, 0x0001 },
+      { 1, "Moisture", "%", DATA_U16, 2, RK_SEC_SLAVE_ID, MB_HOLDING_REG, 0x0001, 0x0001 },
+      { 2, "EC", "mS", DATA_U16, 2, RK_SEC_SLAVE_ID, MB_HOLDING_REG, 0x0002, 0x0001 },
     };
     memcpy(&mb_characteristic, mb_soil_ec, sizeof(mb_soil_ec));
-  } else if (mb_sensor == WATER_EC_SENSOR) {
+    num_characteristic = 3;
+  } else if (mb_sensor == RK_WEC_SENSOR) {
     mb_characteristic_info_t mb_water_ec[3] = {
-      { 0, "Data", "Binary", DATA_BINARY, 20, 0x07, MB_HOLDING_REG, 0x0000, 0x000A },
+      { 0, "Data", "Binary", DATA_BINARY, 20, RK_WEC_SLAVE_ID, MB_HOLDING_REG, 0x0000, 0x000A },
     };
     memcpy(&mb_characteristic, mb_water_ec, sizeof(mb_water_ec));
+    num_characteristic = 1;
+  } else if (mb_sensor == RK_WPH_SENSOR) {
+    mb_characteristic_info_t mb_water_ph[3] = {
+      { 0, "PH", "ph", DATA_U16, 2, RK_WPH_SLAVE_ID, MB_HOLDING_REG, 0x0000, 0x0001 },
+    };
+    memcpy(&mb_characteristic, mb_water_ph, sizeof(mb_water_ph));
+    num_characteristic = 1;
+  } else if (mb_sensor == KD_SOLAR_SENSOR) {
+    mb_characteristic_info_t mb_solar[3] = {
+      { 0, "Pyranometer", "W", DATA_U16, 2, KD_SOLAR_SLAVE_ID, MB_INPUT_REG, 0x0006, 0x0001 },
+      { 1, "App", "Binary", DATA_U16, 2, KD_SOLAR_SLAVE_ID, MB_INPUT_REG, 0xFF00, 0x0001 },
+      { 2, "HW", "Binary", DATA_U16, 2, KD_SOLAR_SLAVE_ID, MB_INPUT_REG, 0xFF01, 0x0001 },
+    };
+    memcpy(&mb_characteristic, mb_solar, sizeof(mb_solar));
+    num_characteristic = 3;
+  } else if (mb_sensor == KD_CO2_SENSOR) {
+    mb_characteristic_info_t mb_co2[3] = {
+      { 0, "CO2", "ppm", DATA_U16, 2, KD_CO2_SLAVE_ID, MB_INPUT_REG, 0x0004, 0x0001 },
+      { 1, "App", "Binary", DATA_U16, 2, KD_CO2_SLAVE_ID, MB_INPUT_REG, 0xFF00, 0x0001 },
+      { 2, "HW", "Binary", DATA_U16, 2, KD_CO2_SLAVE_ID, MB_INPUT_REG, 0xFF01, 0x0001 },
+    };
+    memcpy(&mb_characteristic, mb_co2, sizeof(mb_co2));
+    num_characteristic = 3;
   }
 
   mb_set_uart_config(MB_RX_PIN, MB_TX_PIN, RTS_UNCHANGED, CTS_UNCHANGED);
-  if (mb_master_init(UART_PORT_NUM, 9600) == -1) {
+
+  if (mb_master_init(UART_PORT_NUM, 38400) == -1) {
     LOGE(TAG, "Failed to initialize modbus master");
     return;
   } else {
@@ -78,7 +117,6 @@ void modbus_sensor_test(int mb_sensor) {
 
   vTaskDelay(1000 / portTICK_RATE_MS);
 
-  int num_characteristic = (sizeof(mb_characteristic) / sizeof(mb_characteristic[0]));
   mb_master_register_characteristic(&mb_characteristic[0], num_characteristic);
 
   while (1) {
@@ -89,7 +127,7 @@ void modbus_sensor_test(int mb_sensor) {
         for (int i = 0; i < data_len; i++) {
           LOGI(TAG, "value[%d] = [0x%x]", i, value[i]);
         }
-        if (mb_sensor == WATER_EC_SENSOR) {
+        if (mb_sensor == RK_WEC_SENSOR) {
           uint16_t ec_low = 0, ec_high = 0;
           uint16_t temp_low = 0, temp_high = 0;
           uint16_t sal_low = 0, sal_high = 0;
@@ -106,7 +144,7 @@ void modbus_sensor_test(int mb_sensor) {
           LOGI(TAG, "salinity = %.2f", sal);
           LOGI(TAG, "temperature = %.2f", temp);
         }
-        if (mb_sensor == SOIL_EC_SENSOR) {
+        if (mb_sensor == RK_SEC_SENSOR) {
           if (mb_characteristic[i].cid == 0) {
             uint16_t temp = 0;
             memcpy(&temp, value, 2);
@@ -131,10 +169,10 @@ void modbus_sensor_test(int mb_sensor) {
   // Or, you can read the modbus register directly using mb_master_send_request() command.
 #if 0
   for (int i = 0; i < 10; i++) {
-    if (mb_master_send_request(0x05, 0x03, 0x0000, 0x0003, value) == -1) {
+    if (mb_master_send_request(0x1F, 0x04, 0x0006, 0x0001, value) == -1) {
       LOGE(TAG, "Failed to send_request");
     } else {
-      for (int j = 0; j < 20; j++) {
+      for (int j = 0; j < 2; j++) {
         LOGI(TAG, "value[%d] = [0x%x]", j, value[j]);
       }
     }
