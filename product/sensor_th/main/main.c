@@ -430,12 +430,10 @@ void app_main(void) {
     sc_start(ctx);
   }
 
-#define MODBUS_SENSOR_TEST
-#if defined(MODBUS_SENSOR_TEST)
+#if defined(CONFIG_SMARTFARM_MODBUS_FEATURE)
   modbus_sensor_test(3);
 #endif
 
-#if 0
   set_device_onboard(0);
 
   syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
@@ -451,5 +449,4 @@ void app_main(void) {
   } else if (strcmp(power_mode, "P") == 0) {
     plugged_loop_task();
   }
-#endif
 }
