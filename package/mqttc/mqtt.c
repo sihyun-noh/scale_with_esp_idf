@@ -74,7 +74,7 @@ int mqtt_client_unsubscribe(mqtt_ctx_t *ctx, const char *topic) {
 
 int mqtt_client_publish(mqtt_ctx_t *ctx, const char *topic, const char *data, uint16_t len, uint8_t qos,
                         uint8_t retain) {
-  if (!ctx || !topic || !data || !len) {
+  if (!ctx || !topic || !data) {
     return -1;
   }
   return mqtt_client_publish_impl(ctx->client, topic, data, len, qos, retain);

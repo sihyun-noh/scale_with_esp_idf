@@ -10,7 +10,7 @@
 #include "mqtt.h"
 #include "syscfg.h"
 #include "config.h"
-#include "sysfile.h"
+#include "filelog.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -352,6 +352,7 @@ void stop_mqttc(void) {
 void mqtt_publish_sensor_data(void) {
   char mqtt_temperature[80] = { 0 };
   char mqtt_humidity[80] = { 0 };
+  int ret = 0;
 
   char *hostname = generate_hostname();
 
@@ -372,8 +373,14 @@ void mqtt_publish_sensor_data(void) {
   }
 
   if (s_temperature[0] && s_humidity[0]) {
-    mqtt_publish(mqtt_temperature, create_json_sensor("air", s_temperature, s_battery), 0);
-    mqtt_publish(mqtt_humidity, create_json_sensor("air", s_humidity, s_battery), 0);
+    ret = mqtt_publish(mqtt_temperature, create_json_sensor("air", s_temperature, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
+    ret = mqtt_publish(mqtt_humidity, create_json_sensor("air", s_humidity, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
   } else {
     mqtt_publish(mqtt_temperature, create_json_sensor("air", "", s_battery), 0);
     mqtt_publish(mqtt_humidity, create_json_sensor("air", "", s_battery), 0);

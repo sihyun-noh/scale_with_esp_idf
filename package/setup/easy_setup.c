@@ -19,6 +19,7 @@
 #include "syslog.h"
 #include "event_ids.h"
 #include "wifi_manager.h"
+#include "filelog.h"
 
 #include <sys/param.h>
 #include <freertos/FreeRTOS.h>
@@ -349,6 +350,7 @@ void easy_setup_task(void *pvParameters) {
         wifi_stop_mode();
         syscfg_unset(CFG_DATA, "ssid");
         syscfg_unset(CFG_DATA, "password");
+        FLOGI(TAG,"syscfg_unset!! ssid and password!");
         curr_mode = UNCONFIGURED_MODE;
         router_connect = 0;
         set_device_configured(0);

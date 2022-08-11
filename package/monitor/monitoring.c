@@ -7,6 +7,7 @@
 #include "icmp_echo_api.h"
 #include "event_ids.h"
 #include "easy_setup.h"
+#include "filelog.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>
@@ -420,11 +421,13 @@ static void monitoring_task(void *pvParameters) {
               set_farmnet_state(READY);
               set_wifi_state(ON_NETWORK);
               SLOGI(TAG, "Success ping to farmnet");
+              FLOGI(TAG, "Success ping to farmnet");
             } else {
               set_farmnet_state(NOT_READY);
             }
           } else {
             SLOGI(TAG, "Not found gateway router ip address!!!");
+            FLOGI(TAG, "Not found gateway router ip address!!!");
           }
         }
         if (get_farmnet_state() == NOT_READY) {
@@ -440,6 +443,7 @@ static void monitoring_task(void *pvParameters) {
           g_last_router_check_time = 0;
 
           SLOGI(TAG, "Failure ping to farmnet");
+          FLOGI(TAG, "Failure ping to farmnet");
 
           set_wifi_state(NO_ROUTER_CONNECTION);
           set_wifi_led(NO_ROUTER_CONNECTION);

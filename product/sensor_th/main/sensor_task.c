@@ -102,9 +102,6 @@ int read_temperature_humidity(char* temperature, char* humidity) {
   LOGI(TAG, "average Temperature [°C]: %.2f", sht3x_temperature_i2c);
   LOGI(TAG, "average Relative Humidity [%%]: %.2f", sht3x_humidity_i2c);
 
-  FLOGI(TAG, "average Temperature [°C]: %.2f", sht3x_temperature_i2c);
-  FLOGI(TAG, "average Relative Humidity [%%]: %.2f", sht3x_humidity_i2c);
-
   memset(s_temperature, 0, sizeof(s_temperature));
   snprintf(s_temperature, sizeof(s_temperature), "%.2f", sht3x_temperature_i2c);
   memset(s_humidity, 0, sizeof(s_humidity));

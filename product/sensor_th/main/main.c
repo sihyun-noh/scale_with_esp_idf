@@ -15,6 +15,7 @@
 #include "monitoring.h"
 #include "sysfile.h"
 #include "config.h"
+#include "filelog.h"
 
 #include <string.h>
 
@@ -114,8 +115,8 @@ static void generate_default_sysmfg(void) {
 
   syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
   if (power_mode[0] == 0) {
-    // syscfg_set(MFG_DATA, "power_mode", "B");
-    syscfg_set(MFG_DATA, "power_mode", "P");
+    syscfg_set(MFG_DATA, "power_mode", "B");
+    // syscfg_set(MFG_DATA, "power_mode", "P");
   }
 }
 
@@ -162,14 +163,10 @@ int system_init(void) {
 
   syslog_init();
 
-#if 1
   ret = init_sysfile();
   if (ret != 0) {
     return ERR_SPIFFS_INIT;
   }
-
-  // create_log_file_server_task();
-#endif
 
   // Generate the default manufacturing data if there is no data in mfg partition.
   generate_default_sysmfg();
@@ -248,6 +245,7 @@ void battery_loop_task(void) {
             b_sensor_pub = true;
           }
           if (b_sensor_pub) {
+            FLOGI(TAG, "temperature : %.2f, m_temperature : %.2f", temperature, m_temperature);
             m_temperature = temperature;
             m_humidity = humidity;
             sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
@@ -263,6 +261,7 @@ void battery_loop_task(void) {
         } else {
           rc = ERR_SENSOR_READ;
           LOGE(TAG, "sensor read, error = [%d]", rc);
+          FLOGI(TAG, "sensor read, error = [%d]", rc);
           set_operation_mode(SLEEP_MODE);
         }
 #endif
