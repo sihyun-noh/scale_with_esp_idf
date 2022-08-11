@@ -71,8 +71,6 @@ extern void create_led_task(void);
 
 extern int start_file_server(uint32_t port);
 
-extern void create_led_task(void);
-
 static void generate_default_sysmfg(void);
 
 RTC_DATA_ATTR float m_temperature;

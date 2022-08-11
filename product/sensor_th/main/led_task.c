@@ -40,6 +40,7 @@ static void led_task(void* pvParameters) {
         led_off(LED_GREEN);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
       } else if (is_identification()) {
+        set_identification(0);
         for (int i = 0; i < 3; i++) {
           led_on(LED_RED);
           led_off(LED_BLUE);
