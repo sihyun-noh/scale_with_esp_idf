@@ -27,8 +27,12 @@ typedef enum {
 } MB_SLAVE_ADDR;
 
 // Olimex Board PIN numbers for U1RX and U1TX
-#define MB_RX_PIN 36
-#define MB_TX_PIN 4
+// #define MB_RX_PIN 36
+// #define MB_TX_PIN 4
+
+// Greenlabs Board PIN numbers for U2RX and U2TX
+#define MB_RX_PIN 16
+#define MB_TX_PIN 17
 
 #define RTS_UNCHANGED (-1)
 #define CTS_UNCHANGED (-1)

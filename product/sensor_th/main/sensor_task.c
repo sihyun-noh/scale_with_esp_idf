@@ -132,6 +132,8 @@ int read_co2_temperature_humidity(char* co2, char* temperature, char* humidity) 
     return res;
   }
 
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+
   res = scd4x_read_measurement(&dev, &scd41_co2, &scd41_temperature, &scd41_humidity);
 
   if (res) {
@@ -160,18 +162,18 @@ int read_co2_temperature_humidity(char* co2, char* temperature, char* humidity) 
 }
 #endif
 
-int temperature_comparison(float m_temperature, float temperature) {
+int sensor_comparison(float m_sensor, float sensor, const float const_comparison) {
   float comparison;
 
-  comparison = temperature - m_temperature;
+  comparison = sensor - m_sensor;
 
-  LOGI(TAG, "temperature : %.2f, m_temperature : %.2f, comparison: %.2f", temperature, m_temperature, comparison);
+  LOGI(TAG, "sensor : %.2f, memory_sensor : %.2f, comparison: %.2f", sensor, m_sensor, comparison);
 
   if (comparison < 0) {
     comparison = comparison * -1;
   }
 
-  if (comparison >= 0.5) {
+  if (comparison >= const_comparison) {
     return 1;
   }
   return 0;

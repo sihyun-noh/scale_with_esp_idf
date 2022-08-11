@@ -255,9 +255,9 @@ static int process_payload(int payload_len, char *payload) {
       vTaskDelay(1000 / portTICK_PERIOD_MS);
       esp_restart();
     } else if (!strncmp(get->valuestring, "factory_reset", 13)) {
-      syscfg_unset(CFG_DATA, "ssid");
-      syscfg_unset(CFG_DATA, "password");
-      syscfg_unset(CFG_DATA, "farmip");
+      if (syscfg_clear(0) != 0) {
+        LOGE(TAG, "Failed to sys CFG_DATA clear");
+      }
       mqtt_publish(mqtt_response, create_json_resp("factory_reset"), 0);
       SLOGI(TAG, "Resetting...");
       vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -363,6 +363,13 @@ void mqtt_publish_sensor_data(void) {
   char s_humidity[20] = { 0 };
   char s_battery[20] = { 0 };
 
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+  char mqtt_co2[80] = { 0 };
+  char s_co2[20] = { 0 };
+  snprintf(mqtt_co2, sizeof(mqtt_co2), "value/%s/co2", hostname);
+  sysevent_get("SYSEVENT_BASE", I2C_CO2_EVENT, &s_co2, sizeof(s_co2));
+#endif
+
   sysevent_get("SYSEVENT_BASE", I2C_HUMIDITY_EVENT, &s_humidity, sizeof(s_humidity));
   sysevent_get("SYSEVENT_BASE", I2C_TEMPERATURE_EVENT, &s_temperature, sizeof(s_temperature));
 
@@ -372,6 +379,7 @@ void mqtt_publish_sensor_data(void) {
     sysevent_get("SYSEVENT_BASE", ADC_BATTERY_EVENT, &s_battery, sizeof(s_battery));
   }
 
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
   if (s_temperature[0] && s_humidity[0]) {
     ret = mqtt_publish(mqtt_temperature, create_json_sensor("air", s_temperature, s_battery), 0);
     if (ret != 0) {
@@ -385,6 +393,27 @@ void mqtt_publish_sensor_data(void) {
     mqtt_publish(mqtt_temperature, create_json_sensor("air", "", s_battery), 0);
     mqtt_publish(mqtt_humidity, create_json_sensor("air", "", s_battery), 0);
   }
+#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+  if (s_temperature[0] && s_humidity[0] && s_co2[0]) {
+    ret = mqtt_publish(mqtt_co2, create_json_sensor("air", s_co2, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
+    ret = mqtt_publish(mqtt_temperature, create_json_sensor("air", s_temperature, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
+    ret = mqtt_publish(mqtt_humidity, create_json_sensor("air", s_humidity, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
+  } else {
+    mqtt_publish(mqtt_co2, create_json_sensor("air", "", s_battery), 0);
+    mqtt_publish(mqtt_temperature, create_json_sensor("air", "", s_battery), 0);
+    mqtt_publish(mqtt_humidity, create_json_sensor("air", "", s_battery), 0);
+  }
+#endif
+
   free(hostname);
 
   heap_monitor_func(8092, 4096);

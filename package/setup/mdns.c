@@ -45,9 +45,6 @@ void initialise_mdns(void) {
   // initialize service
   ESP_ERROR_CHECK(mdns_service_add("greenlabs-mdns", "_http", "_tcp", 80, serviceTxtData, 1));
 
-  // add another TXT item
-  ESP_ERROR_CHECK(mdns_service_txt_item_set("_http", "_tcp", "Model", "GLSTH22A000"));
-
   free(hostname);
 }
 

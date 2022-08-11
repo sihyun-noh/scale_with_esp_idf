@@ -57,9 +57,13 @@ static bool b_sensor_pub;
 extern void modbus_sensor_test(int mb_sensor);
 
 extern int sensor_init(void);
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
 extern int read_temperature_humidity(char* temperature, char* humidity);
+#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+extern int read_co2_temperature_humidity(char* co2, char* temperature, char* humidity);
+#endif
 extern int read_battery_percentage(void);
-extern int temperature_comparison(float m_temperature, float temperature);
+extern int sensor_comparison(float m_sensor, float sensor, const float const_comparison);
 
 extern int start_mqttc(void);
 extern void stop_mqttc(void);
@@ -73,8 +77,7 @@ extern int start_file_server(uint32_t port);
 
 static void generate_default_sysmfg(void);
 
-RTC_DATA_ATTR float m_temperature;
-RTC_DATA_ATTR float m_humidity;
+RTC_DATA_ATTR float memory_sensor_buf;
 RTC_DATA_ATTR uint8_t m_alive_count;
 RTC_DATA_ATTR uint8_t m_timezone_set;
 
@@ -108,7 +111,11 @@ static void generate_default_sysmfg(void) {
 
   syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
   if (model_name[0] == 0) {
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
     syscfg_set(MFG_DATA, "model_name", "GLSTH");
+#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+    syscfg_set(MFG_DATA, "model_name", "GLSCO");
+#endif
   }
 
   syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
@@ -199,8 +206,12 @@ void battery_loop_task(void) {
   char buf[20] = { 0 };
 #else
   int rc = 0;
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
   float temperature = 0;
-  float humidity = 0;
+#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+  float co2 = 0;
+  char s_co2[20] = { 0 };
+#endif
   char s_temperature[20] = { 0 };
   char s_humidity[20] = { 0 };
 #endif
@@ -215,7 +226,7 @@ void battery_loop_task(void) {
         set_operation_mode(SENSOR_READ_MODE);
 #else
         if ((rc = sensor_init()) != SYSINIT_OK) {
-          LOGI(TAG, "Could not initialize SHT3x sensor");
+          LOGI(TAG, "Could not initialize sensor");
           set_operation_mode(SLEEP_MODE);
         } else {
           set_operation_mode(SENSOR_READ_MODE);
@@ -231,21 +242,36 @@ void battery_loop_task(void) {
         sysevent_set(I2C_TEMPERATURE_EVENT, buf);
         sysevent_set(I2C_HUMIDITY_EVENT, buf);
         sysevent_set(ADC_BATTERY_EVENT, buf);
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+        sysevent_set(I2C_CO2_EVENT, buf);
+#endif
         set_operation_mode(EASY_SETUP_MODE);
 #else
+
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
         if ((rc = read_temperature_humidity(s_temperature, s_humidity)) == CHECK_OK) {
           temperature = atof(s_temperature);
-          humidity = atof(s_humidity);
           if ((rc = alive_check_task()) == CHECK_OK) {
             b_sensor_pub = true;
-          }
-          if ((rc = temperature_comparison(m_temperature, temperature)) == SENSOR_PUB) {
+          } else if ((rc = sensor_comparison(memory_sensor_buf, temperature, 0.5)) == SENSOR_PUB) {
             b_sensor_pub = true;
           }
           if (b_sensor_pub) {
-            FLOGI(TAG, "temperature : %.2f, m_temperature : %.2f", temperature, m_temperature);
-            m_temperature = temperature;
-            m_humidity = humidity;
+            memory_sensor_buf = temperature;
+            FLOGI(TAG, "temperature : %.2f, m_temperature : %.2f", temperature, memory_sensor_buf);
+#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+        if ((rc = read_co2_temperature_humidity(s_co2, s_temperature, s_humidity)) == CHECK_OK) {
+          co2 = atof(s_co2);
+          if ((rc = alive_check_task()) == CHECK_OK) {
+            b_sensor_pub = true;
+          } else if ((rc = sensor_comparison(memory_sensor_buf, co2, 40)) == SENSOR_PUB) {
+            b_sensor_pub = true;
+          }
+          if (b_sensor_pub) {
+            memory_sensor_buf = co2;
+            FLOGI(TAG, "co2 : %.2f, m_co2 : %.2f", co2, memory_sensor_buf);
+            sysevent_set(I2C_CO2_EVENT, s_co2);
+#endif
             sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
             sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
             if ((rc = read_battery_percentage()) != CHECK_OK) {
@@ -278,10 +304,11 @@ void battery_loop_task(void) {
               // TODO : Get the timezone using the region code of the manufacturing data.
               // Currently hardcoding the timezone to be KST-9
               tm_set_timezone("Asia/Seoul");
+            } else {
+              tm_apply_timesync();
+              tm_set_timezone("Asia/Seoul");
             }
             m_timezone_set = 1;
-          } else {
-            tm_set_timezone("Asia/Seoul");
           }
           set_operation_mode(MQTT_START_MODE);
         } else {
@@ -314,6 +341,9 @@ void plugged_loop_task(void) {
   char buf[20] = { 0 };
 #else
   int rc = 0;
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+  char s_co2[20] = { 0 };
+#endif
   char s_temperature[20] = { 0 };
   char s_humidity[20] = { 0 };
 #endif
@@ -376,7 +406,12 @@ void plugged_loop_task(void) {
           sysevent_set(I2C_HUMIDITY_EVENT, buf);
           set_operation_mode(SENSOR_PUB_MODE);
 #else
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
           if ((rc = read_temperature_humidity(s_temperature, s_humidity)) == CHECK_OK) {
+#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+          if ((rc = read_co2_temperature_humidity(s_co2, s_temperature, s_humidity)) == CHECK_OK) {
+            sysevent_set(I2C_CO2_EVENT, s_co2);
+#endif
             sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
             sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
             set_operation_mode(SENSOR_PUB_MODE);
@@ -420,7 +455,9 @@ void app_main(void) {
     LOGE(TAG, "Failed to initialize device, error = [%d]", rc);
     return;
   }
-
+  if (m_timezone_set) {
+    tm_set_timezone("Asia/Seoul");
+  }
   // Start interactive shell command line
   ctx = sc_init();
   if (ctx) {
