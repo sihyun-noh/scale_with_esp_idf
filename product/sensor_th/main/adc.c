@@ -16,6 +16,7 @@
 #include "sysevent.h"
 #include "event_ids.h"
 #include "filelog.h"
+#include "sys_status.h"
 
 #define MAX_BUFFER_CNT 10
 
@@ -64,6 +65,9 @@ int read_battery_percentage(void) {
   memset(s_bat_percent, 0, sizeof(s_bat_percent));
   snprintf(s_bat_percent, sizeof(s_bat_percent), "%.2f", bat_percent);
 
+  if (bat_percent < 20) {
+    set_low_battery(1);
+  }
   sysevent_set(ADC_BATTERY_EVENT, (char*)s_bat_percent);
 
   return 0;

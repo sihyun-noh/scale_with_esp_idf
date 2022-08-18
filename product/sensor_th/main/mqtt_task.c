@@ -1,6 +1,5 @@
 #include <string.h>
 #include "cJSON.h"
-#include "filelog.h"
 #include "syslog.h"
 #include "freertos/FreeRTOS.h"
 #include "esp_wifi.h"
@@ -27,8 +26,14 @@ static int process_payload(int payload_len, char *payload);
 static const char *TAG = "MQTT";
 
 static mqtt_ctx_t *mqtt_ctx;
-static char jsonBuffer[400];
+static char json_resp[400];
+static char json_data[400];
 static char power_mode[10];
+
+char s_temperature[20] = { 0 };
+char s_humidity[20] = { 0 };
+char s_battery[20] = { 0 };
+char s_co2[20] = { 0 };
 
 char mqtt_request[80] = { 0 };
 char mqtt_response[80] = { 0 };
@@ -128,17 +133,17 @@ static char *create_json_sensor(char *type, char *value, char *bat) {
 
   /* print everything */
   p_out = cJSON_Print(root);
-  memset(&jsonBuffer[0], 0, sizeof(jsonBuffer));
-  memcpy(&jsonBuffer[0], p_out, strlen(p_out));
+  memset(&json_data[0], 0, sizeof(json_data));
+  memcpy(&json_data[0], p_out, strlen(p_out));
 
   free(hostname);
   free(p_out);
   cJSON_Delete(root);
 
-  printf("%s\r\n", jsonBuffer);
-  FLOGI(TAG, "json_payload : %s", jsonBuffer);
+  printf("%s\r\n", json_data);
+  FLOGI(TAG, "json_payload : %s", json_data);
 
-  return jsonBuffer;
+  return json_data;
 }
 
 static char *create_json_info(char *power) {
@@ -193,16 +198,16 @@ static char *create_json_info(char *power) {
   cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
   /* print everything */
   p_out = cJSON_Print(root);
-  memset(&jsonBuffer[0], 0, sizeof(jsonBuffer));
-  memcpy(&jsonBuffer[0], p_out, strlen(p_out));
+  memset(&json_resp[0], 0, sizeof(json_resp));
+  memcpy(&json_resp[0], p_out, strlen(p_out));
 
   free(hostname);
   free(p_out);
   cJSON_Delete(root);
 
-  printf("%s\r\n", jsonBuffer);
+  printf("%s\r\n", json_resp);
 
-  return jsonBuffer;
+  return json_resp;
 }
 
 static char *create_json_resp(char *type) {
@@ -226,16 +231,16 @@ static char *create_json_resp(char *type) {
   cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
   /* print everything */
   p_out = cJSON_Print(root);
-  memset(&jsonBuffer[0], 0, sizeof(jsonBuffer));
-  memcpy(&jsonBuffer[0], p_out, strlen(p_out));
+  memset(&json_resp[0], 0, sizeof(json_resp));
+  memcpy(&json_resp[0], p_out, strlen(p_out));
 
   free(hostname);
   free(p_out);
   cJSON_Delete(root);
 
-  printf("%s\r\n", jsonBuffer);
+  printf("%s\r\n", json_resp);
 
-  return jsonBuffer;
+  return json_resp;
 }
 
 static int process_payload(int payload_len, char *payload) {
@@ -248,6 +253,14 @@ static int process_payload(int payload_len, char *payload) {
       mqtt_publish(mqtt_response, create_json_info(power_mode), 0);
     } else if (!strncmp(get->valuestring, "update", 6)) {
       mqtt_publish(mqtt_response, create_json_resp("update"), 0);
+      sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
+      sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
+      if (!strncmp(power_mode, "B", 1)) {
+        sysevent_set(ADC_BATTERY_EVENT, s_battery);
+      }
+#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+      sysevent_set(I2C_CO2_EVENT, s_co2);
+#endif
       mqtt_publish_sensor_data();
     } else if (!strncmp(get->valuestring, "reset", 5)) {
       mqtt_publish(mqtt_response, create_json_resp("reset"), 0);
@@ -335,6 +348,9 @@ int start_mqttc(void) {
 
   mqtt_ctx = mqtt_client_init(&config);
   ret = mqtt_client_start(mqtt_ctx);
+  if (ret != 0) {
+    LOGE(TAG, "Failed to mqtt start");
+  }
 
   free(hostname);
   return ret;
@@ -359,13 +375,8 @@ void mqtt_publish_sensor_data(void) {
   snprintf(mqtt_temperature, sizeof(mqtt_temperature), "value/%s/temperature", hostname);
   snprintf(mqtt_humidity, sizeof(mqtt_humidity), "value/%s/humidity", hostname);
 
-  char s_temperature[20] = { 0 };
-  char s_humidity[20] = { 0 };
-  char s_battery[20] = { 0 };
-
 #if defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
   char mqtt_co2[80] = { 0 };
-  char s_co2[20] = { 0 };
   snprintf(mqtt_co2, sizeof(mqtt_co2), "value/%s/co2", hostname);
   sysevent_get("SYSEVENT_BASE", I2C_CO2_EVENT, &s_co2, sizeof(s_co2));
 #endif
