@@ -90,7 +90,6 @@ static void generate_default_sysmfg(void) {
 #endif
   }
 
-  syscfg_set(MFG_DATA, "power_mode", "P");
   syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
   if (power_mode[0] == 0) {
     syscfg_set(MFG_DATA, "power_mode", "B");
