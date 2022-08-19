@@ -18,13 +18,13 @@
 #define READY 1
 #define NOT_READY 0
 
-#define PING_ADDR_NUMBER 1          /* the number of ping address */
+#define PING_ADDR_NUMBER 2          /* the number of ping address */
 #define PING_FAIL_COUNT_EACH_ADDR 3 /* the fail times for each ping address */
 
-#define MAX_INTERNET_CHECK_TIME 300  // 5 min
+#define MAX_INTERNET_CHECK_TIME 900  // 15 min
 #define MIN_INTERNET_CHECK_TIME 60   // 1 min
 
-#define ROUTER_CHECK_TIME 120  // 2 min
+#define ROUTER_CHECK_TIME 600  // 10 min
 
 static const char *TAG = "MONITOR";
 static TaskHandle_t wifi_event_monitor_task_handle = NULL;
@@ -41,7 +41,7 @@ static int g_network_state;
 static int g_rssi;
 static int g_ping_cnt;
 
-char *g_ping_addr[PING_ADDR_NUMBER] = { "8.8.8.8" };
+char *g_ping_addr[PING_ADDR_NUMBER] = { "8.8.8.8", "www.google.com" };
 
 typedef enum {
   ON_NETWORK = 0,
@@ -237,6 +237,20 @@ static void set_wifi_state(int network_state) {
 
 static void set_wifi_led(int led_mode) {
   // TODO : Call HAL API for controlling LED status
+  switch (led_mode) {
+    case ON_NETWORK:
+    case ON_INTERNET:
+      if (is_wifi_fail()) {
+        set_wifi_fail(0);
+      }
+      break;
+    case NO_ROUTER_CONNECTION:
+    case NO_INTERNET_CONNECTION:
+      if (!is_wifi_fail()) {
+        set_wifi_fail(1);
+      }
+      break;
+  }
 }
 
 static int get_farmnet_state(void) {
@@ -332,22 +346,28 @@ static int check_internet(void) {
   int internet_ready = NOT_READY;
 
   if (get_farmnet_state() == READY) {
-    for (;;) {
-      if (do_ping(g_ping_addr[0], 3) == PING_OK) {
-        internet_ready = READY;
-        g_ping_cnt = 0;
-        g_internet_check_time = MAX_INTERNET_CHECK_TIME;
-        LOGI(TAG, "Internet Ping Success...");
-        break;
-      } else {
-        g_ping_cnt++;
-        if (g_ping_cnt >= (PING_ADDR_NUMBER * PING_FAIL_COUNT_EACH_ADDR)) {
-          internet_ready = NOT_READY;
+    for (int i = 0; i < PING_ADDR_NUMBER; i++) {
+      for (;;) {
+        if (do_ping(g_ping_addr[i], 3) == PING_OK) {
+          internet_ready = READY;
           g_ping_cnt = 0;
-          g_internet_check_time = MIN_INTERNET_CHECK_TIME;
-          LOGI(TAG, "Internet Ping Failure...");
+          g_internet_check_time = MAX_INTERNET_CHECK_TIME;
+          LOGI(TAG, "Internet Ping Success...");
           break;
+        } else {
+          g_ping_cnt++;
+          if (g_ping_cnt >= (PING_ADDR_NUMBER * PING_FAIL_COUNT_EACH_ADDR)) {
+            internet_ready = NOT_READY;
+            g_ping_cnt = 0;
+            g_internet_check_time = MIN_INTERNET_CHECK_TIME;
+            LOGI(TAG, "Internet Ping Failure...");
+            break;
+          }
         }
+        vTaskDelay(pdMS_TO_TICKS(500));
+      }
+      if (internet_ready == READY) {
+        break;
       }
       vTaskDelay(pdMS_TO_TICKS(500));
     }
@@ -420,6 +440,7 @@ static void monitoring_task(void *pvParameters) {
             if (do_ping(router_ip, 3) == PING_OK) {
               set_farmnet_state(READY);
               set_wifi_state(ON_NETWORK);
+              set_wifi_led(ON_NETWORK);
               SLOGI(TAG, "Success ping to farmnet");
               FLOGI(TAG, "Success ping to farmnet");
             } else {
@@ -503,7 +524,7 @@ int create_monitoring_task(void) {
   UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
 
   if (!wifi_event_monitor_task_handle) {
-    xTaskCreate(monitoring_task, "monitoring_task", 4096, NULL, task_priority, &wifi_event_monitor_task_handle);
+    xTaskCreate(monitoring_task, "monitoring_task", 8192, NULL, task_priority, &wifi_event_monitor_task_handle);
     if (!wifi_event_monitor_task_handle) {
       LOGI(TAG, "Monitoring_task Task Start Failed!");
       return -1;

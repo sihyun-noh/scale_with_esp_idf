@@ -32,10 +32,12 @@
 #include "sysevent.h"
 #include "monitoring.h"
 #include "filelog.h"
+#include "main.h"
 
 #include <string.h>
 
-#define MAX_BUFFER_CNT 10
+#define MAX_READ_CNT 10
+#define MIN_READ_CNT 2
 
 static const char* TAG = "sensor_task";
 
@@ -65,20 +67,25 @@ int sensor_init(void) {
 }
 
 #if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
-int read_temperature_humidity(char* temperature, char* humidity) {
+int read_temperature_humidity(int op_mode, char* temperature, char* humidity) {
   int res = 0;
-  int err_cnt = 0;
+  int err_cnt = 0, read_cnt = 0;
 
   char s_temperature[20] = { 0 };
   char s_humidity[20] = { 0 };
 
-  float sht3x_temperature[MAX_BUFFER_CNT] = { 0 };
-  float sht3x_humidity[MAX_BUFFER_CNT] = { 0 };
+  float sht3x_temperature[MAX_READ_CNT] = { 0 };
+  float sht3x_humidity[MAX_READ_CNT] = { 0 };
 
   float sht3x_temperature_i2c = 0;
   float sht3x_humidity_i2c = 0;
 
-  for (int i = 0; i < MAX_BUFFER_CNT;) {
+  if (op_mode == BATTERY_OP_MODE) {
+    read_cnt = MAX_READ_CNT;
+  } else if (op_mode == POWER_OP_MODE) {
+    read_cnt = MIN_READ_CNT;
+  }
+  for (int i = 0; i < read_cnt;) {
     // Get the values and do something with them.
     if ((res = sht3x_read(&dev, &sht3x_temperature[i], &sht3x_humidity[i])) == SHT3X_OK) {
       LOGI(TAG, "Temperature [°C]: %.2f", sht3x_temperature[i]);
@@ -93,11 +100,11 @@ int read_temperature_humidity(char* temperature, char* humidity) {
     vTaskDelay(100 / portTICK_PERIOD_MS);
   }
 
-  qsort(sht3x_temperature, MAX_BUFFER_CNT, sizeof(float), float_compare);
-  qsort(sht3x_humidity, MAX_BUFFER_CNT, sizeof(float), float_compare);
+  qsort(sht3x_temperature, read_cnt, sizeof(float), float_compare);
+  qsort(sht3x_humidity, read_cnt, sizeof(float), float_compare);
 
-  sht3x_temperature_i2c = float_average(&sht3x_temperature[1], MAX_BUFFER_CNT - 2);
-  sht3x_humidity_i2c = float_average(&sht3x_humidity[1], MAX_BUFFER_CNT - 2);
+  sht3x_temperature_i2c = float_average(&sht3x_temperature[0], read_cnt);
+  sht3x_humidity_i2c = float_average(&sht3x_humidity[0], read_cnt);
 
   LOGI(TAG, "average Temperature [°C]: %.2f", sht3x_temperature_i2c);
   LOGI(TAG, "average Relative Humidity [%%]: %.2f", sht3x_humidity_i2c);

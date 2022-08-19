@@ -1,7 +1,5 @@
-#include <string.h>
 #include "cJSON.h"
 #include "syslog.h"
-#include "freertos/FreeRTOS.h"
 #include "esp_wifi.h"
 #include "sysevent.h"
 #include "sys_status.h"
@@ -11,6 +9,9 @@
 #include "config.h"
 #include "filelog.h"
 
+#include "freertos/FreeRTOS.h"
+
+#include <string.h>
 #include <math.h>
 #include <stdlib.h>
 
@@ -98,7 +99,7 @@ static double round_(float var) {
   // then type cast to int so value is 3767
   // then divided by 100 so the value converted into 37.67
   double value = (int)(var * 100 + .5);
-  return (double)value / 100;
+  return (double)(value / 100);
 }
 
 static char *create_json_sensor(char *type, char *value, char *bat) {
@@ -141,7 +142,6 @@ static char *create_json_sensor(char *type, char *value, char *bat) {
   cJSON_Delete(root);
 
   printf("%s\r\n", json_data);
-  FLOGI(TAG, "json_payload : %s", json_data);
 
   return json_data;
 }

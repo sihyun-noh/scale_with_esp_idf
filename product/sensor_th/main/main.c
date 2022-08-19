@@ -16,37 +16,9 @@
 #include "sysfile.h"
 #include "config.h"
 #include "filelog.h"
+#include "main.h"
 
 #include <string.h>
-
-typedef enum {
-  SYSINIT_OK,
-  ERR_NVS_FLASH,
-  ERR_WIFI_INIT,
-  ERR_SYSCFG_INIT,
-  ERR_SYSCFG_OPEN,
-  ERR_SYSEVENT_CREATE,
-  ERR_SYS_STATUS_INIT,
-  ERR_MONITORING_INIT,
-  ERR_SPIFFS_INIT,
-} err_sysinit_t;
-
-typedef enum {
-  CHECK_OK,
-  SENSOR_PUB,
-  ERR_SENSOR_READ,
-  ERR_BATTERY_READ,
-} err_system_t;
-
-typedef enum {
-  SENSOR_INIT_MODE = 0,
-  SENSOR_READ_MODE,
-  EASY_SETUP_MODE,
-  TIME_ZONE_SET_MODE,
-  MQTT_START_MODE,
-  SENSOR_PUB_MODE,
-  SLEEP_MODE
-} operation_mode_t;
 
 const char* TAG = "main_app";
 
@@ -58,7 +30,7 @@ extern void modbus_sensor_test(int mb_sensor);
 
 extern int sensor_init(void);
 #if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
-extern int read_temperature_humidity(char* temperature, char* humidity);
+extern int read_temperature_humidity(int op_mode, char* temperature, char* humidity);
 #elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
 extern int read_co2_temperature_humidity(char* co2, char* temperature, char* humidity);
 #endif
@@ -118,6 +90,7 @@ static void generate_default_sysmfg(void) {
 #endif
   }
 
+  syscfg_set(MFG_DATA, "power_mode", "P");
   syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
   if (power_mode[0] == 0) {
     syscfg_set(MFG_DATA, "power_mode", "B");
@@ -249,7 +222,7 @@ void battery_loop_task(void) {
 #else
 
 #if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
-        if ((rc = read_temperature_humidity(s_temperature, s_humidity)) == CHECK_OK) {
+        if ((rc = read_temperature_humidity(BATTERY_OP_MODE, s_temperature, s_humidity)) == CHECK_OK) {
           temperature = atof(s_temperature);
           if ((rc = alive_check_task()) == CHECK_OK) {
             b_sensor_pub = true;
@@ -407,7 +380,7 @@ void plugged_loop_task(void) {
           set_operation_mode(SENSOR_PUB_MODE);
 #else
 #if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
-          if ((rc = read_temperature_humidity(s_temperature, s_humidity)) == CHECK_OK) {
+          if ((rc = read_temperature_humidity(POWER_OP_MODE, s_temperature, s_humidity)) == CHECK_OK) {
 #elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
           if ((rc = read_co2_temperature_humidity(s_co2, s_temperature, s_humidity)) == CHECK_OK) {
             sysevent_set(I2C_CO2_EVENT, s_co2);
