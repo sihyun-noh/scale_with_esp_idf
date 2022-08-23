@@ -428,7 +428,9 @@ static void monitoring_task(void *pvParameters) {
   while (1) {
     // Do not need to check if the device's wifi connection status during the easy setup progress.
     // Only check if connection status of farm network or internet after device is onboarding on the network.
-    // wifi_monitoring();
+    if (0) {
+      wifi_monitoring();
+    }
     if (is_device_configured() && (wifi_get_current_mode() == WIFI_MODE_STA)) {
       if (need_to_check_router() == true) {
         // First, check to see if the farmnet wifi connection status.
@@ -454,7 +456,9 @@ static void monitoring_task(void *pvParameters) {
         if (get_farmnet_state() == NOT_READY) {
           // Set internet connection flag as lost
           // Reset g_last_internet_check_time
-          set_internet_state(NOT_READY);
+          if (get_internet_state() != NOT_READY) {
+            set_internet_state(NOT_READY);
+          }
           g_last_internet_check_time = 0;
 
           // Check if previous internet connection status is available(OK), if OK, set internet check time as minimum

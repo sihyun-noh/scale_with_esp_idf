@@ -46,6 +46,39 @@ ESP_EVENT_DEFINE_BASE(SYSEVENT_BASE);
 #define SYSEVENT_REQ_QUEUE_SIZE (32)
 #define SYSEVENT_RES_QUEUE_SIZE (32)
 
+#define reason2str(r) ((r > 176) ? system_event_reasons[r - 176] : system_event_reasons[r - 1])
+
+const char *system_event_reasons[] = { "UNSPECIFIED",
+                                       "AUTH_EXPIRE",
+                                       "AUTH_LEAVE",
+                                       "ASSOC_EXPIRE",
+                                       "ASSOC_TOOMANY",
+                                       "NOT_AUTHED",
+                                       "NOT_ASSOCED",
+                                       "ASSOC_LEAVE",
+                                       "ASSOC_NOT_AUTHED",
+                                       "DISASSOC_PWRCAP_BAD",
+                                       "DISASSOC_SUPCHAN_BAD",
+                                       "UNSPECIFIED",
+                                       "IE_INVALID",
+                                       "MIC_FAILURE",
+                                       "4WAY_HANDSHAKE_TIMEOUT",
+                                       "GROUP_KEY_UPDATE_TIMEOUT",
+                                       "IE_IN_4WAY_DIFFERS",
+                                       "GROUP_CIPHER_INVALID",
+                                       "PAIRWISE_CIPHER_INVALID",
+                                       "AKMP_INVALID",
+                                       "UNSUPP_RSN_IE_VERSION",
+                                       "INVALID_RSN_IE_CAP",
+                                       "802_1X_AUTH_FAILED",
+                                       "CIPHER_SUITE_REJECTED",
+                                       "BEACON_TIMEOUT",
+                                       "NO_AP_FOUND",
+                                       "AUTH_FAIL",
+                                       "ASSOC_FAIL",
+                                       "HANDSHAKE_TIMEOUT",
+                                       "CONNECTION_FAIL" };
+
 typedef enum req_cmd { REQ_EVENT = 0, REQ_REGISTER_EVENT_HANDLER, REQ_UNREGISTER_EVENT_HANDLER } req_cmd_t;
 
 portMUX_TYPE msg_count_lock = portMUX_INITIALIZER_UNLOCKED;
