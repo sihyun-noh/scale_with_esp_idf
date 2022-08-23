@@ -41,7 +41,7 @@ else()
     set(baud_arg "-b ${ESPBAUD}")
 endif()
 
-set(serial_tool_cmd "${SERIAL_TOOL} ${port_arg} ${baud_arg} ${SERIAL_TOOL_ARGS} 0x120000 sensor_th_test.bin")
+set(serial_tool_cmd "${SERIAL_TOOL} ${port_arg} ${baud_arg} ${SERIAL_TOOL_ARGS} 0x1b0000 sensor_th_test.bin")
 
 include("${IDF_PATH}/tools/cmake/utilities.cmake")
 spaces2list(serial_tool_cmd)

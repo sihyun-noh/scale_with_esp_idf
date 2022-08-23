@@ -1,11 +1,3 @@
-/* adc - Simple example
-
-   Simple ADC example that shows how to initialize ADC
-   as well as reading and writing from and to registers for a BATTERY connected over ADC.
-
-   The BATTERY used in this example is a simple BATTERY unit.
-*/
-
 #include "config.h"
 #include "battery.h"
 #include "utils.h"
