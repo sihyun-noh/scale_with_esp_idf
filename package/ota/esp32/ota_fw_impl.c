@@ -11,7 +11,7 @@
 #include "esp_partition.h"
 #include "esp_image_format.h"
 
-#define BUFFER_SIZE (64 * 1024)
+#define BUFFER_SIZE (32 * 1024)
 
 static const char *TAG = "OTA FW";
 
@@ -210,12 +210,17 @@ int ota_fw_download_impl(fw_ctx_t *const fwctx) {
     LOGI(TAG, "total_data_read = %d, data_read = %d", total_data_read, data_read);
   }
 
-  if (esp_http_client_is_complete_data_received(client)) {
-    LOGI(TAG, "FW image donwload completed");
+  if (fw_status == INVALID_FIRMWARE) {
+    LOGI(TAG, "Invalid FW Image!!!");
+    err = OTA_ERR_INVALID_IMAGE;
   } else {
-    LOGI(TAG, "FW image donwload incompleted");
-    if (err != OTA_ERR_WRITE_FLASH) {
-      err = OTA_ERR_DOWNLOAD_IMAGE;
+    if (esp_http_client_is_complete_data_received(client)) {
+      LOGI(TAG, "FW image donwload completed");
+    } else {
+      LOGI(TAG, "FW image donwload incompleted");
+      if (err != OTA_ERR_WRITE_FLASH) {
+        err = OTA_ERR_DOWNLOAD_IMAGE;
+      }
     }
   }
 
@@ -233,13 +238,14 @@ int ota_fw_download_impl(fw_ctx_t *const fwctx) {
 
   if (err == OTA_OK) {
     ota_ctx.valid_fw_image = true;
+    ota_ctx.fw_state = OTA_FW_STATE_DOWNLOAD;
   } else {
     ota_ctx.valid_fw_image = false;
+    ota_ctx.fw_state = OTA_FW_STATE_INVALID;
   }
   ota_ctx.fw_image_len = fw_image_len;
   ota_ctx.data_write_len = total_data_read;
   ota_ctx.update_handle = update_handle;
-  ota_ctx.fw_state = OTA_FW_STATE_DOWNLOAD;
 
   return err;
 

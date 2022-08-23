@@ -8,6 +8,7 @@
 #include "syscfg.h"
 #include "config.h"
 #include "filelog.h"
+#include "ota_task.h"
 
 #include "freertos/FreeRTOS.h"
 
@@ -251,6 +252,11 @@ static int process_payload(int payload_len, char *payload) {
   if (cJSON_IsString(get)) {
     if (!strncmp(get->valuestring, "devinfo", 7)) {
       mqtt_publish(mqtt_response, create_json_info(power_mode), 0);
+    } else if (!strncmp(get->valuestring, "fw_update", strlen("fw_update"))) {
+      cJSON *url = cJSON_GetObjectItem(root, "url");
+      if (url) {
+        start_ota_fw_task(url->valuestring);
+      }
     } else if (!strncmp(get->valuestring, "update", 6)) {
       mqtt_publish(mqtt_response, create_json_resp("update"), 0);
       sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
