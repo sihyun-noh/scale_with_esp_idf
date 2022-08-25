@@ -14,7 +14,7 @@ set(PROJECT_VERSION_FILE "${PROJECT_VERSION_MAJOR}_${PROJECT_VERSION_MINOR}_${PR
 set(PROJECT_STAGE "DVT")
 
 # Set project name
-set(PROJECT_NAME "ACT_MOTOR")
+set(PROJECT_NAME "ACTUATOR_")
 
 # Get the current commit hash
 execute_process(

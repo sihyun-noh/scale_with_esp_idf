@@ -15,8 +15,10 @@
  */
 #include "syscfg.h"
 #include "sysevent.h"
+#include "sys_status.h"
 #include "event_ids.h"
 #include "syslog.h"
+#include "wifi_manager.h"
 
 #include <sys/param.h>
 #include <freertos/FreeRTOS.h>
@@ -46,7 +48,7 @@ typedef enum {
 static const char *TAG = "easy_setup";
 
 static TaskHandle_t easy_setup_handle = NULL;
-static httpd_handle_t httpd_hanlde = NULL;
+static httpd_handle_t httpd_handle = NULL;
 
 static int s_retry_connect = 0;
 static int router_connect = 0;
@@ -58,6 +60,14 @@ extern void initialise_mdns(void);
 
 char farmip[30] = { 0 };
 
+static void set_gateway_address(void) {
+  char router_ip[20] = { 0 };
+
+  get_router_ipaddr(router_ip, sizeof(router_ip));
+  if (router_ip[0]) {
+    syscfg_set(CFG_DATA, "gateway", router_ip);
+  }
+}
 /**
  * @brief An HTTP GET handler
  *
@@ -164,30 +174,43 @@ static httpd_handle_t start_webserver(void) {
  * @param httpd_req_t HTTP Request Data Structure
  */
 static void stop_webserver(httpd_handle_t server) {
-  // Stop the httpd server
-  httpd_ssl_stop(server);
+  if (server) {
+    // Un-register uri handler
+    httpd_unregister_uri_handler(server, "/", HTTP_GET);
+    httpd_unregister_uri_handler(server, "/", HTTP_POST);
+    // Stop the httpd server
+    httpd_ssl_stop(server);
+  }
 }
 
 int sta_disconnect_handler(void *arg) {
-  if (httpd_hanlde) {
-    stop_webserver(httpd_hanlde);
-    httpd_hanlde = NULL;
+  if (httpd_handle) {
+    LOGI(TAG, "Stop Webserver in sta_disconnect_handler...");
+    stop_webserver(httpd_handle);
+    httpd_handle = NULL;
   }
-  xEventGroupSetBits(s_ethernet_event_group, ETHERNET_DISCONNECT);
+  if (s_ethernet_event_group) {
+    xEventGroupSetBits(s_ethernet_event_group, ETHERNET_DISCONNECT);
+  }
   return 0;
 }
 
 int sta_ip_handler(void *arg) {
-  if (httpd_hanlde == NULL) {
-    httpd_hanlde = start_webserver();
+  if (httpd_handle == NULL && farmip[0] == 0) {
+    LOGI(TAG, "Start Webserver in sta_ip_handler...");
+    httpd_handle = start_webserver();
   }
-  xEventGroupSetBits(s_ethernet_event_group, ETHERNET_CONNECTED);
+  if (s_ethernet_event_group) {
+    xEventGroupSetBits(s_ethernet_event_group, ETHERNET_CONNECTED);
+  }
   return 0;
 }
 
 void ethernet_easy_setup_task(void *pvParameters) {
   int exit = 0;
   setup_mode_t curr_mode = UNCONFIGURED_MODE;
+
+  set_device_configured(0);
 
   while (1) {
     switch (curr_mode) {
@@ -248,10 +271,13 @@ void ethernet_easy_setup_task(void *pvParameters) {
         LOGI(TAG, "!!! UNPAIRED MODE !!!");
         curr_mode = UNCONFIGURED_MODE;
         router_connect = 0;
+        set_device_configured(0);
       } break;
     }
     if (exit) {
-      sysevent_set(EASY_SETUP_DONE, "OK");
+      set_gateway_address();
+      set_device_onboard(1);
+      set_device_configured(1);
       break;
     }
     vTaskDelay(500 / portTICK_PERIOD_MS);

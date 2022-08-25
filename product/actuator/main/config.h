@@ -4,13 +4,11 @@
 /******************************************
  * Board version
  *****************************************/
-#define ACT_TTGO_HW1 0
-#define ACT_TTGO_HW3 (ACT_TTGO_HW1 + 2)
 #define ACT_OLIMEX_HW 10
 
 #define ACT_GLS_HW 20 /* Greenlabs HW */
 
-#define ACT_BOARD_VER ACT_OLIMEX_HW
+#define ACT_BOARD_VER ACT_GLS_HW
 
 #define SWITCH 1 /* ON / OFF type */
 #define MOTOR 2  /* forward and reverse motor type */
@@ -28,6 +26,7 @@
 /*****************************************
  * Config
  ****************************************/
+#define MQTT_SEND_INTERVAL 0
 
 /*****************************************
  * Task Priority / Stack size

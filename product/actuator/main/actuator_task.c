@@ -6,7 +6,6 @@
 #include "gpio_api.h"
 #include "config.h"
 
-static TaskHandle_t actuator_handle = NULL;
 static char model_name[10] = { 0 };
 
 #if defined(ACT_BOARD_VER) && (ACT_BOARD_VER == ACT_OLIMEX_HW)
@@ -156,27 +155,10 @@ static void actuator_motor_action(void) {
   }
 }
 
-static void actuator_task(void *pvParameters) {
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
-  while (1) {
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    // test_gpio();
-    if (!strncmp(model_name, "GLASW", 5)) {
-      actuator_switch_action();
-    } else if (!strncmp(model_name, "GLAMT", 5)) {
-      actuator_motor_action();
-    }
+void actuator_task(void) {
+  if (!strncmp(model_name, "GLASW", 5)) {
+    actuator_switch_action();
+  } else if (!strncmp(model_name, "GLAMT", 5)) {
+    actuator_motor_action();
   }
-}
-
-void create_actuator_task(void) {
-  uint16_t stack_size = 4096;
-  UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
-
-  if (actuator_handle) {
-    LOGI(TAG, "Sensor task is alreay created");
-    return;
-  }
-
-  xTaskCreate((TaskFunction_t)actuator_task, "actuator_task", stack_size, NULL, task_priority, &actuator_handle);
 }

@@ -1,22 +1,25 @@
-#include <string.h>
 #include "cJSON.h"
 #include "syslog.h"
-#include "freertos/FreeRTOS.h"
 #include "esp_wifi.h"
 #include "sysevent.h"
+#include "sys_status.h"
 #include "event_ids.h"
 #include "mqtt.h"
 #include "syscfg.h"
+#include "config.h"
+#include "filelog.h"
 
+#include "freertos/FreeRTOS.h"
+
+#include <string.h>
 #include <math.h>
 #include <stdlib.h>
 
 extern char *uptime(void);
 extern char *generate_hostname(void);
+extern void mqtt_publish_actuator_data(void);
 
-static int passing_payload(int payload_len, char *payload);
-
-#define SEND_INTERVAL 0
+static int process_payload(int payload_len, char *payload);
 
 #define HEAP_MONITOR_CRITICAL 1024
 #define HEAP_MONITOR_WARNING 4096
@@ -24,13 +27,13 @@ static int passing_payload(int payload_len, char *payload);
 static const char *TAG = "MQTT";
 
 static mqtt_ctx_t *mqtt_ctx;
-static TaskHandle_t mqtt_handle = NULL;
-static char jsonBuffer[500];
+static char json_data[400];
+static char json_resp[400];
+static char power_mode[10];
+static char model_name[10];
 
-char mqtt_request[50] = { 0 };
-char mqtt_response[50] = { 0 };
-char power_mode[10] = { 0 };
-char model_name[10] = { 0 };
+char mqtt_request[80] = { 0 };
+char mqtt_response[80] = { 0 };
 
 static int minHeap = 0;
 static void heap_monitor_func(int warning_level, int critical_level) {
@@ -80,51 +83,10 @@ static void mqtt_event_callback(void *handler_args, int32_t event_id, void *even
       printf("event MQTT_EVT_DATA\n");
       printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
       printf("PAYLOAD=%.*s\r\n", event->payload_len, event->payload);
-      passing_payload(event->payload_len, event->payload);
+      process_payload(event->payload_len, event->payload);
       break;
     default: break;
   }
-}
-
-static int init_mqtt() {
-  int ret = 0;
-  char farmip[30] = { 0 };
-
-  syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
-  syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
-  syscfg_get(CFG_DATA, "farmip", farmip, sizeof(farmip));
-
-  if (!farmip[0]) {
-    return -1;
-  }
-  char *s_host = strtok(farmip, ":");  //공백을 기준으로 문자열 자르기
-  char *s_port = strtok(NULL, " ");    //널문자를 기준으로 다시 자르기
-  int n_port = atoi(s_port);
-
-  mqtt_config_t config = {
-    .transport = MQTT_TCP,
-    .event_cb_fn = mqtt_event_callback,
-    // .uri = "mqtt://mqtt.eclipseprojects.io",
-    .host = s_host,
-    .port = n_port,
-  };
-
-  char *hostname = generate_hostname();
-
-  snprintf(mqtt_request, sizeof(mqtt_request), "cmd/%s/req", hostname);
-  snprintf(mqtt_response, sizeof(mqtt_response), "cmd/%s/resp", hostname);
-
-  mqtt_ctx = mqtt_client_init(&config);
-
-  ret = mqtt_client_start(mqtt_ctx);
-  if (ret != 0) {
-    LOGE(TAG, "Failed to mqtt start");
-  }
-  vTaskDelay(3000 / portTICK_PERIOD_MS);
-
-  free(hostname);
-
-  return ret;
 }
 
 uint8_t actuator_value[9] = { 0 };
@@ -177,16 +139,16 @@ static char *create_json_actuator_switch(void) {
 
   /* print everything */
   p_out = cJSON_Print(root);
-  memset(&jsonBuffer[0], 0, sizeof(jsonBuffer));
-  memcpy(&jsonBuffer[0], p_out, strlen(p_out));
+  memset(&json_data[0], 0, sizeof(json_data));
+  memcpy(&json_data[0], p_out, strlen(p_out));
 
   free(hostname);
   free(p_out);
   cJSON_Delete(root);
 
-  printf("%s\r\n", jsonBuffer);
+  printf("%s\r\n", json_data);
 
-  return jsonBuffer;
+  return json_data;
 }
 
 static char *create_json_actuator_motor(void) {
@@ -236,16 +198,16 @@ static char *create_json_actuator_motor(void) {
 
   /* print everything */
   p_out = cJSON_Print(root);
-  memset(&jsonBuffer[0], 0, sizeof(jsonBuffer));
-  memcpy(&jsonBuffer[0], p_out, strlen(p_out));
+  memset(&json_data[0], 0, sizeof(json_data));
+  memcpy(&json_data[0], p_out, strlen(p_out));
 
   free(hostname);
   free(p_out);
   cJSON_Delete(root);
 
-  printf("%s\r\n", jsonBuffer);
+  printf("%s\r\n", json_data);
 
-  return jsonBuffer;
+  return json_data;
 }
 
 static char *create_json_actuator_switch_resp(uint8_t actuator_change[9]) {
@@ -273,7 +235,7 @@ static char *create_json_actuator_switch_resp(uint8_t actuator_change[9]) {
   /* create root node and array */
   root = cJSON_CreateObject();
 
-  cJSON_AddItemToObject(root, "type", cJSON_CreateString("update"));
+  cJSON_AddItemToObject(root, "type", cJSON_CreateString("switch"));
   cJSON_AddItemToObject(root, "id", cJSON_CreateString(hostname));
   if (actuator_value[0] == 1) {
     cJSON_AddItemToObject(root, "auto_mode", cJSON_CreateString("on"));
@@ -302,16 +264,16 @@ static char *create_json_actuator_switch_resp(uint8_t actuator_change[9]) {
 
   /* print everything */
   p_out = cJSON_Print(root);
-  memset(&jsonBuffer[0], 0, sizeof(jsonBuffer));
-  memcpy(&jsonBuffer[0], p_out, strlen(p_out));
+  memset(&json_data[0], 0, sizeof(json_data));
+  memcpy(&json_data[0], p_out, strlen(p_out));
 
   free(hostname);
   free(p_out);
   cJSON_Delete(root);
 
-  printf("%s\r\n", jsonBuffer);
+  printf("%s\r\n", json_data);
 
-  return jsonBuffer;
+  return json_data;
 }
 
 static char *create_json_actuator_motor_resp(uint8_t actuator_change[9]) {
@@ -335,7 +297,7 @@ static char *create_json_actuator_motor_resp(uint8_t actuator_change[9]) {
   /* create root node and array */
   root = cJSON_CreateObject();
 
-  cJSON_AddItemToObject(root, "type", cJSON_CreateString("update"));
+  cJSON_AddItemToObject(root, "type", cJSON_CreateString("motor"));
   cJSON_AddItemToObject(root, "id", cJSON_CreateString(hostname));
   if (actuator_value[0] == 1) {
     cJSON_AddItemToObject(root, "auto_mode", cJSON_CreateString("on"));
@@ -365,148 +327,16 @@ static char *create_json_actuator_motor_resp(uint8_t actuator_change[9]) {
 
   /* print everything */
   p_out = cJSON_Print(root);
-  memset(&jsonBuffer[0], 0, sizeof(jsonBuffer));
-  memcpy(&jsonBuffer[0], p_out, strlen(p_out));
+  memset(&json_data[0], 0, sizeof(json_data));
+  memcpy(&json_data[0], p_out, strlen(p_out));
 
   free(hostname);
   free(p_out);
   cJSON_Delete(root);
 
-  printf("%s\r\n", jsonBuffer);
+  printf("%s\r\n", json_data);
 
-  return jsonBuffer;
-}
-
-static char *create_json_info(char *power) {
-  /*
-  {
-    "type":"devinfo",
-    "id" : "GLSTH-0EADBEEFFEE9",
-    "fw_version": "1.0.0",
-    "farm_network" : {"ssid": "connected_farm_network-ssid", "channel": 1},
-    "ip_address" : "192.168.50.100",
-    "rssi" : "30",
-    "send_interval" : 180,
-    "power": "battery",
-    "uptime" : "",
-    "timestamp" : "2022-05-02 15:07:18"
-  }
-  */
-  char *p_out;
-  cJSON *root, *farm_network;
-  wifi_ap_record_t ap_info;
-  char *hostname = generate_hostname();
-  esp_wifi_sta_get_ap_info(&ap_info);
-
-  /* IP Addr assigned to STA */
-  esp_netif_ip_info_t ip_info;
-  char ip_addr[16] = { 0 };
-
-  esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &ip_info);
-  esp_ip4addr_ntoa(&ip_info.ip, ip_addr, sizeof(ip_addr));
-
-  /* create root node and array */
-  root = cJSON_CreateObject();
-  farm_network = cJSON_CreateObject();
-
-  cJSON_AddItemToObject(root, "type", cJSON_CreateString("devinfo"));
-  cJSON_AddItemToObject(root, "id", cJSON_CreateString(hostname));
-  cJSON_AddItemToObject(root, "fw_version", cJSON_CreateString(FW_VERSION));
-
-  cJSON_AddItemToObject(root, "farm_network", farm_network);
-
-  cJSON_AddItemToObject(farm_network, "ssid", cJSON_CreateString((char *)ap_info.ssid));
-  cJSON_AddItemToObject(farm_network, "channel", cJSON_CreateNumber(ap_info.primary));
-  cJSON_AddItemToObject(root, "ip_address", cJSON_CreateString((char *)ip_addr));
-  cJSON_AddItemToObject(root, "rssi", cJSON_CreateNumber(ap_info.rssi));
-  cJSON_AddItemToObject(root, "send_interval", cJSON_CreateNumber(SEND_INTERVAL));
-  if (!strncmp(power, "P", 1)) {
-    cJSON_AddItemToObject(root, "power", cJSON_CreateString("plug"));
-  } else if (!strncmp(power, "B", 1)) {
-    cJSON_AddItemToObject(root, "power", cJSON_CreateString("battery"));
-  }
-  cJSON_AddItemToObject(root, "uptime", cJSON_CreateString(uptime()));
-  cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
-  /* print everything */
-  p_out = cJSON_Print(root);
-  memset(&jsonBuffer[0], 0, sizeof(jsonBuffer));
-  memcpy(&jsonBuffer[0], p_out, strlen(p_out));
-
-  free(hostname);
-  free(p_out);
-  cJSON_Delete(root);
-
-  printf("%s\r\n", jsonBuffer);
-
-  return jsonBuffer;
-}
-
-static char *create_json_resp(char *type) {
-  /*
-  {
-    "type": "update", "reset"
-    "id" : "GLSTH-0EADBEEFFEE9",
-    "state": "success"
-    "timestamp" : "2022-05-02 15:07:18"
-  }
-  */
-  char *p_out;
-  cJSON *root;
-  char *hostname = generate_hostname();
-
-  /* create root node and array */
-  root = cJSON_CreateObject();
-
-  cJSON_AddItemToObject(root, "type", cJSON_CreateString(type));
-  cJSON_AddItemToObject(root, "id", cJSON_CreateString(hostname));
-  cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
-  /* print everything */
-  p_out = cJSON_Print(root);
-  memset(&jsonBuffer[0], 0, sizeof(jsonBuffer));
-  memcpy(&jsonBuffer[0], p_out, strlen(p_out));
-
-  free(hostname);
-  free(p_out);
-  cJSON_Delete(root);
-
-  printf("%s\r\n", jsonBuffer);
-
-  return jsonBuffer;
-}
-
-static int actuator_data_mqtt_send() {
-  char *hostname = generate_hostname();
-
-  if (!strncmp(model_name, "GLASW", 5)) {
-    char mqtt_switch[50] = { 0 };
-    snprintf(mqtt_switch, sizeof(mqtt_switch), "value/%s/switch", hostname);
-    mqtt_publish(mqtt_switch, create_json_actuator_switch(), 0);
-  } else if (!strncmp(model_name, "GLAMT", 5)) {
-    char mqtt_motor[50] = { 0 };
-    snprintf(mqtt_motor, sizeof(mqtt_motor), "value/%s/motor", hostname);
-    mqtt_publish(mqtt_motor, create_json_actuator_motor(), 0);
-  }
-
-  free(hostname);
-  return 0;
-}
-
-static void mqtt_task(void *pvParameters) {
-  int ret = 0;
-
-  ret = init_mqtt();
-  if (ret != 0) {
-    LOGI(TAG, "Failed to create mqtt init");
-    mqtt_handle = NULL;
-    vTaskDelete(NULL);
-    return;
-  }
-  actuator_data_mqtt_send();
-
-  while (1) {
-    heap_monitor_func(HEAP_MONITOR_WARNING, HEAP_MONITOR_CRITICAL);
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-  }
+  return json_data;
 }
 
 static void actuator_switch_passing(char content[300]) {
@@ -615,12 +445,16 @@ static void actuator_motor_passing(char content[300]) {
             }
             if (cJSON_IsString(mode)) {
               if (!strncmp(mode->valuestring, "fwd", 3)) {
-                sysevent_set(io->valueint + ACTUATOR_BASE, (char *)mode->valuestring);
-                actuator_value[io->valueint] = 1;
+                if (actuator_value[io->valueint] != 1) {
+                  sysevent_set(io->valueint + ACTUATOR_BASE, (char *)mode->valuestring);
+                  actuator_value[io->valueint] = 1;
+                }
                 actuator_change[io->valueint] = 1;
               } else if (!strncmp(mode->valuestring, "rwd", 3)) {
-                sysevent_set(io->valueint + ACTUATOR_BASE, (char *)mode->valuestring);
-                actuator_value[io->valueint] = 2;
+                if (actuator_value[io->valueint] != 2) {
+                  sysevent_set(io->valueint + ACTUATOR_BASE, (char *)mode->valuestring);
+                  actuator_value[io->valueint] = 2;
+                }
                 actuator_change[io->valueint] = 1;
               } else if (!strncmp(mode->valuestring, "stop", 4)) {
                 sysevent_set(io->valueint + ACTUATOR_BASE, (char *)mode->valuestring);
@@ -644,10 +478,106 @@ static void actuator_motor_passing(char content[300]) {
   cJSON_Delete(root);
 }
 
-static int passing_payload(int payload_len, char *payload) {
+static char *create_json_info(char *power) {
+  /*
+  {
+    "type":"devinfo",
+    "id" : "GLSTH-0EADBEEFFEE9",
+    "fw_version": "1.0.0",
+    "farm_network" : {"ssid": "connected_farm_network-ssid", "channel": 1},
+    "ip_address" : "192.168.50.100",
+    "rssi" : "30",
+    "send_interval" : 180,
+    "power": "battery",
+    "uptime" : "",
+    "timestamp" : "2022-05-02 15:07:18"
+  }
+  */
+  char *p_out;
+  cJSON *root, *farm_network;
+  wifi_ap_record_t ap_info;
+  char *hostname = generate_hostname();
+  esp_wifi_sta_get_ap_info(&ap_info);
+
+  /* IP Addr assigned to STA */
+  esp_netif_ip_info_t ip_info;
+  char ip_addr[16] = { 0 };
+
+  esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &ip_info);
+  esp_ip4addr_ntoa(&ip_info.ip, ip_addr, sizeof(ip_addr));
+
+  /* create root node and array */
+  root = cJSON_CreateObject();
+  farm_network = cJSON_CreateObject();
+
+  cJSON_AddItemToObject(root, "type", cJSON_CreateString("devinfo"));
+  cJSON_AddItemToObject(root, "id", cJSON_CreateString(hostname));
+  cJSON_AddItemToObject(root, "fw_version", cJSON_CreateString(FW_VERSION));
+
+  cJSON_AddItemToObject(root, "farm_network", farm_network);
+
+  cJSON_AddItemToObject(farm_network, "ssid", cJSON_CreateString((char *)ap_info.ssid));
+  cJSON_AddItemToObject(farm_network, "channel", cJSON_CreateNumber(ap_info.primary));
+  cJSON_AddItemToObject(root, "ip_address", cJSON_CreateString((char *)ip_addr));
+  cJSON_AddItemToObject(root, "rssi", cJSON_CreateNumber(ap_info.rssi));
+  cJSON_AddItemToObject(root, "send_interval", cJSON_CreateNumber(MQTT_SEND_INTERVAL));
+  if (!strncmp(power, "P", 1)) {
+    cJSON_AddItemToObject(root, "power", cJSON_CreateString("plug"));
+  } else if (!strncmp(power, "B", 1)) {
+    cJSON_AddItemToObject(root, "power", cJSON_CreateString("battery"));
+  }
+  cJSON_AddItemToObject(root, "uptime", cJSON_CreateString(uptime()));
+  cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
+  /* print everything */
+  p_out = cJSON_Print(root);
+  memset(&json_resp[0], 0, sizeof(json_resp));
+  memcpy(&json_resp[0], p_out, strlen(p_out));
+
+  free(hostname);
+  free(p_out);
+  cJSON_Delete(root);
+
+  printf("%s\r\n", json_resp);
+
+  return json_resp;
+}
+
+static char *create_json_resp(char *type) {
+  /*
+  {
+    "type": "update", "reset"
+    "id" : "GLSTH-0EADBEEFFEE9",
+    "state": "success"
+    "timestamp" : "2022-05-02 15:07:18"
+  }
+  */
+  char *p_out;
+  cJSON *root;
+  char *hostname = generate_hostname();
+
+  /* create root node and array */
+  root = cJSON_CreateObject();
+
+  cJSON_AddItemToObject(root, "type", cJSON_CreateString(type));
+  cJSON_AddItemToObject(root, "id", cJSON_CreateString(hostname));
+  cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
+  /* print everything */
+  p_out = cJSON_Print(root);
+  memset(&json_resp[0], 0, sizeof(json_resp));
+  memcpy(&json_resp[0], p_out, strlen(p_out));
+
+  free(hostname);
+  free(p_out);
+  cJSON_Delete(root);
+
+  printf("%s\r\n", json_resp);
+
+  return json_resp;
+}
+
+static int process_payload(int payload_len, char *payload) {
   char content[300] = { 0 };
   snprintf(content, payload_len + 1, "%s", payload);
-  LOGI(TAG, "payload_len : %d", payload_len);
   cJSON *root = cJSON_Parse(content);
   cJSON *get = cJSON_GetObjectItem(root, "type");
   if (cJSON_IsString(get)) {
@@ -655,32 +585,119 @@ static int passing_payload(int payload_len, char *payload) {
       mqtt_publish(mqtt_response, create_json_info(power_mode), 0);
     } else if (!strncmp(get->valuestring, "update", 6)) {
       mqtt_publish(mqtt_response, create_json_resp("update"), 0);
-      actuator_data_mqtt_send();
+      mqtt_publish_actuator_data();
     } else if (!strncmp(get->valuestring, "reset", 5)) {
-      SLOGI(TAG, "Resetting...");
       mqtt_publish(mqtt_response, create_json_resp("reset"), 0);
+      SLOGI(TAG, "Resetting...");
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      esp_restart();
+    } else if (!strncmp(get->valuestring, "factory_reset", 13)) {
+      if (syscfg_clear(0) != 0) {
+        LOGE(TAG, "Failed to sys CFG_DATA clear");
+      }
+      mqtt_publish(mqtt_response, create_json_resp("factory_reset"), 0);
+      SLOGI(TAG, "Resetting...");
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      esp_restart();
+    } else if (!strncmp(get->valuestring, "server_change", 13)) {
+      char farmip[30] = { 0 };
+      cJSON *Server = cJSON_GetObjectItem(root, "Server");
+      if (cJSON_IsString(Server)) {
+        snprintf(farmip, sizeof(farmip), "%s", Server->valuestring);
+        syscfg_set(CFG_DATA, "farmip", farmip);
+        LOGI(TAG, "Got server url = %s ", Server->valuestring);
+      }
+      SLOGI(TAG, "Resetting...");
+      mqtt_publish(mqtt_response, create_json_resp("server_change"), 0);
       vTaskDelay(1000 / portTICK_PERIOD_MS);
       esp_restart();
     } else if (!strncmp(get->valuestring, "fw_update", 9)) {
       // 기능 구현 보류
     } else if (!strncmp(get->valuestring, "switch", 6)) {
-      actuator_switch_passing(content);
+      if (!strncmp(model_name, "GLASW", 5)) {
+        actuator_switch_passing(content);
+        mqtt_publish_actuator_data();
+      }
     } else if (!strncmp(get->valuestring, "motor", 5)) {
-      actuator_motor_passing(content);
+      if (!strncmp(model_name, "GLAMT", 5)) {
+        actuator_motor_passing(content);
+        mqtt_publish_actuator_data();
+      }
     }
   }
   cJSON_Delete(root);
   return 0;
 }
 
-void create_mqtt_task(void) {
-  uint16_t stack_size = 8192;
-  UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
+int start_mqttc(void) {
+  int ret = 0;
+  char farmip[30] = { 0 };
 
-  if (mqtt_handle) {
-    LOGI(TAG, "MQTT task is alreay created");
-    return;
+  syscfg_get(CFG_DATA, "farmip", farmip, sizeof(farmip));
+  syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
+  syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
+
+  if (!farmip[0]) {
+    return -1;
   }
 
-  xTaskCreate((TaskFunction_t)mqtt_task, "MQTT", stack_size, NULL, task_priority, &mqtt_handle);
+  char *s_host = strtok(farmip, ":");  //공백을 기준으로 문자열 자르기
+  char *s_port = strtok(NULL, " ");    //널문자를 기준으로 다시 자르기
+
+  if (s_host == NULL || s_port == NULL) {
+    return -1;
+  }
+
+  int n_port = atoi(s_port);
+
+  mqtt_config_t config = {
+    .transport = MQTT_TCP,
+    .event_cb_fn = mqtt_event_callback,
+    // .uri = "mqtt://mqtt.eclipseprojects.io",
+    .host = s_host,
+    .port = n_port,
+  };
+
+  char *hostname = generate_hostname();
+
+  snprintf(mqtt_request, sizeof(mqtt_request), "cmd/%s/req", hostname);
+  snprintf(mqtt_response, sizeof(mqtt_response), "cmd/%s/resp", hostname);
+
+  mqtt_ctx = mqtt_client_init(&config);
+
+  ret = mqtt_client_start(mqtt_ctx);
+  if (ret != 0) {
+    LOGE(TAG, "Failed to mqtt start");
+  }
+  vTaskDelay(3000 / portTICK_PERIOD_MS);
+
+  free(hostname);
+  return ret;
+}
+
+void stop_mqttc(void) {
+  if (mqtt_ctx) {
+    mqtt_client_disconnect(mqtt_ctx);
+    mqtt_client_stop(mqtt_ctx);
+    mqtt_client_deinit(mqtt_ctx);
+    mqtt_ctx = NULL;
+  }
+}
+
+void mqtt_publish_actuator_data(void) {
+  char *hostname = generate_hostname();
+
+  if (!strncmp(model_name, "GLASW", 5)) {
+    char mqtt_switch[50] = { 0 };
+    snprintf(mqtt_switch, sizeof(mqtt_switch), "value/%s/switch", hostname);
+    mqtt_publish(mqtt_switch, create_json_actuator_switch(), 0);
+  } else if (!strncmp(model_name, "GLAMT", 5)) {
+    char mqtt_motor[50] = { 0 };
+    snprintf(mqtt_motor, sizeof(mqtt_motor), "value/%s/motor", hostname);
+    mqtt_publish(mqtt_motor, create_json_actuator_motor(), 0);
+  }
+
+  free(hostname);
+
+  heap_monitor_func(8092, 4096);
 }

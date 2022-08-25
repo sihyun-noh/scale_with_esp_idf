@@ -28,19 +28,37 @@ typedef enum {
 } err_sysinit_t;
 
 typedef enum {
-  CHECK_OK,
-  ERR_SENSOR_READ,
-  ERR_BATTERY_READ,
-} err_system_t;
+  SYSTEM_INIT_MODE = 0,
+  MODEL_CHECK_MODE,
+  ACTUATOR_INIT_MODE,
+  EASY_SETUP_MODE,
+  TIME_ZONE_SET_MODE,
+  MQTT_START_MODE,
+  MONITOR_MODE,
+  SLEEP_MODE,
+} operation_mode_t;
 
 static const char *TAG = "main_app";
 
 sc_ctx_t *ctx = NULL;
 
-extern void create_mqtt_task(void);
 extern int actuator_init(void);
-extern void create_actuator_task(void);
+extern void actuator_task(void);
 static void generate_default_sysmfg(void);
+
+extern int start_mqttc(void);
+extern void stop_mqttc(void);
+extern void mqtt_publish_actuator_data(void);
+
+static operation_mode_t s_curr_mode;
+
+void set_operation_mode(operation_mode_t mode) {
+  s_curr_mode = mode;
+}
+
+operation_mode_t get_operation_mode(void) {
+  return s_curr_mode;
+}
 
 /**
  * @brief Handler function to stop interactive command shell
@@ -60,15 +78,12 @@ static void generate_default_sysmfg(void) {
 
   syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
   if (model_name[0] == 0) {
-    syscfg_set(MFG_DATA, "model_name", "GLASW");
+    syscfg_set(MFG_DATA, "model_name", "GLAMT");
   }
   syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
   if (power_mode[0] == 0) {
     syscfg_set(MFG_DATA, "power_mode", "P");
   }
-
-  syscfg_set(CFG_DATA, "farmip", "192.168.50.104:1883");
-  // syscfg_set(CFG_DATA, "farmip", "192.168.200.191:1883");
 }
 
 int system_init(void) {
@@ -115,26 +130,23 @@ int system_init(void) {
   return SYSINIT_OK;
 }
 
-typedef enum {
-  SYSTEM_INIT_MODE = 0,
-  MODEL_CHECK_MODE,
-  ACTUATOR_INIT_MODE,
-  ACTUATOR_TASK_MODE,
-  EASY_SETUP_MODE,
-  TIME_ZONE_SET_MODE,
-  MQTT_TASK_MODE,
-  MONITOR_MODE,
-} operation_mode_t;
+int sleep_timer_wakeup(int wakeup_time_sec) {
+  int ret = 0;
+  LOGI(TAG, "Enabling timer wakeup, %ds\n", wakeup_time_sec);
+  ret = esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000);
+  esp_deep_sleep_start();
+  return ret;
+}
 
 void app_main(void) {
   int rc = SYSINIT_OK;
-  operation_mode_t curr_mode = SYSTEM_INIT_MODE;
   char model_name[10] = { 0 };
   char power_mode[10] = { 0 };
-  char s_easy_setup[10] = { 0 };
+
+  set_operation_mode(SYSTEM_INIT_MODE);
 
   while (1) {
-    switch (curr_mode) {
+    switch (get_operation_mode()) {
       case SYSTEM_INIT_MODE: {
         LOGI(TAG, "SYSTEM_INIT_MODE");
         if ((rc = system_init()) != SYSINIT_OK) {
@@ -146,56 +158,73 @@ void app_main(void) {
           if (ctx) {
             sc_start(ctx);
           }
-          curr_mode = MODEL_CHECK_MODE;
+          set_device_onboard(0);
+          set_operation_mode(MODEL_CHECK_MODE);
         }
       } break;
       case MODEL_CHECK_MODE: {
+        LOGI(TAG, "MODEL_CHECK_MODE");
         syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
         syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
-        LOGI(TAG, "MODEL_CHECK_MODE");
         LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
-        curr_mode = ACTUATOR_INIT_MODE;
+        set_operation_mode(ACTUATOR_INIT_MODE);
       } break;
       case ACTUATOR_INIT_MODE: {
         LOGI(TAG, "ACTUATOR_INIT_MODE");
         if ((rc = actuator_init()) != SYSINIT_OK) {
           LOGI(TAG, "Could not initialize actuator");
-          curr_mode = MONITOR_MODE;
+          set_operation_mode(SLEEP_MODE);
         } else {
-          curr_mode = EASY_SETUP_MODE;
+          set_operation_mode(EASY_SETUP_MODE);
         }
       } break;
       case EASY_SETUP_MODE: {
         LOGI(TAG, "EASY_SETUP_MODE");
         create_ethernet_easy_setup_task();
-        curr_mode = TIME_ZONE_SET_MODE;
+        set_operation_mode(TIME_ZONE_SET_MODE);
       } break;
       case TIME_ZONE_SET_MODE: {
-        LOGI(TAG, "TIME_ZONE_SET_MODE");
-        if (sysevent_get("SYSEVENT_BASE", EASY_SETUP_DONE, &s_easy_setup, sizeof(s_easy_setup)) == 0) {
-          if (!strncmp(s_easy_setup, "OK", 2)) {
-            if (tm_is_timezone_set() == false) {
-              tm_init_sntp();
-              tm_apply_timesync();
-              // TODO : Get the timezone using the region code of the manufacturing data.
-              // Currently hardcoding the timezone to be KST-9
-              tm_set_timezone("Asia/Seoul");
-            }
-            curr_mode = ACTUATOR_TASK_MODE;
+        if (is_device_configured() && is_device_onboard()) {
+          LOGI(TAG, "TIME_ZONE_SET_MODE");
+          // If sensor node onboarded on the network after finishing easy setup.
+          // It need to sync the time zone and current time from the ntp server
+          if (tm_is_timezone_set() == false) {
+            tm_init_sntp();
+            tm_apply_timesync();
+            // TODO : Get the timezone using the region code of the manufacturing data.
+            // Currently hardcoding the timezone to be KST-9
+            tm_set_timezone("Asia/Seoul");
+          } else {
+            tm_apply_timesync();
+            tm_set_timezone("Asia/Seoul");
           }
+          set_operation_mode(MQTT_START_MODE);
+        } else {
+          // If the sensor is not connected to the farm network router, it should continuously try to connect.
+          set_operation_mode(TIME_ZONE_SET_MODE);
         }
       } break;
-      case ACTUATOR_TASK_MODE: {
-        LOGI(TAG, "ACTUATOR_TASK_MODE");
-        create_actuator_task();
-        curr_mode = MQTT_TASK_MODE;
-      } break;
-      case MQTT_TASK_MODE: {
-        LOGI(TAG, "MQTT_TASK_MODE");
-        create_mqtt_task();
-        curr_mode = MONITOR_MODE;
+      case MQTT_START_MODE: {
+        if (is_device_onboard()) {
+          start_mqttc();
+          mqtt_publish_actuator_data();
+          set_operation_mode(MONITOR_MODE);
+        } else {
+          set_operation_mode(SLEEP_MODE);
+        }
       } break;
       case MONITOR_MODE: {
+        if (is_device_onboard()) {
+          actuator_task();
+        } else {
+          set_operation_mode(SLEEP_MODE);
+        }
+      } break;
+      case SLEEP_MODE: {
+        stop_mqttc();
+        vTaskDelay(5000 / portTICK_RATE_MS);
+        sleep_timer_wakeup(30);
+        set_operation_mode(SYSTEM_INIT_MODE);
       } break;
     }
     vTaskDelay(500 / portTICK_PERIOD_MS);
