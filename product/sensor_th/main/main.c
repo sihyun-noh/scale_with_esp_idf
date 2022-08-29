@@ -8,8 +8,6 @@
 #include "wifi_manager.h"
 #include "esp_sleep.h"
 #include "event_ids.h"
-#include "syscfg.h"
-#include "gpio_api.h"
 #include "time_api.h"
 #include "monitoring.h"
 #include "sysfile.h"
