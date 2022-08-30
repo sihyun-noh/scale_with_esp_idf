@@ -28,7 +28,7 @@ int actuator_init(void) {
   for (uint8_t i = 0; i < sizeof(gpio_arry); i++) {
     relay_off(gpio_arry[i]);
     if ((ret = gpio_init(gpio_arry[i], OUTPUT)) != 0) {
-      LOGE(TAG, "%s : Could not initialize, error = %d\n", ret);
+      LOGE(TAG, "Could not initialize, error = %d\n", ret);
       return ret;
     }
     relay_off(gpio_arry[i]);
