@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "esp_wifi_types.h"
+#include "sdkconfig.h"
 #include "unity.h"
 #include "esp_ota_ops.h"
 #include "easy_setup.h"
@@ -31,6 +33,7 @@
 
 #include "config.h"
 #include "sht3x_params.h"
+#include "scd4x_params.h"
 
 static void print_banner(const char* text);
 
@@ -52,6 +55,20 @@ typedef enum {
   TEST_OK = 0,
   TEST_FAIL,
 } unit_test_t;
+
+typedef enum {
+  FACTORY_SENSOR_TYPE = 1,
+  FACTORY_POWER_MODE,
+} factory_test_event_id_t;
+
+typedef enum {
+  STH = 1,  // Temperature Humidity Sensor
+  SSE,      // Soil Moisture Sensor, Temperature Probe & EC Sensor
+  SWE,      // Water EC Sensor
+  SWP,      // Water PH Sensor
+  SWS,      // Weather Station
+  SCO,      // CO2 Sensor
+} sensor_type_t;
 
 static void __attribute__((noreturn)) task_fatal_error(void) {
   LOGE(TAG, "Exiting task due to fatal error...");
@@ -143,18 +160,40 @@ int system_init(void) {
   }
   // Generate the default manufacturing data if there is no data in mfg partition.
 
-  // ret = init_sysfile();
-  // if (ret != 0) {
-  //   return ERR_SPIFFS_INIT;
-  // }
-
-  //  create_log_file_server_task();
-
-  //  generate_default_sysmfg();
-
   return SYSINIT_OK;
 }
 
+//-----------------------------  syscfg unit test ---------------------------//
+void system_package_unit_test_with_syscfg(void) {
+  LOGI(TAG, "CFG_DATA");
+  TEST_ASSERT_EQUAL(0, syscfg_show(CFG_DATA));
+  LOGI(TAG, "MFG_DATA");
+  TEST_ASSERT_EQUAL(0, syscfg_show(MFG_DATA));
+  return;
+}
+
+void system_package_unit_test_with_sys_set_mfg(void) {
+  LOGI(TAG, "mfg_data set sensor type");
+  // TEST_ASSERT_EQUAL(0, syscfg_set(MFG_DATA, "sensor", "scd4x"));
+  TEST_ASSERT_EQUAL(0, syscfg_set(MFG_DATA, "sensor", "sht3x"));
+  return;
+}
+
+void system_package_unit_test_with_sys_get_mfg(void) {
+  char empty[20] = { 0 };
+  char s_type[4] = { 0 };
+  char p_mode[2] = { 0 };
+  LOGI(TAG, "mfg_data get sensor type");
+  TEST_ASSERT_EQUAL(0, syscfg_get(MFG_DATA, "serial_number", empty, sizeof(empty)));
+  TEST_ASSERT_EQUAL(0, syscfg_get(MFG_DATA, "power_mode", p_mode, sizeof(p_mode)));
+  LOGI(TAG, "get_serial_number : %s", empty);
+  LOGI(TAG, "get_power_mode : %s", p_mode);
+  strncpy(s_type, empty + 6, sizeof(s_type) - 1);
+  LOGI(TAG, "get_sensor_s_type : %s", s_type);
+  sysevent_set(FACTORY_SENSOR_TYPE, s_type);
+  sysevent_set(FACTORY_POWER_MODE, p_mode);
+  return;
+}
 //-----------------------------  sensor(battery) unit test ---------------------------//
 
 void sensor_init_read_value_test_with_battery(void) {
@@ -164,26 +203,44 @@ void sensor_init_read_value_test_with_battery(void) {
   data = read_battery(BATTERY_PORT);
   LOGI(TAG, "battery value : %d", data);
   TEST_ASSERT(0 < data);
+  return;
 }
 
 //-----------------------------  sensor(sht3x) unit test ---------------------------//
 void sensor_init_read_value_test_with_sht3x(void) {
   sht3x_dev_t dev;
-  float temperature;
-  float humidity;
+  float temperature = 0;
+  float humidity = 0;
 
   TEST_ASSERT_EQUAL(0, sht3x_init(&dev, &sht3x_params[0]));
   TEST_ASSERT_EQUAL(0, sht3x_read(&dev, &temperature, &humidity));
   LOGI(TAG, "sensor read temperature value : %.2f", temperature);
   LOGI(TAG, "sensor read humidity value : %.2f", humidity);
+  return;
 }
 
-//-----------------------------  syscfg unit test ---------------------------//
-void system_package_unit_test_with_syscfg(void) {
-  LOGI(TAG, "CFG_DATA");
-  TEST_ASSERT_EQUAL(0, syscfg_show(CFG_DATA));
-  LOGI(TAG, "MFG_DATA");
-  TEST_ASSERT_EQUAL(0, syscfg_show(MFG_DATA));
+//-----------------------------  sensor(scd4x) unit test ---------------------------//
+void sensor_init_read_value_test_with_scd4x(void) {
+  int res;
+  scd4x_dev_t dev;
+  uint16_t scd41_co2 = 0;
+  float scd41_temperature = 0;
+  float scd41_humidity = 0;
+
+  TEST_ASSERT_EQUAL(0, scd4x_init(&dev, &scd4x_params[0]));
+
+  res = scd4x_get_data_ready_flag(&dev);
+  if (res == -1) {
+    LOGI(TAG, "scd4x is not data ready !!!");
+    TEST_FAIL();
+  }
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+
+  TEST_ASSERT_EQUAL(0, scd4x_read_measurement(&dev, &scd41_co2, &scd41_temperature, &scd41_humidity));
+  LOGI(TAG, "sensor read temperature value : %.2f", scd41_temperature);
+  LOGI(TAG, "sensor read humidity value : %.2f", scd41_humidity);
+  LOGI(TAG, "sensor read co2 value : %u", scd41_co2);
+  return;
 }
 
 //-----------------------------  wifi unit test ---------------------------//
@@ -216,11 +273,14 @@ void system_package_unit_test_with_wifi(void) {
   if (test_status == TEST_FAIL) {
     TEST_FAIL();
   }
+  return;
 }
 
 void app_main(void) {
   int rc = SYSINIT_OK;
   unit_test_t test_status = TEST_OK;
+  char s_type[4] = { 0 };
+  char p_mode[2] = { 0 };
 
   if ((rc = system_init()) != SYSINIT_OK) {
     LOGE(TAG, "Failed to initialize device, error = [%d]", rc);
@@ -229,8 +289,24 @@ void app_main(void) {
 
   print_banner("component_test_sensor_sht3x");
   UNITY_BEGIN();
-  RUN_TEST(sensor_init_read_value_test_with_sht3x);
   RUN_TEST(system_package_unit_test_with_syscfg);
+  RUN_TEST(system_package_unit_test_with_sys_get_mfg);
+
+  sysevent_get(SYSEVENT_BASE, FACTORY_SENSOR_TYPE, s_type, sizeof(s_type));
+  sysevent_get(SYSEVENT_BASE, FACTORY_POWER_MODE, p_mode, sizeof(p_mode));
+
+  if (strncmp(s_type, "STH", sizeof(s_type) - 1) == 0) {
+    RUN_TEST(sensor_init_read_value_test_with_sht3x);
+  } else if (strncmp(s_type, "SCO", sizeof(s_type) - 1) == 0) {
+    RUN_TEST(sensor_init_read_value_test_with_scd4x);
+  } else {
+    TEST_FAIL();
+  }
+
+  if (strncmp(p_mode, "B", sizeof(p_mode) - 1) == 0) {
+    RUN_TEST(sensor_init_read_value_test_with_battery);
+  }
+
   RUN_TEST(system_package_unit_test_with_wifi);
   test_status = UNITY_END();
 

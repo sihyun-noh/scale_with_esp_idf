@@ -1,0 +1,6 @@
+mfg,namespace,
+serial_number,data,string
+mac_address,data,string
+hw_version,data,string,REPEAT
+model_name,data,string
+power_mode,data,string

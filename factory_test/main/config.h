@@ -10,7 +10,8 @@
 
 #define SENS_GLS_HW 20 /* Greenlabs HW */
 
-#define SENS_BOARD_VER SENS_TTGO_HW1
+//#define SENS_BOARD_VER SENS_TTGO_HW1
+#define SENS_BOARD_VER SENS_GLS_HW
 
 #define SHT3X 1 /* Temperature and Humidity Sensor */
 #define SCD4X 2 /* CO2 and Temperature and Humidity */
@@ -35,6 +36,11 @@
 #define SCD4X_I2C_SDA_PIN 13
 #define SCD4X_I2C_SCL_PIN 16
 #endif
+#elif defined(SENS_BOARD_VER) && (SENS_BOARD_VER == SENS_GLS_HW)
+#define SHT3X_I2C_SDA_PIN 21
+#define SHT3X_I2C_SCL_PIN 22
+#define SCD4X_I2C_SDA_PIN 21
+#define SCD4X_I2C_SCL_PIN 22
 #endif
 
 #define BATTERY_PORT 6  // GPIO34

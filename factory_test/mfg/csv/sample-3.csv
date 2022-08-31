@@ -1,0 +1,7 @@
+key,type,encoding,value
+mfg,namespace,,
+serial_number,data,string,102123SCO00003
+mac_address,data,string,0EADBEEFFEE9
+hw_version,data,string,A0
+model_name,data,string,GLSCO
+power_mode,data,string,B
