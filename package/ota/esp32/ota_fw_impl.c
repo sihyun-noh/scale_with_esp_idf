@@ -75,23 +75,32 @@ static int check_fw_image(const esp_partition_t *running, uint8_t *fw_image, uin
         LOGI(TAG, "Running firmware project name: %s", running_app_info.project_name);
       }
 
-      fw_image_status = VALID_FIRMWARE;
+      // If the FW name is different, firmware update will be ignored, it has been rollbacked to the previous fw
+      // version
+      if (memcmp(new_app_info.project_name, running_app_info.project_name, sizeof(new_app_info.project_name)) != 0) {
+        fw_image_status = INVALID_FIRMWARE;
+        LOGI(TAG, "New firmware is invalid, This is not the firmware for this product");
+        LOGW(TAG, "The firmware update will be ignored, it has been rollbacked to the previous firmware");
+      } else {
+        fw_image_status = VALID_FIRMWARE;
 
-      const esp_partition_t *last_invalid_app = esp_ota_get_last_invalid_partition();
-      if (last_invalid_app != NULL) {
-        esp_app_desc_t invalid_app_info;
-        if (esp_ota_get_partition_description(last_invalid_app, &invalid_app_info) == ESP_OK) {
-          LOGI(TAG, "Invalid firmware version: %s", invalid_app_info.version);
-          LOGI(TAG, "Invalid firmware project name: %s", invalid_app_info.project_name);
-        }
-        if (memcmp(invalid_app_info.version, new_app_info.version, sizeof(invalid_app_info.version)) == 0 &&
-            memcmp(invalid_app_info.project_name, new_app_info.project_name, sizeof(invalid_app_info.project_name)) ==
-                0) {
-          LOGI(TAG, "New firmware is invalid, last invalid firmware is the same as the new firmware");
-          LOGW(TAG, "The firmware update will be ignored, it has been rollbacked to the previous firmware");
-          fw_image_status = INVALID_FIRMWARE;
+        const esp_partition_t *last_invalid_app = esp_ota_get_last_invalid_partition();
+        if (last_invalid_app != NULL) {
+          esp_app_desc_t invalid_app_info;
+          if (esp_ota_get_partition_description(last_invalid_app, &invalid_app_info) == ESP_OK) {
+            LOGI(TAG, "Invalid firmware version: %s", invalid_app_info.version);
+            LOGI(TAG, "Invalid firmware project name: %s", invalid_app_info.project_name);
+          }
+          if (memcmp(invalid_app_info.version, new_app_info.version, sizeof(invalid_app_info.version)) == 0 &&
+              memcmp(invalid_app_info.project_name, new_app_info.project_name, sizeof(invalid_app_info.project_name)) ==
+                  0) {
+            LOGI(TAG, "New firmware is invalid, last invalid firmware is the same as the new firmware");
+            LOGW(TAG, "The firmware update will be ignored, it has been rollbacked to the previous firmware");
+            fw_image_status = INVALID_FIRMWARE;
+          }
         }
       }
+
       b_image_header_check = true;
     }
   } else if (b_image_header_check == true && fw_image_status == VALID_FIRMWARE) {
@@ -280,7 +289,7 @@ int ota_fw_active_new_image_impl(fw_ctx_t *const fwctx) {
   }
 
   ota_ctx_clear(&ota_ctx);
-  ota_fw_reset_device_impl(fwctx);
+  // ota_fw_reset_device_impl(fwctx);
   return err;
 }
 

@@ -28,11 +28,17 @@
 #define is_identification sys_stat_get_identification
 #define set_identification sys_stat_set_identification
 
+#define is_fwupdate sys_stat_get_fwupdate
+#define set_fwupdate sys_stat_set_fwupdate
+
 extern int sys_stat_get_configured(void);
 extern void sys_stat_set_configured(uint8_t status);
 
 extern int sys_stat_get_onboard(void);
 extern void sys_stat_set_onboard(uint8_t status);
+
+extern int sys_stat_get_fwupdate(void);
+extern void sys_stat_set_fwupdate(uint8_t status);
 
 extern int sys_stat_get_internet(void);
 extern void sys_stat_set_internet(uint8_t status);
