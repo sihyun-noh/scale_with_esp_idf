@@ -27,6 +27,7 @@ typedef enum {
   TIME_ZONE_SET_MODE,
   MQTT_START_MODE,
   SENSOR_PUB_MODE,
+  OTA_FWUPDATE_MODE,
   SLEEP_MODE
 } operation_mode_t;
 

@@ -1,4 +1,5 @@
 #include "easy_setup.h"
+#include "freertos/projdefs.h"
 #include "nvs_flash.h"
 #include "shell_console.h"
 #include "syscfg.h"
@@ -44,7 +45,7 @@ extern void create_led_task(void);
 
 extern int start_file_server(uint32_t port);
 
-static void generate_default_sysmfg(void);
+static void generate_default_syscfg(void);
 
 RTC_DATA_ATTR float memory_sensor_buf;
 RTC_DATA_ATTR uint8_t m_alive_count;
@@ -59,6 +60,9 @@ void set_operation_mode(operation_mode_t mode) {
 }
 
 operation_mode_t get_operation_mode(void) {
+  if (is_fwupdate()) {
+    s_curr_mode = OTA_FWUPDATE_MODE;
+  }
   return s_curr_mode;
 }
 
@@ -74,7 +78,7 @@ void stop_shell(void) {
 }
 
 /* The code below is only used for testing purpose until manufacturing data is applied */
-static void generate_default_sysmfg(void) {
+static void generate_default_syscfg(void) {
   char model_name[10] = { 0 };
   char power_mode[10] = { 0 };
 
@@ -92,6 +96,8 @@ static void generate_default_sysmfg(void) {
     syscfg_set(MFG_DATA, "power_mode", "B");
     // syscfg_set(MFG_DATA, "power_mode", "P");
   }
+
+  syscfg_set(CFG_DATA, "fw_version", FW_VERSION);
 }
 
 int system_init(void) {
@@ -143,7 +149,7 @@ int system_init(void) {
   }
 
   // Generate the default manufacturing data if there is no data in mfg partition.
-  generate_default_sysmfg();
+  generate_default_syscfg();
 
   return SYSINIT_OK;
 }
@@ -289,6 +295,10 @@ void battery_loop_task(void) {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         set_operation_mode(SENSOR_PUB_MODE);
       } break;
+      case OTA_FWUPDATE_MODE: {
+        // Do not anything while OTA FW updating
+        vTaskDelay(pdMS_TO_TICKS(1000));
+      } break;
       case SENSOR_PUB_MODE: {
         mqtt_publish_sensor_data();
         vTaskDelay(10000 / portTICK_PERIOD_MS);
@@ -403,6 +413,10 @@ void plugged_loop_task(void) {
           set_operation_mode(SLEEP_MODE);
         }
         vTaskDelay(MQTT_SEND_INTERVAL * 1000 / portTICK_PERIOD_MS);
+      } break;
+      case OTA_FWUPDATE_MODE: {
+        // Do not anything while OTA FW updating
+        vTaskDelay(pdMS_TO_TICKS(1000));
       } break;
       case SLEEP_MODE: {
         stop_mqttc();

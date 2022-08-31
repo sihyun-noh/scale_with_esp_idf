@@ -30,6 +30,7 @@ static const char *TAG = "MQTT";
 static mqtt_ctx_t *mqtt_ctx;
 static char json_resp[400];
 static char json_data[400];
+static char json_fwup_resp[400];
 static char power_mode[10];
 
 char s_temperature[20] = { 0 };
@@ -171,9 +172,12 @@ static char *create_json_info(char *power) {
   /* IP Addr assigned to STA */
   esp_netif_ip_info_t ip_info;
   char ip_addr[16] = { 0 };
+  char fw_version[80] = { 0 };
 
   esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &ip_info);
   esp_ip4addr_ntoa(&ip_info.ip, ip_addr, sizeof(ip_addr));
+
+  syscfg_get(CFG_DATA, "fw_version", fw_version, sizeof(fw_version));
 
   /* create root node and array */
   root = cJSON_CreateObject();
@@ -181,7 +185,7 @@ static char *create_json_info(char *power) {
 
   cJSON_AddItemToObject(root, "type", cJSON_CreateString("devinfo"));
   cJSON_AddItemToObject(root, "id", cJSON_CreateString(hostname));
-  cJSON_AddItemToObject(root, "fw_version", cJSON_CreateString(FW_VERSION));
+  cJSON_AddItemToObject(root, "fw_version", cJSON_CreateString(fw_version));
 
   cJSON_AddItemToObject(root, "farm_network", farm_network);
 
@@ -216,7 +220,6 @@ static char *create_json_resp(char *type) {
   {
     "type": "update", "reset"
     "id" : "GLSTH-0EADBEEFFEE9",
-    "state": "success"
     "timestamp" : "2022-05-02 15:07:18"
   }
   */
@@ -244,6 +247,48 @@ static char *create_json_resp(char *type) {
   return json_resp;
 }
 
+static char *create_json_fwup_resp(int ret) {
+  /*
+  {
+    "type": "fw_update"
+    "id" : "GLSTH-0EADBEEFFEE9",
+    "state": "success"
+    "fw_version" : "1.0.1"
+    "timestamp" : "2022-05-02 15:07:18"
+  }
+  */
+  char *p_out;
+  cJSON *root;
+  char *hostname = generate_hostname();
+  char fw_version[80] = { 0 };
+
+  /* create root node and array */
+  root = cJSON_CreateObject();
+
+  cJSON_AddItemToObject(root, "type", cJSON_CreateString("fw_update"));
+  cJSON_AddItemToObject(root, "id", cJSON_CreateString(hostname));
+  if (ret == 0) {
+    cJSON_AddItemToObject(root, "state", cJSON_CreateString("success"));
+  } else {
+    cJSON_AddItemToObject(root, "state", cJSON_CreateString("failure"));
+  }
+  syscfg_get(CFG_DATA, "fw_version", fw_version, sizeof(fw_version));
+  cJSON_AddItemToObject(root, "fw_version", cJSON_CreateString(fw_version));
+  cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
+  /* print everything */
+  p_out = cJSON_Print(root);
+  memset(&json_fwup_resp, 0, sizeof(json_fwup_resp));
+  memcpy(&json_fwup_resp, p_out, strlen(p_out));
+
+  free(hostname);
+  free(p_out);
+  cJSON_Delete(root);
+
+  printf("%s\r\n", json_fwup_resp);
+
+  return json_fwup_resp;
+}
+
 static int process_payload(int payload_len, char *payload) {
   char content[100] = { 0 };
   snprintf(content, payload_len + 1, "%s", payload);
@@ -255,7 +300,9 @@ static int process_payload(int payload_len, char *payload) {
     } else if (!strncmp(get->valuestring, "fw_update", strlen("fw_update"))) {
       cJSON *url = cJSON_GetObjectItem(root, "url");
       if (url) {
-        start_ota_fw_task(url->valuestring);
+        // start_ota_fw_task(url->valuestring);
+        int ret = start_ota_fw_task_wait(url->valuestring);
+        mqtt_publish(mqtt_response, create_json_fwup_resp(ret), 0);
       }
     } else if (!strncmp(get->valuestring, "update", 6)) {
       mqtt_publish(mqtt_response, create_json_resp("update"), 0);
