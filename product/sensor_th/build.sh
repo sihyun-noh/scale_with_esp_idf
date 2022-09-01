@@ -27,13 +27,17 @@ checkArgVariable() {
 }
 
 if [ -z ${1} ] || [[ ${1} = "build" ]] || [[ ${1} = "flash" ]]; then
-  echo "Please select product. 1: Temp & Humi, 2 : CO2 TH....  "
+  echo "Please select product. 1: Temp & Humi, 2 : CO2 TH, 3 : Soil EC, 4 : Solar Radiation"
   read SELECT_NUM
 
   if [ ${SELECT_NUM} = "1" ]; then
     PRODUCT_NAME="SHT3X"
-  else
+  elif [ ${SELECT_NUM} = "2" ]; then
     PRODUCT_NAME="SCD4X"
+  elif [ ${SELECT_NUM} = "3" ]; then
+    PRODUCT_NAME="RK520_02"
+  elif [ ${SELECT_NUM} = "4" ]; then
+    PRODUCT_NAME="SWSR7500"
   fi
 
   echo "select ${PRODUCT_NAME}"

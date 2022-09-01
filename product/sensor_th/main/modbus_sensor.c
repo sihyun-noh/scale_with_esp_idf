@@ -37,7 +37,7 @@ typedef enum {
 #define RTS_UNCHANGED (-1)
 #define CTS_UNCHANGED (-1)
 
-#define UART_PORT_NUM 1
+#define UART_PORT_NUM 2
 
 const static char *TAG = "modbus_sensor";
 
