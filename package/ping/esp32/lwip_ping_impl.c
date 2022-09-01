@@ -17,7 +17,7 @@ int do_ping_lwip_impl(char *host, int seq) {
   int packet_size = 0;
   unsigned char *ping_buf = NULL;
   unsigned char *reply_buf = NULL;
-  int i = 0, ping_socket = -1;
+  int ping_socket = -1;
 
   struct sockaddr_in to_addr, from_addr;
   struct hostent *server_host;
@@ -75,9 +75,8 @@ int do_ping_lwip_impl(char *host, int seq) {
   }
 
   /* Make ping echo packet */
-  for (i = 0; i < data_size; i++) {
-    ping_buf[sizeof(struct icmp_echo_hdr) + 1] = (unsigned char)i;
-  }
+  /* Initailze ping_buf */
+  memset(ping_buf, 0, packet_size);
 
   pecho = (struct icmp_echo_hdr *)ping_buf;
   ICMPH_TYPE_SET(pecho, ICMP_ECHO);
