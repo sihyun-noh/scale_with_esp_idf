@@ -18,6 +18,8 @@ checkArgVariable() {
     echo "start build, flash and monitor"
   elif [ "${*}" = "menuconfig" ]; then
     echo "start menuconfig"
+  elif [[ "${*}" =~ "erase" ]]; then
+    echo "start ${*}"
   else
     echo "Not support command. Please check your command"
     exit 0
@@ -114,10 +116,13 @@ prodBuild() {
 
 if [ -z ${1} ]; then
   prodBuild
-elif [[ "${*}" =~ "flash" ]]; then
+elif [ ${1} = "flash" ]; then
   prodBuild
   checkDeviceConnect
   ESPPORT=${PORT_PATH} ninja flash
+elif [[ "${*}" =~ "erase" ]]; then
+  checkDeviceConnect
+  idf.py -p ${PORT_PATH} ${*}
 elif [[ ! "${*}" =~ "monitor" ]]; then
   idf.py ${*}
 fi
