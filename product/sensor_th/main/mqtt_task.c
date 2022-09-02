@@ -289,20 +289,30 @@ static char *create_json_fwup_resp(int ret) {
   return json_fwup_resp;
 }
 
+void mqtt_fw_resp(int ret) {
+  LOGI(TAG, "start_ota_fw_task_wait : ret = %d", ret);
+  mqtt_publish(mqtt_response, create_json_fwup_resp(ret), 0);
+  set_fwupdate(0);
+}
+
 static int process_payload(int payload_len, char *payload) {
   char content[100] = { 0 };
   snprintf(content, payload_len + 1, "%s", payload);
   cJSON *root = cJSON_Parse(content);
   cJSON *get = cJSON_GetObjectItem(root, "type");
   if (cJSON_IsString(get)) {
+    LOGI(TAG, "get->valuestring = %s\n", get->valuestring);
     if (!strncmp(get->valuestring, "devinfo", 7)) {
+      LOGI(TAG, "Got devinfo mqtt topic");
       mqtt_publish(mqtt_response, create_json_info(power_mode), 0);
     } else if (!strncmp(get->valuestring, "fw_update", strlen("fw_update"))) {
+      LOGI(TAG, "Got fw_update mqtt topic");
       cJSON *url = cJSON_GetObjectItem(root, "url");
       if (url) {
         // start_ota_fw_task(url->valuestring);
-        int ret = start_ota_fw_task_wait(url->valuestring);
-        mqtt_publish(mqtt_response, create_json_fwup_resp(ret), 0);
+        LOGI(TAG, "url = %s", url->valuestring);
+        set_fwupdate(1);
+        start_ota_fw_task_wait(url->valuestring);
       }
     } else if (!strncmp(get->valuestring, "update", 6)) {
       mqtt_publish(mqtt_response, create_json_resp("update"), 0);

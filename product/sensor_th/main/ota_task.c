@@ -36,6 +36,8 @@ static TaskHandle_t ota_fw_handle;
 
 static char* download_url = NULL;
 
+extern void mqtt_fw_resp(int ret);
+
 void ota_fw_task(void* pParameters) {
   fw_ctx_t fwctx;
   ota_task_params_t* task_params = (ota_task_params_t*)pParameters;
@@ -80,7 +82,7 @@ void ota_fw_task(void* pParameters) {
   // set_wifi_led();
 
   // Wait for mqtt client to send FW update status.
-  vTaskDelay(pdMS_TO_TICKS(5000));
+  vTaskDelay(pdMS_TO_TICKS(15000));
   ota_fw_reset_device(&fwctx);
 
   ota_fw_handle = NULL;
@@ -131,8 +133,9 @@ int start_ota_fw_task_wait(char* fw_download_url) {
     ota_task_params_wait.entry = 0x01;
 
     xTaskNotifyStateClear(NULL);
-    if (xTaskCreate(ota_fw_task, (char const*)"ota_fw_task", SENS_OTAFW_TASK_STACK_SIZE, NULL, SENS_OTAFW_TASK_PRIORITY,
-                    &ota_fw_handle) != pdPASS) {
+    snprintf(download_url, MAX_FW_DOWNLOAD_URL, "%s", fw_download_url);
+    if (xTaskCreate(ota_fw_task, (char const*)"ota_fw_task", SENS_OTAFW_TASK_STACK_SIZE, &ota_task_params_wait,
+                    SENS_OTAFW_TASK_PRIORITY, &ota_fw_handle) != pdPASS) {
       LOGW(TAG, "[%s] Failed to create OTA FW Task", __FUNCTION__);
     } else {
       for (;;) {
@@ -163,6 +166,8 @@ int start_ota_fw_task_wait(char* fw_download_url) {
   } else {
     LOGE(TAG, "Failed to calloc for download_url");
   }
+
+  mqtt_fw_resp(ret);
 
   return ret;
 }
