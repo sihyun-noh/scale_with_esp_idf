@@ -1,3 +1,4 @@
+#include "freertos/projdefs.h"
 #include "syscfg.h"
 #include "syslog.h"
 #include "sysevent.h"
@@ -18,6 +19,7 @@
 #define READY 1
 #define NOT_READY 0
 
+#define PING_RETRY_COUNT 3          /* Ping retry count */
 #define PING_ADDR_NUMBER 2          /* the number of ping address */
 #define PING_FAIL_COUNT_EACH_ADDR 3 /* the fail times for each ping address */
 
@@ -275,7 +277,7 @@ static bool check_ip_ready(void) {
 
   ret = get_sta_ipaddr(ip_addr, sizeof(ip_addr));
   if (ret == 0 && ip_addr[0]) {
-    LOGI(TAG, "station ip addr = %s", ip_addr);
+    SLOGI(TAG, "station ip addr = %s", ip_addr);
     return true;
   }
   return false;
@@ -296,6 +298,16 @@ static bool need_to_check_router(void) {
   return false;
 }
 
+static int get_gateway_address(char *ip_addr, size_t ip_addr_len) {
+  char gateway_addr[20] = { 0 };
+  syscfg_get(CFG_DATA, "gateway", gateway_addr, sizeof(gateway_addr));
+  if (gateway_addr[0]) {
+    snprintf(ip_addr, ip_addr_len, "%s", gateway_addr);
+    return 0;
+  }
+  return -1;
+}
+
 /*
  * Function that checking if farm network is alive or not using wifi api or ping command.
  * (1) Check if the sensor node is connected to the router every 30 seconds.
@@ -306,12 +318,31 @@ static int check_farmnet(void) {
 
   ap_info_t ap_info = { 0 };
   int rc = get_ap_info(&ap_info);
-  LOGI(TAG, "get_ap_info , rc = %d, ssid = %s", rc, ap_info.ssid);
+  SLOGI(TAG, "get_ap_info , rc = %d, ssid = %s", rc, ap_info.ssid);
   if (rc == 0 && check_ip_ready()) {
     g_rssi = ap_info.rssi;
     farmnet_ready = READY;
   } else {
     farmnet_ready = NOT_READY;
+  }
+
+  // One more check if the router is alive using ping command.
+  char router_ip[20] = { 0 };
+  if (get_gateway_address(router_ip, sizeof(router_ip)) == 0) {
+    SLOGI(TAG, "gateway router ip addr = %s", router_ip);
+    for (int i = 0; i < PING_RETRY_COUNT; i++) {
+      if (do_ping(router_ip, 3) == PING_OK) {
+        farmnet_ready = READY;
+        break;
+      } else {
+        farmnet_ready = NOT_READY;
+      }
+      vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+  } else {
+    farmnet_ready = NOT_READY;
+    SLOGI(TAG, "Not found gateway router ip address!!!");
+    FLOGI(TAG, "Not found gateway router ip address!!!");
   }
 
   set_farmnet_state(farmnet_ready);
@@ -352,7 +383,7 @@ static int check_internet(void) {
           internet_ready = READY;
           g_ping_cnt = 0;
           g_internet_check_time = MAX_INTERNET_CHECK_TIME;
-          LOGI(TAG, "Internet Ping Success...");
+          SLOGI(TAG, "Internet Ping Success...");
           break;
         } else {
           g_ping_cnt++;
@@ -360,7 +391,7 @@ static int check_internet(void) {
             internet_ready = NOT_READY;
             g_ping_cnt = 0;
             g_internet_check_time = MIN_INTERNET_CHECK_TIME;
-            LOGI(TAG, "Internet Ping Failure...");
+            SLOGI(TAG, "Internet Ping Failure...");
             break;
           }
         }
@@ -379,44 +410,6 @@ static int check_internet(void) {
   return internet_ready;
 }
 
-static void wifi_monitoring(void) {
-  char res_event_msg[50] = { 0 };
-  int ret = -1;
-
-  ret = sysevent_get(WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, &res_event_msg, sizeof(res_event_msg));
-  if (!ret) {
-    LOGI(TAG, "WIFI_EVENT_STA_CONNECTED : %s\n", res_event_msg);
-    memset(&res_event_msg, 0, sizeof(res_event_msg));
-  }
-
-  ret = sysevent_get(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, &res_event_msg, sizeof(res_event_msg));
-  if (!ret) {
-    LOGI(TAG, "WIFI_EVENT_STA_DISCONNECTED : %s\n", res_event_msg);
-    memset(&res_event_msg, 0, sizeof(res_event_msg));
-
-    SLOGI(TAG, "start_ping_google");
-    if ((do_ping("www.google.com", 3) == PING_ERR_UNKNOWN_HOST)) {
-      sysevent_set(NO_INTERNET_EVENT, (char *)res_event_msg);
-    }
-  }
-
-  ret = sysevent_get(IP_EVENT, IP_EVENT_STA_GOT_IP, &res_event_msg, sizeof(res_event_msg));
-  if (!ret) {
-    LOGI(TAG, "IP_EVENT_STA_GOT_IP : %s\n", res_event_msg);
-    memset(&res_event_msg, 0, sizeof(res_event_msg));
-  }
-}
-
-static int get_gateway_address(char *ip_addr, size_t ip_addr_len) {
-  char gateway_addr[20] = { 0 };
-  syscfg_get(CFG_DATA, "gateway", gateway_addr, sizeof(gateway_addr));
-  if (gateway_addr[0]) {
-    snprintf(ip_addr, ip_addr_len, "%s", gateway_addr);
-    return 0;
-  }
-  return -1;
-}
-
 static void monitoring_task(void *pvParameters) {
   int ret = -1;
   uint8_t task_count = 0;
@@ -428,32 +421,15 @@ static void monitoring_task(void *pvParameters) {
   while (1) {
     // Do not need to check if the device's wifi connection status during the easy setup progress.
     // Only check if connection status of farm network or internet after device is onboarding on the network.
-    if (0) {
-      wifi_monitoring();
-    }
     if (is_device_configured() && (wifi_get_current_mode() == WIFI_MODE_STA)) {
       if (need_to_check_router() == true) {
         // First, check to see if the farmnet wifi connection status.
         if (check_farmnet() == READY) {
-          // One more check if the router is alive using ping command.
-          char router_ip[20] = { 0 };
-          if (get_gateway_address(router_ip, sizeof(router_ip)) == 0) {
-            LOGI(TAG, "gateway router ip addr = %s", router_ip);
-            if (do_ping(router_ip, 3) == PING_OK) {
-              set_farmnet_state(READY);
-              set_wifi_state(ON_NETWORK);
-              set_wifi_led(ON_NETWORK);
-              SLOGI(TAG, "Success ping to farmnet");
-              FLOGI(TAG, "Success ping to farmnet");
-            } else {
-              set_farmnet_state(NOT_READY);
-            }
-          } else {
-            SLOGI(TAG, "Not found gateway router ip address!!!");
-            FLOGI(TAG, "Not found gateway router ip address!!!");
-          }
-        }
-        if (get_farmnet_state() == NOT_READY) {
+          SLOGI(TAG, "Success ping to farmnet");
+          FLOGI(TAG, "Success ping to farmnet");
+          set_wifi_state(ON_NETWORK);
+          set_wifi_led(ON_NETWORK);
+        } else {
           // Set internet connection flag as lost
           // Reset g_last_internet_check_time
           if (get_internet_state() != NOT_READY) {
@@ -496,7 +472,7 @@ static void monitoring_task(void *pvParameters) {
     }
 
     if (is_device_configured() && !is_device_onboard()) {
-      LOGI(TAG, "Device is disconnected from the farm network!!!");
+      SLOGI(TAG, "Device is disconnected from the farm network!!!");
       vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
 
@@ -513,7 +489,7 @@ static void monitoring_task(void *pvParameters) {
 
     ret = sysevent_get(SYSEVENT_BASE, TASK_MONITOR_EVENT, &res_event_msg, sizeof(res_event_msg));
     if (!ret) {
-      LOGI(TAG, "TASK_MONITOR_EVENT : %s\n", res_event_msg);
+      SLOGI(TAG, "TASK_MONITOR_EVENT : %s\n", res_event_msg);
       memset(&res_event_msg, 0, sizeof(res_event_msg));
     }
 
@@ -530,7 +506,7 @@ int create_monitoring_task(void) {
   if (!wifi_event_monitor_task_handle) {
     xTaskCreate(monitoring_task, "monitoring_task", 8192, NULL, task_priority, &wifi_event_monitor_task_handle);
     if (!wifi_event_monitor_task_handle) {
-      LOGI(TAG, "Monitoring_task Task Start Failed!");
+      SLOGI(TAG, "Monitoring_task Task Start Failed!");
       return -1;
     }
   }
