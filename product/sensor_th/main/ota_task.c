@@ -36,8 +36,6 @@ static TaskHandle_t ota_fw_handle;
 
 static char* download_url = NULL;
 
-extern void mqtt_fwupdate_resp(int ret);
-
 void ota_fw_task(void* pParameters) {
   fw_ctx_t fwctx;
   ota_task_params_t* task_params = (ota_task_params_t*)pParameters;
@@ -158,17 +156,17 @@ int start_ota_fw_task_wait(char* fw_download_url) {
         if (value == OTA_TASK_FWUP_OK) {
           LOGI(TAG, "[%s] OTA FW Task success", __FUNCTION__);
           ret = 0;
+          break;
         } else {
           LOGI(TAG, "[%s] OTA FW Task Failed", __FUNCTION__);
           ret = -2;
+          break;
         }
       }
     }
   } else {
     LOGE(TAG, "Failed to calloc for download_url");
   }
-
-  mqtt_fwupdate_resp(ret);
 
   return ret;
 }

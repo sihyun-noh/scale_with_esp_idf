@@ -289,12 +289,6 @@ static char *create_json_fwup_resp(int ret) {
   return json_fwup_resp;
 }
 
-void mqtt_fwupdate_resp(int ret) {
-  LOGI(TAG, "start_ota_fw_task_wait : ret = %d", ret);
-  mqtt_publish(mqtt_response, create_json_fwup_resp(ret), 0);
-  set_fwupdate(0);
-}
-
 static int process_payload(int payload_len, char *payload) {
   char content[100] = { 0 };
   snprintf(content, payload_len + 1, "%s", payload);
@@ -312,7 +306,10 @@ static int process_payload(int payload_len, char *payload) {
         // start_ota_fw_task(url->valuestring);
         LOGI(TAG, "url = %s", url->valuestring);
         set_fwupdate(1);
-        start_ota_fw_task_wait(url->valuestring);
+        int ret = start_ota_fw_task_wait(url->valuestring);
+        LOGI(TAG, "start_ota_fw_task_wait : ret = %d", ret);
+        mqtt_publish(mqtt_response, create_json_fwup_resp(ret), 0);
+        set_fwupdate(0);
       }
     } else if (!strncmp(get->valuestring, "update", 6)) {
       mqtt_publish(mqtt_response, create_json_resp("update"), 0);
