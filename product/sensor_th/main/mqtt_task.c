@@ -289,7 +289,7 @@ static char *create_json_fwup_resp(int ret) {
   return json_fwup_resp;
 }
 
-void mqtt_fw_resp(int ret) {
+void mqtt_fwupdate_resp(int ret) {
   LOGI(TAG, "start_ota_fw_task_wait : ret = %d", ret);
   mqtt_publish(mqtt_response, create_json_fwup_resp(ret), 0);
   set_fwupdate(0);

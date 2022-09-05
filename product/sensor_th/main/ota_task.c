@@ -36,7 +36,7 @@ static TaskHandle_t ota_fw_handle;
 
 static char* download_url = NULL;
 
-extern void mqtt_fw_resp(int ret);
+extern void mqtt_fwupdate_resp(int ret);
 
 void ota_fw_task(void* pParameters) {
   fw_ctx_t fwctx;
@@ -82,7 +82,8 @@ void ota_fw_task(void* pParameters) {
   // set_wifi_led();
 
   // Wait for mqtt client to send FW update status.
-  vTaskDelay(pdMS_TO_TICKS(15000));
+  vTaskDelay(pdMS_TO_TICKS(10000));
+  // Reset a device after updating FW image.
   ota_fw_reset_device(&fwctx);
 
   ota_fw_handle = NULL;
@@ -167,7 +168,7 @@ int start_ota_fw_task_wait(char* fw_download_url) {
     LOGE(TAG, "Failed to calloc for download_url");
   }
 
-  mqtt_fw_resp(ret);
+  mqtt_fwupdate_resp(ret);
 
   return ret;
 }
