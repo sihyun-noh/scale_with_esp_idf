@@ -74,10 +74,14 @@ int do_ping_lwip_impl(char *host, int seq) {
     to_addr.sin_addr.s_addr = inet_addr(host);
   }
 
-  /* Make ping echo packet */
   /* Initailze ping_buf */
   memset(ping_buf, 0, packet_size);
+  /* Make ping echo payload data packet */
+  for (int i = 0; i < data_size; i++) {
+    ping_buf[sizeof(struct icmp_echo_hdr) + i] = (unsigned char)i;
+  }
 
+  /* Make ping echo header data packet */
   pecho = (struct icmp_echo_hdr *)ping_buf;
   ICMPH_TYPE_SET(pecho, ICMP_ECHO);
   ICMPH_CODE_SET(pecho, 0);
