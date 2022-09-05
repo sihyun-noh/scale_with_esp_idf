@@ -483,6 +483,32 @@ void mqtt_publish_sensor_data(void) {
     mqtt_publish(mqtt_temperature, create_json_sensor("air", "", s_battery), 0);
     mqtt_publish(mqtt_humidity, create_json_sensor("air", "", s_battery), 0);
   }
+#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == RK520_02)
+  char s_ec[20] = { 0 };
+  char s_moisture[20] = { 0 };
+  char s_temperature[20] = { 0 };
+  char mqtt_ec[80] = { 0 };
+  snprintf(mqtt_ec, sizeof(mqtt_ec), "value/%s/ec", hostname);
+  sysevent_get("SYSEVNT_BASE", MB_EC_EVENT, s_ec, sizeof(s_ec));
+  sysevent_get("SYSEVNT_BASE", MB_MOISTURE_EVENT, s_moisture, sizeof(s_moisture));
+  sysevent_get("SYSEVNT_BASE", MB_TEMPERATURE_EVENT, s_temperature, sizeof(s_temperature));
+  if (s_ec[0]) {
+    ret = mqtt_publish(mqtt_ec, create_json_sensor("air", s_ec, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
+  }
+#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SWSR7500)
+  char s_pyranometer[20] = { 0 };
+  char mqtt_solar[80] = { 0 };
+  snprintf(mqtt_solar, sizeof(mqtt_solar), "value/%s/solar", hostname);
+  sysevent_get("SYSEVENT_BASE", MB_PYRANOMETER_EVENT, s_pyranometer, sizeof(s_pyranometer));
+  if (s_pyranometer[0]) {
+    ret = mqtt_publish(mqtt_solar, create_json_sensor("air", s_pyranometer, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
+  }
 #endif
 
   free(hostname);

@@ -20,7 +20,7 @@
 #define SWSR7500 4 /* KD Solar Radiation */
 
 #ifndef SENSOR_TYPE
-#define SENSOR_TYPE SWSR7500
+#define SENSOR_TYPE SHT3X
 #endif
 
 #if defined(SENS_BOARD_VER) && (SENS_BOARD_VER >= SENS_TTGO_HW1)

@@ -308,6 +308,7 @@ int read_solar_radiation(char* pyranometer) {
       f_pyranometer = (float)(u_pyranometer / 10.00);
       LOGI(TAG, "pyranometer = %.2f", f_pyranometer);
       snprintf(s_pyranometer, sizeof(s_pyranometer), "%.2f", f_pyranometer);
+      snprintf(pyranometer, sizeof(s_pyranometer), "%s", s_pyranometer);
     }
   }
   return res;
