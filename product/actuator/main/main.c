@@ -54,7 +54,11 @@ static void generate_default_sysmfg(void) {
 
   syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
   if (model_name[0] == 0) {
+#if defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == SWITCH)
+    syscfg_set(MFG_DATA, "model_name", "GLASW");
+#elif defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == MOTOR)
     syscfg_set(MFG_DATA, "model_name", "GLAMT");
+#endif
   }
   syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
   if (power_mode[0] == 0) {
@@ -192,8 +196,6 @@ void app_main(void) {
       case MONITOR_MODE: {
         if (is_device_onboard()) {
           actuator_task();
-        } else {
-          set_operation_mode(SLEEP_MODE);
         }
       } break;
       case SLEEP_MODE: {

@@ -258,7 +258,7 @@ value/GLASW-0EADBEEFFEE9/switch
 
 id : 노드의 unique_id
 auto_mode : 자동 모드 켜짐(on), 꺼짐(off)
-io : 포트번호
+io : 포트번호(number)
 value : 센서의 값
 mode : 실제 동작 : 동작(on), 정지(off) 
 timestamp : 현재 시간
@@ -268,16 +268,16 @@ value/GLAMT-0EADBEEFFEE9/motor
 {
    "id" : "GLAMT-0EADBEEFFEE9",
    "auto_mode" : "on",
-   "value" : [{"io" : 1, "mode" : "fwd"},
-              {"io" : 2, "mode" : "rwd"},
-              {"io" : 3, "mode" : "rwd"},
+   "value" : [{"io" : 1, "mode" : "open"},
+              {"io" : 2, "mode" : "close"},
+              {"io" : 3, "mode" : "close"},
               {"io" : 4, "mode" : "stop"}],
    "timestamp" : "2022-05-02 15:07:18"
 }
 sensor_id : 노드의 unique_id
 auto_mode : 자동 모드 켜짐(on), 꺼짐(off)
-io : 정회전포트번호(fwd_io), 역회전포트번호(rwd_io)
-mode : 실제 동작 : 정회전(fwd), 역회전(rwd), 정지(stop) 
+io : 포트번호(number)
+mode : 실제 동작 : 정회전(open), 역회전(close), 정지(stop) 
 timestamp : 현재 시간
 
 Fan-in 구독: value/+/motor
@@ -293,7 +293,7 @@ cmd/GLASW-0EADBEEFFEE9/req
 }
 cmd/GLASW-0EADBEEFFEE9/resp
 {
-   "type": "update"
+   "type": "switch"
    "id" : "GLASW-0EADBEEFFEE9",
    "auto_mode" : "on",
    "value" : [{"io" : 1, "mode" : "on"},
@@ -307,14 +307,14 @@ cmd/GLAMT-0EADBEEFFEE9/req
 {
    "type": "motor",
    "auto_mode" : "on",
-   "value" : [{"io" : 2, "mode" : "fwd"}]
+   "value" : [{"io" : 2, "mode" : "open"}]
 }
 cmd/GLAMT-0EADBEEFFEE9/resp
 {
-   "type": "update"
+   "type": "motor"
    "id" : "GLAMT-0EADBEEFFEE9",
    "auto_mode" : "on",
-   "value" : [{"io" : 2, "mode" : "fwd"}],
+   "value" : [{"io" : 2, "mode" : "open"}],
 	 "state": "success",
    "timestamp" : "2022-05-02 15:07:18"
 }
@@ -328,7 +328,7 @@ cmd/GLAMT-0EADBEEFFEE9/req
 {
    "type": "motor",
    "auto_mode" : "off"
-   "value" : [{"io" : 2, "mode" : "fwd"}],
+   "value" : [{"io" : 2, "mode" : "open"}],
 }
 cmd/GLAMT-0EADBEEFFEE9/resp
 {
@@ -491,6 +491,8 @@ FarmMorning->>MQTT Broker: request publish<br>("cmd/<thing-name(id)>/req", "type
 MQTT Broker->>SensorNode: request publish<br>("cmd/<thing-name(id)>/req", "type":"motor")
 SensorNode->>MQTT Broker: response publish<br>("cmd/<thing-name(id)>/resp", "type":"motor")
 MQTT Broker->>FarmMorning: response publish<br>("cmd/<thing-name(id)>/resp", "type":"motor")
+SensorNode->>MQTT Broker: response publish<br>("value/<thing-name(id)>/motor")
+MQTT Broker->>FarmMorning: response publish<br>("value/<thing-name(id)>/motor")
 end
 
 alt update publish request and response<br> ex) motor

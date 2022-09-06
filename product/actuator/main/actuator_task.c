@@ -74,28 +74,31 @@ void test_gpio(void) {
   static uint8_t control;
   uint8_t i = 0;
 
+  relay_on(gpio_arry[8]);
   switch (buff) {
     case 0:
       relay_on(gpio_arry[control]);
       LOGI(TAG, "gpio test : %d, control : %d", gpio_arry[control], control);
+      control++;
       if (control >= sizeof(gpio_arry) - 1) {
         control = 0;
-      } else {
-        control++;
       }
       buff++;
+      vTaskDelay(5000 / portTICK_PERIOD_MS);
       break;
     case 1:
     default:
-      for (i = 0; i < sizeof(gpio_arry); i++) {
-        relay_off(gpio_arry[control]);
+      for (i = 0; i < sizeof(gpio_arry) - 1; i++) {
+        relay_off(gpio_arry[i]);
       }
       LOGI(TAG, "gpio test off");
       buff = 0;
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
       break;
   }
 }
 
+#if defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == SWITCH)
 static void actuator_switch_action(void) {
   char s_actuator[20] = { 0 };
 
@@ -119,7 +122,7 @@ static void actuator_switch_action(void) {
     }
   }
 }
-
+#elif defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == MOTOR)
 static void actuator_motor_action(void) {
   char s_actuator[20] = { 0 };
 
@@ -132,13 +135,13 @@ static void actuator_motor_action(void) {
       for (uint8_t i = 0; i < 4; i++) {
         if (sysevent_get("SYSEVENT_BASE", ACTUATOR_PORT1 + i, &s_actuator, sizeof(s_actuator)) == 0) {
           vTaskDelay(500 / portTICK_PERIOD_MS);
-          if (!strncmp(s_actuator, "fwd", 3)) {
+          if (!strncmp(s_actuator, "open", 4)) {
             relay_off(gpio_arry[i * 2]);
             relay_off(gpio_arry[(i * 2) + 1]);
             vTaskDelay(500 / portTICK_PERIOD_MS);
             relay_on(gpio_arry[i * 2]);
             relay_off(gpio_arry[(i * 2) + 1]);
-          } else if (!strncmp(s_actuator, "rwd", 3)) {
+          } else if (!strncmp(s_actuator, "close", 5)) {
             relay_off(gpio_arry[i * 2]);
             relay_off(gpio_arry[(i * 2) + 1]);
             vTaskDelay(500 / portTICK_PERIOD_MS);
@@ -154,11 +157,12 @@ static void actuator_motor_action(void) {
     }
   }
 }
+#endif
 
 void actuator_task(void) {
-  if (!strncmp(model_name, "GLASW", 5)) {
-    actuator_switch_action();
-  } else if (!strncmp(model_name, "GLAMT", 5)) {
-    actuator_motor_action();
-  }
+#if defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == SWITCH)
+  actuator_switch_action();
+#elif defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == MOTOR)
+  actuator_motor_action();
+#endif
 }

@@ -35,6 +35,8 @@ static char model_name[10];
 char mqtt_request[80] = { 0 };
 char mqtt_response[80] = { 0 };
 
+uint8_t actuator_value[9] = { 0 };
+
 static int minHeap = 0;
 static void heap_monitor_func(int warning_level, int critical_level) {
   int freeHeap = xPortGetFreeHeapSize();
@@ -89,7 +91,7 @@ static void mqtt_event_callback(void *handler_args, int32_t event_id, void *even
   }
 }
 
-uint8_t actuator_value[9] = { 0 };
+#if defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == SWITCH)
 static char *create_json_actuator_switch(void) {
   /*
   {
@@ -131,65 +133,6 @@ static char *create_json_actuator_switch(void) {
       cJSON_AddItemToObject(io, "mode", cJSON_CreateString("on"));
     } else if (actuator_value[i + 1] == 0) {
       cJSON_AddItemToObject(io, "mode", cJSON_CreateString("off"));
-    }
-    cJSON_AddItemToArray(value, io);
-  }
-
-  cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
-
-  /* print everything */
-  p_out = cJSON_Print(root);
-  memset(&json_data[0], 0, sizeof(json_data));
-  memcpy(&json_data[0], p_out, strlen(p_out));
-
-  free(hostname);
-  free(p_out);
-  cJSON_Delete(root);
-
-  printf("%s\r\n", json_data);
-
-  return json_data;
-}
-
-static char *create_json_actuator_motor(void) {
-  /*
-  {
-    "id" : "GLAMT-0EADBEEFFEE9",
-    "auto_mode" : "on",
-    "value" : [ {"io" : 1, "mode" : "fwd"},
-                {"io" : 2, "mode" : "rwd"},
-                {"io" : 3, "mode" : "rwd"},
-                {"io" : 4, "mode" : "stop"}],
-    "timestamp" : "2022-05-02 15:07:18"
-  }
-  */
-  char *p_out;
-  cJSON *root;
-  // double _buf;
-
-  char *hostname = generate_hostname();
-
-  /* create root node and array */
-  root = cJSON_CreateObject();
-
-  cJSON_AddItemToObject(root, "id", cJSON_CreateString(hostname));
-  if (actuator_value[0] == 1) {
-    cJSON_AddItemToObject(root, "auto_mode", cJSON_CreateString("on"));
-  } else if (actuator_value[0] == 0) {
-    cJSON_AddItemToObject(root, "auto_mode", cJSON_CreateString("off"));
-  }
-
-  cJSON *value = cJSON_CreateArray();
-  cJSON_AddItemToObject(root, "value", value);
-  for (uint8_t i = 0; i < 4; i++) {
-    cJSON *io = cJSON_CreateObject();
-    cJSON_AddItemToObject(io, "io", cJSON_CreateNumber(i + 1));
-    if (actuator_value[i + 1] == 1) {
-      cJSON_AddItemToObject(io, "mode", cJSON_CreateString("fwd"));
-    } else if (actuator_value[i + 1] == 2) {
-      cJSON_AddItemToObject(io, "mode", cJSON_CreateString("rwd"));
-    } else if (actuator_value[i + 1] == 0) {
-      cJSON_AddItemToObject(io, "mode", cJSON_CreateString("stop"));
     }
     cJSON_AddItemToArray(value, io);
   }
@@ -276,69 +219,6 @@ static char *create_json_actuator_switch_resp(uint8_t actuator_change[9]) {
   return json_data;
 }
 
-static char *create_json_actuator_motor_resp(uint8_t actuator_change[9]) {
-  /*
-  {
-    "id" : "GLAMT-0EADBEEFFEE9",
-    "auto_mode" : "on",
-    "value" : [{"io" : 1, "mode" : "fwd"},
-                {"io" : 2, "mode" : "rwd"},
-                {"io" : 3, "mode" : "rwd"},
-                {"io" : 4, "mode" : "stop"}],
-    "timestamp" : "2022-05-02 15:07:18"
-  }
-  */
-  char *p_out;
-  cJSON *root;
-  // double _buf;
-
-  char *hostname = generate_hostname();
-
-  /* create root node and array */
-  root = cJSON_CreateObject();
-
-  cJSON_AddItemToObject(root, "type", cJSON_CreateString("motor"));
-  cJSON_AddItemToObject(root, "id", cJSON_CreateString(hostname));
-  if (actuator_value[0] == 1) {
-    cJSON_AddItemToObject(root, "auto_mode", cJSON_CreateString("on"));
-
-    cJSON *value = cJSON_CreateArray();
-    cJSON_AddItemToObject(root, "value", value);
-    for (uint8_t i = 0; i < 4; i++) {
-      if (!actuator_change[i + 1]) {
-        continue;
-      }
-      cJSON *io = cJSON_CreateObject();
-      cJSON_AddItemToObject(io, "io", cJSON_CreateNumber(i + 1));
-      if (actuator_value[i + 1] == 1) {
-        cJSON_AddItemToObject(io, "mode", cJSON_CreateString("fwd"));
-      } else if (actuator_value[i + 1] == 2) {
-        cJSON_AddItemToObject(io, "mode", cJSON_CreateString("rwd"));
-      } else if (actuator_value[i + 1] == 0) {
-        cJSON_AddItemToObject(io, "mode", cJSON_CreateString("stop"));
-      }
-      cJSON_AddItemToArray(value, io);
-    }
-  } else if (actuator_value[0] == 0) {
-    cJSON_AddItemToObject(root, "auto_mode", cJSON_CreateString("off"));
-  }
-
-  cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
-
-  /* print everything */
-  p_out = cJSON_Print(root);
-  memset(&json_data[0], 0, sizeof(json_data));
-  memcpy(&json_data[0], p_out, strlen(p_out));
-
-  free(hostname);
-  free(p_out);
-  cJSON_Delete(root);
-
-  printf("%s\r\n", json_data);
-
-  return json_data;
-}
-
 static void actuator_switch_passing(char content[300]) {
   uint8_t actuator_change[9] = { 0 };
   /*
@@ -404,6 +284,128 @@ static void actuator_switch_passing(char content[300]) {
 
   cJSON_Delete(root);
 }
+#elif defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == MOTOR)
+static char *create_json_actuator_motor(void) {
+  /*
+  {
+    "id" : "GLAMT-0EADBEEFFEE9",
+    "auto_mode" : "on",
+    "value" : [ {"io" : 1, "mode" : "open"},
+                {"io" : 2, "mode" : "open"},
+                {"io" : 3, "mode" : "close"},
+                {"io" : 4, "mode" : "stop"}],
+    "timestamp" : "2022-05-02 15:07:18"
+  }
+  */
+  char *p_out;
+  cJSON *root;
+  // double _buf;
+
+  char *hostname = generate_hostname();
+
+  /* create root node and array */
+  root = cJSON_CreateObject();
+
+  cJSON_AddItemToObject(root, "id", cJSON_CreateString(hostname));
+  if (actuator_value[0] == 1) {
+    cJSON_AddItemToObject(root, "auto_mode", cJSON_CreateString("on"));
+  } else if (actuator_value[0] == 0) {
+    cJSON_AddItemToObject(root, "auto_mode", cJSON_CreateString("off"));
+  }
+
+  cJSON *value = cJSON_CreateArray();
+  cJSON_AddItemToObject(root, "value", value);
+  for (uint8_t i = 0; i < 4; i++) {
+    cJSON *io = cJSON_CreateObject();
+    cJSON_AddItemToObject(io, "io", cJSON_CreateNumber(i + 1));
+    if (actuator_value[i + 1] == 1) {
+      cJSON_AddItemToObject(io, "mode", cJSON_CreateString("open"));
+    } else if (actuator_value[i + 1] == 2) {
+      cJSON_AddItemToObject(io, "mode", cJSON_CreateString("close"));
+    } else if (actuator_value[i + 1] == 0) {
+      cJSON_AddItemToObject(io, "mode", cJSON_CreateString("stop"));
+    }
+    cJSON_AddItemToArray(value, io);
+  }
+
+  cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
+
+  /* print everything */
+  p_out = cJSON_Print(root);
+  memset(&json_data[0], 0, sizeof(json_data));
+  memcpy(&json_data[0], p_out, strlen(p_out));
+
+  free(hostname);
+  free(p_out);
+  cJSON_Delete(root);
+
+  printf("%s\r\n", json_data);
+
+  return json_data;
+}
+
+static char *create_json_actuator_motor_resp(uint8_t actuator_change[9]) {
+  /*
+  {
+    "id" : "GLAMT-0EADBEEFFEE9",
+    "auto_mode" : "on",
+    "value" : [{"io" : 1, "mode" : "open"},
+                {"io" : 2, "mode" : "close"},
+                {"io" : 3, "mode" : "close"},
+                {"io" : 4, "mode" : "stop"}],
+    "timestamp" : "2022-05-02 15:07:18"
+  }
+  */
+  char *p_out;
+  cJSON *root;
+  // double _buf;
+
+  char *hostname = generate_hostname();
+
+  /* create root node and array */
+  root = cJSON_CreateObject();
+
+  cJSON_AddItemToObject(root, "type", cJSON_CreateString("motor"));
+  cJSON_AddItemToObject(root, "id", cJSON_CreateString(hostname));
+  if (actuator_value[0] == 1) {
+    cJSON_AddItemToObject(root, "auto_mode", cJSON_CreateString("on"));
+
+    cJSON *value = cJSON_CreateArray();
+    cJSON_AddItemToObject(root, "value", value);
+    for (uint8_t i = 0; i < 4; i++) {
+      if (!actuator_change[i + 1]) {
+        continue;
+      }
+      cJSON *io = cJSON_CreateObject();
+      cJSON_AddItemToObject(io, "io", cJSON_CreateNumber(i + 1));
+      if (actuator_value[i + 1] == 1) {
+        cJSON_AddItemToObject(io, "mode", cJSON_CreateString("open"));
+      } else if (actuator_value[i + 1] == 2) {
+        cJSON_AddItemToObject(io, "mode", cJSON_CreateString("close"));
+      } else if (actuator_value[i + 1] == 0) {
+        cJSON_AddItemToObject(io, "mode", cJSON_CreateString("stop"));
+      }
+      cJSON_AddItemToArray(value, io);
+    }
+  } else if (actuator_value[0] == 0) {
+    cJSON_AddItemToObject(root, "auto_mode", cJSON_CreateString("off"));
+  }
+
+  cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
+
+  /* print everything */
+  p_out = cJSON_Print(root);
+  memset(&json_data[0], 0, sizeof(json_data));
+  memcpy(&json_data[0], p_out, strlen(p_out));
+
+  free(hostname);
+  free(p_out);
+  cJSON_Delete(root);
+
+  printf("%s\r\n", json_data);
+
+  return json_data;
+}
 
 static void actuator_motor_passing(char content[300]) {
   uint8_t actuator_change[9] = { 0 };
@@ -411,7 +413,7 @@ static void actuator_motor_passing(char content[300]) {
   {
     "type": "motor",
     "auto_mode" : "on",
-    "value" : [{"io" : 2, "mode" : "fwd"}]
+    "value" : [{"io" : 2, "mode" : "open"}]
   }
   */
 
@@ -444,13 +446,13 @@ static void actuator_motor_passing(char content[300]) {
               continue;
             }
             if (cJSON_IsString(mode)) {
-              if (!strncmp(mode->valuestring, "fwd", 3)) {
+              if (!strncmp(mode->valuestring, "open", 4)) {
                 if (actuator_value[io->valueint] != 1) {
                   sysevent_set(io->valueint + ACTUATOR_BASE, (char *)mode->valuestring);
                   actuator_value[io->valueint] = 1;
                 }
                 actuator_change[io->valueint] = 1;
-              } else if (!strncmp(mode->valuestring, "rwd", 3)) {
+              } else if (!strncmp(mode->valuestring, "close", 5)) {
                 if (actuator_value[io->valueint] != 2) {
                   sysevent_set(io->valueint + ACTUATOR_BASE, (char *)mode->valuestring);
                   actuator_value[io->valueint] = 2;
@@ -477,6 +479,7 @@ static void actuator_motor_passing(char content[300]) {
 
   cJSON_Delete(root);
 }
+#endif
 
 static char *create_json_info(char *power) {
   /*
@@ -614,15 +617,15 @@ static int process_payload(int payload_len, char *payload) {
     } else if (!strncmp(get->valuestring, "fw_update", 9)) {
       // 기능 구현 보류
     } else if (!strncmp(get->valuestring, "switch", 6)) {
-      if (!strncmp(model_name, "GLASW", 5)) {
-        actuator_switch_passing(content);
-        mqtt_publish_actuator_data();
-      }
+#if defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == SWITCH)
+      actuator_switch_passing(content);
+      mqtt_publish_actuator_data();
+#endif
     } else if (!strncmp(get->valuestring, "motor", 5)) {
-      if (!strncmp(model_name, "GLAMT", 5)) {
-        actuator_motor_passing(content);
-        mqtt_publish_actuator_data();
-      }
+#if defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == MOTOR)
+      actuator_motor_passing(content);
+      mqtt_publish_actuator_data();
+#endif
     }
   }
   cJSON_Delete(root);
@@ -687,15 +690,15 @@ void stop_mqttc(void) {
 void mqtt_publish_actuator_data(void) {
   char *hostname = generate_hostname();
 
-  if (!strncmp(model_name, "GLASW", 5)) {
-    char mqtt_switch[50] = { 0 };
-    snprintf(mqtt_switch, sizeof(mqtt_switch), "value/%s/switch", hostname);
-    mqtt_publish(mqtt_switch, create_json_actuator_switch(), 0);
-  } else if (!strncmp(model_name, "GLAMT", 5)) {
-    char mqtt_motor[50] = { 0 };
-    snprintf(mqtt_motor, sizeof(mqtt_motor), "value/%s/motor", hostname);
-    mqtt_publish(mqtt_motor, create_json_actuator_motor(), 0);
-  }
+#if defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == SWITCH)
+  char mqtt_switch[50] = { 0 };
+  snprintf(mqtt_switch, sizeof(mqtt_switch), "value/%s/switch", hostname);
+  mqtt_publish(mqtt_switch, create_json_actuator_switch(), 0);
+#elif defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == MOTOR)
+  char mqtt_motor[50] = { 0 };
+  snprintf(mqtt_motor, sizeof(mqtt_motor), "value/%s/motor", hostname);
+  mqtt_publish(mqtt_motor, create_json_actuator_motor(), 0);
+#endif
 
   free(hostname);
 
