@@ -89,9 +89,6 @@ void ota_fw_task(void* pParameters) {
 }
 
 void start_ota_fw_task(char* fw_download_url) {
-  uint16_t stack_size = SENS_OTAFW_TASK_STACK_SIZE;
-  UBaseType_t task_priority = SENS_OTAFW_TASK_PRIORITY;
-
   if (ota_fw_handle) {
     LOGI(TAG, "OTA FW update task is alreay created");
     return;

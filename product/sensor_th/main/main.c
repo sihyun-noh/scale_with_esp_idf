@@ -99,7 +99,6 @@ static void generate_default_syscfg(void) {
 #endif
   }
 
-  syscfg_set(MFG_DATA, "power_mode", "B");
   syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
   if (power_mode[0] == 0) {
     syscfg_set(MFG_DATA, "power_mode", "B");
@@ -447,8 +446,8 @@ void plugged_loop_task(void) {
             ec = atof(s_ec);
             temperature = atof(s_temperature);
             moisture = atof(s_moisture);
-            LOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", ec, moisture, temperature);
-            FLOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", ec, moisture, temperature);
+            LOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", ec, moisture, temperature);
+            FLOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", ec, moisture, temperature);
             sysevent_set(MB_TEMPERATURE_EVENT, s_temperature);
             sysevent_set(MB_MOISTURE_EVENT, s_moisture);
             sysevent_set(MB_EC_EVENT, s_ec);

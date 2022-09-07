@@ -102,14 +102,14 @@ void test_gpio(void) {
 static void actuator_switch_action(void) {
   char s_actuator[20] = { 0 };
 
-  if (sysevent_get("SYSEVENT_BASE", ACTUATOR_AUTO, &s_actuator, sizeof(s_actuator)) == 0) {
+  if (sysevent_get(SYSEVENT_BASE, ACTUATOR_AUTO, &s_actuator, sizeof(s_actuator)) == 0) {
     if (!strncmp(s_actuator, "off", 3)) {
       actuator_all_off();
     } else if (!strncmp(s_actuator, "on", 2)) {
       relay_on(gpio_arry[8]);
       vTaskDelay(500 / portTICK_PERIOD_MS);
       for (uint8_t i = 0; i < 8; i++) {
-        if (sysevent_get("SYSEVENT_BASE", ACTUATOR_PORT1 + i, &s_actuator, sizeof(s_actuator)) == 0) {
+        if (sysevent_get(SYSEVENT_BASE, ACTUATOR_PORT1 + i, &s_actuator, sizeof(s_actuator)) == 0) {
           if (!strncmp(s_actuator, "on", 2)) {
             relay_on(gpio_arry[i]);
           } else if (!strncmp(s_actuator, "off", 3)) {
@@ -126,14 +126,14 @@ static void actuator_switch_action(void) {
 static void actuator_motor_action(void) {
   char s_actuator[20] = { 0 };
 
-  if (sysevent_get("SYSEVENT_BASE", ACTUATOR_AUTO, &s_actuator, sizeof(s_actuator)) == 0) {
+  if (sysevent_get(SYSEVENT_BASE, ACTUATOR_AUTO, &s_actuator, sizeof(s_actuator)) == 0) {
     if (!strncmp(s_actuator, "off", 3)) {
       actuator_all_off();
     } else if (!strncmp(s_actuator, "on", 2)) {
       relay_on(gpio_arry[8]);
       vTaskDelay(500 / portTICK_PERIOD_MS);
       for (uint8_t i = 0; i < 4; i++) {
-        if (sysevent_get("SYSEVENT_BASE", ACTUATOR_PORT1 + i, &s_actuator, sizeof(s_actuator)) == 0) {
+        if (sysevent_get(SYSEVENT_BASE, ACTUATOR_PORT1 + i, &s_actuator, sizeof(s_actuator)) == 0) {
           vTaskDelay(500 / portTICK_PERIOD_MS);
           if (!strncmp(s_actuator, "open", 4)) {
             relay_off(gpio_arry[i * 2]);

@@ -438,16 +438,18 @@ void mqtt_publish_sensor_data(void) {
 #if defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
   char mqtt_co2[80] = { 0 };
   snprintf(mqtt_co2, sizeof(mqtt_co2), "value/%s/co2", hostname);
-  sysevent_get("SYSEVENT_BASE", I2C_CO2_EVENT, &s_co2, sizeof(s_co2));
+  sysevent_get(SYSEVENT_BASE, I2C_CO2_EVENT, &s_co2, sizeof(s_co2));
 #endif
 
-  sysevent_get("SYSEVENT_BASE", I2C_HUMIDITY_EVENT, &s_humidity, sizeof(s_humidity));
-  sysevent_get("SYSEVENT_BASE", I2C_TEMPERATURE_EVENT, &s_temperature, sizeof(s_temperature));
+#if defined(SENSOR_TYPE) && ((SENSOR_TYPE == SHT3X) || (SENSOR_TYPE == SCD4X))
+  sysevent_get(SYSEVENT_BASE, I2C_HUMIDITY_EVENT, &s_humidity, sizeof(s_humidity));
+  sysevent_get(SYSEVENT_BASE, I2C_TEMPERATURE_EVENT, &s_temperature, sizeof(s_temperature));
+#endif
 
   if (!strncmp(power_mode, "P", 1)) {
     snprintf(s_battery, sizeof(s_battery), "-1");
   } else if (!strncmp(power_mode, "B", 1)) {
-    sysevent_get("SYSEVENT_BASE", ADC_BATTERY_EVENT, &s_battery, sizeof(s_battery));
+    sysevent_get(SYSEVENT_BASE, ADC_BATTERY_EVENT, &s_battery, sizeof(s_battery));
   }
 
 #if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
@@ -489,9 +491,9 @@ void mqtt_publish_sensor_data(void) {
   char s_temperature[20] = { 0 };
   char mqtt_ec[80] = { 0 };
   snprintf(mqtt_ec, sizeof(mqtt_ec), "value/%s/ec", hostname);
-  sysevent_get("SYSEVNT_BASE", MB_EC_EVENT, s_ec, sizeof(s_ec));
-  sysevent_get("SYSEVNT_BASE", MB_MOISTURE_EVENT, s_moisture, sizeof(s_moisture));
-  sysevent_get("SYSEVNT_BASE", MB_TEMPERATURE_EVENT, s_temperature, sizeof(s_temperature));
+  sysevent_get(SYSEVENT_BASE, MB_EC_EVENT, s_ec, sizeof(s_ec));
+  sysevent_get(SYSEVENT_BASE, MB_MOISTURE_EVENT, s_moisture, sizeof(s_moisture));
+  sysevent_get(SYSEVENT_BASE, MB_TEMPERATURE_EVENT, s_temperature, sizeof(s_temperature));
   if (s_ec[0]) {
     ret = mqtt_publish(mqtt_ec, create_json_sensor("air", s_ec, s_battery), 0);
     if (ret != 0) {
@@ -502,7 +504,7 @@ void mqtt_publish_sensor_data(void) {
   char s_pyranometer[20] = { 0 };
   char mqtt_solar[80] = { 0 };
   snprintf(mqtt_solar, sizeof(mqtt_solar), "value/%s/solar", hostname);
-  sysevent_get("SYSEVENT_BASE", MB_PYRANOMETER_EVENT, s_pyranometer, sizeof(s_pyranometer));
+  sysevent_get(SYSEVENT_BASE, MB_PYRANOMETER_EVENT, s_pyranometer, sizeof(s_pyranometer));
   if (s_pyranometer[0]) {
     ret = mqtt_publish(mqtt_solar, create_json_sensor("air", s_pyranometer, s_battery), 0);
     if (ret != 0) {

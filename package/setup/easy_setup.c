@@ -38,7 +38,7 @@
 #define WIFI_CONNECTED BIT0
 #define WIFI_DISCONNECT BIT1
 
-#define MAX_RETRY_CONNECT 5
+#define MAX_RETRY_CONNECT 50
 
 typedef enum {
   UNCONFIGURED_MODE = 0,
@@ -316,7 +316,7 @@ void easy_setup_task(void *pvParameters) {
           curr_mode = PAIRING_MODE;
           s_retry_connect++;
           xEventGroupClearBits(s_wifi_event_group, WIFI_DISCONNECT);
-          vTaskDelay(500 / portTICK_PERIOD_MS);
+          vTaskDelay((300 * 1000) / portTICK_PERIOD_MS);
           if (s_retry_connect >= MAX_RETRY_CONNECT) {
             curr_mode = UNPAIRED_MODE;
             s_retry_connect = 0;
@@ -350,7 +350,7 @@ void easy_setup_task(void *pvParameters) {
         wifi_stop_mode();
         syscfg_unset(CFG_DATA, "ssid");
         syscfg_unset(CFG_DATA, "password");
-        FLOGI(TAG,"syscfg_unset!! ssid and password!");
+        FLOGI(TAG, "syscfg_unset!! ssid and password!");
         curr_mode = UNCONFIGURED_MODE;
         router_connect = 0;
         set_device_configured(0);

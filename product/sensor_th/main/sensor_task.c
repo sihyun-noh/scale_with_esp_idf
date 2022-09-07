@@ -265,19 +265,9 @@ int read_soil_ec(char* temperature, char* moisture, char* ec) {
       snprintf(s_temperature, sizeof(s_temperature), "%.2f", f_temp);
       snprintf(s_moisture, sizeof(s_moisture), "%.2f", f_mos);
       snprintf(s_ec, sizeof(s_ec), "%.2f", f_ec);
-      /***
-      if (mb_characteristic[i].cid == 0) {
-        memcpy(&u_temp, value, 2);
-        LOGI(TAG, "temperature = %.2f", (float)(u_temp / 10.00));
-      } else if (mb_characteristic[i].cid == 1) {
-        memcpy(&u_mos, value, 2);
-        LOGI(TAG, "moisture = %.2f", (float)(u_mos / 10.00));
-
-      } else if (mb_characteristic[i].cid == 2) {
-        memcpy(&u_ec, value, 2);
-        LOGI(TAG, "EC = %.2f", (float)(u_ec / 1000.00));
-      }
-      ***/
+      snprintf(temperature, sizeof(s_temperature), "%s", s_temperature);
+      snprintf(moisture, sizeof(s_moisture), "%s", s_moisture);
+      snprintf(ec, sizeof(s_ec), "%s", s_ec);
       vTaskDelay(500 / portTICK_RATE_MS);
     }
   }
