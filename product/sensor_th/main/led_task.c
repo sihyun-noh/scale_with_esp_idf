@@ -1,15 +1,26 @@
-#include "led.h"
-#include "config.h"
+#include <string.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+
+#include "config.h"
+#include "led.h"
 #include "log.h"
 #include "sys_status.h"
+#include "syscfg.h"
 
 static const char* TAG = "led_task";
 static TaskHandle_t led_handle = NULL;
 
 static void led_task(void* pvParameters) {
+  int is_battery = 0;
+  char power_mode[10] = { 0 };
+
+  syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
+
+  if (strcmp(power_mode, "B") == 0)
+    is_battery = 1;
+
   led_off(LED_RED);
   led_off(LED_GREEN);
   led_off(LED_BLUE);
@@ -22,9 +33,6 @@ static void led_task(void* pvParameters) {
   } else {
     LOGI(TAG, "led_task start");
     while (1) {
-      led_off(LED_RED);
-      led_off(LED_GREEN);
-      led_off(LED_BLUE);
       if (is_low_battery()) {
         led_on(LED_RED);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -51,6 +59,16 @@ static void led_task(void* pvParameters) {
           led_off(LED_GREEN);
           led_on(LED_BLUE);
           vTaskDelay(1000 / portTICK_PERIOD_MS);
+        }
+      } else {
+        if (is_battery) {
+          led_off(LED_RED);
+          led_off(LED_GREEN);
+          led_off(LED_BLUE);
+        } else {
+          led_on(LED_RED);
+          led_on(LED_GREEN);
+          led_on(LED_BLUE);
         }
       }
       vTaskDelay(1000 / portTICK_PERIOD_MS);
