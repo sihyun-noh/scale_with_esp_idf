@@ -1,9 +1,9 @@
-name: Release actuator
+name: Release actuator Switch
 
 on:
   push:
     tags:
-    - 'actuator/*'
+    - 'actuator/switch*'
 
 jobs:
   build:
@@ -14,6 +14,13 @@ jobs:
     - name: Checkout smartfarm-ief repo
       uses: actions/checkout@v2
 
+    - name: Prepare Build
+      run: |
+           cd product/actuator
+           DEFINED_PROD=$(grep -h '#define ACTUATOR_TYPE*' main/config.h)
+           COMPILE_PROD="#define ACTUATOR_TYPE SWITCH"
+           perl -pi -e "s/${DEFINED_PROD}/${COMPILE_PROD}/g" main/config.h
+
     - name: esp-idf build
       uses: espressif/esp-idf-ci-action@main
       with:
@@ -22,13 +29,13 @@ jobs:
         path: './product/actuator'
 
     - name: Get lastest tag name
-      run: echo "TAG=${GITHUB_REF/refs\/tags\/actuator\//}" >> $GITHUB_ENV
+      run: echo "TAG=${GITHUB_REF/refs\/tags\/actuator\/switch_/}" >> $GITHUB_ENV
 
     - name: Get current date info
       run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
     - name: Copy file
-      run: cp product/actuator/build/ACT_MOTOR*.bin ACT_MOTOR_${{ env.TAG }}_${{ env.DATE }}.bin
+      run: cp product/actuator/build/ACTUATOR_*.bin ACTUATOR_SWITCH_${{ env.TAG }}_${{ env.DATE }}.bin
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v3

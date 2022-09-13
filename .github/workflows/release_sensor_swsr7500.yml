@@ -1,9 +1,9 @@
-name: Release sensor_th
+name: Release sensor Solar Radiation
 
 on:
   push:
     tags:
-    - 'sensor_th/*'
+    - 'sensor/swsr7500*'
 
 jobs:
   build:
@@ -14,21 +14,28 @@ jobs:
     - name: Checkout smartfarm-ief repo
       uses: actions/checkout@v2
 
+    - name: Prepare Build
+      run: |
+           cd product/sensor
+           DEFINED_PROD=$(grep -h '#define SENSOR_TYPE*' main/config.h)
+           COMPILE_PROD="#define SENSOR_TYPE SWSR7500"
+           perl -pi -e "s/${DEFINED_PROD}/${COMPILE_PROD}/g" main/config.h
+
     - name: esp-idf build
       uses: espressif/esp-idf-ci-action@main
       with:
         esp_idf_version: v4.4
         target: esp32
-        path: './product/sensor_th'
+        path: './product/sensor'
 
     - name: Get lastest tag name
-      run: echo "TAG=${GITHUB_REF/refs\/tags\/sensor_th\//}" >> $GITHUB_ENV
+      run: echo "TAG=${GITHUB_REF/refs\/tags\/sensor\/swsr7500_/}" >> $GITHUB_ENV
 
     - name: Get current date info
       run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
     - name: Copy file
-      run: cp ./product/sensor_th/build/SENS_SHT3x*.bin SENS_SHT3x_${{ env.TAG }}_${{ env.DATE }}.bin
+      run: cp ./product/sensor/build/SENS_*.bin SENS_SWSR7500_${{ env.TAG }}_${{ env.DATE }}.bin
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v3

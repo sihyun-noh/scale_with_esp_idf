@@ -1,4 +1,4 @@
-#!/usr/bin/env bash 
+#!/usr/bin/env bash
 
 # 매개변수 확인.
 # default 로 없을 경우엔 build 실행.
