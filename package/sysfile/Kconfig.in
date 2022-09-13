@@ -1,0 +1,5 @@
+config SMARTFARM_FILELOG_FEATURE
+  bool "SmartFarm filelog feature"
+  default "y"
+  help
+    Smartfarm system file log feature.

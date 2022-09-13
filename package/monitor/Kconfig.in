@@ -1,0 +1,5 @@
+config SMARTFARM_MONITOR_FEATURE
+  bool "SmartFarm monitor feature"
+  default "y"
+  help
+    Smartfarm system monitor feature.
