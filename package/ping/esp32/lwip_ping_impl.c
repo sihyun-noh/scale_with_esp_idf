@@ -34,16 +34,16 @@ int do_ping_lwip_impl(char *host, int seq) {
   packet_size = sizeof(struct icmp_echo_hdr) + data_size;
   printf("packet_size = %d\n", packet_size);
 
-  ping_buf = pvPortMalloc(packet_size);
+  ping_buf = malloc(packet_size);
   if (ping_buf == NULL) {
     printf("Failed to allocate ping buffer\n");
-    ret = PING_FAIL;
+    ret = PING_ERR_MALLOC;
     goto exit;
   }
-  reply_buf = pvPortMalloc(packet_size);
+  reply_buf = malloc(packet_size);
   if (reply_buf == NULL) {
     printf("Failed to allocate relay buffer\n");
-    ret = PING_FAIL;
+    ret = PING_ERR_MALLOC;
     goto exit;
   }
 
@@ -120,10 +120,10 @@ exit:
     close(ping_socket);
   }
   if (ping_buf) {
-    vPortFree(ping_buf);
+    free(ping_buf);
   }
   if (reply_buf) {
-    vPortFree(reply_buf);
+    free(reply_buf);
   }
 
   if (ret == PING_FAIL) {
