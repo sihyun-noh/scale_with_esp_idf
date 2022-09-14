@@ -98,7 +98,7 @@ void test_gpio(void) {
   }
 }
 
-#if defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == SWITCH)
+#if (ACTUATOR_TYPE == SWITCH)
 static void actuator_switch_action(void) {
   char s_actuator[20] = { 0 };
 
@@ -122,7 +122,7 @@ static void actuator_switch_action(void) {
     }
   }
 }
-#elif defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == MOTOR)
+#elif (ACTUATOR_TYPE == MOTOR)
 static void actuator_motor_action(void) {
   char s_actuator[20] = { 0 };
 
@@ -160,9 +160,9 @@ static void actuator_motor_action(void) {
 #endif
 
 void actuator_task(void) {
-#if defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == SWITCH)
+#if (ACTUATOR_TYPE == SWITCH)
   actuator_switch_action();
-#elif defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == MOTOR)
+#elif (ACTUATOR_TYPE == MOTOR)
   actuator_motor_action();
 #endif
 }

@@ -54,9 +54,9 @@ static void generate_default_sysmfg(void) {
 
   syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
   if (model_name[0] == 0) {
-#if defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == SWITCH)
+#if (ACTUATOR_TYPE == SWITCH)
     syscfg_set(MFG_DATA, "model_name", "GLASW");
-#elif defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == MOTOR)
+#elif (ACTUATOR_TYPE == MOTOR)
     syscfg_set(MFG_DATA, "model_name", "GLAMT");
 #endif
   }

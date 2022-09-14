@@ -1,12 +1,12 @@
 #include "config.h"
 #include "log.h"
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
+#if (SENSOR_TYPE == SHT3X)
 #include "sht3x_params.h"
 #endif
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+#if (SENSOR_TYPE == SCD4X)
 #include "scd4x_params.h"
 #endif
-#if defined(SENSOR_TYPE) && ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500))
+#if ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500))
 #include "mb_master_rtu.h"
 #endif
 #include "utils.h"
@@ -45,11 +45,11 @@ typedef enum {
 
 static const char* TAG = "sensor_task";
 
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
+#if (SENSOR_TYPE == SHT3X)
 sht3x_dev_t dev;
-#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+#elif (SENSOR_TYPE == SCD4X)
 scd4x_dev_t dev;
-#elif defined(SENSOR_TYPE) && ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500))
+#elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500))
 int num_characteristic = 0;
 mb_characteristic_info_t mb_characteristic[3] = { 0 };
 #endif
@@ -57,18 +57,18 @@ mb_characteristic_info_t mb_characteristic[3] = { 0 };
 int sensor_init(void) {
   int res = 0;
 
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
+#if (SENSOR_TYPE == SHT3X)
   if ((res = sht3x_init(&dev, &sht3x_params[0])) != SHT3X_OK) {
     LOGI(TAG, "Could not initialize SHT3x sensor = %d", res);
     return res;
   }
-#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+#elif (SENSOR_TYPE == SCD4X)
   // Please implement the SCD4x initialize code.
   if ((res = scd4x_init(&dev, &scd4x_params[0])) != 0) {
     LOGI(TAG, "Could not initialize SCD4X sensor = %d", res);
     return res;
   }
-#elif defined(SENSOR_TYPE) && ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500))
+#elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500))
   // Refer to the modbus function code and register in EC Water RK500-13.pdf
   // << Water EC Sensor >>
   // Slave ID = 0x07, Function Code = 0x03, Start Address = 0x0000, Read Register Len = 0x000A
@@ -125,7 +125,7 @@ int sensor_init(void) {
   return res;
 }
 
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
+#if (SENSOR_TYPE == SHT3X)
 int read_temperature_humidity(int op_mode, char* temperature, char* humidity) {
   int res = 0;
   int err_cnt = 0, read_cnt = 0;
@@ -180,7 +180,7 @@ int read_temperature_humidity(int op_mode, char* temperature, char* humidity) {
 }
 #endif
 
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+#if (SENSOR_TYPE == SCD4X)
 int read_co2_temperature_humidity(char* co2, char* temperature, char* humidity) {
   int res = 0;
 
@@ -228,7 +228,7 @@ int read_co2_temperature_humidity(char* co2, char* temperature, char* humidity) 
 }
 #endif
 
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == RK520_02)
+#if (SENSOR_TYPE == RK520_02)
 int read_soil_ec(char* temperature, char* moisture, char* ec) {
   int res = 0;
   int data_len = 0;
@@ -275,7 +275,7 @@ int read_soil_ec(char* temperature, char* moisture, char* ec) {
 }
 #endif
 
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SWSR7500)
+#if (SENSOR_TYPE == SWSR7500)
 int read_solar_radiation(char* pyranometer) {
   int res = 0;
   int data_len = 0;

@@ -318,7 +318,7 @@ static int process_payload(int payload_len, char *payload) {
       if (!strncmp(power_mode, "B", 1)) {
         sysevent_set(ADC_BATTERY_EVENT, s_battery);
       }
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+#if (SENSOR_TYPE == SCD4X)
       sysevent_set(I2C_CO2_EVENT, s_co2);
 #endif
       mqtt_publish_sensor_data();
@@ -435,13 +435,13 @@ void mqtt_publish_sensor_data(void) {
   snprintf(mqtt_temperature, sizeof(mqtt_temperature), "value/%s/temperature", hostname);
   snprintf(mqtt_humidity, sizeof(mqtt_humidity), "value/%s/humidity", hostname);
 
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+#if (SENSOR_TYPE == SCD4X)
   char mqtt_co2[80] = { 0 };
   snprintf(mqtt_co2, sizeof(mqtt_co2), "value/%s/co2", hostname);
   sysevent_get(SYSEVENT_BASE, I2C_CO2_EVENT, &s_co2, sizeof(s_co2));
 #endif
 
-#if defined(SENSOR_TYPE) && ((SENSOR_TYPE == SHT3X) || (SENSOR_TYPE == SCD4X))
+#if ((SENSOR_TYPE == SHT3X) || (SENSOR_TYPE == SCD4X))
   sysevent_get(SYSEVENT_BASE, I2C_HUMIDITY_EVENT, &s_humidity, sizeof(s_humidity));
   sysevent_get(SYSEVENT_BASE, I2C_TEMPERATURE_EVENT, &s_temperature, sizeof(s_temperature));
 #endif
@@ -452,7 +452,7 @@ void mqtt_publish_sensor_data(void) {
     sysevent_get(SYSEVENT_BASE, ADC_BATTERY_EVENT, &s_battery, sizeof(s_battery));
   }
 
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
+#if (SENSOR_TYPE == SHT3X)
   if (s_temperature[0] && s_humidity[0]) {
     ret = mqtt_publish(mqtt_temperature, create_json_sensor("air", s_temperature, s_battery), 0);
     if (ret != 0) {
@@ -466,7 +466,7 @@ void mqtt_publish_sensor_data(void) {
     mqtt_publish(mqtt_temperature, create_json_sensor("air", "", s_battery), 0);
     mqtt_publish(mqtt_humidity, create_json_sensor("air", "", s_battery), 0);
   }
-#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+#elif (SENSOR_TYPE == SCD4X)
   if (s_temperature[0] && s_humidity[0] && s_co2[0]) {
     ret = mqtt_publish(mqtt_co2, create_json_sensor("air", s_co2, s_battery), 0);
     if (ret != 0) {
@@ -485,7 +485,7 @@ void mqtt_publish_sensor_data(void) {
     mqtt_publish(mqtt_temperature, create_json_sensor("air", "", s_battery), 0);
     mqtt_publish(mqtt_humidity, create_json_sensor("air", "", s_battery), 0);
   }
-#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == RK520_02)
+#elif (SENSOR_TYPE == RK520_02)
   char s_ec[20] = { 0 };
   char s_moisture[20] = { 0 };
   char s_temperature[20] = { 0 };
@@ -500,7 +500,7 @@ void mqtt_publish_sensor_data(void) {
       FLOGI(TAG, "mqtt_publish error!");
     }
   }
-#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SWSR7500)
+#elif (SENSOR_TYPE == SWSR7500)
   char s_pyranometer[20] = { 0 };
   char mqtt_solar[80] = { 0 };
   snprintf(mqtt_solar, sizeof(mqtt_solar), "value/%s/solar", hostname);

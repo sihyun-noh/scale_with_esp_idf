@@ -24,13 +24,13 @@
 #endif
 
 #if defined(SENS_BOARD_VER) && (SENS_BOARD_VER >= SENS_TTGO_HW1)
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
+#if (SENSOR_TYPE == SHT3X)
 #define SHT3X_I2C_SDA_PIN 21
 #define SHT3X_I2C_SCL_PIN 22
-#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+#elif (SENSOR_TYPE == SCD4X)
 #define SCD4X_I2C_SDA_PIN 21
 #define SCD4X_I2C_SCL_PIN 22
-#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == RK520_02)
+#elif (SENSOR_TYPE == RK520_02)
 // Greenlabs Board PIN numbers for U2RX and U2TX
 #define MB_RX_PIN 16
 #define MB_TX_PIN 17
@@ -38,7 +38,7 @@
 #define CTS_UNCHANGED (-1)
 #define UART_PORT_NUM 2
 #define BAUD_RATE 9600
-#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SWSR7500)
+#elif (SENSOR_TYPE == SWSR7500)
 #define MB_RX_PIN 16
 #define MB_TX_PIN 17
 #define RTS_UNCHANGED (-1)
@@ -47,13 +47,13 @@
 #define BAUD_RATE 38400
 #endif
 #elif defined(SENS_BOARD_VER) && (SENS_BOARD_VER == SENS_OLIMEX_HW)
-#if defined(SENSOR_TYPE) && (SENSOR_TYPE == SHT3X)
+#if (SENSOR_TYPE == SHT3X)
 #define SHT3X_I2C_SDA_PIN 13
 #define SHT3X_I2C_SCL_PIN 16
-#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == SCD4X)
+#elif (SENSOR_TYPE == SCD4X)
 #define SCD4X_I2C_SDA_PIN 13
 #define SCD4X_I2C_SCL_PIN 16
-#elif defined(SENSOR_TYPE) && (SENSOR_TYPE == RK520_02)
+#elif (SENSOR_TYPE == RK520_02)
 // Olimex Board PIN numbers for U1RX and U1TX
 #define MB_RX_PIN 36
 #define MB_TX_PIN 4

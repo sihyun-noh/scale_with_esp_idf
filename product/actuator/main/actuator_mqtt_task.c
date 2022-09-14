@@ -91,7 +91,7 @@ static void mqtt_event_callback(void *handler_args, int32_t event_id, void *even
   }
 }
 
-#if defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == SWITCH)
+#if (ACTUATOR_TYPE == SWITCH)
 static char *create_json_actuator_switch(void) {
   /*
   {
@@ -284,7 +284,7 @@ static void actuator_switch_passing(char content[300]) {
 
   cJSON_Delete(root);
 }
-#elif defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == MOTOR)
+#elif (ACTUATOR_TYPE == MOTOR)
 static char *create_json_actuator_motor(void) {
   /*
   {
@@ -617,12 +617,12 @@ static int process_payload(int payload_len, char *payload) {
     } else if (!strncmp(get->valuestring, "fw_update", 9)) {
       // 기능 구현 보류
     } else if (!strncmp(get->valuestring, "switch", 6)) {
-#if defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == SWITCH)
+#if (ACTUATOR_TYPE == SWITCH)
       actuator_switch_passing(content);
       mqtt_publish_actuator_data();
 #endif
     } else if (!strncmp(get->valuestring, "motor", 5)) {
-#if defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == MOTOR)
+#if (ACTUATOR_TYPE == MOTOR)
       actuator_motor_passing(content);
       mqtt_publish_actuator_data();
 #endif
@@ -690,11 +690,11 @@ void stop_mqttc(void) {
 void mqtt_publish_actuator_data(void) {
   char *hostname = generate_hostname();
 
-#if defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == SWITCH)
+#if (ACTUATOR_TYPE == SWITCH)
   char mqtt_switch[50] = { 0 };
   snprintf(mqtt_switch, sizeof(mqtt_switch), "value/%s/switch", hostname);
   mqtt_publish(mqtt_switch, create_json_actuator_switch(), 0);
-#elif defined(ACTUATOR_TYPE) && (ACTUATOR_TYPE == MOTOR)
+#elif (ACTUATOR_TYPE == MOTOR)
   char mqtt_motor[50] = { 0 };
   snprintf(mqtt_motor, sizeof(mqtt_motor), "value/%s/motor", hostname);
   mqtt_publish(mqtt_motor, create_json_actuator_motor(), 0);
