@@ -126,7 +126,7 @@ elif [ ${1} = "flash" ]; then
   ESPPORT=${PORT_PATH} ESPBAUD=460800 ninja flash
 elif [[ "${*}" =~ "erase" ]]; then
   checkDeviceConnect
-  idf.py -p ${PORT_PATH} ${*}
+  idf.py -p ${PORT_PATH} erase-flash
 elif [[ ! "${*}" =~ "monitor" ]]; then
   idf.py ${*}
 fi
