@@ -123,7 +123,7 @@ if [ -z ${1} ]; then
 elif [ ${1} = "flash" ]; then
   prodBuild
   checkDeviceConnect
-  ESPPORT=${PORT_PATH} ninja flash
+  ESPPORT=${PORT_PATH} ESPBAUD=460800 ninja flash
 elif [[ "${*}" =~ "erase" ]]; then
   checkDeviceConnect
   idf.py -p ${PORT_PATH} ${*}
