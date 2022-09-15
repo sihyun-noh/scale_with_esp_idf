@@ -1,9 +1,9 @@
 /**
  * @file sysfile.c
  *
- * @brief using SPIFFS is provided in the "storage/spiffs" directory. 
- * This is initializes and mounts/format a SPIFFS partition, then writes and reads data from it using POSIX and C library APIs. 
- * 
+ * @brief using SPIFFS is provided in the "storage/spiffs" directory.
+ * This is initializes and mounts/format a SPIFFS partition, then writes and reads data from it using POSIX and C library APIs.
+ *
  *
  * Created by Greenlabs, Smartfarm Team.
  * Copyright (c) 2022 Greenlabs Co. and/or its affiliates. All rights reserved.
