@@ -50,6 +50,8 @@ static void heap_monitor_func(int warning_level, int critical_level) {
 
   LOGI(TAG, "Free HeapSize = %d", freeHeap);
 
+  LOGI(TAG, "uptime = %s", uptime());
+
   if (minHeap <= critical_level) {
     SLOGE(TAG, "Heap critical level reached: %d", critical_level);
   } else if (minHeap <= warning_level) {
