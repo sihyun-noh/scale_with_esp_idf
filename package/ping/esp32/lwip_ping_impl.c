@@ -30,6 +30,7 @@ int do_ping_lwip_impl(char *host, int seq) {
   int from_addr_len = sizeof(struct sockaddr);
   int data_size = 120;
   int ping_id = 0xABCD;
+  int delta_time = 10;
 
   packet_size = sizeof(struct icmp_echo_hdr) + data_size;
   printf("packet_size = %d\n", packet_size);
@@ -98,9 +99,9 @@ int do_ping_lwip_impl(char *host, int seq) {
 
   /* Recv ping reply packet */
   if ((recvfrom(ping_socket, reply_buf, packet_size, 0, (struct sockaddr *)&from_addr, (socklen_t *)&from_addr_len)) >=
-      ((int)(sizeof(struct ip_hdr) + sizeof(struct icmp_echo_hdr)) &&
-       (from_addr.sin_addr.s_addr == to_addr.sin_addr.s_addr))) {
-    reply_time = xTaskGetTickCount();
+          (int)(sizeof(struct ip_hdr) + sizeof(struct icmp_echo_hdr)) &&
+      (from_addr.sin_addr.s_addr == to_addr.sin_addr.s_addr)) {
+    reply_time = xTaskGetTickCount() + delta_time;
     iphdr = (struct ip_hdr *)reply_buf;
     pecho = (struct icmp_echo_hdr *)(reply_buf + (IPH_HL(iphdr) * 4));
 

@@ -174,12 +174,16 @@ static char *create_json_info(char *power) {
   /* IP Addr assigned to STA */
   esp_netif_ip_info_t ip_info;
   char ip_addr[16] = { 0 };
+  char free_mem[20] = { 0 };
   char fw_version[80] = { 0 };
+  char sleep_mode_cnt[20] = { 0 };
 
   esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &ip_info);
   esp_ip4addr_ntoa(&ip_info.ip, ip_addr, sizeof(ip_addr));
 
+  snprintf(free_mem, sizeof(free_mem), "%d", xPortGetFreeHeapSize());
   syscfg_get(CFG_DATA, "fw_version", fw_version, sizeof(fw_version));
+  syscfg_get(CFG_DATA, "sleep_mode_cnt", sleep_mode_cnt, sizeof(sleep_mode_cnt));
 
   /* create root node and array */
   root = cJSON_CreateObject();
@@ -202,6 +206,8 @@ static char *create_json_info(char *power) {
     cJSON_AddItemToObject(root, "power", cJSON_CreateString("battery"));
   }
   cJSON_AddItemToObject(root, "uptime", cJSON_CreateString(uptime()));
+  cJSON_AddItemToObject(root, "free_mem", cJSON_CreateString(free_mem));
+  cJSON_AddItemToObject(root, "sleep_mode", cJSON_CreateString(sleep_mode_cnt));
   cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
   /* print everything */
   p_out = cJSON_Print(root);

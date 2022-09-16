@@ -493,7 +493,7 @@ static void monitoring_task(void *pvParameters) {
       memset(&res_event_msg, 0, sizeof(res_event_msg));
     }
 
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
   }
 
   vTaskDelete(NULL);

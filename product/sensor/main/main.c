@@ -81,6 +81,21 @@ void stop_shell(void) {
   }
 }
 
+static void sleep_mode_count(void) {
+  int sleep_cnt = 0;
+  char sleep_mode_cnt[20] = { 0 };
+
+  syscfg_get(CFG_DATA, "sleep_mode_cnt", sleep_mode_cnt, sizeof(sleep_mode_cnt));
+  if (sleep_mode_cnt[0]) {
+    sleep_cnt = atoi(sleep_mode_cnt);
+  }
+  sleep_cnt++;
+  LOGI(TAG, "sleep mode count = %d", sleep_cnt);
+  memset(sleep_mode_cnt, 0, sizeof(sleep_mode_cnt));
+  snprintf(sleep_mode_cnt, sizeof(sleep_mode_cnt), "%d", sleep_cnt);
+  syscfg_set(CFG_DATA, "sleep_mode_cnt", sleep_mode_cnt);
+}
+
 /* The code below is only used for testing purpose until manufacturing data is applied */
 static void generate_default_syscfg(void) {
   char model_name[10] = { 0 };
@@ -491,6 +506,9 @@ void plugged_loop_task(void) {
         vTaskDelay(pdMS_TO_TICKS(1000));
       } break;
       case SLEEP_MODE: {
+        // On the power plug model, entering sleep mode means that the router or internet status is unavailable, so we
+        // use deep sleep mode to reconnect to the Wi-Fi router.
+        sleep_mode_count();
         stop_mqttc();
         vTaskDelay(5000 / portTICK_RATE_MS);
         sleep_timer_wakeup(30);
