@@ -29,7 +29,6 @@ static const char *TAG = "MQTT";
 static mqtt_ctx_t *mqtt_ctx;
 static char json_data[400];
 static char json_resp[400];
-static char power_mode[10];
 static char model_name[10];
 
 char mqtt_request[80] = { 0 };
@@ -481,7 +480,7 @@ static void actuator_motor_passing(char content[300]) {
 }
 #endif
 
-static char *create_json_info(char *power) {
+static char *create_json_info(void) {
   /*
   {
     "type":"devinfo",
@@ -524,11 +523,11 @@ static char *create_json_info(char *power) {
   cJSON_AddItemToObject(root, "ip_address", cJSON_CreateString((char *)ip_addr));
   cJSON_AddItemToObject(root, "rssi", cJSON_CreateNumber(ap_info.rssi));
   cJSON_AddItemToObject(root, "send_interval", cJSON_CreateNumber(MQTT_SEND_INTERVAL));
-  if (!strncmp(power, "P", 1)) {
+  if (!is_battery_model())
     cJSON_AddItemToObject(root, "power", cJSON_CreateString("plug"));
-  } else if (!strncmp(power, "B", 1)) {
+  else
     cJSON_AddItemToObject(root, "power", cJSON_CreateString("battery"));
-  }
+
   cJSON_AddItemToObject(root, "uptime", cJSON_CreateString(uptime()));
   cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
   /* print everything */
@@ -585,7 +584,7 @@ static int process_payload(int payload_len, char *payload) {
   cJSON *get = cJSON_GetObjectItem(root, "type");
   if (cJSON_IsString(get)) {
     if (!strncmp(get->valuestring, "devinfo", 7)) {
-      mqtt_publish(mqtt_response, create_json_info(power_mode), 0);
+      mqtt_publish(mqtt_response, create_json_info(), 0);
     } else if (!strncmp(get->valuestring, "update", 6)) {
       mqtt_publish(mqtt_response, create_json_resp("update"), 0);
       mqtt_publish_actuator_data();
@@ -638,7 +637,6 @@ int start_mqttc(void) {
 
   syscfg_get(CFG_DATA, "farmip", farmip, sizeof(farmip));
   syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
-  syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
 
   if (!farmip[0]) {
     return -1;

@@ -31,7 +31,6 @@ static mqtt_ctx_t *mqtt_ctx;
 static char json_resp[400];
 static char json_data[400];
 static char json_fwup_resp[400];
-static char power_mode[10];
 
 char s_temperature[20] = { 0 };
 char s_humidity[20] = { 0 };
@@ -150,7 +149,7 @@ static char *create_json_sensor(char *type, char *value, char *bat) {
   return json_data;
 }
 
-static char *create_json_info(char *power) {
+static char *create_json_info(void) {
   /*
   {
     "type":"devinfo",
@@ -200,11 +199,11 @@ static char *create_json_info(char *power) {
   cJSON_AddItemToObject(root, "ip_address", cJSON_CreateString((char *)ip_addr));
   cJSON_AddItemToObject(root, "rssi", cJSON_CreateNumber(ap_info.rssi));
   cJSON_AddItemToObject(root, "send_interval", cJSON_CreateNumber(MQTT_SEND_INTERVAL));
-  if (!strncmp(power, "P", 1)) {
+  if (!is_battery_model())
     cJSON_AddItemToObject(root, "power", cJSON_CreateString("plug"));
-  } else if (!strncmp(power, "B", 1)) {
+  else
     cJSON_AddItemToObject(root, "power", cJSON_CreateString("battery"));
-  }
+
   cJSON_AddItemToObject(root, "uptime", cJSON_CreateString(uptime()));
   cJSON_AddItemToObject(root, "free_mem", cJSON_CreateString(free_mem));
   cJSON_AddItemToObject(root, "sleep_mode", cJSON_CreateString(sleep_mode_cnt));
@@ -306,7 +305,7 @@ static int process_payload(int payload_len, char *payload) {
     LOGI(TAG, "get->valuestring = %s\n", get->valuestring);
     if (!strncmp(get->valuestring, "devinfo", 7)) {
       LOGI(TAG, "Got devinfo mqtt topic");
-      mqtt_publish(mqtt_response, create_json_info(power_mode), 0);
+      mqtt_publish(mqtt_response, create_json_info(), 0);
     } else if (!strncmp(get->valuestring, "fw_update", strlen("fw_update"))) {
       LOGI(TAG, "Got fw_update mqtt topic");
       cJSON *url = cJSON_GetObjectItem(root, "url");
@@ -323,7 +322,7 @@ static int process_payload(int payload_len, char *payload) {
       mqtt_publish(mqtt_response, create_json_resp("update"), 0);
       sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
       sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
-      if (!strncmp(power_mode, "B", 1)) {
+      if (is_battery_model()) {
         sysevent_set(ADC_BATTERY_EVENT, s_battery);
       }
 #if (SENSOR_TYPE == SCD4X)
@@ -386,7 +385,6 @@ int start_mqttc(void) {
   char farmip[30] = { 0 };
 
   syscfg_get(CFG_DATA, "farmip", farmip, sizeof(farmip));
-  syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
 
   if (!farmip[0]) {
     return -1;
@@ -454,11 +452,10 @@ void mqtt_publish_sensor_data(void) {
   sysevent_get(SYSEVENT_BASE, I2C_TEMPERATURE_EVENT, &s_temperature, sizeof(s_temperature));
 #endif
 
-  if (!strncmp(power_mode, "P", 1)) {
+  if (!is_battery_model())
     snprintf(s_battery, sizeof(s_battery), "-1");
-  } else if (!strncmp(power_mode, "B", 1)) {
+  else
     sysevent_get(SYSEVENT_BASE, ADC_BATTERY_EVENT, &s_battery, sizeof(s_battery));
-  }
 
 #if (SENSOR_TYPE == SHT3X)
   if (s_temperature[0] && s_humidity[0]) {

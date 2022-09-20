@@ -13,14 +13,6 @@ static const char* TAG = "led_task";
 static TaskHandle_t led_handle = NULL;
 
 static void led_task(void* pvParameters) {
-  int is_battery = 0;
-  char power_mode[10] = { 0 };
-
-  syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
-
-  if (strcmp(power_mode, "B") == 0)
-    is_battery = 1;
-
   led_off(LED_RED);
   led_off(LED_GREEN);
   led_off(LED_BLUE);
@@ -61,7 +53,7 @@ static void led_task(void* pvParameters) {
           vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
       } else {
-        if (is_battery) {
+        if (is_battery_model()) {
           led_off(LED_RED);
           led_off(LED_GREEN);
           led_off(LED_BLUE);

@@ -16,6 +16,9 @@
 #define is_wifi_ap_available sys_stat_get_wifi_ap
 #define set_wifi_ap_status sys_stat_set_wifi_ap
 
+#define is_battery_model sys_stat_get_battery_model
+#define set_battery_model sys_stat_set_battery_model
+
 #define is_low_battery sys_stat_get_low_battery
 #define set_low_battery sys_stat_set_low_battery
 
@@ -48,6 +51,9 @@ extern void sys_stat_set_wifi_ap(uint8_t status);
 
 extern int sys_stat_get_wifi_sta(void);
 extern void sys_stat_set_wifi_sta(uint8_t status);
+
+extern int sys_stat_get_battery_model(void);
+extern void sys_stat_set_battery_model(uint8_t status);
 
 extern int sys_stat_get_low_battery(void);
 extern void sys_stat_set_low_battery(uint8_t status);

@@ -22,6 +22,7 @@
 #define STATUS_INTERNET (1 << 1) /* Indicator event when internet is available */
 #define STATUS_WIFI_AP (1 << 2)  /* Use event when WiFi AP mode comes up */
 #define STATUS_WIFI_STA (1 << 3) /* Use event when WiFi Sta mode comes up */
+#define STATUS_BATTERY (1 << 4)  /* Use event to check battery model */
 
 /* LED Status */
 #define STATUS_OK (1 << 0)              /* Normal operation */
@@ -117,6 +118,19 @@ void sys_stat_set_wifi_ap(uint8_t status) {
     xEventGroupSetBits(hw_status_events, STATUS_WIFI_AP);
   } else {
     xEventGroupClearBits(hw_status_events, STATUS_WIFI_AP);
+  }
+}
+
+int sys_stat_get_battery_model(void) {
+  EventBits_t bits = xEventGroupGetBits(hw_status_events);
+  return ((bits & STATUS_BATTERY) == STATUS_BATTERY);
+}
+
+void sys_stat_set_battery_model(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(hw_status_events, STATUS_BATTERY);
+  } else {
+    xEventGroupClearBits(hw_status_events, STATUS_BATTERY);
   }
 }
 

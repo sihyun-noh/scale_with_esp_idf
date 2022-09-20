@@ -21,6 +21,7 @@ sc_ctx_t *ctx = NULL;
 extern int actuator_init(void);
 extern void actuator_task(void);
 static void generate_default_sysmfg(void);
+static void check_model(void);
 
 extern int start_mqttc(void);
 extern void stop_mqttc(void);
@@ -66,6 +67,21 @@ static void generate_default_sysmfg(void) {
   }
 }
 
+static void check_model(void) {
+  char model_name[10] = { 0 };
+  char power_mode[10] = { 0 };
+
+  syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
+  syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
+
+  LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
+
+  if (!strncmp(power_mode, "B", 1))
+    set_battery_model(1);
+  else
+    set_battery_model(0);
+}
+
 int system_init(void) {
   // Initialize NVS
   esp_err_t ret = nvs_flash_init();
@@ -73,39 +89,35 @@ int system_init(void) {
     ESP_ERROR_CHECK(nvs_flash_erase());
     ret = nvs_flash_init();
   }
-  if (ret != ESP_OK) {
+  if (ret)
     return ERR_NVS_FLASH;
-  }
 
   ret = syscfg_init();
-  if (ret != 0) {
+  if (ret)
     return ERR_SYSCFG_INIT;
-  }
 
   ret = syscfg_open();
-  if (ret != 0) {
+  if (ret)
     return ERR_SYSCFG_OPEN;
-  }
 
   ret = sys_stat_init();
-  if (ret != 0) {
+  if (ret)
     return ERR_SYS_STATUS_INIT;
-  }
-
-  ret = monitoring_init();
-  if (ret != 0) {
-    return ERR_MONITORING_INIT;
-  }
 
   ret = sysevent_create();
-  if (ret != 0) {
+  if (ret)
     return ERR_SYSEVENT_CREATE;
-  }
 
   syslog_init();
 
   // Generate the default manufacturing data if there is no data in mfg partition.
   generate_default_sysmfg();
+
+  check_model();
+
+  ret = monitoring_init();
+  if (ret)
+    return ERR_MONITORING_INIT;
 
   return SYSINIT_OK;
 }
@@ -120,8 +132,6 @@ int sleep_timer_wakeup(int wakeup_time_sec) {
 
 void app_main(void) {
   int rc = SYSINIT_OK;
-  char model_name[10] = { 0 };
-  char power_mode[10] = { 0 };
 
   set_operation_mode(SYSTEM_INIT_MODE);
 
@@ -139,15 +149,8 @@ void app_main(void) {
             sc_start(ctx);
           }
           set_device_onboard(0);
-          set_operation_mode(MODEL_CHECK_MODE);
+          set_operation_mode(ACTUATOR_INIT_MODE);
         }
-      } break;
-      case MODEL_CHECK_MODE: {
-        LOGI(TAG, "MODEL_CHECK_MODE");
-        syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
-        syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
-        LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
-        set_operation_mode(ACTUATOR_INIT_MODE);
       } break;
       case ACTUATOR_INIT_MODE: {
         LOGI(TAG, "ACTUATOR_INIT_MODE");

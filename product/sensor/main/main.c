@@ -50,6 +50,7 @@ extern void create_led_task(void);
 extern int start_file_server(uint32_t port);
 
 static void generate_default_syscfg(void);
+static void check_model(void);
 
 RTC_DATA_ATTR float memory_sensor_buf;
 RTC_DATA_ATTR uint8_t m_alive_count;
@@ -122,6 +123,21 @@ static void generate_default_syscfg(void) {
   syscfg_set(CFG_DATA, "fw_version", FW_VERSION);
 }
 
+static void check_model(void) {
+  char model_name[10] = { 0 };
+  char power_mode[10] = { 0 };
+
+  syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
+  syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
+
+  LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
+
+  if (!strncmp(power_mode, "B", 1))
+    set_battery_model(1);
+  else
+    set_battery_model(0);
+}
+
 int system_init(void) {
   // Initialize NVS
   esp_err_t ret = nvs_flash_init();
@@ -129,49 +145,43 @@ int system_init(void) {
     ESP_ERROR_CHECK(nvs_flash_erase());
     ret = nvs_flash_init();
   }
-  if (ret != ESP_OK) {
+  if (ret)
     return ERR_NVS_FLASH;
-  }
 
   ret = wifi_user_init();
-  if (ret != 0) {
+  if (ret)
     return ERR_WIFI_INIT;
-  }
 
   ret = syscfg_init();
-  if (ret != 0) {
+  if (ret)
     return ERR_SYSCFG_INIT;
-  }
 
   ret = syscfg_open();
-  if (ret != 0) {
+  if (ret)
     return ERR_SYSCFG_OPEN;
-  }
 
   ret = sys_stat_init();
-  if (ret != 0) {
+  if (ret)
     return ERR_SYS_STATUS_INIT;
-  }
-
-  ret = monitoring_init();
-  if (ret != 0) {
-    return ERR_MONITORING_INIT;
-  }
 
   ret = sysevent_create();
-  if (ret != 0) {
+  if (ret)
     return ERR_SYSEVENT_CREATE;
-  }
 
   syslog_init();
 
   ret = init_sysfile();
-  if (ret != 0) {
+  if (ret)
     return ERR_SPIFFS_INIT;
-  }
 
   // Generate the default manufacturing data if there is no data in mfg partition.
   generate_default_syscfg();
+
+  check_model();
+
+  ret = monitoring_init();
+  if (ret)
+    return ERR_MONITORING_INIT;
 
   return SYSINIT_OK;
 }
@@ -521,21 +531,19 @@ void plugged_loop_task(void) {
 
 void app_main(void) {
   int rc = SYSINIT_OK;
-  char model_name[10] = { 0 };
-  char power_mode[10] = { 0 };
 
   if ((rc = system_init()) != SYSINIT_OK) {
     LOGE(TAG, "Failed to initialize device, error = [%d]", rc);
     return;
   }
-  if (m_timezone_set) {
+
+  if (m_timezone_set)
     tm_set_timezone("Asia/Seoul");
-  }
+
   // Start interactive shell command line
   ctx = sc_init();
-  if (ctx) {
+  if (ctx)
     sc_start(ctx);
-  }
 
   //#if defined(CONFIG_SMARTFARM_MODBUS_FEATURE)
   //  modbus_sensor_test(3);
@@ -543,17 +551,12 @@ void app_main(void) {
 
   set_device_onboard(0);
 
-  syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
-  syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
-  LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
-
 #if defined(CONFIG_LED_FEATURE)
   create_led_task();
 #endif
 
-  if (strcmp(power_mode, "B") == 0) {
+  if (is_battery_model())
     battery_loop_task();
-  } else if (strcmp(power_mode, "P") == 0) {
+  else
     plugged_loop_task();
-  }
 }

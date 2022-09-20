@@ -14,7 +14,6 @@ typedef enum {
 
 typedef enum {
   SYSTEM_INIT_MODE = 0,
-  MODEL_CHECK_MODE,
   ACTUATOR_INIT_MODE,
   EASY_SETUP_MODE,
   TIME_ZONE_SET_MODE,

@@ -418,6 +418,11 @@ static void monitoring_task(void *pvParameters) {
   is_run_task_monitor_alarm(wifi_event_monitor_task_handle);
   task_count = get_task_count();
 
+  if (!is_battery_model()) {
+    set_wifi_state(NO_INTERNET_CONNECTION);
+    set_wifi_led(NO_INTERNET_CONNECTION);
+  }
+
   while (1) {
     // Do not need to check if the device's wifi connection status during the easy setup progress.
     // Only check if connection status of farm network or internet after device is onboarding on the network.
