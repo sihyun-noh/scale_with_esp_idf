@@ -268,6 +268,7 @@ static char *create_json_fwup_resp(int ret) {
   cJSON *root;
   char *hostname = generate_hostname();
   char fw_version[80] = { 0 };
+  char new_fw_version[80] = { 0 };
 
   /* create root node and array */
   root = cJSON_CreateObject();
@@ -276,11 +277,13 @@ static char *create_json_fwup_resp(int ret) {
   cJSON_AddItemToObject(root, "id", cJSON_CreateString(hostname));
   if (ret == 0) {
     cJSON_AddItemToObject(root, "state", cJSON_CreateString("success"));
+    syscfg_get(CFG_DATA, "new_fw_version", new_fw_version, sizeof(new_fw_version));
+    cJSON_AddItemToObject(root, "fw_version", cJSON_CreateString(new_fw_version));
   } else {
     cJSON_AddItemToObject(root, "state", cJSON_CreateString("failure"));
+    syscfg_get(CFG_DATA, "fw_version", fw_version, sizeof(fw_version));
+    cJSON_AddItemToObject(root, "fw_version", cJSON_CreateString(fw_version));
   }
-  syscfg_get(CFG_DATA, "fw_version", fw_version, sizeof(fw_version));
-  cJSON_AddItemToObject(root, "fw_version", cJSON_CreateString(fw_version));
   cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
   /* print everything */
   p_out = cJSON_Print(root);

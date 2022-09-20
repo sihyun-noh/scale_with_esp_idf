@@ -1,6 +1,7 @@
 #include "ota_fw_impl.h"
 #include "log.h"
 #include "config.h"
+#include "syscfg.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -70,6 +71,8 @@ static int check_fw_image(const esp_partition_t *running, uint8_t *fw_image, uin
              sizeof(esp_app_desc_t));
       LOGI(TAG, "New firmware version: %s", new_app_info.version);
       LOGI(TAG, "New firmware project name: %s", new_app_info.project_name);
+
+      syscfg_set(CFG_DATA, "new_fw_version", new_app_info.project_name);
 
       esp_app_desc_t running_app_info;
       if (esp_ota_get_partition_description(running, &running_app_info) == ESP_OK) {

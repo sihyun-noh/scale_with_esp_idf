@@ -361,15 +361,15 @@ void battery_loop_task(void) {
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         set_operation_mode(SENSOR_PUB_MODE);
       } break;
-      case OTA_FWUPDATE_MODE: {
-        // Do not anything while OTA FW updating
-        vTaskDelay(pdMS_TO_TICKS(1000));
-      } break;
       case SENSOR_PUB_MODE: {
         mqtt_publish_sensor_data();
         vTaskDelay(10000 / portTICK_PERIOD_MS);
         stop_mqttc();
         set_operation_mode(SLEEP_MODE);
+      } break;
+      case OTA_FWUPDATE_MODE: {
+        // Do not anything while OTA FW updating
+        vTaskDelay(pdMS_TO_TICKS(1000));
       } break;
       case SLEEP_MODE: {
         LOGI(TAG, "SLEEP_MODE");
