@@ -15,7 +15,7 @@ typedef enum {
 
 typedef enum {
   CHECK_OK,
-  SENSOR_PUB,
+  SENSOR_NOT_PUB,
   ERR_SENSOR_READ,
   ERR_BATTERY_READ,
 } err_system_t;

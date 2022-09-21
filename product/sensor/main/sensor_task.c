@@ -14,11 +14,13 @@
 #include "syscfg.h"
 #include "event_ids.h"
 #include "sysevent.h"
+#include "sys_status.h"
 #include "monitoring.h"
 #include "filelog.h"
 #include "main.h"
 
 #include <string.h>
+#include <math.h>
 
 #define MAX_READ_CNT 10
 #define MIN_READ_CNT 2
@@ -53,6 +55,24 @@ scd4x_dev_t dev;
 int num_characteristic = 0;
 mb_characteristic_info_t mb_characteristic[3] = { 0 };
 #endif
+
+RTC_DATA_ATTR float memory_sensor_buf;
+RTC_DATA_ATTR uint8_t m_alive_count;
+
+int sensor_comparison(float m_sensor, float sensor, const float const_comparison);
+
+int alive_check_task(void) {
+  int ret = 0;
+  LOGI(TAG, "%d", m_alive_count);
+  if (m_alive_count >= 20) {
+    m_alive_count = 0;
+    ret = 0;
+  } else {
+    m_alive_count = m_alive_count + 1;
+    ret = 1;
+  }
+  return ret;
+}
 
 int sensor_init(void) {
   int res = 0;
@@ -126,7 +146,7 @@ int sensor_init(void) {
 }
 
 #if (SENSOR_TYPE == SHT3X)
-int read_temperature_humidity(int op_mode, char* temperature, char* humidity) {
+int read_temperature_humidity(void) {
   int res = 0;
   int err_cnt = 0, read_cnt = 0;
 
@@ -139,11 +159,11 @@ int read_temperature_humidity(int op_mode, char* temperature, char* humidity) {
   float sht3x_temperature_i2c = 0;
   float sht3x_humidity_i2c = 0;
 
-  if (op_mode == BATTERY_OP_MODE) {
+  if (is_battery_model())
     read_cnt = MAX_READ_CNT;
-  } else if (op_mode == POWER_OP_MODE) {
+  else
     read_cnt = MIN_READ_CNT;
-  }
+
   for (int i = 0; i < read_cnt;) {
     // Get the values and do something with them.
     if ((res = sht3x_read(&dev, &sht3x_temperature[i], &sht3x_humidity[i])) == SHT3X_OK) {
@@ -173,15 +193,23 @@ int read_temperature_humidity(int op_mode, char* temperature, char* humidity) {
   memset(s_humidity, 0, sizeof(s_humidity));
   snprintf(s_humidity, sizeof(s_humidity), "%.2f", sht3x_humidity_i2c);
 
-  memcpy(temperature, s_temperature, sizeof(s_temperature));
-  memcpy(humidity, s_humidity, sizeof(s_humidity));
+  if (is_battery_model()) {
+    if (!alive_check_task() || sensor_comparison(memory_sensor_buf, sht3x_temperature_i2c, 0.5)) {
+      FLOGI(TAG, "temperature : %.2f, m_temperature : %.2f", sht3x_temperature_i2c, memory_sensor_buf);
+      memory_sensor_buf = sht3x_temperature_i2c;
+    } else {
+      return SENSOR_NOT_PUB;
+    }
+  }
+  sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
+  sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
 
   return 0;
 }
 #endif
 
 #if (SENSOR_TYPE == SCD4X)
-int read_co2_temperature_humidity(char* co2, char* temperature, char* humidity) {
+int read_co2_temperature_humidity(void) {
   int res = 0;
 
   char s_co2[20] = { 0 };
@@ -191,6 +219,7 @@ int read_co2_temperature_humidity(char* co2, char* temperature, char* humidity) 
   uint16_t scd41_co2 = 0;
   float scd41_temperature = 0;
   float scd41_humidity = 0;
+  float f_co2 = 0;
 
   res = scd4x_get_data_ready_flag(&dev);
   if (res == -1) {
@@ -219,9 +248,18 @@ int read_co2_temperature_humidity(char* co2, char* temperature, char* humidity) 
     memset(s_humidity, 0, sizeof(s_humidity));
     snprintf(s_humidity, sizeof(s_humidity), "%.2f", scd41_humidity);
 
-    memcpy(co2, s_co2, sizeof(s_co2));
-    memcpy(temperature, s_temperature, sizeof(s_temperature));
-    memcpy(humidity, s_humidity, sizeof(s_humidity));
+    if (is_battery_model()) {
+      f_co2 = atof(s_co2);
+      if (!alive_check_task() || sensor_comparison(memory_sensor_buf, f_co2, 40)) {
+        FLOGI(TAG, "co2 : %.2f, m_co2 : %.2f", f_co2, memory_sensor_buf);
+        memory_sensor_buf = f_co2;
+      } else {
+        return SENSOR_NOT_PUB;
+      }
+    }
+    sysevent_set(I2C_CO2_EVENT, s_co2);
+    sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
+    sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
   }
 
   return res;
@@ -229,7 +267,7 @@ int read_co2_temperature_humidity(char* co2, char* temperature, char* humidity) 
 #endif
 
 #if (SENSOR_TYPE == RK520_02)
-int read_soil_ec(char* temperature, char* moisture, char* ec) {
+int read_soil_ec(void) {
   int res = 0;
   int data_len = 0;
   uint8_t value[30] = { 0 };
@@ -265,9 +303,18 @@ int read_soil_ec(char* temperature, char* moisture, char* ec) {
       snprintf(s_temperature, sizeof(s_temperature), "%.2f", f_temp);
       snprintf(s_moisture, sizeof(s_moisture), "%.2f", f_mos);
       snprintf(s_ec, sizeof(s_ec), "%.2f", f_ec);
-      snprintf(temperature, sizeof(s_temperature), "%s", s_temperature);
-      snprintf(moisture, sizeof(s_moisture), "%s", s_moisture);
-      snprintf(ec, sizeof(s_ec), "%s", s_ec);
+      sysevent_set(MB_TEMPERATURE_EVENT, s_temperature);
+      sysevent_set(MB_MOISTURE_EVENT, s_moisture);
+      sysevent_set(MB_EC_EVENT, s_ec);
+
+      if (is_battery_model()) {
+        LOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", f_ec, f_mos, f_temp);
+        FLOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", f_ec, f_mos, f_temp);
+      } else {
+        LOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", f_ec, f_mos, f_temp);
+        FLOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", f_ec, f_mos, f_temp);
+      }
+
       vTaskDelay(500 / portTICK_RATE_MS);
     }
   }
@@ -276,7 +323,7 @@ int read_soil_ec(char* temperature, char* moisture, char* ec) {
 #endif
 
 #if (SENSOR_TYPE == SWSR7500)
-int read_solar_radiation(char* pyranometer) {
+int read_solar_radiation(void) {
   int res = 0;
   int data_len = 0;
 
@@ -297,8 +344,9 @@ int read_solar_radiation(char* pyranometer) {
       memcpy(&u_pyranometer, value, 2);
       f_pyranometer = (float)(u_pyranometer / 10.00);
       LOGI(TAG, "pyranometer = %.2f", f_pyranometer);
+      FLOGI(TAG, "pyranometer = %.2f", f_pyranometer);
       snprintf(s_pyranometer, sizeof(s_pyranometer), "%.2f", f_pyranometer);
-      snprintf(pyranometer, sizeof(s_pyranometer), "%s", s_pyranometer);
+      sysevent_set(MB_PYRANOMETER_EVENT, s_pyranometer);
     }
   }
   return res;
@@ -306,26 +354,9 @@ int read_solar_radiation(char* pyranometer) {
 #endif
 
 int sensor_comparison(float m_sensor, float sensor, const float const_comparison) {
-  float comparison;
-
-  comparison = sensor - m_sensor;
-
-  LOGI(TAG, "sensor : %.2f, memory_sensor : %.2f, comparison: %.2f", sensor, m_sensor, comparison);
-
-  if (comparison < 0) {
-    comparison = comparison * -1;
-  }
-
-  if (comparison >= const_comparison) {
+  LOGI(TAG, "sensor : %.2f, m_sensor : %.2f, diff : %.2f", sensor, m_sensor, fabs(sensor - m_sensor));
+  if (fabs(sensor - m_sensor) >= const_comparison)
     return 1;
-  }
+
   return 0;
 }
-
-float convert_uint32_to_float(uint16_t low, uint16_t high) {
-  float fValue = 0.0;
-  uint32_t value = ((uint32_t)low << 16) | high;
-  memcpy(&fValue, &value, sizeof(value));
-  return fValue;
-}
-

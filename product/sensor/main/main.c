@@ -28,16 +28,15 @@ extern void modbus_sensor_test(int mb_sensor);
 
 extern int sensor_init(void);
 #if (SENSOR_TYPE == SHT3X)
-extern int read_temperature_humidity(int op_mode, char* temperature, char* humidity);
+extern int read_temperature_humidity(void);
 #elif (SENSOR_TYPE == SCD4X)
-extern int read_co2_temperature_humidity(char* co2, char* temperature, char* humidity);
+extern int read_co2_temperature_humidity(void);
 #elif (SENSOR_TYPE == RK520_02)
-extern int read_soil_ec(char *temperature, char *moisture, char *ec);
+extern int read_soil_ec(void);
 #elif (SENSOR_TYPE == SWSR7500)
-extern int read_solar_radiation(char* pyranometer);
+extern int read_solar_radiation(void);
 #endif
 extern int read_battery_percentage(void);
-extern int sensor_comparison(float m_sensor, float sensor, const float const_comparison);
 
 extern int start_mqttc(void);
 extern void stop_mqttc(void);
@@ -52,8 +51,6 @@ extern int start_file_server(uint32_t port);
 static void generate_default_syscfg(void);
 static void check_model(void);
 
-RTC_DATA_ATTR float memory_sensor_buf;
-RTC_DATA_ATTR uint8_t m_alive_count;
 RTC_DATA_ATTR uint8_t m_timezone_set;
 
 static operation_mode_t s_curr_mode;
@@ -186,19 +183,6 @@ int system_init(void) {
   return SYSINIT_OK;
 }
 
-int alive_check_task() {
-  int ret = 0;
-  LOGI(TAG, "%d", m_alive_count);
-  if (m_alive_count >= 20) {
-    m_alive_count = 0;
-    ret = 0;
-  } else {
-    m_alive_count = m_alive_count + 1;
-    ret = 1;
-  }
-  return ret;
-}
-
 int sleep_timer_wakeup(int wakeup_time_sec) {
   int ret = 0;
   LOGI(TAG, "Enabling timer wakeup, %ds\n", wakeup_time_sec);
@@ -213,26 +197,6 @@ void battery_loop_task(void) {
   char buf[20] = { 0 };
 #else
   int rc = 0;
-#if (SENSOR_TYPE == SHT3X)
-  float temperature = 0;
-  char s_temperature[20] = { 0 };
-  char s_humidity[20] = { 0 };
-#elif (SENSOR_TYPE == SCD4X)
-  float co2 = 0;
-  char s_co2[20] = { 0 };
-  char s_temperature[20] = { 0 };
-  char s_humidity[20] = { 0 };
-#elif (SENSOR_TYPE == RK520_02)
-  float temperature = 0.0;
-  float moisture = 0.0;
-  float ec = 0.0;
-  char s_temperature[20] = { 0 };
-  char s_moisture[20] = { 0 };
-  char s_ec[20] = { 0 };
-#elif (SENSOR_TYPE == SWSR7500)
-  float pyranometer = 0.0;
-  char s_pyranometer[20] = { 0 };
-#endif
 #endif
 
   set_operation_mode(SENSOR_INIT_MODE);
@@ -268,61 +232,22 @@ void battery_loop_task(void) {
 #else
 
 #if (SENSOR_TYPE == SHT3X)
-        if ((rc = read_temperature_humidity(BATTERY_OP_MODE, s_temperature, s_humidity)) == CHECK_OK) {
-          temperature = atof(s_temperature);
-          if ((rc = alive_check_task()) == CHECK_OK) {
-            b_sensor_pub = true;
-          } else if ((rc = sensor_comparison(memory_sensor_buf, temperature, 0.5)) == SENSOR_PUB) {
-            b_sensor_pub = true;
-          }
-          if (b_sensor_pub) {
-            memory_sensor_buf = temperature;
-            FLOGI(TAG, "temperature : %.2f, m_temperature : %.2f", temperature, memory_sensor_buf);
-            sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
-            sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
+        rc = read_temperature_humidity();
 #elif (SENSOR_TYPE == SCD4X)
-        if ((rc = read_co2_temperature_humidity(s_co2, s_temperature, s_humidity)) == CHECK_OK) {
-          co2 = atof(s_co2);
-          if ((rc = alive_check_task()) == CHECK_OK) {
-            b_sensor_pub = true;
-          } else if ((rc = sensor_comparison(memory_sensor_buf, co2, 40)) == SENSOR_PUB) {
-            b_sensor_pub = true;
-          }
-          if (b_sensor_pub) {
-            memory_sensor_buf = co2;
-            FLOGI(TAG, "co2 : %.2f, m_co2 : %.2f", co2, memory_sensor_buf);
-            sysevent_set(I2C_CO2_EVENT, s_co2);
-            sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
-            sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
+        rc = read_co2_temperature_humidity();
 #elif (SENSOR_TYPE == RK520_02)
-        if ((rc = read_soil_ec(s_temperature, s_moisture, s_ec)) == CHECK_OK) {
-          ec = atof(s_ec);
-          temperature = atof(s_temperature);
-          moisture = atof(s_moisture);
-          LOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", ec, moisture, temperature);
-          FLOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", ec, moisture, temperature);
-          b_sensor_pub = true;
-          if (b_sensor_pub) {
-            sysevent_set(MB_EC_EVENT, s_ec);
-            sysevent_set(MB_TEMPERATURE_EVENT, s_temperature);
-            sysevent_set(MB_MOISTURE_EVENT, s_moisture);
+        rc = read_soil_ec();
 #elif (SENSOR_TYPE == SWSR7500)
-        if ((rc = read_solar_radiation(s_pyranometer)) == CHECK_OK) {
-          pyranometer = atof(s_pyranometer);
-          LOGI(TAG, "pyranometer : %.2f", pyranometer);
-          FLOGI(TAG, "pyranometer : %.2f", pyranometer);
-          b_sensor_pub = true;
-          if (b_sensor_pub) {
-            sysevent_set(MB_PYRANOMETER_EVENT, s_pyranometer);
+        rc = read_solar_radiation();
 #endif
-            if ((rc = read_battery_percentage()) != CHECK_OK) {
-              // Failed to read battery percentage, it will be set 0
-              sysevent_set(ADC_BATTERY_EVENT, "0");
-            }
-            set_operation_mode(EASY_SETUP_MODE);
-          } else {
-            set_operation_mode(SLEEP_MODE);
+        if (rc == CHECK_OK) {
+          if (read_battery_percentage() != CHECK_OK) {
+            // Failed to read battery percentage, it will be set 0
+            sysevent_set(ADC_BATTERY_EVENT, "0");
           }
+          set_operation_mode(EASY_SETUP_MODE);
+        } else if (rc == SENSOR_NOT_PUB) {
+          set_operation_mode(SLEEP_MODE);
         } else {
           rc = ERR_SENSOR_READ;
           LOGE(TAG, "sensor read, error = [%d]", rc);
@@ -386,24 +311,6 @@ void plugged_loop_task(void) {
   char buf[20] = { 0 };
 #else
   int rc = 0;
-#if (SENSOR_TYPE == SHT3X)
-  char s_temperature[20] = { 0 };
-  char s_humidity[20] = { 0 };
-#elif (SENSOR_TYPE == SCD4X)
-  char s_co2[20] = { 0 };
-  char s_temperature[20] = { 0 };
-  char s_humidity[20] = { 0 };
-#elif (SENSOR_TYPE == RK520_02)
-  float temperature = 0.0;
-  float moisture = 0.0;
-  float ec = 0.0;
-  char s_temperature[20] = { 0 };
-  char s_moisture[20] = { 0 };
-  char s_ec[20] = { 0 };
-#elif (SENSOR_TYPE == SWSR7500)
-  float pyranometer = 0.0;
-  char s_pyranometer[20] = { 0 };
-#endif
 #endif
 
   set_operation_mode(SENSOR_INIT_MODE);
@@ -465,33 +372,17 @@ void plugged_loop_task(void) {
           set_operation_mode(SENSOR_PUB_MODE);
 #else
 #if (SENSOR_TYPE == SHT3X)
-          if ((rc = read_temperature_humidity(POWER_OP_MODE, s_temperature, s_humidity)) == CHECK_OK) {
-            sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
-            sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
+          rc = read_temperature_humidity();
 #elif (SENSOR_TYPE == SCD4X)
-          if ((rc = read_co2_temperature_humidity(s_co2, s_temperature, s_humidity)) == CHECK_OK) {
-            sysevent_set(I2C_CO2_EVENT, s_co2);
-            sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
-            sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
+          rc = read_co2_temperature_humidity();
 #elif (SENSOR_TYPE == RK520_02)
-          if ((rc = read_soil_ec(s_temperature, s_moisture, s_ec)) == CHECK_OK) {
-            ec = atof(s_ec);
-            temperature = atof(s_temperature);
-            moisture = atof(s_moisture);
-            LOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", ec, moisture, temperature);
-            FLOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", ec, moisture, temperature);
-            sysevent_set(MB_TEMPERATURE_EVENT, s_temperature);
-            sysevent_set(MB_MOISTURE_EVENT, s_moisture);
-            sysevent_set(MB_EC_EVENT, s_ec);
+          rc = read_soil_ec();
 #elif (SENSOR_TYPE == SWSR7500)
-          if ((rc = read_solar_radiation(s_pyranometer)) == CHECK_OK) {
-            pyranometer = atof(s_pyranometer);
-            LOGI(TAG, "pyranometer : %.2f", pyranometer);
-            FLOGI(TAG, "pyranometer : %.2f", pyranometer);
-            sysevent_set(MB_PYRANOMETER_EVENT, s_pyranometer);
+          rc = read_solar_radiation();
 #endif
+          if (rc == CHECK_OK)
             set_operation_mode(SENSOR_PUB_MODE);
-          } else {
+          else {
             rc = ERR_SENSOR_READ;
             LOGE(TAG, "sensor read, error = [%d]", rc);
             vTaskDelay(5000 / portTICK_PERIOD_MS);
