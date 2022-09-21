@@ -48,6 +48,14 @@ void stop_shell(void) {
   }
 }
 
+int sleep_timer_wakeup(int wakeup_time_sec) {
+  int ret = 0;
+  LOGI(TAG, "Enabling timer wakeup, %ds\n", wakeup_time_sec);
+  ret = esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000);
+  esp_deep_sleep_start();
+  return ret;
+}
+
 /* The code below is only used for testing purpose until manufacturing data is applied */
 static void generate_default_sysmfg(void) {
   char model_name[10] = { 0 };
@@ -80,6 +88,19 @@ static void check_model(void) {
     set_battery_model(1);
   else
     set_battery_model(0);
+}
+
+static int set_time_zone(void) {
+  if (is_device_configured() && is_device_onboard()) {
+    LOGI(TAG, "TIME_ZONE_SET_MODE");
+    if (tm_is_timezone_set() == false)
+      tm_init_sntp();
+
+    tm_apply_timesync();
+    tm_set_timezone("Asia/Seoul");
+    return 0;
+  }
+  return 1;
 }
 
 int system_init(void) {
@@ -122,14 +143,6 @@ int system_init(void) {
   return SYSINIT_OK;
 }
 
-int sleep_timer_wakeup(int wakeup_time_sec) {
-  int ret = 0;
-  LOGI(TAG, "Enabling timer wakeup, %ds\n", wakeup_time_sec);
-  ret = esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000);
-  esp_deep_sleep_start();
-  return ret;
-}
-
 void app_main(void) {
   int rc = SYSINIT_OK;
 
@@ -167,25 +180,8 @@ void app_main(void) {
         set_operation_mode(TIME_ZONE_SET_MODE);
       } break;
       case TIME_ZONE_SET_MODE: {
-        if (is_device_configured() && is_device_onboard()) {
-          LOGI(TAG, "TIME_ZONE_SET_MODE");
-          // If sensor node onboarded on the network after finishing easy setup.
-          // It need to sync the time zone and current time from the ntp server
-          if (tm_is_timezone_set() == false) {
-            tm_init_sntp();
-            tm_apply_timesync();
-            // TODO : Get the timezone using the region code of the manufacturing data.
-            // Currently hardcoding the timezone to be KST-9
-            tm_set_timezone("Asia/Seoul");
-          } else {
-            tm_apply_timesync();
-            tm_set_timezone("Asia/Seoul");
-          }
+        if (!set_time_zone())
           set_operation_mode(MQTT_START_MODE);
-        } else {
-          // If the sensor is not connected to the farm network router, it should continuously try to connect.
-          set_operation_mode(TIME_ZONE_SET_MODE);
-        }
       } break;
       case MQTT_START_MODE: {
         if (is_device_onboard()) {

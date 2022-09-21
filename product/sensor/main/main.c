@@ -79,6 +79,14 @@ void stop_shell(void) {
   }
 }
 
+int sleep_timer_wakeup(int wakeup_time_sec) {
+  int ret = 0;
+  LOGI(TAG, "Enabling timer wakeup, %ds\n", wakeup_time_sec);
+  ret = esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000);
+  esp_deep_sleep_start();
+  return ret;
+}
+
 static void sleep_mode_count(void) {
   int sleep_cnt = 0;
   char sleep_mode_cnt[20] = { 0 };
@@ -135,6 +143,21 @@ static void check_model(void) {
     set_battery_model(0);
 }
 
+static int set_time_zone(void) {
+  if (is_device_configured() && is_device_onboard()) {
+    if (!m_timezone_set || !is_battery_model()) {
+      if (tm_is_timezone_set() == false)
+        tm_init_sntp();
+
+      tm_apply_timesync();
+      tm_set_timezone("Asia/Seoul");
+      m_timezone_set = 1;
+    }
+    return 0;
+  }
+  return 1;
+}
+
 int system_init(void) {
   // Initialize NVS
   esp_err_t ret = nvs_flash_init();
@@ -181,14 +204,6 @@ int system_init(void) {
     return ERR_MONITORING_INIT;
 
   return SYSINIT_OK;
-}
-
-int sleep_timer_wakeup(int wakeup_time_sec) {
-  int ret = 0;
-  LOGI(TAG, "Enabling timer wakeup, %ds\n", wakeup_time_sec);
-  ret = esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000);
-  esp_deep_sleep_start();
-  return ret;
 }
 
 void battery_loop_task(void) {
@@ -262,24 +277,8 @@ void battery_loop_task(void) {
         set_operation_mode(TIME_ZONE_SET_MODE);
       } break;
       case TIME_ZONE_SET_MODE: {
-        if (is_device_configured() && is_device_onboard()) {
-          if (!m_timezone_set) {
-            if (tm_is_timezone_set() == false) {
-              tm_init_sntp();
-              tm_apply_timesync();
-              // TODO : Get the timezone using the region code of the manufacturing data.
-              // Currently hardcoding the timezone to be KST-9
-              tm_set_timezone("Asia/Seoul");
-            } else {
-              tm_apply_timesync();
-              tm_set_timezone("Asia/Seoul");
-            }
-            m_timezone_set = 1;
-          }
+        if (set_time_zone() == CHECK_OK)
           set_operation_mode(MQTT_START_MODE);
-        } else {
-          set_operation_mode(TIME_ZONE_SET_MODE);
-        }
       } break;
       case MQTT_START_MODE: {
         start_mqttc();
@@ -334,26 +333,9 @@ void plugged_loop_task(void) {
         set_operation_mode(TIME_ZONE_SET_MODE);
       } break;
       case TIME_ZONE_SET_MODE: {
-        if (is_device_configured() && is_device_onboard()) {
-          // If sensor node onboarded on the network after finishing easy setup.
-          // It need to sync the time zone and current time from the ntp server
-          if (tm_is_timezone_set() == false) {
-            tm_init_sntp();
-            tm_apply_timesync();
-            // TODO : Get the timezone using the region code of the manufacturing data.
-            // Currently hardcoding the timezone to be KST-9
-            tm_set_timezone("Asia/Seoul");
-          } else {
-            tm_apply_timesync();
-            tm_set_timezone("Asia/Seoul");
-          }
+        if (set_time_zone() == CHECK_OK) {
           set_operation_mode(MQTT_START_MODE);
-          /* Add file log tesk. */
           start_file_server(8001);
-
-        } else {
-          // If the sensor is not connected to the farm network router, it should continuously try to connect.
-          set_operation_mode(TIME_ZONE_SET_MODE);
         }
       } break;
       case MQTT_START_MODE: {
