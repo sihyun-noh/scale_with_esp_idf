@@ -31,7 +31,4 @@ typedef enum {
   SLEEP_MODE
 } operation_mode_t;
 
-#define BATTERY_OP_MODE 0
-#define POWER_OP_MODE 1
-
 #endif /* _MAIN_H_ */

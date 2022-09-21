@@ -15,7 +15,6 @@
 #include "event_ids.h"
 #include "sysevent.h"
 #include "sys_status.h"
-#include "monitoring.h"
 #include "filelog.h"
 #include "main.h"
 
@@ -24,6 +23,8 @@
 
 #define MAX_READ_CNT 10
 #define MIN_READ_CNT 2
+
+#define SENSOR_TEST 0
 
 typedef enum {
   RK_SEC_SENSOR = 0,  // RK520 Soil EC sensor
@@ -76,6 +77,10 @@ int alive_check_task(void) {
 
 int sensor_init(void) {
   int res = 0;
+
+#if (SENSOR_TEST)
+  return res;
+#endif
 
 #if (SENSOR_TYPE == SHT3X)
   if ((res = sht3x_init(&dev, &sht3x_params[0])) != SHT3X_OK) {
@@ -353,10 +358,47 @@ int read_solar_radiation(void) {
 }
 #endif
 
+#if (SENSOR_TEST)
+int read_test_data(void) {
+  float random = 0;
+  char buf[20] = { 0 };
+
+  random = (float)(rand() % 10000) / 100;
+  snprintf(buf, sizeof(buf), "%f", random);
+  sysevent_set(I2C_TEMPERATURE_EVENT, buf);
+  sysevent_set(I2C_HUMIDITY_EVENT, buf);
+#if (SENSOR_TYPE == SCD4X)
+  sysevent_set(I2C_CO2_EVENT, buf);
+#endif
+  if (is_battery_model())
+    sysevent_set(ADC_BATTERY_EVENT, buf);
+
+  return 0;
+}
+#endif
+
 int sensor_comparison(float m_sensor, float sensor, const float const_comparison) {
   LOGI(TAG, "sensor : %.2f, m_sensor : %.2f, diff : %.2f", sensor, m_sensor, fabs(sensor - m_sensor));
   if (fabs(sensor - m_sensor) >= const_comparison)
     return 1;
 
   return 0;
+}
+
+int sensor_read(void) {
+  int rc = 0;
+#if (SENSOR_TEST)
+  rc = read_test_data();
+  return rc;
+#endif
+#if (SENSOR_TYPE == SHT3X)
+  rc = read_temperature_humidity();
+#elif (SENSOR_TYPE == SCD4X)
+  rc = read_co2_temperature_humidity();
+#elif (SENSOR_TYPE == RK520_02)
+  rc = read_soil_ec();
+#elif (SENSOR_TYPE == SWSR7500)
+  rc = read_solar_radiation();
+#endif
+  return rc;
 }

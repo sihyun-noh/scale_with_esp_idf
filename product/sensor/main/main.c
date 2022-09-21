@@ -22,20 +22,10 @@ const char* TAG = "main_app";
 
 sc_ctx_t* ctx = NULL;
 
-static bool b_sensor_pub;
-
 extern void modbus_sensor_test(int mb_sensor);
 
 extern int sensor_init(void);
-#if (SENSOR_TYPE == SHT3X)
-extern int read_temperature_humidity(void);
-#elif (SENSOR_TYPE == SCD4X)
-extern int read_co2_temperature_humidity(void);
-#elif (SENSOR_TYPE == RK520_02)
-extern int read_soil_ec(void);
-#elif (SENSOR_TYPE == SWSR7500)
-extern int read_solar_radiation(void);
-#endif
+extern int sensor_read(void);
 extern int read_battery_percentage(void);
 
 extern int start_mqttc(void);
@@ -54,8 +44,6 @@ static void check_model(void);
 RTC_DATA_ATTR uint8_t m_timezone_set;
 
 static operation_mode_t s_curr_mode;
-
-#define SENSOR_TEST 0
 
 void set_operation_mode(operation_mode_t mode) {
   s_curr_mode = mode;
@@ -207,12 +195,7 @@ int system_init(void) {
 }
 
 void battery_loop_task(void) {
-#if (SENSOR_TEST == 1)
-  float random = 0;
-  char buf[20] = { 0 };
-#else
   int rc = 0;
-#endif
 
   set_operation_mode(SENSOR_INIT_MODE);
 
@@ -220,41 +203,16 @@ void battery_loop_task(void) {
     switch (get_operation_mode()) {
       case SENSOR_INIT_MODE: {
         LOGI(TAG, "SENSOR_INIT_MODE");
-#if (SENSOR_TEST == 1)
-        set_operation_mode(SENSOR_READ_MODE);
-#else
         if ((rc = sensor_init()) != SYSINIT_OK) {
           LOGI(TAG, "Could not initialize sensor");
           set_operation_mode(SLEEP_MODE);
         } else {
           set_operation_mode(SENSOR_READ_MODE);
         }
-#endif
       } break;
       case SENSOR_READ_MODE: {
         LOGI(TAG, "SENSOR_READ_MODE");
-        b_sensor_pub = false;
-#if (SENSOR_TEST == 1)
-        random = (float)(rand() % 10000) / 100;  // 난수 생성
-        snprintf(buf, sizeof(buf), "%f", random);
-        sysevent_set(I2C_TEMPERATURE_EVENT, buf);
-        sysevent_set(I2C_HUMIDITY_EVENT, buf);
-        sysevent_set(ADC_BATTERY_EVENT, buf);
-#if (SENSOR_TYPE == SCD4X)
-        sysevent_set(I2C_CO2_EVENT, buf);
-#endif
-        set_operation_mode(EASY_SETUP_MODE);
-#else
-
-#if (SENSOR_TYPE == SHT3X)
-        rc = read_temperature_humidity();
-#elif (SENSOR_TYPE == SCD4X)
-        rc = read_co2_temperature_humidity();
-#elif (SENSOR_TYPE == RK520_02)
-        rc = read_soil_ec();
-#elif (SENSOR_TYPE == SWSR7500)
-        rc = read_solar_radiation();
-#endif
+        rc = sensor_read();
         if (rc == CHECK_OK) {
           if (read_battery_percentage() != CHECK_OK) {
             // Failed to read battery percentage, it will be set 0
@@ -269,7 +227,6 @@ void battery_loop_task(void) {
           FLOGI(TAG, "sensor read, error = [%d]", rc);
           set_operation_mode(SLEEP_MODE);
         }
-#endif
       } break;
       case EASY_SETUP_MODE: {
         LOGI(TAG, "EASY_SETUP_MODE");
@@ -305,27 +262,18 @@ void battery_loop_task(void) {
 }
 
 void plugged_loop_task(void) {
-#if (SENSOR_TEST == 1)
-  float random = 0;
-  char buf[20] = { 0 };
-#else
   int rc = 0;
-#endif
 
   set_operation_mode(SENSOR_INIT_MODE);
 
   while (1) {
     switch (get_operation_mode()) {
       case SENSOR_INIT_MODE: {
-#if (SENSOR_TEST == 1)
-        set_operation_mode(EASY_SETUP_MODE);
-#else
         if ((rc = sensor_init()) != SYSINIT_OK) {
           LOGI(TAG, "Could not initialize SHT3x sensor");
         } else {
           set_operation_mode(EASY_SETUP_MODE);
         }
-#endif
       } break;
       case EASY_SETUP_MODE: {
         LOGI(TAG, "EASY_SETUP_MODE");
@@ -346,31 +294,14 @@ void plugged_loop_task(void) {
       } break;
       case SENSOR_READ_MODE: {
         if (is_device_onboard()) {
-#if (SENSOR_TEST == 1)
-          random = (float)(rand() % 10000) / 100;  // 난수 생성
-          snprintf(buf, sizeof(buf), "%f", random);
-          sysevent_set(I2C_TEMPERATURE_EVENT, buf);
-          sysevent_set(I2C_HUMIDITY_EVENT, buf);
-          set_operation_mode(SENSOR_PUB_MODE);
-#else
-#if (SENSOR_TYPE == SHT3X)
-          rc = read_temperature_humidity();
-#elif (SENSOR_TYPE == SCD4X)
-          rc = read_co2_temperature_humidity();
-#elif (SENSOR_TYPE == RK520_02)
-          rc = read_soil_ec();
-#elif (SENSOR_TYPE == SWSR7500)
-          rc = read_solar_radiation();
-#endif
+          rc = sensor_read();
           if (rc == CHECK_OK)
             set_operation_mode(SENSOR_PUB_MODE);
           else {
             rc = ERR_SENSOR_READ;
             LOGE(TAG, "sensor read, error = [%d]", rc);
             vTaskDelay(5000 / portTICK_PERIOD_MS);
-            set_operation_mode(SENSOR_READ_MODE);
           }
-#endif
         } else {
           set_operation_mode(SLEEP_MODE);
         }
