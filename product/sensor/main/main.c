@@ -94,6 +94,7 @@ static void sleep_mode_count(void) {
 static void generate_default_syscfg(void) {
   char model_name[10] = { 0 };
   char power_mode[10] = { 0 };
+  char fw_version[80] = { 0 };
 
   syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
   if (model_name[0] == 0) {
@@ -113,7 +114,10 @@ static void generate_default_syscfg(void) {
     syscfg_set(MFG_DATA, "power_mode", "B");
   }
 
-  syscfg_set(CFG_DATA, "fw_version", FW_VERSION);
+  syscfg_get(CFG_DATA, "fw_version", fw_version, sizeof(fw_version));
+  if (fw_version[0] == 0) {
+    syscfg_set(CFG_DATA, "fw_version", FW_VERSION);
+  }
 }
 
 static void check_model(void) {

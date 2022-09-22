@@ -40,6 +40,8 @@ static bool b_image_header_check;
 
 static fw_status_t fw_status;
 
+static char new_fw_version[80] = { 0 };
+
 static void ota_ctx_clear(esp_ota_ctx_t *ctx) {
   if (ctx != NULL) {
     memset(ctx, 0, sizeof(esp_ota_ctx_t));
@@ -72,7 +74,8 @@ static int check_fw_image(const esp_partition_t *running, uint8_t *fw_image, uin
       LOGI(TAG, "New firmware version: %s", new_app_info.version);
       LOGI(TAG, "New firmware project name: %s", new_app_info.project_name);
 
-      syscfg_set(CFG_DATA, "new_fw_version", new_app_info.project_name);
+      // Save the new firmware version that will be used in MQTT fw update response.
+      snprintf(new_fw_version, sizeof(new_fw_version), "%s", new_app_info.project_name);
 
       esp_app_desc_t running_app_info;
       if (esp_ota_get_partition_description(running, &running_app_info) == ESP_OK) {
@@ -290,6 +293,8 @@ int ota_fw_active_new_image_impl(fw_ctx_t *const fwctx) {
       } else {
         err = OTA_OK;
         LOGI(TAG, "FW image is valid...");
+        // Set new firmware version to fw_version syscfg variable after checking the FW validation.
+        syscfg_set(CFG_DATA, "fw_version", new_fw_version);
         return err;
       }
     }
