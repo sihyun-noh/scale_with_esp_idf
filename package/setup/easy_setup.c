@@ -15,6 +15,7 @@
  */
 #include "syscfg.h"
 #include "sysevent.h"
+#include "sys_config.h"
 #include "sys_status.h"
 #include "syslog.h"
 #include "event_ids.h"
@@ -75,7 +76,7 @@ static void set_gateway_address(void) {
 
   get_router_ipaddr(router_ip, sizeof(router_ip));
   if (router_ip[0]) {
-    syscfg_set(CFG_DATA, "gateway", router_ip);
+    syscfg_set(SYSCFG_I_GATEWAYIP, SYSCFG_N_GATEWAYIP, router_ip);
   }
 }
 /**
@@ -129,15 +130,15 @@ static esp_err_t post_handler(httpd_req_t *req) {
     // ssid pw
     snprintf(farmssid, sizeof(farmssid), "%s", ssid->valuestring);
     snprintf(farmpw, sizeof(farmpw), "%s", pw->valuestring);
-    syscfg_set(CFG_DATA, "ssid", farmssid);
-    syscfg_set(CFG_DATA, "password", farmpw);
+    syscfg_set(SYSCFG_I_SSID, SYSCFG_N_SSID, farmssid);
+    syscfg_set(SYSCFG_I_PASSWORD, SYSCFG_N_PASSWORD, farmpw);
     LOGI(TAG, "Got SSID = [%s] password = [%s]", farmssid, farmpw);
   }
 
   cJSON *Server = cJSON_GetObjectItem(root, "Server");
   if (cJSON_IsString(Server)) {
     snprintf(farmip, sizeof(farmip), "%s", Server->valuestring);
-    syscfg_set(CFG_DATA, "farmip", farmip);
+    syscfg_set(SYSCFG_I_FARMIP, SYSCFG_N_FARMIP, farmip);
     LOGI(TAG, "Got server url = %s ", Server->valuestring);
   }
 
@@ -251,10 +252,10 @@ void easy_setup_task(void *pvParameters) {
 
   setup_mode_t curr_mode = UNCONFIGURED_MODE;
 
-  syscfg_get(CFG_DATA, "ssid", farmssid, sizeof(farmssid));
-  syscfg_get(CFG_DATA, "password", farmpw, sizeof(farmpw));
-  syscfg_get(CFG_DATA, "farmip", farmip, sizeof(farmip));
-  syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
+  syscfg_get(SYSCFG_I_SSID, SYSCFG_N_SSID, farmssid, sizeof(farmssid));
+  syscfg_get(SYSCFG_I_PASSWORD, SYSCFG_N_PASSWORD, farmpw, sizeof(farmpw));
+  syscfg_get(SYSCFG_I_FARMIP, SYSCFG_N_FARMIP, farmip, sizeof(farmip));
+  syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
 
   if (farmssid[0] && farmpw[0]) {
     curr_mode = PAIRING_MODE;
@@ -279,8 +280,8 @@ void easy_setup_task(void *pvParameters) {
 
           ap_mode_running = 1;
         } else {
-          syscfg_get(CFG_DATA, "ssid", farmssid, sizeof(farmssid));
-          syscfg_get(CFG_DATA, "password", farmpw, sizeof(farmpw));
+          syscfg_get(SYSCFG_I_SSID, SYSCFG_N_SSID, farmssid, sizeof(farmssid));
+          syscfg_get(SYSCFG_I_PASSWORD, SYSCFG_N_PASSWORD, farmpw, sizeof(farmpw));
           if (farmssid[0] && farmpw[0]) {
             sysevent_unregister_handler(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, ap_connect_handler);
             sysevent_unregister_handler(WIFI_EVENT, WIFI_EVENT_AP_STOP, ap_disconnect_handler);
@@ -348,8 +349,8 @@ void easy_setup_task(void *pvParameters) {
         LOGI(TAG, "!!! UNPAIRED MODE !!!");
         ap_mode_running = 0;
         wifi_stop_mode();
-        syscfg_unset(CFG_DATA, "ssid");
-        syscfg_unset(CFG_DATA, "password");
+        syscfg_unset(SYSCFG_I_SSID, SYSCFG_N_SSID);
+        syscfg_unset(SYSCFG_I_PASSWORD, SYSCFG_N_PASSWORD);
         FLOGI(TAG, "syscfg_unset!! ssid and password!");
         curr_mode = UNCONFIGURED_MODE;
         router_connect = 0;

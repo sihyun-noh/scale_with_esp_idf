@@ -15,6 +15,7 @@
  *
  */
 #include "syscfg.h"
+#include "sys_config.h"
 
 #include <string.h>
 
@@ -158,5 +159,10 @@ int syscfg_info_cmd(int argc, char **argv) {
     return -1;
   }
 
+  return 0;
+}
+
+int syscfg_dump_cmd(int argc, char **argv) {
+  dump_syscfg();
   return 0;
 }

@@ -73,4 +73,9 @@ int syscfg_show_cmd(int argc, char **argv);
  */
 int syscfg_info_cmd(int argc, char **argv);
 
+/**
+ * @breif Command to show all syscfg variables with CFG and MFG areas
+ */
+int syscfg_dump_cmd(int argc, char **argv);
+
 #endif /* _SYSCFG_CMD_H_ */

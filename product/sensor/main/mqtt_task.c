@@ -2,6 +2,7 @@
 #include "syslog.h"
 #include "esp_wifi.h"
 #include "sysevent.h"
+#include "sys_config.h"
 #include "sys_status.h"
 #include "event_ids.h"
 #include "mqtt.h"
@@ -174,15 +175,15 @@ static char *create_json_info(void) {
   esp_netif_ip_info_t ip_info;
   char ip_addr[16] = { 0 };
   char free_mem[20] = { 0 };
-  char fw_version[80] = { 0 };
-  char sleep_mode_cnt[20] = { 0 };
+  char fw_version[SYSCFG_S_FWVERSION] = { 0 };
+  char reconnect[SYSCFG_S_RECONNECT] = { 0 };
 
   esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &ip_info);
   esp_ip4addr_ntoa(&ip_info.ip, ip_addr, sizeof(ip_addr));
 
   snprintf(free_mem, sizeof(free_mem), "%d", xPortGetFreeHeapSize());
-  syscfg_get(CFG_DATA, "fw_version", fw_version, sizeof(fw_version));
-  syscfg_get(CFG_DATA, "sleep_mode_cnt", sleep_mode_cnt, sizeof(sleep_mode_cnt));
+  syscfg_get(SYSCFG_I_FWVERSION, SYSCFG_N_FWVERSION, fw_version, sizeof(fw_version));
+  syscfg_get(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, reconnect, sizeof(reconnect));
 
   /* create root node and array */
   root = cJSON_CreateObject();
@@ -206,7 +207,7 @@ static char *create_json_info(void) {
 
   cJSON_AddItemToObject(root, "uptime", cJSON_CreateString(uptime()));
   cJSON_AddItemToObject(root, "free_mem", cJSON_CreateString(free_mem));
-  cJSON_AddItemToObject(root, "sleep_mode", cJSON_CreateString(sleep_mode_cnt));
+  cJSON_AddItemToObject(root, "reconnect", cJSON_CreateString(reconnect));
   cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
   /* print everything */
   p_out = cJSON_Print(root);
@@ -267,7 +268,7 @@ static char *create_json_fwup_resp(int ret) {
   char *p_out;
   cJSON *root;
   char *hostname = generate_hostname();
-  char fw_version[80] = { 0 };
+  char fw_version[SYSCFG_S_FWVERSION] = { 0 };
 
   /* create root node and array */
   root = cJSON_CreateObject();
@@ -279,7 +280,7 @@ static char *create_json_fwup_resp(int ret) {
   } else {
     cJSON_AddItemToObject(root, "state", cJSON_CreateString("failure"));
   }
-  syscfg_get(CFG_DATA, "fw_version", fw_version, sizeof(fw_version));
+  syscfg_get(SYSCFG_I_FWVERSION, SYSCFG_N_FWVERSION, fw_version, sizeof(fw_version));
   cJSON_AddItemToObject(root, "fw_version", cJSON_CreateString(fw_version));
   cJSON_AddItemToObject(root, "timestamp", cJSON_CreateString(log_timestamp()));
   /* print everything */
@@ -343,16 +344,17 @@ static int process_payload(int payload_len, char *payload) {
       vTaskDelay(1000 / portTICK_PERIOD_MS);
       esp_restart();
     } else if (!strncmp(get->valuestring, "wifi_change", 11)) {
-      char farmssid[50] = { 0 };
-      char farmpw[50] = { 0 };
+      char farmssid[SYSCFG_S_SSID] = { 0 };
+      char farmpw[SYSCFG_S_PASSWORD] = { 0 };
+
       cJSON *ssid = cJSON_GetObjectItem(root, "SSID");
       cJSON *pw = cJSON_GetObjectItem(root, "Password");
       // ssid pw
       if (cJSON_IsString(ssid) && cJSON_IsString(pw)) {
         snprintf(farmssid, sizeof(farmssid), "%s", ssid->valuestring);
         snprintf(farmpw, sizeof(farmpw), "%s", pw->valuestring);
-        syscfg_set(CFG_DATA, "ssid", farmssid);
-        syscfg_set(CFG_DATA, "password", farmpw);
+        syscfg_set(SYSCFG_I_SSID, SYSCFG_N_SSID, farmssid);
+        syscfg_set(SYSCFG_I_PASSWORD, SYSCFG_N_PASSWORD, farmpw);
         LOGI(TAG, "Got SSID = [%s] password = [%s]", farmssid, farmpw);
       }
       SLOGI(TAG, "Resetting...");
@@ -360,11 +362,11 @@ static int process_payload(int payload_len, char *payload) {
       vTaskDelay(1000 / portTICK_PERIOD_MS);
       esp_restart();
     } else if (!strncmp(get->valuestring, "server_change", 13)) {
-      char farmip[30] = { 0 };
+      char farmip[SYSCFG_S_FARMIP] = { 0 };
       cJSON *Server = cJSON_GetObjectItem(root, "Server");
       if (cJSON_IsString(Server)) {
         snprintf(farmip, sizeof(farmip), "%s", Server->valuestring);
-        syscfg_set(CFG_DATA, "farmip", farmip);
+        syscfg_set(SYSCFG_I_FARMIP, SYSCFG_N_FARMIP, farmip);
         LOGI(TAG, "Got server url = %s ", Server->valuestring);
       }
       SLOGI(TAG, "Resetting...");
@@ -382,9 +384,9 @@ static int process_payload(int payload_len, char *payload) {
 
 int start_mqttc(void) {
   int ret = 0;
-  char farmip[30] = { 0 };
+  char farmip[SYSCFG_S_FARMIP] = { 0 };
 
-  syscfg_get(CFG_DATA, "farmip", farmip, sizeof(farmip));
+  syscfg_get(SYSCFG_I_FARMIP, SYSCFG_N_FARMIP, farmip, sizeof(farmip));
 
   if (!farmip[0]) {
     return -1;

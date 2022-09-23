@@ -3,6 +3,7 @@
 #include "nvs_flash.h"
 #include "shell_console.h"
 #include "syscfg.h"
+#include "sys_config.h"
 #include "sysevent.h"
 #include "sys_status.h"
 #include "syslog.h"
@@ -38,7 +39,7 @@ extern void create_led_task(void);
 
 extern int start_file_server(uint32_t port);
 
-static void generate_default_syscfg(void);
+// static void generate_default_syscfg(void);
 static void check_model(void);
 
 RTC_DATA_ATTR uint8_t m_timezone_set;
@@ -75,21 +76,22 @@ int sleep_timer_wakeup(int wakeup_time_sec) {
   return ret;
 }
 
-static void sleep_mode_count(void) {
-  int sleep_cnt = 0;
-  char sleep_mode_cnt[20] = { 0 };
+static void reconnect_count(void) {
+  int reconnect_cnt = 0;
+  char reconnect[20] = { 0 };
 
-  syscfg_get(CFG_DATA, "sleep_mode_cnt", sleep_mode_cnt, sizeof(sleep_mode_cnt));
-  if (sleep_mode_cnt[0]) {
-    sleep_cnt = atoi(sleep_mode_cnt);
+  syscfg_get(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, reconnect, sizeof(reconnect));
+  if (reconnect[0]) {
+    reconnect_cnt = atoi(reconnect);
   }
-  sleep_cnt++;
-  LOGI(TAG, "sleep mode count = %d", sleep_cnt);
-  memset(sleep_mode_cnt, 0, sizeof(sleep_mode_cnt));
-  snprintf(sleep_mode_cnt, sizeof(sleep_mode_cnt), "%d", sleep_cnt);
-  syscfg_set(CFG_DATA, "sleep_mode_cnt", sleep_mode_cnt);
+  reconnect_cnt++;
+  LOGI(TAG, "reconnect count = %d", reconnect_cnt);
+  memset(reconnect, 0, sizeof(reconnect));
+  snprintf(reconnect, sizeof(reconnect), "%d", reconnect_cnt);
+  syscfg_set(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, reconnect);
 }
 
+#if 0
 /* The code below is only used for testing purpose until manufacturing data is applied */
 static void generate_default_syscfg(void) {
   char model_name[10] = { 0 };
@@ -119,13 +121,14 @@ static void generate_default_syscfg(void) {
     syscfg_set(CFG_DATA, "fw_version", FW_VERSION);
   }
 }
+#endif
 
 static void check_model(void) {
   char model_name[10] = { 0 };
   char power_mode[10] = { 0 };
 
-  syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
-  syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
+  syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
+  syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
 
   LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
 
@@ -187,7 +190,8 @@ int system_init(void) {
     return ERR_SPIFFS_INIT;
 
   // Generate the default manufacturing data if there is no data in mfg partition.
-  generate_default_syscfg();
+  // generate_default_syscfg();
+  generate_syscfg();
 
   check_model();
 
@@ -326,7 +330,7 @@ void plugged_loop_task(void) {
       case SLEEP_MODE: {
         // On the power plug model, entering sleep mode means that the router or internet status is unavailable, so we
         // use deep sleep mode to reconnect to the Wi-Fi router.
-        sleep_mode_count();
+        reconnect_count();
         stop_mqttc();
         vTaskDelay(5000 / portTICK_RATE_MS);
         sleep_timer_wakeup(30);

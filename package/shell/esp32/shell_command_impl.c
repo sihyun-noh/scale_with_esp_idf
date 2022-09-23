@@ -158,6 +158,11 @@ static sc_cmd_t commands[] = {
       .func = syscfg_info_cmd,
   },
   {
+      .name = "syscfg_dump",
+      .help = "Show all variables with CFG and MFG",
+      .func = syscfg_dump_cmd,
+  },
+  {
       .name = "syscfg_erase",
       .help = "Erase all key and value from syscfg",
       .func = syscfg_erase_cmd,
