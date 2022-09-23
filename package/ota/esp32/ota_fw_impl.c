@@ -2,6 +2,7 @@
 #include "log.h"
 #include "config.h"
 #include "syscfg.h"
+#include "sys_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -40,7 +41,7 @@ static bool b_image_header_check;
 
 static fw_status_t fw_status;
 
-static char new_fw_version[80] = { 0 };
+static char new_fw_version[SYSCFG_S_FWVERSION] = { 0 };
 
 static void ota_ctx_clear(esp_ota_ctx_t *ctx) {
   if (ctx != NULL) {
@@ -294,7 +295,7 @@ int ota_fw_active_new_image_impl(fw_ctx_t *const fwctx) {
         err = OTA_OK;
         LOGI(TAG, "FW image is valid...");
         // Set new firmware version to fw_version syscfg variable after checking the FW validation.
-        syscfg_set(CFG_DATA, "fw_version", new_fw_version);
+        syscfg_set(SYSCFG_I_FWVERSION, SYSCFG_N_FWVERSION, new_fw_version);
         return err;
       }
     }
