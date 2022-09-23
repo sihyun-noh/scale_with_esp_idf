@@ -2,7 +2,8 @@
  * @file sysfile.c
  *
  * @brief using SPIFFS is provided in the "storage/spiffs" directory.
- * This is initializes and mounts/format a SPIFFS partition, then writes and reads data from it using POSIX and C library APIs.
+ * This is initializes and mounts/format a SPIFFS partition, then writes and reads data from it using POSIX and C
+ library APIs.
  *
  *
  * Created by Greenlabs, Smartfarm Team.
@@ -16,6 +17,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
 #include "sysfile.h"
+#include "esp32/spiffs_impl.h"
 
 int init_sysfile(void) {
   return init_spiffs_impl();
@@ -23,6 +25,10 @@ int init_sysfile(void) {
 
 int sysfile_format(void) {
   return format_spiffs_impl();
+}
+
+int sysfile_show_file(void) {
+  return show_file_impl();
 }
 
 int write_log(const char *log_file_name, const char *log_data) {

@@ -10,6 +10,7 @@
 #include "config.h"
 #include "filelog.h"
 #include "ota_task.h"
+#include "sysfile.h"
 
 #include "freertos/FreeRTOS.h"
 
@@ -376,6 +377,12 @@ static int process_payload(int payload_len, char *payload) {
     } else if (!strncmp(get->valuestring, "search", 6)) {
       set_identification(1);
       mqtt_publish(mqtt_response, create_json_resp("search"), 0);
+    } else if (!strncmp(get->valuestring, "spiffs_format", 13)) {
+      sysfile_format();
+      mqtt_publish(mqtt_response, create_json_resp("spiffs_format"), 0);
+      SLOGI(TAG, "Resetting...");
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      esp_restart();
     }
   }
   cJSON_Delete(root);

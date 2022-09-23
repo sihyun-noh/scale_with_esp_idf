@@ -18,6 +18,14 @@ int init_sysfile(void);
 int sysfile_format(void);
 
 /**
+ * @brief show all sysfile name form /SPIFFS
+ *
+ * @return int 0 on success, -1 on failure,
+ */
+
+int sysfile_show_file(void);
+
+/**
  * @brief write log data to file.
  *
  * @param log_file_name Text file name to save log data.

@@ -37,6 +37,13 @@ int init_spiffs_impl(void);
 int format_spiffs_impl(void);
 
 /**
+ * @brief show all sysfile name from /SPIFFS
+ *
+ * @return int 0 on success, -1 on failure,
+ */
+int show_file_impl(void);
+
+/**
  * @brief write log data to file.
  *
  * @param log_file_name Text file name to save log data.

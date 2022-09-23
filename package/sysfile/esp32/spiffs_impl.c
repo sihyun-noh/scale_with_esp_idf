@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include "esp_err.h"
 #include "esp_spiffs.h"
+#include <dirent.h>
 
 #include "syslog.h"
 #include "spiffs_impl.h"
@@ -64,6 +65,23 @@ int format_spiffs_impl() {
     return -1;
   }
   return 0;
+}
+
+int show_file_impl() {
+  int num = 0;
+  DIR *d;
+  struct dirent *dir;
+  d = opendir(BASE_PATH);
+  if (d) {
+    while ((dir = readdir(d)) != NULL) {
+      LOGI(TAG, "%d : %s\n", ++num, dir->d_name);
+    }
+    closedir(d);
+    return 0;
+  } else {
+    LOGI(TAG, "Failed to show file_log name");
+    return -1;
+  }
 }
 
 int write_log_data_to_file_impl(const char *log_file_name, const char *log_data) {

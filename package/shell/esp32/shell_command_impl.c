@@ -23,6 +23,7 @@
 #include "nvs_flash.h"
 
 #include "icmp_echo_cmd.h"
+#include "sysfile.h"
 
 extern void stop_shell(void);
 extern int mqtt_start_cmd(int argc, char **argv);
@@ -202,6 +203,12 @@ static sc_cmd_t commands[] = {
       .help = "send ICMP ECHO_REQUEST to network hosts",
       .func = ping_cmd,
   },
+  {
+      .name = "show_sysfile_name",
+      .help = "Show all sysfile name from ./SPIFFS ",
+      .func = sysfile_show_file,
+  },
+
 };
 
 /**
