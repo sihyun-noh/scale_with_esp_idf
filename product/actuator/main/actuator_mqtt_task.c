@@ -6,6 +6,7 @@
 #include "event_ids.h"
 #include "mqtt.h"
 #include "syscfg.h"
+#include "sys_config.h"
 #include "config.h"
 #include "filelog.h"
 
@@ -606,7 +607,7 @@ static int process_payload(int payload_len, char *payload) {
       cJSON *Server = cJSON_GetObjectItem(root, "Server");
       if (cJSON_IsString(Server)) {
         snprintf(farmip, sizeof(farmip), "%s", Server->valuestring);
-        syscfg_set(CFG_DATA, "farmip", farmip);
+        syscfg_set(SYSCFG_I_FARMIP, SYSCFG_N_FARMIP, farmip);
         LOGI(TAG, "Got server url = %s ", Server->valuestring);
       }
       SLOGI(TAG, "Resetting...");
@@ -635,8 +636,8 @@ int start_mqttc(void) {
   int ret = 0;
   char farmip[30] = { 0 };
 
-  syscfg_get(CFG_DATA, "farmip", farmip, sizeof(farmip));
-  syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
+  syscfg_get(SYSCFG_I_FARMIP, SYSCFG_N_FARMIP, farmip, sizeof(farmip));
+  syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
 
   if (!farmip[0]) {
     return -1;

@@ -1,5 +1,6 @@
 #include <string.h>
 #include "syscfg.h"
+#include "sys_config.h"
 #include "sysevent.h"
 #include "event_ids.h"
 #include "syslog.h"
@@ -23,7 +24,7 @@ static int relay_off(uint8_t pin);
 
 int actuator_init(void) {
   int ret;
-  syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
+  syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
 
   for (uint8_t i = 0; i < sizeof(gpio_arry); i++) {
     relay_off(gpio_arry[i]);

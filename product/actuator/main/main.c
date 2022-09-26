@@ -2,6 +2,7 @@
 #include "nvs_flash.h"
 #include "shell_console.h"
 #include "syscfg.h"
+#include "sys_config.h"
 #include "sysevent.h"
 #include "sys_status.h"
 #include "syslog.h"
@@ -61,17 +62,17 @@ static void generate_default_sysmfg(void) {
   char model_name[10] = { 0 };
   char power_mode[10] = { 0 };
 
-  syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
+  syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
   if (model_name[0] == 0) {
 #if (ACTUATOR_TYPE == SWITCH)
-    syscfg_set(MFG_DATA, "model_name", "GLASW");
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLASW");
 #elif (ACTUATOR_TYPE == MOTOR)
-    syscfg_set(MFG_DATA, "model_name", "GLAMT");
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLAMT");
 #endif
   }
-  syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
+  syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
   if (power_mode[0] == 0) {
-    syscfg_set(MFG_DATA, "power_mode", "P");
+    syscfg_set(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, "P");
   }
 }
 
@@ -79,8 +80,8 @@ static void check_model(void) {
   char model_name[10] = { 0 };
   char power_mode[10] = { 0 };
 
-  syscfg_get(MFG_DATA, "model_name", model_name, sizeof(model_name));
-  syscfg_get(MFG_DATA, "power_mode", power_mode, sizeof(power_mode));
+  syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
+  syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
 
   LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
 
