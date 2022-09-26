@@ -106,6 +106,12 @@ static int uptime_cmd(int argc, char **argv) {
   return 0;
 }
 
+static int sysfile_show_cmd(int argc, char **argv) {
+  printf("Show sysfile list");
+  sysfile_show_file();
+  return 0;
+}
+
 /** @brief Assign the command structure that will be used in shell command */
 static sc_cmd_t commands[] = {
   {
@@ -206,7 +212,7 @@ static sc_cmd_t commands[] = {
   {
       .name = "show_sysfile_name",
       .help = "Show all sysfile name from ./SPIFFS ",
-      .func = sysfile_show_file,
+      .func = sysfile_show_cmd,
   },
 
 };
