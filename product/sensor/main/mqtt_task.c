@@ -112,8 +112,8 @@ static char *gen_default_resp(char *resp_type) {
   root = gen_resp_obj(resp_type);
 
   output = cJSON_Print(root);
-  memset(&json_resp[0], 0x00, sizeof(json_resp));
-  memcpy(&json_resp[0], output, strlen(output));
+  memset(json_resp, 0x00, sizeof(json_resp));
+  memcpy(json_resp, output, strlen(output));
 
   free(output);
   cJSON_Delete(root);
@@ -153,8 +153,8 @@ static char *gen_sensor_resp(char *resp_type, char *value, char *bat) {
 
   output = cJSON_Print(root);
 
-  memset(&json_data[0], 0x00, sizeof(json_data));
-  memcpy(&json_data[0], output, strlen(output));
+  memset(json_data, 0x00, sizeof(json_data));
+  memcpy(json_data, output, strlen(output));
 
   free(output);
   cJSON_Delete(root);
@@ -225,8 +225,8 @@ static char *gen_devinfo_resp(void) {
 
   output = cJSON_Print(root);
 
-  memset(&json_resp[0], 0x00, sizeof(json_resp));
-  memcpy(&json_resp[0], output, strlen(output));
+  memset(json_resp, 0x00, sizeof(json_resp));
+  memcpy(json_resp, output, strlen(output));
 
   free(output);
   cJSON_Delete(root);
@@ -253,8 +253,8 @@ static char *gen_fwupdate_resp(int result) {
 
   // Print json payload
   output = cJSON_Print(root);
-  memset(&json_fwup_resp, 0x00, sizeof(json_fwup_resp));
-  memcpy(&json_fwup_resp, output, strlen(output));
+  memset(json_fwup_resp, 0x00, sizeof(json_fwup_resp));
+  memcpy(json_fwup_resp, output, strlen(output));
 
   free(output);
   cJSON_Delete(root);
@@ -264,7 +264,33 @@ static char *gen_fwupdate_resp(int result) {
   return json_fwup_resp;
 }
 
-static void update_sensor_data_cmd_handler(void) {
+static char *gen_syscfg_resp(cJSON *action, cJSON *result) {
+  cJSON *root;
+  char *output;
+
+  root = gen_resp_obj("syscfg");
+  cJSON_AddItemToObject(root, REQRES_K_ACTION, action);
+  cJSON_AddItemToObject(root, REQRES_K_RESULT, result);
+
+  output = cJSON_Print(root);
+  memset(json_resp, 0x00, sizeof(json_resp));
+  memcpy(json_resp, output, strlen(output));
+
+  free(output);
+  cJSON_Delete(root);
+
+  LOGI(TAG, "%s\n", json_resp);
+
+  return json_resp;
+}
+
+static void devinfo_cmd_handler(cJSON *root) {
+  mqtt_publish(mqtt_response, gen_devinfo_resp(), 0);
+}
+
+static void update_sensor_data_cmd_handler(cJSON *root) {
+  (void)root;
+
   mqtt_publish(mqtt_response, gen_default_resp("update"), 0);
   sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
   sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
@@ -277,14 +303,18 @@ static void update_sensor_data_cmd_handler(void) {
   mqtt_publish_sensor_data();
 }
 
-static void reset_device_cmd_handler(void) {
+static void reset_device_cmd_handler(cJSON *root) {
+  (void)root;
+
   mqtt_publish(mqtt_response, gen_default_resp("reset"), 0);
   SLOGI(TAG, "Resetting...");
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   esp_restart();
 }
 
-static void factory_reset_cmd_handler(void) {
+static void factory_reset_cmd_handler(cJSON *root) {
+  (void)root;
+
   if (syscfg_clear(0) != 0) {
     LOGE(TAG, "Failed to sys CFG_DATA clear");
   }
@@ -328,12 +358,16 @@ static void server_change_cmd_handler(cJSON *root) {
   esp_restart();
 }
 
-static void serach_device_cmd_handler(void) {
+static void serach_device_cmd_handler(cJSON *root) {
+  (void)root;
+
   set_identification(1);
   mqtt_publish(mqtt_response, gen_default_resp("search"), 0);
 }
 
-static void spiffs_format_cmd_handler(void) {
+static void spiffs_format_cmd_handler(cJSON *root) {
+  (void)root;
+
   sysfile_format();
   mqtt_publish(mqtt_response, gen_default_resp("spiffs_format"), 0);
   SLOGI(TAG, "Resetting...");
@@ -341,20 +375,124 @@ static void spiffs_format_cmd_handler(void) {
   esp_restart();
 }
 
-static int update_fwversion_cmd_handler(cJSON *payload) {
-  cJSON *url = cJSON_GetObjectItem(payload, REQRES_K_URL);
+static void update_fwversion_cmd_handler(cJSON *root) {
+  cJSON *url = cJSON_GetObjectItem(root, REQRES_K_URL);
 
   if (!url) {
-    LOGE(TAG, "Failed to get firmware download URL from mqtt data");
-    return -1;
+    LOGE(TAG, "Failed to get firmware download URL from mqtt payload");
+    return;
   }
 
+  set_fwupdate(1);
   LOGI(TAG, "fw download url = %s", url->valuestring);
 
   int ret = start_ota_fw_task_wait(url->valuestring);
   LOGI(TAG, "start_ota_fw_task_wait : ret = %d", ret);
 
-  return ret;
+  mqtt_publish(mqtt_response, gen_fwupdate_resp(ret), 0);
+  set_fwupdate(0);
+}
+
+/* "syscfg set" action */
+static int syscfg_set_action(char *name, char *value) {
+  int index = get_syscfg_idx(name);
+  if (index < 0) {
+    return -1;
+  }
+
+  if (syscfg_set(index, name, value) != 0) {
+    return -1;
+  }
+  return 0;
+}
+
+/* "syscfg get" action */
+static int syscfg_get_action(char *name, char *buff, uint32_t buff_size) {
+  int index = get_syscfg_idx(name);
+  if (index < 0) {
+    return -1;
+  }
+
+  if (syscfg_get(index, name, buff, buff_size) != 0) {
+    return -1;
+  }
+  return 0;
+}
+
+/* "syscfg show" action */
+static int syscfg_show_action(cJSON **object) {
+  cJSON *syscfg_obj = dump_syscfg_to_json_object();
+  if (!syscfg_obj) {
+    return -1;
+  }
+  *object = syscfg_obj;
+  return 0;
+}
+
+#define SYSCFG_OP_SIZE 16
+
+static cJSON *syscfg_action(char *action) {
+  cJSON *result = NULL;
+  char op[SYSCFG_OP_SIZE + 1] = { 0 };
+  char var_name[SYSCFG_VARIABLE_NAME_SIZE] = { 0 };
+  char var_value[SYSCFG_VARIABLE_VALUE_SIZE] = { 0 };
+  char *result_val = REQRES_V_ERR_SYSCFG_FAIL;
+
+  /* Get operation type, name, value from action string */
+  /* (e.g.) action : set power_mode P or get power_mode */
+  sscanf(action, "%s%s%s", op, var_name, var_value);
+
+  LOGI(TAG, "op = %s", op);
+  LOGI(TAG, "var_name = %s", var_name);
+  LOGI(TAG, "var_value = %s", var_value);
+
+  /* "syscfg set" command */
+  if (!strncmp(op, REQRES_V_SYSCFG_SET, strlen(REQRES_V_SYSCFG_SET))) {
+    /* Execute "syscfg set action" */
+    if (!syscfg_set_action(var_name, var_value)) {
+      result_val = REQRES_V_SYSCFG_OK;
+    }
+    result = cJSON_CreateString(result_val);
+  }
+  /* "syscfg get" command */
+  else if (!strncmp(op, REQRES_V_SYSCFG_GET, strlen(REQRES_V_SYSCFG_GET))) {
+    memset(var_value, 0x00, sizeof(var_value));
+    /* Execute "syscfg get action" */
+    if (!syscfg_get_action(var_name, var_value, sizeof(var_value))) {
+      result_val = var_value;
+    }
+    result = cJSON_CreateString(result_val);
+  }
+  /* "syscfg show" command */
+  else if (!strncmp(op, REQRES_V_SYSCFG_SHOW, strlen(REQRES_V_SYSCFG_SHOW))) {
+    cJSON *obj = NULL;
+    /* Execute "syscfg show action" */
+    if (!syscfg_show_action(&obj)) {
+      result = cJSON_Duplicate(obj, 1);
+      cJSON_Delete(obj);
+    } else {
+      result = cJSON_CreateString(REQRES_V_ERR_SYSCFG_NONE);
+    }
+  }
+
+  return result;
+}
+
+static void syscfg_cmd_handler(cJSON *root) {
+  cJSON *result;
+  cJSON *action = cJSON_GetObjectItem(root, REQRES_K_ACTION);
+
+  if (!action) {
+    LOGE(TAG, "Failed to get action from mqtt payload");
+    return;
+  }
+
+  result = syscfg_action(action->valuestring);
+
+  // Use duplicate action json object instead of using action object directly, because it(action) is freed in mqtt
+  // request handler.
+  cJSON *resp_action = cJSON_Duplicate(action, 1);
+  mqtt_publish(mqtt_response, gen_syscfg_resp(resp_action, result), 0);
 }
 
 static int mqtt_req_cmd_handler(cJSON *mqtt_data) {
@@ -368,26 +506,23 @@ static int mqtt_req_cmd_handler(cJSON *mqtt_data) {
 
   /* devinfo */
   if (!strcmp(req_type->valuestring, REQRES_V_DEVINFO)) {
-    mqtt_publish(mqtt_response, gen_devinfo_resp(), 0);
+    devinfo_cmd_handler(mqtt_data);
   }
   /* fw_update */
   else if (!strcmp(req_type->valuestring, REQRES_V_FWUPDATE)) {
-    set_fwupdate(1);
-    ret = update_fwversion_cmd_handler(mqtt_data);
-    mqtt_publish(mqtt_response, gen_fwupdate_resp(ret), 0);
-    set_fwupdate(0);
+    update_fwversion_cmd_handler(mqtt_data);
   }
   /* update */
   else if (!strcmp(req_type->valuestring, REQRES_V_UPDATE)) {
-    update_sensor_data_cmd_handler();
+    update_sensor_data_cmd_handler(mqtt_data);
   }
   /* reset a device */
   else if (!strcmp(req_type->valuestring, REQRES_V_RESET)) {
-    reset_device_cmd_handler();
+    reset_device_cmd_handler(mqtt_data);
   }
   /* factory reset */
   else if (!strcmp(req_type->valuestring, REQRES_V_FACTORY_RESET)) {
-    factory_reset_cmd_handler();
+    factory_reset_cmd_handler(mqtt_data);
   }
   /* wifi change */
   else if (!strcmp(req_type->valuestring, REQRES_V_WIFI_CHANGE)) {
@@ -399,11 +534,15 @@ static int mqtt_req_cmd_handler(cJSON *mqtt_data) {
   }
   /* serach (identify) */
   else if (!strcmp(req_type->valuestring, REQRES_V_SEARCH)) {
-    serach_device_cmd_handler();
+    serach_device_cmd_handler(mqtt_data);
   }
   /* spiffs (file) format */
   else if (!strcmp(req_type->valuestring, REQRES_V_SPIFFS_FORMAT)) {
-    spiffs_format_cmd_handler();
+    spiffs_format_cmd_handler(mqtt_data);
+  }
+  /* syscfg action (set/get/show) */
+  else if (!strcmp(req_type->valuestring, REQRES_V_SYSCFG)) {
+    syscfg_cmd_handler(mqtt_data);
   }
 
   return ret;

@@ -27,7 +27,7 @@ int syscfg_get_cmd(int argc, char **argv) {
 
   int type = atoi(argv[1]);
   char *key = argv[2];
-  char value[SYSCFG_MAX_VALUE_LEN];
+  char value[SYSCFG_VARIABLE_VALUE_SIZE] = { 0 };
   if (syscfg_get(type, key, value, sizeof(value)) != 0) {
     printf("Failed to get value for key %s\n", key);
     return -1;

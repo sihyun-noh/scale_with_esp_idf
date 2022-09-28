@@ -7,7 +7,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define SYSCFG_MAX_VALUE_LEN 256
+#define SYSCFG_VARIABLE_NAME_SIZE 32
+#define SYSCFG_VARIABLE_VALUE_SIZE 64
 
 /**
  * @brief Initialize the system configuration module.
