@@ -294,9 +294,16 @@ void easy_setup_task(void *pvParameters) {
         sysevent_get_with_handler(IP_EVENT, IP_EVENT_STA_GOT_IP, sta_ip_handler, NULL);
         wifi_stop_mode();
         vTaskDelay(500 / portTICK_PERIOD_MS);
+        /*** NOTES ***/
+        // If the connection is lost, the wifi disconnection information is saved in the nvs area,
+        // and due to this, when the device is rebooted, the normal connection may not be possible
+        // to refer to the information of the nvs for fast connection.
+        // To prevent this issue, nvs_erase() should be called before connection to the AP.
+        nvs_erase();
         curr_mode = STA_CONNECT_MODE;
       } break;
       case STA_CONNECT_MODE: {
+        vTaskDelay(500 / portTICK_PERIOD_MS);
         wifi_sta_mode();
         wifi_connect_ap(farmssid, farmpw);
         LOGI(TAG, "Connecting to AP with SSID:%s password:%s", farmssid, farmpw);
@@ -319,12 +326,13 @@ void easy_setup_task(void *pvParameters) {
           xEventGroupClearBits(s_wifi_event_group, WIFI_DISCONNECT);
           vTaskDelay((300 * 1000) / portTICK_PERIOD_MS);
           if (s_retry_connect >= MAX_RETRY_CONNECT) {
-            curr_mode = UNPAIRED_MODE;
+            // curr_mode = UNPAIRED_MODE;
             s_retry_connect = 0;
           }
         } else {
           LOGE(TAG, "UNEXPECTED EVENT");
-          curr_mode = UNPAIRED_MODE;
+          // curr_mode = UNPAIRED_MODE;
+          curr_mode = PAIRING_MODE;
         }
       } break;
       case PAIRED_MODE: {

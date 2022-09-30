@@ -117,4 +117,11 @@ int syscfg_show(syscfg_type_t type);
  */
 int syscfg_info(syscfg_type_t type);
 
+/**
+ * @brief Erase all information of nvs flash area.
+ *
+ * @return int 0 on success, -1 on error
+ */
+int nvs_erase(void);
+
 #endif /* _SYSCFG_H_ */

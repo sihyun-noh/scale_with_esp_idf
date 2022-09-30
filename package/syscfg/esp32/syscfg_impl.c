@@ -413,3 +413,23 @@ int syscfg_info_impl(syscfg_type_t type) {
            stats.total_entries);
   return 0;
 }
+
+int nvs_erase_impl(void) {
+  ESP_LOGI(TAG, "Erasing NVS...\n");
+
+  nvs_handle_t nvs_handle;
+
+  esp_err_t err = nvs_open("nvs", NVS_READWRITE, &nvs_handle);
+  if (err == ESP_OK) {
+    err = nvs_erase_all(nvs_handle);
+    if (err == ESP_OK) {
+      err = nvs_commit(nvs_handle);
+    }
+
+    nvs_close(nvs_handle);
+  }
+
+  ESP_LOGI(TAG, "Namespace '%s' was %s erased\n", "nvs", (err == ESP_OK) ? "" : "not");
+
+  return (err == ESP_OK) ? 0 : -1;
+}

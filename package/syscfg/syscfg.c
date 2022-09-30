@@ -62,3 +62,7 @@ int syscfg_show(syscfg_type_t type) {
 int syscfg_info(syscfg_type_t type) {
   return syscfg_info_impl(type);
 }
+
+int nvs_erase(void) {
+  return nvs_erase_impl();
+}

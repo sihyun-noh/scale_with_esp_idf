@@ -78,4 +78,9 @@ int syscfg_info_cmd(int argc, char **argv);
  */
 int syscfg_dump_cmd(int argc, char **argv);
 
+/**
+ * @breif Command to erase wifi and other information of nvs flash area
+ */
+int nvs_erase_cmd(int argc, char **argv);
+
 #endif /* _SYSCFG_CMD_H_ */

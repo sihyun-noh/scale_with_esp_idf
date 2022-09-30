@@ -166,3 +166,8 @@ int syscfg_dump_cmd(int argc, char **argv) {
   dump_syscfg();
   return 0;
 }
+
+int nvs_erase_cmd(int argc, char **argv) {
+  nvs_erase();
+  return 0;
+}

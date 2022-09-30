@@ -145,6 +145,13 @@ int syscfg_show_impl(syscfg_type_t type);
  */
 int syscfg_info_impl(syscfg_type_t type);
 
+/**
+ * @brief Erase all information of nvs flash area
+ *
+ * @return int 0 on success, -1 on error
+ */
+int nvs_erase_impl(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -56,24 +56,6 @@ static int reset_command(int argc, char **argv) {
   return 0;
 }
 
-static int erase_nvs_command(int argc, char **argv) {
-  printf("Erasing NVS...\n");
-  nvs_handle_t nvs_handle;
-
-  esp_err_t err = nvs_open("nvs", NVS_READWRITE, &nvs_handle);
-  if (err == ESP_OK) {
-    err = nvs_erase_all(nvs_handle);
-    if (err == ESP_OK) {
-      err = nvs_commit(nvs_handle);
-    }
-  }
-
-  printf("Namespace '%s' was %s erased\n", "nvs", (err == ESP_OK) ? "" : "not");
-
-  nvs_close(nvs_handle);
-  return 0;
-}
-
 /**
  * @brief Quit shell command
  *
@@ -127,7 +109,7 @@ static sc_cmd_t commands[] = {
   {
       .name = "erase_nvs",
       .help = "Erase NVS",
-      .func = erase_nvs_command,
+      .func = nvs_erase_cmd,
   },
   {
       .name = "syscfg_get",
