@@ -6,6 +6,9 @@
 #if (SENSOR_TYPE == SCD4X)
 #include "scd4x_params.h"
 #endif
+#if (SENSOR_TYPE == ATLAS_PH)
+#include "atlas_ph_params.h"
+#endif
 #if ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500))
 #include "mb_master_rtu.h"
 #endif
@@ -52,6 +55,8 @@ static const char* TAG = "sensor_task";
 sht3x_dev_t dev;
 #elif (SENSOR_TYPE == SCD4X)
 scd4x_dev_t dev;
+#elif (SENSOR_TYPE == ATLAS_PH)
+atlas_ph_dev_t dev;
 #elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500))
 int num_characteristic = 0;
 mb_characteristic_info_t mb_characteristic[3] = { 0 };
@@ -91,6 +96,11 @@ int sensor_init(void) {
   // Please implement the SCD4x initialize code.
   if ((res = scd4x_init(&dev, &scd4x_params[0])) != 0) {
     LOGI(TAG, "Could not initialize SCD4X sensor = %d", res);
+    return res;
+  }
+#elif (SENSOR_TYPE == ATLAS_PH)
+  if ((res = atlas_ph_init(&dev, &atlas_ph_params[0])) != 0) {
+    LOGI(TAG, "Could not initialize Atlas pH sensor = %d", res);
     return res;
   }
 #elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500))
@@ -358,6 +368,22 @@ int read_solar_radiation(void) {
 }
 #endif
 
+#if (SENSOR_TYPE == ATLAS_PH)
+int read_ph(void) {
+  int res = 0;
+  char s_ph[10] = { 0 };
+
+  res = atlas_ph_read(&dev, s_ph);
+
+  if (res)
+    LOGI(TAG, "Error executing atlas_ph_read(): %i", res);
+  else
+    sysevent_set(I2C_PH_EVENT, s_ph);
+
+  return res;
+}
+#endif
+
 #if (SENSOR_TEST)
 int read_test_data(void) {
   float random = 0;
@@ -399,6 +425,8 @@ int sensor_read(void) {
   rc = read_soil_ec();
 #elif (SENSOR_TYPE == SWSR7500)
   rc = read_solar_radiation();
+#elif (SENSOR_TYPE == ATLAS_PH)
+  rc = read_ph();
 #endif
   return rc;
 }

@@ -18,6 +18,7 @@
 #define SCD4X 2    /* CO2 and Temperature and Humidity */
 #define RK520_02 3 /* Soil EC Rika Sensor */
 #define SWSR7500 4 /* KD Solar Radiation */
+#define ATLAS_PH 5 /* Atlas pH Sensor */
 
 #ifndef SENSOR_TYPE
 #define SENSOR_TYPE SHT3X
@@ -30,6 +31,9 @@
 #elif (SENSOR_TYPE == SCD4X)
 #define SCD4X_I2C_SDA_PIN 21
 #define SCD4X_I2C_SCL_PIN 22
+#elif (SENSOR_TYPE == ATLAS_PH)
+#define ATLAS_PH_I2C_SDA_PIN 21
+#define ATLAS_PH_I2C_SCL_PIN 22
 #elif (SENSOR_TYPE == RK520_02)
 // Greenlabs Board PIN numbers for U2RX and U2TX
 #define MB_RX_PIN 16
@@ -53,6 +57,9 @@
 #elif (SENSOR_TYPE == SCD4X)
 #define SCD4X_I2C_SDA_PIN 13
 #define SCD4X_I2C_SCL_PIN 16
+#elif (SENSOR_TYPE == ATLAS_PH)
+#define ATLAS_PH_I2C_SDA_PIN 13
+#define ATLAS_PH_I2C_SCL_PIN 16
 #elif (SENSOR_TYPE == RK520_02)
 // Olimex Board PIN numbers for U1RX and U1TX
 #define MB_RX_PIN 36

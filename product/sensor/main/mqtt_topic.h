@@ -9,6 +9,7 @@
 #define CO2_PUB_SUB_TOPIC "value/%s/co2"
 #define EC_PUB_SUB_TOPIC "value/%s/ec"
 #define SOLAR_PUB_SUB_TOPIC "value/%s/solar"
+#define PH_PUB_SUB_TOPIC "value/%s/ph"
 
 /* Command Request & Response */
 #define CMD_REQUEST_TOPIC "cmd/%s/req"

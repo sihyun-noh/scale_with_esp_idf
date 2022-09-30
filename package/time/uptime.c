@@ -21,7 +21,7 @@ char* uptime(void) {
   nearSec = nearSec - (minute * 60);
   uint32_t second = nearSec;
 
-  snprintf(s_uptime, sizeof(s_uptime), "%d:%d:%d", hour, minute, second);
+  snprintf(s_uptime, sizeof(s_uptime), "%02d:%02d:%02d", hour, minute, second);
 
   return s_uptime;
 }
