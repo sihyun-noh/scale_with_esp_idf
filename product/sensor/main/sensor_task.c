@@ -9,6 +9,9 @@
 #if (SENSOR_TYPE == ATLAS_PH)
 #include "atlas_ph_params.h"
 #endif
+#if (SENSOR_TYPE == ATLAS_EC)
+#include "atlas_ec_params.h"
+#endif
 #if ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500))
 #include "mb_master_rtu.h"
 #endif
@@ -57,6 +60,8 @@ sht3x_dev_t dev;
 scd4x_dev_t dev;
 #elif (SENSOR_TYPE == ATLAS_PH)
 atlas_ph_dev_t dev;
+#elif (SENSOR_TYPE == ATLAS_EC)
+atlas_ec_dev_t dev;
 #elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500))
 int num_characteristic = 0;
 mb_characteristic_info_t mb_characteristic[3] = { 0 };
@@ -101,6 +106,11 @@ int sensor_init(void) {
 #elif (SENSOR_TYPE == ATLAS_PH)
   if ((res = atlas_ph_init(&dev, &atlas_ph_params[0])) != 0) {
     LOGI(TAG, "Could not initialize Atlas pH sensor = %d", res);
+    return res;
+  }
+#elif (SENSOR_TYPE == ATLAS_EC)
+  if ((res = atlas_ec_init(&dev, &atlas_ec_params[0])) != 0) {
+    LOGI(TAG, "Could not initialize Atlas EC sensor = %d", res);
     return res;
   }
 #elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500))
@@ -384,6 +394,22 @@ int read_ph(void) {
 }
 #endif
 
+#if (SENSOR_TYPE == ATLAS_EC)
+int read_ec(void) {
+  int res = 0;
+  char s_ec[10] = { 0 };
+
+  res = atlas_ec_read(&dev, s_ec);
+
+  if (res)
+    LOGI(TAG, "Error executing atlas_ec_read(): %i", res);
+  else
+    sysevent_set(I2C_EC_EVENT, s_ec);
+
+  return res;
+}
+#endif
+
 #if (SENSOR_TEST)
 int read_test_data(void) {
   float random = 0;
@@ -427,6 +453,8 @@ int sensor_read(void) {
   rc = read_solar_radiation();
 #elif (SENSOR_TYPE == ATLAS_PH)
   rc = read_ph();
+#elif (SENSOR_TYPE == ATLAS_EC)
+  rc = read_ec();
 #endif
   return rc;
 }

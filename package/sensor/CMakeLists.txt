@@ -27,6 +27,12 @@ if(CONFIG_ATLAS_PH_FEATURE)
   list(APPEND includes "./atlas_ph")
 endif()
 
+if(CONFIG_ATLAS_EC_FEATURE)
+  list(APPEND srcs
+    "atlas_ec/atlas_ec.c")
+  list(APPEND includes "./atlas_ec")
+endif()
+
 idf_component_register(SRCS "${srcs}"
                     INCLUDE_DIRS ${includes}
                     REQUIRES ${req})

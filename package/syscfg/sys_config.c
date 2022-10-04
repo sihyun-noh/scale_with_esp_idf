@@ -165,6 +165,8 @@ void generate_syscfg(void) {
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSSO");
 #elif (SENSOR_TYPE == ATLAS_PH)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSPH");
+#elif (SENSOR_TYPE == ATLAS_EC)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSEC");
 #endif
   }
   syscfg_get(SYSCFG_I_HWVERSION, SYSCFG_N_HWVERSION, hw_version, sizeof(hw_version));

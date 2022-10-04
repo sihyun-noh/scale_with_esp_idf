@@ -763,6 +763,17 @@ void mqtt_publish_sensor_data(void) {
       FLOGI(TAG, "mqtt_publish error!");
     }
   }
+#elif (SENSOR_TYPE == ATLAS_EC)
+  char s_ec[20] = { 0 };
+  char mqtt_ec[80] = { 0 };
+  snprintf(mqtt_ec, sizeof(mqtt_ec), EC_PUB_SUB_TOPIC, device_id);
+  sysevent_get(SYSEVENT_BASE, I2C_EC_EVENT, s_ec, sizeof(s_ec));
+  if (s_ec[0]) {
+    ret = mqtt_publish(mqtt_ec, gen_sensor_resp("air", s_ec, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
+  }
 #endif
 
   heap_monitor_func(8092, 4096);

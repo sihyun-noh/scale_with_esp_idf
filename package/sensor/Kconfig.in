@@ -22,4 +22,10 @@ menu "SmartFarm Sensors Configuration"
     default "y"
     help
       Atlas pH Sensor
+
+  config ATLAS_EC_FEATURE
+    bool "Atlas EC feature"
+    default "y"
+    help
+      Atlas EC Sensor
 endmenu # Sensors

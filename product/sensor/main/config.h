@@ -19,6 +19,7 @@
 #define RK520_02 3 /* Soil EC Rika Sensor */
 #define SWSR7500 4 /* KD Solar Radiation */
 #define ATLAS_PH 5 /* Atlas pH Sensor */
+#define ATLAS_EC 6 /* Atlas EC Sensor */
 
 #ifndef SENSOR_TYPE
 #define SENSOR_TYPE SHT3X
@@ -34,6 +35,9 @@
 #elif (SENSOR_TYPE == ATLAS_PH)
 #define ATLAS_PH_I2C_SDA_PIN 21
 #define ATLAS_PH_I2C_SCL_PIN 22
+#elif (SENSOR_TYPE == ATLAS_EC)
+#define ATLAS_EC_I2C_SDA_PIN 21
+#define ATLAS_EC_I2C_SCL_PIN 22
 #elif (SENSOR_TYPE == RK520_02)
 // Greenlabs Board PIN numbers for U2RX and U2TX
 #define MB_RX_PIN 16
@@ -60,6 +64,9 @@
 #elif (SENSOR_TYPE == ATLAS_PH)
 #define ATLAS_PH_I2C_SDA_PIN 13
 #define ATLAS_PH_I2C_SCL_PIN 16
+#elif (SENSOR_TYPE == ATLAS_EC)
+#define ATLAS_EC_I2C_SDA_PIN 13
+#define ATLAS_EC_I2C_SCL_PIN 16
 #elif (SENSOR_TYPE == RK520_02)
 // Olimex Board PIN numbers for U1RX and U1TX
 #define MB_RX_PIN 36
