@@ -292,6 +292,24 @@ int read_co2_temperature_humidity(void) {
 #endif
 
 #if (SENSOR_TYPE == RK520_02)
+float convert_bulk_to_saturation_ec(float temp, float mos, float ec) {
+  float raw, eb, ep, op, saturation_ec;
+
+  raw = (mos + 0.6956) / 0.0003879;
+  eb = (0.000000002887 * raw * raw * raw) - (0.00002080 * raw * raw) + (0.05276 * raw) - 43.39;
+  eb = eb * eb;
+  ep = 80.3 - (0.37 * (temp - 20));
+  op = (ep * ec) / (eb - 4.1);
+  saturation_ec = (80 * mos * ec) / (0.5 * (eb - 4.1));
+
+  LOGI(TAG, "[EC] raw : %lf, eb : %lf, ep : %lf", raw, eb, ep);
+  LOGI(TAG, "[EC] Bulk EC : %lf", ec);
+  LOGI(TAG, "[EC] Pore Water EC : %lf (ds/m)", op);
+  LOGI(TAG, "[EC] Saturation Extract EC : %lf (ds/m)", saturation_ec);
+
+  return saturation_ec;
+}
+
 int read_soil_ec(void) {
   int res = 0;
   int data_len = 0;
@@ -299,10 +317,12 @@ int read_soil_ec(void) {
   char s_temperature[10] = { 0 };
   char s_moisture[10] = { 0 };
   char s_ec[10] = { 0 };
+  char s_saturation_ec[10] = { 0 };
 
   float f_temp = 0.0;
   float f_mos = 0.0;
   float f_ec = 0.0;
+  float f_saturation_ec = 0.0;
 
   uint16_t u_temp = 0;
   uint16_t u_mos = 0;
@@ -328,9 +348,15 @@ int read_soil_ec(void) {
       snprintf(s_temperature, sizeof(s_temperature), "%.2f", f_temp);
       snprintf(s_moisture, sizeof(s_moisture), "%.2f", f_mos);
       snprintf(s_ec, sizeof(s_ec), "%.2f", f_ec);
+
+      f_saturation_ec = convert_bulk_to_saturation_ec(f_temp, f_mos, f_ec);
+      snprintf(s_saturation_ec, sizeof(s_saturation_ec), "%.2f", f_saturation_ec);
+
       sysevent_set(MB_TEMPERATURE_EVENT, s_temperature);
       sysevent_set(MB_MOISTURE_EVENT, s_moisture);
-      sysevent_set(MB_EC_EVENT, s_ec);
+      //sysevent_set(MB_EC_EVENT, s_ec);
+      sysevent_set(MB_EC_EVENT, s_saturation_ec);
+
 
       if (is_battery_model()) {
         LOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", f_ec, f_mos, f_temp);
