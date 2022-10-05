@@ -732,11 +732,22 @@ void mqtt_publish_sensor_data(void) {
   char s_temperature[20] = { 0 };
   char mqtt_ec[80] = { 0 };
   snprintf(mqtt_ec, sizeof(mqtt_ec), EC_PUB_SUB_TOPIC, device_id);
-  sysevent_get(SYSEVENT_BASE, MB_EC_EVENT, s_ec, sizeof(s_ec));
+  sysevent_get(SYSEVENT_BASE, MB_SOIL_EC_EVENT, s_ec, sizeof(s_ec));
   sysevent_get(SYSEVENT_BASE, MB_MOISTURE_EVENT, s_moisture, sizeof(s_moisture));
   sysevent_get(SYSEVENT_BASE, MB_TEMPERATURE_EVENT, s_temperature, sizeof(s_temperature));
   if (s_ec[0]) {
-    ret = mqtt_publish(mqtt_ec, gen_sensor_resp("air", s_ec, s_battery), 0);
+    ret = mqtt_publish(mqtt_ec, gen_sensor_resp("soil", s_ec, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
+  }
+#elif (SENSOR_TYPE == RK500_02)
+  char s_ph[20] = { 0 };
+  char mqtt_ph[80] = { 0 };
+  snprintf(mqtt_ph, sizeof(mqtt_ph), PH_PUB_SUB_TOPIC, device_id);
+  sysevent_get(SYSEVENT_BASE, MB_WATER_PH_EVENT, s_ph, sizeof(s_ph));
+  if (s_ph[0]) {
+    ret = mqtt_publish(mqtt_ph, gen_sensor_resp("water", s_ph, s_battery), 0);
     if (ret != 0) {
       FLOGI(TAG, "mqtt_publish error!");
     }
@@ -758,7 +769,7 @@ void mqtt_publish_sensor_data(void) {
   snprintf(mqtt_ph, sizeof(mqtt_ph), PH_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, I2C_PH_EVENT, s_ph, sizeof(s_ph));
   if (s_ph[0]) {
-    ret = mqtt_publish(mqtt_ph, gen_sensor_resp("air", s_ph, s_battery), 0);
+    ret = mqtt_publish(mqtt_ph, gen_sensor_resp("water", s_ph, s_battery), 0);
     if (ret != 0) {
       FLOGI(TAG, "mqtt_publish error!");
     }
@@ -769,7 +780,7 @@ void mqtt_publish_sensor_data(void) {
   snprintf(mqtt_ec, sizeof(mqtt_ec), EC_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, I2C_EC_EVENT, s_ec, sizeof(s_ec));
   if (s_ec[0]) {
-    ret = mqtt_publish(mqtt_ec, gen_sensor_resp("air", s_ec, s_battery), 0);
+    ret = mqtt_publish(mqtt_ec, gen_sensor_resp("water", s_ec, s_battery), 0);
     if (ret != 0) {
       FLOGI(TAG, "mqtt_publish error!");
     }

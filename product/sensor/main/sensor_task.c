@@ -12,7 +12,7 @@
 #if (SENSOR_TYPE == ATLAS_EC)
 #include "atlas_ec_params.h"
 #endif
-#if ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500))
+#if ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500) || (SENSOR_TYPE == RK500_02))
 #include "mb_master_rtu.h"
 #endif
 #include "utils.h"
@@ -62,7 +62,7 @@ scd4x_dev_t dev;
 atlas_ph_dev_t dev;
 #elif (SENSOR_TYPE == ATLAS_EC)
 atlas_ec_dev_t dev;
-#elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500))
+#elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500) || (SENSOR_TYPE == RK500_02))
 int num_characteristic = 0;
 mb_characteristic_info_t mb_characteristic[3] = { 0 };
 #endif
@@ -113,7 +113,7 @@ int sensor_init(void) {
     LOGI(TAG, "Could not initialize Atlas EC sensor = %d", res);
     return res;
   }
-#elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500))
+#elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500) || (SENSOR_TYPE == RK500_02))
   // Refer to the modbus function code and register in EC Water RK500-13.pdf
   // << Water EC Sensor >>
   // Slave ID = 0x07, Function Code = 0x03, Start Address = 0x0000, Read Register Len = 0x000A
@@ -133,6 +133,7 @@ int sensor_init(void) {
   // };
 
 #if (SENSOR_TYPE == RK520_02)
+  // Rika Soil EC Sensor
   /**
   mb_characteristic_info_t mb_soil_ec[3] = {
     { 0, "Temperature", "C", DATA_U16, 2, RK_SEC_SLAVE_ID, MB_HOLDING_REG, 0x0000, 0x0001 },
@@ -146,10 +147,18 @@ int sensor_init(void) {
   memcpy(&mb_characteristic, mb_soil_ec, sizeof(mb_soil_ec));
   num_characteristic = 1;
 #elif (SENSOR_TYPE == SWSR7500)
+  // Korea Digital Solar Radiation(Pyranometer) Sensor
   mb_characteristic_info_t mb_solar[1] = {
     { 0, "Pyranometer", "W", DATA_U16, 2, KD_SOLAR_SLAVE_ID, MB_INPUT_REG, 0x0006, 0x0001 },
   };
   memcpy(&mb_characteristic, mb_solar, sizeof(mb_solar));
+  num_characteristic = 1;
+#elif (SENSOR_TYPE == RK500_02)
+  // Rika Water PH Sensor
+  mb_characteristic_info_t mb_water_ph[3] = {
+    { 0, "PH", "ph", DATA_U16, 2, RK_WPH_SLAVE_ID, MB_HOLDING_REG, 0x0000, 0x0001 },
+  };
+  memcpy(&mb_characteristic, mb_water_ph, sizeof(mb_water_ph));
   num_characteristic = 1;
 #endif
 
@@ -354,9 +363,7 @@ int read_soil_ec(void) {
 
       sysevent_set(MB_TEMPERATURE_EVENT, s_temperature);
       sysevent_set(MB_MOISTURE_EVENT, s_moisture);
-      //sysevent_set(MB_EC_EVENT, s_ec);
-      sysevent_set(MB_EC_EVENT, s_saturation_ec);
-
+      sysevent_set(MB_SOIL_EC_EVENT, s_saturation_ec);
 
       if (is_battery_model()) {
         LOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", f_ec, f_mos, f_temp);
@@ -364,6 +371,44 @@ int read_soil_ec(void) {
       } else {
         LOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", f_ec, f_mos, f_temp);
         FLOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", f_ec, f_mos, f_temp);
+      }
+
+      vTaskDelay(500 / portTICK_RATE_MS);
+    }
+  }
+  return res;
+}
+#endif
+
+#if (SENSOR_TYPE == RK500_02)
+int read_water_ph(void) {
+  int res = 0;
+  int data_len = 0;
+  uint8_t value[30] = { 0 };
+  char s_ph[10] = { 0 };
+  float f_ph = 0.0;
+  uint16_t u_ph = 0;
+
+  for (int i = 0; i < num_characteristic; i++) {
+    if (mb_master_read_characteristic(mb_characteristic[i].cid, mb_characteristic[i].name, value, &data_len) == -1) {
+      LOGE(TAG, "Failed to read value");
+      res = -1;
+    } else {
+      for (int k = 0; k < data_len; k++) {
+        LOGI(TAG, "value[%d] = [0x%x]", k, value[k]);
+      }
+      memcpy(&u_ph, value, 2);
+      f_ph = (float)(u_ph / 100.00);
+      LOGI(TAG, "ph = %.2f", f_ph);
+      snprintf(s_ph, sizeof(s_ph), "%.2f", f_ph);
+      sysevent_set(MB_WATER_PH_EVENT, s_ph);
+
+      if (is_battery_model()) {
+        LOGI(TAG, "ph : %.2f", f_ph);
+        FLOGI(TAG, "ph : %.2f", f_ph);
+      } else {
+        LOGI(TAG, "Power mode > ph : %.2f", f_ph);
+        FLOGI(TAG, "Power mode > ph : %.2f", f_ph);
       }
 
       vTaskDelay(500 / portTICK_RATE_MS);
@@ -475,6 +520,8 @@ int sensor_read(void) {
   rc = read_co2_temperature_humidity();
 #elif (SENSOR_TYPE == RK520_02)
   rc = read_soil_ec();
+#elif (SENSOR_TYPE == RK500_02)
+  rc = read_water_ph();
 #elif (SENSOR_TYPE == SWSR7500)
   rc = read_solar_radiation();
 #elif (SENSOR_TYPE == ATLAS_PH)

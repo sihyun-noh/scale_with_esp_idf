@@ -20,6 +20,7 @@
 #define SWSR7500 4 /* KD Solar Radiation */
 #define ATLAS_PH 5 /* Atlas pH Sensor */
 #define ATLAS_EC 6 /* Atlas EC Sensor */
+#define RK500_02 7 /* Water PH Rika Sensor */
 
 #ifndef SENSOR_TYPE
 #define SENSOR_TYPE SHT3X
@@ -38,7 +39,7 @@
 #elif (SENSOR_TYPE == ATLAS_EC)
 #define ATLAS_EC_I2C_SDA_PIN 21
 #define ATLAS_EC_I2C_SCL_PIN 22
-#elif (SENSOR_TYPE == RK520_02)
+#elif (SENSOR_TYPE == RK520_02 || SENSOR_TYPE == RK500_02)
 // Greenlabs Board PIN numbers for U2RX and U2TX
 #define MB_RX_PIN 16
 #define MB_TX_PIN 17
