@@ -1,9 +1,9 @@
-name: Release sensor RK520 Soil EC
+name: Release sensor Atlas Water pH
 
 on:
   push:
     tags:
-    - 'sensor/rk520*'
+    - 'sensor/atlas_ph*'
 
 jobs:
   build:
@@ -18,7 +18,7 @@ jobs:
       run: |
            cd product/sensor
            DEFINED_PROD=$(grep -h '#define SENSOR_TYPE*' main/config.h)
-           COMPILE_PROD="#define SENSOR_TYPE RK520_02"
+           COMPILE_PROD="#define SENSOR_TYPE ATLAS_PH"
            perl -pi -e "s/${DEFINED_PROD}/${COMPILE_PROD}/g" main/config.h
 
     - name: esp-idf build
@@ -29,13 +29,13 @@ jobs:
         path: './product/sensor'
 
     - name: Get lastest tag name
-      run: echo "TAG=${GITHUB_REF/refs\/tags\/sensor\/rk520_/}" >> $GITHUB_ENV
+      run: echo "TAG=${GITHUB_REF/refs\/tags\/sensor\/atlas_ph_/}" >> $GITHUB_ENV
 
     - name: Get current date info
       run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
     - name: Copy file
-      run: cp ./product/sensor/build/SENS_*.bin SENS_RK520_02_${{ env.TAG }}_${{ env.DATE }}.bin
+      run: cp ./product/sensor/build/SENS_*.bin SENS_ATLAS_PH_${{ env.TAG }}_${{ env.DATE }}.bin
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
