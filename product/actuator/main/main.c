@@ -12,6 +12,7 @@
 #include "time_api.h"
 #include "monitoring.h"
 #include "main.h"
+#include "config.h"
 
 #include <string.h>
 
