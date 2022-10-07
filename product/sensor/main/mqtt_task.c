@@ -127,7 +127,7 @@ static char *gen_sensor_resp(char *resp_type, char *value, char *bat) {
   /*
   {
     "id" : "GLSTH-0EADBEEFFEE9",
-    "type": "air"
+    "type": "air", or "soil", or "water"
     "value" : 25.00,
     (default)"unit": "C" - (Optional),
     "battery" : 97.24 - (Optional)
@@ -150,6 +150,49 @@ static char *gen_sensor_resp(char *resp_type, char *value, char *bat) {
   if (val >= 0) {
     cJSON_AddItemToObject(root, REQRES_K_BATTERY, cJSON_CreateNumber(val));
   }
+
+  output = cJSON_Print(root);
+
+  memset(json_data, 0x00, sizeof(json_data));
+  memcpy(json_data, output, strlen(output));
+
+  free(output);
+  cJSON_Delete(root);
+
+  LOGI(TAG, "%s\n", json_data);
+
+  return json_data;
+}
+
+static char *gen_sensor_bulkec_resp(char *resp_type, char *ec, char *temp, char *mos) {
+  /*
+  {
+    "id" : "GLSTH-0EADBEEFFEE9",
+    "type": "air", or "soil", or "water"
+    "ec" : 0.04,
+    "temperature" : 24.05,
+    "moisture" : "0.25",
+    "timestamp" : "2022-05-02 15:07:18"
+  }
+  */
+  cJSON *root;
+  char *output;
+  double bulk_ec;
+  double temperature;
+  double moisture;
+
+  char device_id[SYSCFG_S_DEVICEID] = { 0 };
+
+  syscfg_get(SYSCFG_I_DEVICEID, SYSCFG_N_DEVICEID, device_id, SYSCFG_S_DEVICEID);
+
+  root = gen_resp_obj(resp_type);
+
+  bulk_ec = round_(atof(ec));
+  cJSON_AddItemToObject(root, "ec", cJSON_CreateNumber(bulk_ec));
+  temperature = round_(atof(temp));
+  cJSON_AddItemToObject(root, "temperature", cJSON_CreateNumber(temperature));
+  moisture = round_(atof(mos));
+  cJSON_AddItemToObject(root, "moisture", cJSON_CreateNumber(moisture));
 
   output = cJSON_Print(root);
 
@@ -727,16 +770,26 @@ void mqtt_publish_sensor_data(void) {
     mqtt_publish(mqtt_humidity, gen_sensor_resp("air", "", s_battery), 0);
   }
 #elif (SENSOR_TYPE == RK520_02)
-  char s_ec[20] = { 0 };
+  char s_bulk_ec[20] = { 0 };
+  char s_saturation_ec[20] = { 0 };
   char s_moisture[20] = { 0 };
   char s_temperature[20] = { 0 };
-  char mqtt_ec[80] = { 0 };
-  snprintf(mqtt_ec, sizeof(mqtt_ec), EC_PUB_SUB_TOPIC, device_id);
-  sysevent_get(SYSEVENT_BASE, MB_SOIL_EC_EVENT, s_ec, sizeof(s_ec));
+  char mqtt_saturation_ec[80] = { 0 };
+  snprintf(mqtt_saturation_ec, sizeof(mqtt_saturation_ec), EC_PUB_SUB_TOPIC, device_id);
+  sysevent_get(SYSEVENT_BASE, MB_SOIL_EC_EVENT, s_saturation_ec, sizeof(s_saturation_ec));
+  sysevent_get(SYSEVENT_BASE, MB_SOIL_BULK_EC_EVENT, s_bulk_ec, sizeof(s_bulk_ec));
   sysevent_get(SYSEVENT_BASE, MB_MOISTURE_EVENT, s_moisture, sizeof(s_moisture));
   sysevent_get(SYSEVENT_BASE, MB_TEMPERATURE_EVENT, s_temperature, sizeof(s_temperature));
-  if (s_ec[0]) {
-    ret = mqtt_publish(mqtt_ec, gen_sensor_resp("soil", s_ec, s_battery), 0);
+  if (s_saturation_ec[0]) {
+    ret = mqtt_publish(mqtt_saturation_ec, gen_sensor_resp("soil", s_saturation_ec, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
+  }
+  if (s_bulk_ec[0] && s_temperature[0] && s_moisture[0]) {
+    char mqtt_bulk_ec[80] = { 0 };
+    snprintf(mqtt_bulk_ec, sizeof(mqtt_bulk_ec), BULK_EC_PUB_SUB_TOPIC, device_id);
+    ret = mqtt_publish(mqtt_bulk_ec, gen_sensor_bulkec_resp("log", s_bulk_ec, s_temperature, s_moisture), 0);
     if (ret != 0) {
       FLOGI(TAG, "mqtt_publish error!");
     }

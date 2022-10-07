@@ -332,6 +332,7 @@ int read_soil_ec(void) {
   float f_mos = 0.0;
   float f_ec = 0.0;
   float f_saturation_ec = 0.0;
+  int moisture_percent = 0;
 
   uint16_t u_temp = 0;
   uint16_t u_mos = 0;
@@ -349,9 +350,11 @@ int read_soil_ec(void) {
       memcpy(&u_mos, value + 2, 2);
       memcpy(&u_ec, value + 4, 2);
       f_temp = (float)(u_temp / 10.00);
-      f_mos = (float)(u_mos / 10.00);
+      moisture_percent = (u_mos / 10);
+      f_mos = (moisture_percent / 100.00);
       f_ec = (float)(u_ec / 1000.00);
       LOGI(TAG, "ec = %.2f", f_ec);
+      LOGI(TAG, "moisture percent = %d", moisture_percent);
       LOGI(TAG, "moisture = %.2f", f_mos);
       LOGI(TAG, "temperature = %.2f", f_temp);
       snprintf(s_temperature, sizeof(s_temperature), "%.2f", f_temp);
@@ -364,13 +367,14 @@ int read_soil_ec(void) {
       sysevent_set(MB_TEMPERATURE_EVENT, s_temperature);
       sysevent_set(MB_MOISTURE_EVENT, s_moisture);
       sysevent_set(MB_SOIL_EC_EVENT, s_saturation_ec);
+      sysevent_set(MB_SOIL_BULK_EC_EVENT, s_ec);
 
       if (is_battery_model()) {
-        LOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", f_ec, f_mos, f_temp);
-        FLOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", f_ec, f_mos, f_temp);
+        LOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
+        FLOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
       } else {
-        LOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", f_ec, f_mos, f_temp);
-        FLOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", f_ec, f_mos, f_temp);
+        LOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
+        FLOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
       }
 
       vTaskDelay(500 / portTICK_RATE_MS);

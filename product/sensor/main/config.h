@@ -23,7 +23,7 @@
 #define RK500_02 7 /* Water PH Rika Sensor */
 
 #ifndef SENSOR_TYPE
-#define SENSOR_TYPE SHT3X
+#define SENSOR_TYPE RK520_02
 #endif
 
 #if defined(SENS_BOARD_VER) && (SENS_BOARD_VER >= SENS_TTGO_HW1)

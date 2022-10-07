@@ -10,6 +10,7 @@
 #define EC_PUB_SUB_TOPIC "value/%s/ec"
 #define SOLAR_PUB_SUB_TOPIC "value/%s/solar"
 #define PH_PUB_SUB_TOPIC "value/%s/ph"
+#define BULK_EC_PUB_SUB_TOPIC "value/%s/bulkec"
 
 /* Command Request & Response */
 #define CMD_REQUEST_TOPIC "cmd/%s/req"
