@@ -164,6 +164,7 @@ static char *gen_sensor_resp(char *resp_type, char *value, char *bat) {
   return json_data;
 }
 
+#if (SENSOR_TYPE == RK520_02)
 static char *gen_sensor_bulkec_resp(char *resp_type, char *ec, char *temp, char *mos) {
   /*
   {
@@ -206,6 +207,7 @@ static char *gen_sensor_bulkec_resp(char *resp_type, char *ec, char *temp, char 
 
   return json_data;
 }
+#endif
 
 static char *gen_devinfo_resp(void) {
   /*
