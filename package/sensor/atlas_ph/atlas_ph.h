@@ -41,6 +41,15 @@ typedef struct {
   int scl_pin;        /**< I2C scl pin number */
 } atlas_ph_dev_t;
 
+typedef enum {
+  ATLAS_PH_CAL_LOW = 0,
+  ATLAS_PH_CAL_MID,
+  ATLAS_PH_CAL_HIGH,
+  ATLAS_PH_CAL_CHECK,
+  ATLAS_PH_CAL_CLEAR
+} atlas_ph_cal_mode_t;
+
 int atlas_ph_init(atlas_ph_dev_t* dev, const atlas_ph_params_t* params);
 int atlas_ph_read(atlas_ph_dev_t* dev, char* ph);
+int atlas_ph_cal(atlas_ph_dev_t* dev, atlas_ph_cal_mode_t mode);
 #endif /* _ATLAS_PH_H_ */

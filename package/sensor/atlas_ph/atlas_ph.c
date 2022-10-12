@@ -57,3 +57,48 @@ int atlas_ph_read(atlas_ph_dev_t* dev, char* ph) {
 
   return ret;
 }
+
+int atlas_ph_cal(atlas_ph_dev_t* dev, atlas_ph_cal_mode_t mode) {
+  int ret = 0;
+  uint8_t read[10] = { 0 };
+  uint8_t data[20] = { 0 };
+
+  LOGI(TAG, "0: low[4.00], 1: mid[6.86], 2: high[9.18], 3: cal check, 4: cal clear");
+
+  if (mode == ATLAS_PH_CAL_LOW)
+    snprintf((char *)data, sizeof(data), "Cal,low,4.00");
+  else if (mode == ATLAS_PH_CAL_MID)
+    snprintf((char *)data, sizeof(data), "Cal,mid,6.86");
+  else if (mode == ATLAS_PH_CAL_HIGH)
+    snprintf((char *)data, sizeof(data), "Cal,high,9.18");
+  else if (mode == ATLAS_PH_CAL_CHECK)
+    snprintf((char *)data, sizeof(data), "Cal,?");
+  else if (mode == ATLAS_PH_CAL_CLEAR)
+    snprintf((char *)data, sizeof(data), "Cal,clear");
+  else {
+    return -1;
+  }
+
+  i2c_lock(dev->bus);
+  if ((ret = i2c_write_bytes(dev->bus, dev->addr, data, sizeof(data), 0)) != 0) {
+    LOGI(TAG, "Error i2c write bytes %i", ret);
+  }
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  if ((ret = i2c_read_bytes(dev->bus, dev->addr, read, sizeof(read), 0)) != 0) {
+    LOGI(TAG, "Error i2c read bytes %i", ret);
+  }
+  i2c_unlock(dev->bus);
+
+  if (read[0] == 1) {
+    if (mode == ATLAS_PH_CAL_CHECK)
+      LOGI(TAG, "Altlas pH Cal : %s ", read);
+    else if (mode == ATLAS_PH_CAL_CLEAR)
+      LOGI(TAG, "Altlas pH Cal clear success");
+    else
+      LOGI(TAG, "Altlas pH Cal[%d] success", mode);
+  } else {
+    LOGI(TAG, "Altlas pH Cal[%d] failed : %d", mode, read[0]);
+  }
+
+  return ret;
+}

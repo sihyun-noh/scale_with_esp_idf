@@ -467,6 +467,22 @@ int read_ph(void) {
 
   return res;
 }
+
+int atlas_ph_cal_cmd(int argc, char **argv) {
+  if (argc != 2) {
+    printf("Usage: %s <type:0,1,2,3,4>\n", argv[0]);
+    return -1;
+  }
+
+  int type = atoi(argv[1]);
+
+  if (atlas_ph_cal(&dev, type) != 0) {
+    LOGI(TAG, "Failed to calibrate Atlas pH sensor = %d", type);
+    return -1;
+  }
+
+  return 0;
+}
 #endif
 
 #if (SENSOR_TYPE == ATLAS_EC)

@@ -24,12 +24,16 @@
 
 #include "icmp_echo_cmd.h"
 #include "sysfile.h"
+#include "config.h"
 
 extern void stop_shell(void);
 extern int mqtt_start_cmd(int argc, char **argv);
 extern int mqtt_subscribe_cmd(int argc, char **argv);
 extern int mqtt_publish_cmd(int argc, char **argv);
 extern char *uptime(void);
+#if (SENSOR_TYPE == ATLAS_PH)
+extern int atlas_ph_cal_cmd(int argc, char **argv);
+#endif
 
 typedef int (*sc_cmd_func_t)(int argc, char **argv);
 
@@ -196,7 +200,13 @@ static sc_cmd_t commands[] = {
       .help = "Show all sysfile name from ./SPIFFS ",
       .func = sysfile_show_cmd,
   },
-
+#if (SENSOR_TYPE == ATLAS_PH)
+  {
+      .name = "cal_atlas_ph",
+      .help = "Atlas pH Sensor Calibration",
+      .func = atlas_ph_cal_cmd,
+  },
+#endif
 };
 
 /**
