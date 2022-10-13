@@ -33,6 +33,8 @@ extern int mqtt_publish_cmd(int argc, char **argv);
 extern char *uptime(void);
 #if (SENSOR_TYPE == ATLAS_PH)
 extern int atlas_ph_cal_cmd(int argc, char **argv);
+#elif (SENSOR_TYPE == ATLAS_EC)
+extern int atlas_ec_cal_cmd(int argc, char **argv);
 #endif
 
 typedef int (*sc_cmd_func_t)(int argc, char **argv);
@@ -205,6 +207,13 @@ static sc_cmd_t commands[] = {
       .name = "cal_atlas_ph",
       .help = "Atlas pH Sensor Calibration",
       .func = atlas_ph_cal_cmd,
+  },
+#endif
+#if (SENSOR_TYPE == ATLAS_EC)
+  {
+      .name = "cal_atlas_ec",
+      .help = "Atlas EC Sensor Calibration",
+      .func = atlas_ec_cal_cmd,
   },
 #endif
 };

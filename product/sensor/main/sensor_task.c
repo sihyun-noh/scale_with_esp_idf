@@ -499,6 +499,22 @@ int read_ec(void) {
 
   return res;
 }
+
+int atlas_ec_cal_cmd(int argc, char **argv) {
+  if (argc != 2) {
+    printf("Usage: %s <type:0,1,2,3,4,5>\n", argv[0]);
+    return -1;
+  }
+
+  int type = atoi(argv[1]);
+
+  if (atlas_ec_cal(&dev, type) != 0) {
+    LOGI(TAG, "Failed to calibrate Atlas EC sensor = %d", type);
+    return -1;
+  }
+
+  return 0;
+}
 #endif
 
 #if (SENSOR_TEST)
