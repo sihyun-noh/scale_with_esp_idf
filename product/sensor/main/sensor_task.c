@@ -332,7 +332,6 @@ int read_soil_ec(void) {
   float f_mos = 0.0;
   float f_ec = 0.0;
   float f_saturation_ec = 0.0;
-  int moisture_percent = 0;
 
   uint16_t u_temp = 0;
   uint16_t u_mos = 0;
@@ -350,18 +349,16 @@ int read_soil_ec(void) {
       memcpy(&u_mos, value + 2, 2);
       memcpy(&u_ec, value + 4, 2);
       f_temp = (float)(u_temp / 10.00);
-      moisture_percent = (u_mos / 10);
-      f_mos = (moisture_percent / 100.00);
+      f_mos = (float)(u_mos / 10.0);
       f_ec = (float)(u_ec / 1000.00);
       LOGI(TAG, "ec = %.2f", f_ec);
-      LOGI(TAG, "moisture percent = %d", moisture_percent);
       LOGI(TAG, "moisture = %.2f", f_mos);
       LOGI(TAG, "temperature = %.2f", f_temp);
       snprintf(s_temperature, sizeof(s_temperature), "%.2f", f_temp);
       snprintf(s_moisture, sizeof(s_moisture), "%.2f", f_mos);
       snprintf(s_ec, sizeof(s_ec), "%.2f", f_ec);
 
-      f_saturation_ec = convert_bulk_to_saturation_ec(f_temp, f_mos, f_ec);
+      f_saturation_ec = convert_bulk_to_saturation_ec(f_temp, (f_mos / 100), f_ec);
       snprintf(s_saturation_ec, sizeof(s_saturation_ec), "%.2f", f_saturation_ec);
 
       sysevent_set(MB_TEMPERATURE_EVENT, s_temperature);
@@ -468,7 +465,7 @@ int read_ph(void) {
   return res;
 }
 
-int atlas_ph_cal_cmd(int argc, char **argv) {
+int atlas_ph_cal_cmd(int argc, char** argv) {
   if (argc != 2) {
     printf("Usage: %s <type:0,1,2,3,4>\n", argv[0]);
     return -1;

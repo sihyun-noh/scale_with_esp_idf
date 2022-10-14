@@ -32,10 +32,29 @@ static char json_resp[1024];
 static char json_data[1024];
 static char json_fwup_resp[512];
 
+#if (SENSOR_TYPE == SHT3X)
 char s_temperature[20] = { 0 };
 char s_humidity[20] = { 0 };
-char s_battery[20] = { 0 };
+#elif (SENSOR_TYPE == SCD4X)
 char s_co2[20] = { 0 };
+char s_temperature[20] = { 0 };
+char s_humidity[20] = { 0 };
+#elif (SENSOR_TYPE == RK520_02)
+char s_bulk_ec[20] = { 0 };
+char s_saturation_ec[20] = { 0 };
+char s_moisture[20] = { 0 };
+char s_temperature[20] = { 0 };
+#elif (SENSOR_TYPE == RK500_02)
+char s_ph[20] = { 0 };
+#elif (SENSOR_TYPE == SWSR7500)
+char s_pyranometer[20] = { 0 };
+#elif (SENSOR_TYPE == ATLAS_PH)
+char s_ph[20] = { 0 };
+#elif (SENSOR_TYPE == ATLAS_EC)
+char s_ec[20] = { 0 };
+#endif
+
+char s_battery[20] = { 0 };
 
 char mqtt_request[128] = { 0 };
 char mqtt_response[128] = { 0 };
@@ -337,14 +356,33 @@ static void update_sensor_data_cmd_handler(cJSON *root) {
   (void)root;
 
   mqtt_publish(mqtt_response, gen_default_resp("update"), 0);
+
+#if (SENSOR_TYPE == SHT3X)
   sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
   sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
+#elif (SENSOR_TYPE == SCD4X)
+  sysevent_set(I2C_CO2_EVENT, s_co2);
+  sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
+  sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
+#elif (SENSOR_TYPE == RK520_02)
+  sysevent_set(MB_SOIL_EC_EVENT, s_saturation_ec);
+  sysevent_set(MB_SOIL_BULK_EC_EVENT, s_bulk_ec);
+  sysevent_set(MB_MOISTURE_EVENT, s_moisture);
+  sysevent_set(MB_TEMPERATURE_EVENT, s_temperature);
+#elif (SENSOR_TYPE == RK500_02)
+  sysevent_set(MB_WATER_PH_EVENT, s_ph);
+#elif (SENSOR_TYPE == SWSR7500)
+  sysevent_set(MB_PYRANOMETER_EVENT, s_pyranometer);
+#elif (SENSOR_TYPE == ATLAS_PH)
+  sysevent_set(MB_WATER_PH_EVENT, s_ph);
+#elif (SENSOR_TYPE == ATLAS_EC)
+  sysevent_set(I2C_EC_EVENT, s_ec);
+#endif
+
   if (is_battery_model()) {
     sysevent_set(ADC_BATTERY_EVENT, s_battery);
   }
-#if (SENSOR_TYPE == SCD4X)
-  sysevent_set(I2C_CO2_EVENT, s_co2);
-#endif
+
   mqtt_publish_sensor_data();
 }
 
@@ -712,26 +750,10 @@ void stop_mqttc(void) {
 }
 
 void mqtt_publish_sensor_data(void) {
-  char mqtt_temperature[80] = { 0 };
-  char mqtt_humidity[80] = { 0 };
   char device_id[SYSCFG_S_DEVICEID] = { 0 };
   int ret = 0;
 
   syscfg_get(SYSCFG_I_DEVICEID, SYSCFG_N_DEVICEID, device_id, SYSCFG_S_DEVICEID);
-
-  snprintf(mqtt_temperature, sizeof(mqtt_temperature), TEMPERATURE_PUB_SUB_TOPIC, device_id);
-  snprintf(mqtt_humidity, sizeof(mqtt_humidity), HUMIDITY_PUB_SUB_TOPIC, device_id);
-
-#if (SENSOR_TYPE == SCD4X)
-  char mqtt_co2[80] = { 0 };
-  snprintf(mqtt_co2, sizeof(mqtt_co2), CO2_PUB_SUB_TOPIC, device_id);
-  sysevent_get(SYSEVENT_BASE, I2C_CO2_EVENT, &s_co2, sizeof(s_co2));
-#endif
-
-#if ((SENSOR_TYPE == SHT3X) || (SENSOR_TYPE == SCD4X))
-  sysevent_get(SYSEVENT_BASE, I2C_HUMIDITY_EVENT, &s_humidity, sizeof(s_humidity));
-  sysevent_get(SYSEVENT_BASE, I2C_TEMPERATURE_EVENT, &s_temperature, sizeof(s_temperature));
-#endif
 
   if (!is_battery_model())
     snprintf(s_battery, sizeof(s_battery), "-1");
@@ -739,51 +761,77 @@ void mqtt_publish_sensor_data(void) {
     sysevent_get(SYSEVENT_BASE, ADC_BATTERY_EVENT, &s_battery, sizeof(s_battery));
 
 #if (SENSOR_TYPE == SHT3X)
-  if (s_temperature[0] && s_humidity[0]) {
+  char mqtt_temperature[80] = { 0 };
+  char mqtt_humidity[80] = { 0 };
+  snprintf(mqtt_temperature, sizeof(mqtt_temperature), TEMPERATURE_PUB_SUB_TOPIC, device_id);
+  snprintf(mqtt_humidity, sizeof(mqtt_humidity), HUMIDITY_PUB_SUB_TOPIC, device_id);
+  sysevent_get(SYSEVENT_BASE, I2C_HUMIDITY_EVENT, &s_humidity, sizeof(s_humidity));
+  sysevent_get(SYSEVENT_BASE, I2C_TEMPERATURE_EVENT, &s_temperature, sizeof(s_temperature));
+  if (s_temperature[0]) {
     ret = mqtt_publish(mqtt_temperature, gen_sensor_resp("air", s_temperature, s_battery), 0);
     if (ret != 0) {
       FLOGI(TAG, "mqtt_publish error!");
     }
+  }
+  if (s_humidity[0]) {
     ret = mqtt_publish(mqtt_humidity, gen_sensor_resp("air", s_humidity, s_battery), 0);
     if (ret != 0) {
       FLOGI(TAG, "mqtt_publish error!");
     }
-  } else {
-    mqtt_publish(mqtt_temperature, gen_sensor_resp("air", "", s_battery), 0);
-    mqtt_publish(mqtt_humidity, gen_sensor_resp("air", "", s_battery), 0);
   }
 #elif (SENSOR_TYPE == SCD4X)
-  if (s_temperature[0] && s_humidity[0] && s_co2[0]) {
+  char mqtt_co2[80] = { 0 };
+  char mqtt_temperature[80] = { 0 };
+  char mqtt_humidity[80] = { 0 };
+  snprintf(mqtt_co2, sizeof(mqtt_co2), CO2_PUB_SUB_TOPIC, device_id);
+  snprintf(mqtt_temperature, sizeof(mqtt_temperature), TEMPERATURE_PUB_SUB_TOPIC, device_id);
+  snprintf(mqtt_humidity, sizeof(mqtt_humidity), HUMIDITY_PUB_SUB_TOPIC, device_id);
+  sysevent_get(SYSEVENT_BASE, I2C_CO2_EVENT, &s_co2, sizeof(s_co2));
+  sysevent_get(SYSEVENT_BASE, I2C_HUMIDITY_EVENT, &s_humidity, sizeof(s_humidity));
+  sysevent_get(SYSEVENT_BASE, I2C_TEMPERATURE_EVENT, &s_temperature, sizeof(s_temperature));
+  if (s_co2[0]) {
     ret = mqtt_publish(mqtt_co2, gen_sensor_resp("air", s_co2, s_battery), 0);
     if (ret != 0) {
       FLOGI(TAG, "mqtt_publish error!");
     }
+  }
+  if (s_temperature[0]) {
     ret = mqtt_publish(mqtt_temperature, gen_sensor_resp("air", s_temperature, s_battery), 0);
     if (ret != 0) {
       FLOGI(TAG, "mqtt_publish error!");
     }
+  }
+  if (s_humidity[0]) {
     ret = mqtt_publish(mqtt_humidity, gen_sensor_resp("air", s_humidity, s_battery), 0);
     if (ret != 0) {
       FLOGI(TAG, "mqtt_publish error!");
     }
-  } else {
-    mqtt_publish(mqtt_co2, gen_sensor_resp("air", "", s_battery), 0);
-    mqtt_publish(mqtt_temperature, gen_sensor_resp("air", "", s_battery), 0);
-    mqtt_publish(mqtt_humidity, gen_sensor_resp("air", "", s_battery), 0);
   }
 #elif (SENSOR_TYPE == RK520_02)
-  char s_bulk_ec[20] = { 0 };
-  char s_saturation_ec[20] = { 0 };
-  char s_moisture[20] = { 0 };
-  char s_temperature[20] = { 0 };
   char mqtt_saturation_ec[80] = { 0 };
+  char mqtt_temperature[80] = { 0 };
+  char mqtt_humidity[80] = { 0 };
   snprintf(mqtt_saturation_ec, sizeof(mqtt_saturation_ec), EC_PUB_SUB_TOPIC, device_id);
+  snprintf(mqtt_temperature, sizeof(mqtt_temperature), TEMPERATURE_PUB_SUB_TOPIC, device_id);
+  snprintf(mqtt_humidity, sizeof(mqtt_humidity), HUMIDITY_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, MB_SOIL_EC_EVENT, s_saturation_ec, sizeof(s_saturation_ec));
   sysevent_get(SYSEVENT_BASE, MB_SOIL_BULK_EC_EVENT, s_bulk_ec, sizeof(s_bulk_ec));
   sysevent_get(SYSEVENT_BASE, MB_MOISTURE_EVENT, s_moisture, sizeof(s_moisture));
   sysevent_get(SYSEVENT_BASE, MB_TEMPERATURE_EVENT, s_temperature, sizeof(s_temperature));
   if (s_saturation_ec[0]) {
     ret = mqtt_publish(mqtt_saturation_ec, gen_sensor_resp("soil", s_saturation_ec, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
+  }
+  if (s_temperature[0]) {
+    ret = mqtt_publish(mqtt_temperature, gen_sensor_resp("soil", s_temperature, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
+  }
+  if (s_moisture[0]) {
+    ret = mqtt_publish(mqtt_humidity, gen_sensor_resp("soil", s_moisture, s_battery), 0);
     if (ret != 0) {
       FLOGI(TAG, "mqtt_publish error!");
     }
@@ -797,7 +845,6 @@ void mqtt_publish_sensor_data(void) {
     }
   }
 #elif (SENSOR_TYPE == RK500_02)
-  char s_ph[20] = { 0 };
   char mqtt_ph[80] = { 0 };
   snprintf(mqtt_ph, sizeof(mqtt_ph), PH_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, MB_WATER_PH_EVENT, s_ph, sizeof(s_ph));
@@ -808,18 +855,16 @@ void mqtt_publish_sensor_data(void) {
     }
   }
 #elif (SENSOR_TYPE == SWSR7500)
-  char s_pyranometer[20] = { 0 };
-  char mqtt_solar[80] = { 0 };
-  snprintf(mqtt_solar, sizeof(mqtt_solar), SOLAR_PUB_SUB_TOPIC, device_id);
+  char mqtt_pyranometer[80] = { 0 };
+  snprintf(mqtt_pyranometer, sizeof(mqtt_pyranometer), SOLAR_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, MB_PYRANOMETER_EVENT, s_pyranometer, sizeof(s_pyranometer));
   if (s_pyranometer[0]) {
-    ret = mqtt_publish(mqtt_solar, gen_sensor_resp("air", s_pyranometer, s_battery), 0);
+    ret = mqtt_publish(mqtt_pyranometer, gen_sensor_resp("air", s_pyranometer, s_battery), 0);
     if (ret != 0) {
       FLOGI(TAG, "mqtt_publish error!");
     }
   }
 #elif (SENSOR_TYPE == ATLAS_PH)
-  char s_ph[20] = { 0 };
   char mqtt_ph[80] = { 0 };
   snprintf(mqtt_ph, sizeof(mqtt_ph), PH_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, I2C_PH_EVENT, s_ph, sizeof(s_ph));
@@ -830,7 +875,6 @@ void mqtt_publish_sensor_data(void) {
     }
   }
 #elif (SENSOR_TYPE == ATLAS_EC)
-  char s_ec[20] = { 0 };
   char mqtt_ec[80] = { 0 };
   snprintf(mqtt_ec, sizeof(mqtt_ec), EC_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, I2C_EC_EVENT, s_ec, sizeof(s_ec));
