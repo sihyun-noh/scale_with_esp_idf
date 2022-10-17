@@ -16,6 +16,7 @@ set(PROJECT_STAGE "DVT")
 # Set project name
 set(PROJECT_NAME "ACTUATOR_$ENV{CURRENT_PROJECT}")
 message("project name : ${PROJECT_NAME}")
+set(PROJECT_TYPE "ACTUATOR")
 
 # Get the current commit hash
 execute_process(

@@ -16,6 +16,7 @@ set(PROJECT_STAGE "DVT")
 # Set project name
 set(PROJECT_NAME "SENS_$ENV{CURRENT_PROJECT}")
 message("project name : ${PROJECT_NAME}")
+set(PROJECT_TYPE "SENSOR")
 
 # Get the current commit hash
 execute_process(

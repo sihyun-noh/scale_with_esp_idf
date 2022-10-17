@@ -26,6 +26,8 @@
 #define SENSOR_TYPE RK520_02
 #endif
 
+#define ACTUATOR_TYPE -1
+
 #if defined(SENS_BOARD_VER) && (SENS_BOARD_VER >= SENS_TTGO_HW1)
 #if (SENSOR_TYPE == SHT3X)
 #define SHT3X_I2C_SDA_PIN 21

@@ -17,6 +17,8 @@
 #define ACTUATOR_TYPE SWITCH
 #endif
 
+#define SENSOR_TYPE -1
+
 #if defined(ACT_BOARD_VER) && (ACT_BOARD_VER == ACT_GLS_HW)
 
 #elif defined(ACT_BOARD_VER) && (ACT_BOARD_VER == ACT_OLIMEX_HW)
