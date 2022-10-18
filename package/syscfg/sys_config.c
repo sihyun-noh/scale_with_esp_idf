@@ -53,6 +53,15 @@ static void generate_default_serial(char *serial_no, size_t buff_len) {
   snprintf(prod_code, sizeof(prod_code), "%s", "SE");
 #elif (SENSOR_TYPE == SWSR7200)
   snprintf(prod_code, sizeof(prod_code), "%s", "SO");
+#elif (SENSOR_TYPE == ATLAS_PH)
+  snprintf(prod_code, sizeof(prod_code), "%s", "PH");
+#elif (SENSOR_TYPE == ATLAS_EC || SENSOR_TYPE == RK500_02)
+  snprintf(prod_code, sizeof(prod_code), "%s", "EC");
+#endif
+#if (ACTUATOR_TYPE == SWITCH)
+  snprintf(prod_code, sizeof(prod_code), "%s", "SW");
+#elif (ACTUATOR_TYPE == MOTOR)
+  snprintf(prod_code, sizeof(prod_code), "%s", "MT");
 #endif
   snprintf(serial_no, buff_len, "%02d%02d%02d%s%05d", supplier_id, year_mfr, week_mfr, prod_code, seq_id);
 }
@@ -165,8 +174,13 @@ void generate_syscfg(void) {
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSSO");
 #elif (SENSOR_TYPE == ATLAS_PH)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSPH");
-#elif (SENSOR_TYPE == ATLAS_EC)
+#elif (SENSOR_TYPE == ATLAS_EC || SENSOR_TYPE == RK500_02)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSEC");
+#endif
+#if (ACTUATOR_TYPE == SWITCH)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLASW");
+#elif (ACTUATOR_TYPE == MOTOR)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLAMT");
 #endif
   }
   syscfg_get(SYSCFG_I_HWVERSION, SYSCFG_N_HWVERSION, hw_version, sizeof(hw_version));
