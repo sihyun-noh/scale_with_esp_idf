@@ -35,6 +35,7 @@ extern char *uptime(void);
 extern int atlas_ph_cal_cmd(int argc, char **argv);
 #elif (SENSOR_TYPE == ATLAS_EC)
 extern int atlas_ec_cal_cmd(int argc, char **argv);
+extern int atlas_ec_probe_cmd(int argc, char **argv);
 #endif
 
 typedef int (*sc_cmd_func_t)(int argc, char **argv);
@@ -204,16 +205,21 @@ static sc_cmd_t commands[] = {
   },
 #if (SENSOR_TYPE == ATLAS_PH)
   {
-      .name = "cal_atlas_ph",
+      .name = "atlas_ph_cal",
       .help = "Atlas pH Sensor Calibration",
       .func = atlas_ph_cal_cmd,
   },
 #endif
 #if (SENSOR_TYPE == ATLAS_EC)
   {
-      .name = "cal_atlas_ec",
+      .name = "atlas_ec_cal",
       .help = "Atlas EC Sensor Calibration",
       .func = atlas_ec_cal_cmd,
+  },
+  {
+      .name = "atlas_ec_probe",
+      .help = "Atlas EC Sensor Probe",
+      .func = atlas_ec_probe_cmd,
   },
 #endif
 };

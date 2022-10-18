@@ -512,6 +512,22 @@ int atlas_ec_cal_cmd(int argc, char **argv) {
 
   return 0;
 }
+
+int atlas_ec_probe_cmd(int argc, char **argv) {
+  if (argc != 2) {
+    printf("Usage: %s <type:0,1,2,3>\n", argv[0]);
+    return -1;
+  }
+
+  int type = atoi(argv[1]);
+
+  if (atlas_ec_probe(&dev, type) != 0) {
+    LOGI(TAG, "Failed to set probe of Atlas EC sensor = %d", type);
+    return -1;
+  }
+
+  return 0;
+}
 #endif
 
 #if (SENSOR_TEST)

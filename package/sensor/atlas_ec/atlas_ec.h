@@ -50,7 +50,15 @@ typedef enum {
   ATLAS_EC_CAL_CLEAR
 } atlas_ec_cal_mode_t;
 
+typedef enum {
+  ATLAS_EC_PROBE_CHECK = 0,
+  ATLAS_EC_PROBE_0_1,
+  ATLAS_EC_PROBE_1_0,
+  ATLAS_EC_PROBE_10
+} atlas_ec_probe_t;
+
 int atlas_ec_init(atlas_ec_dev_t* dev, const atlas_ec_params_t* params);
 int atlas_ec_read(atlas_ec_dev_t* dev, char* ec);
 int atlas_ec_cal(atlas_ec_dev_t* dev, atlas_ec_cal_mode_t mode);
+int atlas_ec_probe(atlas_ec_dev_t* dev, atlas_ec_probe_t probe);
 #endif /* _ATLAS_EC_H_ */

@@ -104,3 +104,44 @@ int atlas_ec_cal(atlas_ec_dev_t* dev, atlas_ec_cal_mode_t mode) {
 
   return ret;
 }
+
+int atlas_ec_probe(atlas_ec_dev_t* dev, atlas_ec_probe_t probe) {
+  int ret = 0;
+  uint8_t read[10] = { 0 };
+  uint8_t data[20] = { 0 };
+
+  LOGI(TAG, "0: check, 1: K[0.1], 2: K[1.0], 3: K[10]");
+
+  if (probe == ATLAS_EC_PROBE_CHECK)
+    snprintf((char *)data, sizeof(data), "K,?");
+  else if (probe == ATLAS_EC_PROBE_0_1)
+    snprintf((char *)data, sizeof(data), "K,0.1");
+  else if (probe == ATLAS_EC_PROBE_1_0)
+    snprintf((char *)data, sizeof(data), "K,1.0");
+  else if (probe == ATLAS_EC_PROBE_10)
+    snprintf((char *)data, sizeof(data), "K,10");
+  else {
+    return -1;
+  }
+
+  i2c_lock(dev->bus);
+  if ((ret = i2c_write_bytes(dev->bus, dev->addr, data, sizeof(data), 0)) != 0) {
+    LOGI(TAG, "Error i2c write bytes %i", ret);
+  }
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  if ((ret = i2c_read_bytes(dev->bus, dev->addr, read, sizeof(read), 0)) != 0) {
+    LOGI(TAG, "Error i2c read bytes %i", ret);
+  }
+  i2c_unlock(dev->bus);
+
+  if (read[0] == 1) {
+    if (probe == ATLAS_EC_PROBE_CHECK)
+      LOGI(TAG, "Altlas EC Probe : %s ", read);
+    else
+      LOGI(TAG, "Altlas EC Probe[%d] success", probe);
+  } else {
+    LOGI(TAG, "Altlas EC Probe[%d] failed : %d", probe, read[0]);
+  }
+
+  return ret;
+}
