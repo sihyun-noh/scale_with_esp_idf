@@ -45,6 +45,7 @@ static void check_model(void);
 RTC_DATA_ATTR uint8_t m_timezone_set;
 
 static operation_mode_t s_curr_mode;
+static int send_interval;
 
 void set_operation_mode(operation_mode_t mode) {
   s_curr_mode = mode;
@@ -126,11 +127,15 @@ static void generate_default_syscfg(void) {
 static void check_model(void) {
   char model_name[10] = { 0 };
   char power_mode[10] = { 0 };
+  char s_send_interval[10] = { 0 };
 
   syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
   syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
+  syscfg_get(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, s_send_interval, sizeof(s_send_interval));
+  send_interval = atoi(s_send_interval);
 
   LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
+  LOGI(TAG, "send_interval : %d", send_interval);
 
   if (!strncmp(power_mode, "B", 1))
     set_battery_model(1);
@@ -262,7 +267,7 @@ void battery_loop_task(void) {
       } break;
       case SLEEP_MODE: {
         LOGI(TAG, "SLEEP_MODE");
-        sleep_timer_wakeup(60);
+        sleep_timer_wakeup(send_interval);
       } break;
     }
     vTaskDelay(500 / portTICK_PERIOD_MS);
@@ -321,7 +326,7 @@ void plugged_loop_task(void) {
         } else {
           set_operation_mode(SLEEP_MODE);
         }
-        vTaskDelay(MQTT_SEND_INTERVAL * 1000 / portTICK_PERIOD_MS);
+        vTaskDelay(send_interval * 1000 / portTICK_PERIOD_MS);
       } break;
       case OTA_FWUPDATE_MODE: {
         // Do not anything while OTA FW updating
@@ -356,10 +361,6 @@ void app_main(void) {
   ctx = sc_init();
   if (ctx)
     sc_start(ctx);
-
-  //#if defined(CONFIG_SMARTFARM_MODBUS_FEATURE)
-  //  modbus_sensor_test(3);
-  //#endif
 
   set_device_onboard(0);
 

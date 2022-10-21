@@ -27,7 +27,7 @@ checkArgVariable() {
 }
 
 if [ -z ${1} ] || [[ ${1} = "build" ]] || [[ ${1} = "flash" ]]; then
-  echo "Please select product. 1: Temp & Humi, 2 : CO2 TH, 3 : Soil EC, 4 : Solar Radiation, 5 : Atlas pH, 6 : Atlas EC, 7 : Water PH"
+  echo "Please select product. 1: Temp & Humi, 2 : CO2 TH, 3 : Soil EC, 4 : Solar Radiation, 5 : Atlas pH, 6 : Atlas EC, 7 : Water PH, 8 : Wind Direction, 9 : Wind Speed, 10 : Water EC"
   read SELECT_NUM
 
   if [ ${SELECT_NUM} = "1" ]; then
@@ -44,6 +44,12 @@ if [ -z ${1} ] || [[ ${1} = "build" ]] || [[ ${1} = "flash" ]]; then
     PRODUCT_NAME="ATLAS_EC"
   elif [ ${SELECT_NUM} = "7" ]; then
     PRODUCT_NAME="RK500_02"
+  elif [ ${SELECT_NUM} = "8" ]; then
+    PRODUCT_NAME="RK110_02"
+  elif [ ${SELECT_NUM} = "9" ]; then
+    PRODUCT_NAME="RK100_02"
+  elif [ ${SELECT_NUM} = "10" ]; then
+    PRODUCT_NAME="RK500_13"
   fi
 
   echo "select ${PRODUCT_NAME}"

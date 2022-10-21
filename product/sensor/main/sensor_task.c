@@ -12,7 +12,8 @@
 #if (SENSOR_TYPE == ATLAS_EC)
 #include "atlas_ec_params.h"
 #endif
-#if ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500) || (SENSOR_TYPE == RK500_02))
+#if ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500) || (SENSOR_TYPE == RK500_02) || \
+     (SENSOR_TYPE == RK110_02) || (SENSOR_TYPE == RK100_02) || (SENSOR_TYPE == RK500_13))
 #include "mb_master_rtu.h"
 #endif
 #include "utils.h"
@@ -31,14 +32,6 @@
 #define MIN_READ_CNT 2
 
 #define SENSOR_TEST 0
-
-typedef enum {
-  RK_SEC_SENSOR = 0,  // RK520 Soil EC sensor
-  RK_WEC_SENSOR,      // RK500 Water EC sensor
-  RK_WPH_SENSOR,      // RK500 Water PH sensor
-  KD_SOLAR_SENSOR,    // KD SWSR7500 Solar sensor
-  KD_CO2_SENSOR,      // KD KCD-HP CO2 sensor
-} MB_SENSOR;
 
 typedef enum {
   RK_TH_SLAVE_ID = 0x01,     // Rika Temperature/Humidity sensor
@@ -62,7 +55,8 @@ scd4x_dev_t dev;
 atlas_ph_dev_t dev;
 #elif (SENSOR_TYPE == ATLAS_EC)
 atlas_ec_dev_t dev;
-#elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500) || (SENSOR_TYPE == RK500_02))
+#elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500) || (SENSOR_TYPE == RK500_02) || \
+       (SENSOR_TYPE == RK110_02) || (SENSOR_TYPE == RK100_02) || (SENSOR_TYPE == RK500_13))
 int num_characteristic = 0;
 mb_characteristic_info_t mb_characteristic[3] = { 0 };
 #endif
@@ -113,7 +107,8 @@ int sensor_init(void) {
     LOGI(TAG, "Could not initialize Atlas EC sensor = %d", res);
     return res;
   }
-#elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500) || (SENSOR_TYPE == RK500_02))
+#elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500) || (SENSOR_TYPE == RK500_02) || \
+       (SENSOR_TYPE == RK110_02) || (SENSOR_TYPE == RK100_02) || (SENSOR_TYPE == RK500_13))
   // Refer to the modbus function code and register in EC Water RK500-13.pdf
   // << Water EC Sensor >>
   // Slave ID = 0x07, Function Code = 0x03, Start Address = 0x0000, Read Register Len = 0x000A
@@ -159,6 +154,24 @@ int sensor_init(void) {
     { 0, "PH", "ph", DATA_U16, 2, RK_WPH_SLAVE_ID, MB_HOLDING_REG, 0x0000, 0x0001 },
   };
   memcpy(&mb_characteristic, mb_water_ph, sizeof(mb_water_ph));
+  num_characteristic = 1;
+#elif (SENSOR_TYPE == RK110_02)
+  // Rika Wind Direction Sensor
+  mb_characteristic_info_t mb_wind_direction[1] = { { 0, "Wind_direction", "degree", DATA_U16, 2, RK_WD_SLAVE_ID,
+                                                      MB_HOLDING_REG, 0x0000, 0x0001 } };
+  memcpy(&mb_characteristic, mb_wind_direction, sizeof(mb_wind_direction));
+  num_characteristic = 1;
+#elif (SENSOR_TYPE == RK100_02)
+  // Rika Wind Speed Sensor
+  mb_characteristic_info_t mb_wind_speed[1] = {
+    { 0, "Wind_speed", "m/s", DATA_U16, 2, RK_WS_SLAVE_ID, MB_HOLDING_REG, 0x0000, 0x0001 },
+  };
+  memcpy(&mb_characteristic, mb_wind_speed, sizeof(mb_wind_speed));
+  num_characteristic = 1;
+#elif (SENSOR_TYPE == RK500_13)
+  mb_characteristic_info_t mb_water_ec[1] = { { 0, "Data", "Binary", DATA_BINARY, 20, RK_WEC_SLAVE_ID, MB_HOLDING_REG,
+                                                0x0000, 0x000A } };
+  memcpy(&mb_characteristic, mb_water_ec, sizeof(mb_water_ec));
   num_characteristic = 1;
 #endif
 
@@ -497,7 +510,7 @@ int read_ec(void) {
   return res;
 }
 
-int atlas_ec_cal_cmd(int argc, char **argv) {
+int atlas_ec_cal_cmd(int argc, char** argv) {
   if (argc != 2) {
     printf("Usage: %s <type:0,1,2,3,4,5>\n", argv[0]);
     return -1;
@@ -513,7 +526,7 @@ int atlas_ec_cal_cmd(int argc, char **argv) {
   return 0;
 }
 
-int atlas_ec_probe_cmd(int argc, char **argv) {
+int atlas_ec_probe_cmd(int argc, char** argv) {
   if (argc != 2) {
     printf("Usage: %s <type:0,1,2,3>\n", argv[0]);
     return -1;
@@ -527,6 +540,140 @@ int atlas_ec_probe_cmd(int argc, char **argv) {
   }
 
   return 0;
+}
+#endif
+
+#if (SENSOR_TYPE == RK110_02)
+int read_wind_direction(void) {
+  int res = 0;
+  int data_len = 0;
+  uint8_t value[30] = { 0 };
+  char s_wind_direction[10] = { 0 };
+  uint16_t u_wind_direction = 0;
+
+  for (int i = 0; i < num_characteristic; i++) {
+    if (mb_master_read_characteristic(mb_characteristic[i].cid, mb_characteristic[i].name, value, &data_len) == -1) {
+      LOGE(TAG, "Failed to read value");
+      res = -1;
+    } else {
+      for (int k = 0; k < data_len; k++) {
+        LOGI(TAG, "value[%d] = [0x%x]", k, value[k]);
+      }
+      memcpy(&u_wind_direction, value, 2);
+      LOGI(TAG, "wind direction = %d", u_wind_direction);
+      snprintf(s_wind_direction, sizeof(s_wind_direction), "%d", u_wind_direction);
+      sysevent_set(MB_WIND_DIRECTION_EVENT, s_wind_direction);
+
+      if (is_battery_model()) {
+        LOGI(TAG, "wind direction = %d", u_wind_direction);
+        FLOGI(TAG, "wind direction = %d", u_wind_direction);
+      } else {
+        LOGI(TAG, "Power mode > wind direction = %d", u_wind_direction);
+        FLOGI(TAG, "Power mode > wind direction = %d", u_wind_direction);
+      }
+    }
+  }
+  return res;
+}
+#endif
+
+#if (SENSOR_TYPE == RK100_02)
+int read_wind_speed(void) {
+  int res = 0;
+  int data_len = 0;
+  uint8_t value[30] = { 0 };
+  char s_wind_speed[10] = { 0 };
+  float f_wind_speed = 0.0;
+  uint16_t u_wind_speed = 0;
+
+  for (int i = 0; i < num_characteristic; i++) {
+    if (mb_master_read_characteristic(mb_characteristic[i].cid, mb_characteristic[i].name, value, &data_len) == -1) {
+      LOGE(TAG, "Failed to read value");
+      res = -1;
+    } else {
+      for (int k = 0; k < data_len; k++) {
+        LOGI(TAG, "value[%d] = [0x%x]", k, value[k]);
+      }
+      memcpy(&u_wind_speed, value, 2);
+      f_wind_speed = (float)(u_wind_speed / 10.0);
+      LOGI(TAG, "wind speed = %.1f", f_wind_speed);
+      snprintf(s_wind_speed, sizeof(s_wind_speed), "%.1f", f_wind_speed);
+      sysevent_set(MB_WIND_SPEED_EVENT, s_wind_speed);
+
+      if (is_battery_model()) {
+        LOGI(TAG, "wind speed = %.1f", f_wind_speed);
+        FLOGI(TAG, "wind speed = %.1f", f_wind_speed);
+      } else {
+        LOGI(TAG, "Power mode > wind speed = %.1f", f_wind_speed);
+        FLOGI(TAG, "Power mode > wind speed = %.1f", f_wind_speed);
+      }
+    }
+  }
+  return res;
+}
+#endif
+
+#if (SENSOR_TYPE == RK500_13)
+float convert_uint32_to_float(uint16_t low, uint16_t high) {
+  float fValue = 0.0;
+  uint32_t value = ((uint32_t)low << 16) | high;
+  memcpy(&fValue, &value, sizeof(value));
+  return fValue;
+}
+
+int read_rika_water_ec(void) {
+  int res = 0;
+  int data_len = 0;
+  uint8_t value[30] = { 0 };
+  char s_temperature[10] = { 0 };
+  char s_ec[10] = { 0 };
+
+  float f_ec = 0.0;
+  float f_sal = 0.0;
+  float f_temp = 0.0;
+
+  uint16_t ec_low = 0, ec_high = 0;
+  uint16_t temp_low = 0, temp_high = 0;
+  uint16_t sal_low = 0, sal_high = 0;
+
+  for (int i = 0; i < num_characteristic; i++) {
+    if (mb_master_read_characteristic(mb_characteristic[i].cid, mb_characteristic[i].name, value, &data_len) == -1) {
+      LOGE(TAG, "Failed to read value");
+      res = -1;
+    } else {
+      for (int k = 0; k < data_len; k++) {
+        LOGI(TAG, "value[%d] = [0x%x]", k, value[k]);
+      }
+
+      memcpy(&ec_low, value, 2);
+      memcpy(&ec_high, value + 2, 2);
+      memcpy(&temp_low, value + 8, 2);
+      memcpy(&temp_high, value + 10, 2);
+      memcpy(&sal_low, value + 16, 2);
+      memcpy(&sal_high, value + 18, 2);
+      f_ec = convert_uint32_to_float(ec_low, ec_high);
+      f_sal = convert_uint32_to_float(sal_low, sal_high);
+      f_temp = convert_uint32_to_float(temp_low, temp_high);
+      LOGI(TAG, "ec = %.2f", f_ec);
+      LOGI(TAG, "salinity = %.2f", f_sal);
+      LOGI(TAG, "temperature = %.2f", f_temp);
+
+      snprintf(s_temperature, sizeof(s_temperature), "%.2f", f_temp);
+      snprintf(s_ec, sizeof(s_ec), "%.2f", f_ec);
+
+      sysevent_set(MB_WATER_EC_EVENT, s_ec);
+      sysevent_set(MB_TEMPERATURE_EVENT, s_temperature);
+
+      if (is_battery_model()) {
+        LOGI(TAG, "ec : %.2f, salinity : %.2f, temperature : %.2f", f_ec, f_sal, f_temp);
+        FLOGI(TAG, "ec : %.2f, salinity : %.2f, temperature : %.2f", f_ec, f_sal, f_temp);
+      } else {
+        LOGI(TAG, "Power mode > ec : %.2f, salinity : %.2f, temperature : %.2f", f_ec, f_sal, f_temp);
+        FLOGI(TAG, "Power mode > ec : %.2f, salinity : %.2f, temperature : %.2f", f_ec, f_sal, f_temp);
+      }
+    }
+  }
+  return res;
 }
 #endif
 
@@ -577,6 +724,12 @@ int sensor_read(void) {
   rc = read_ph();
 #elif (SENSOR_TYPE == ATLAS_EC)
   rc = read_ec();
+#elif (SENSOR_TYPE == RK110_02)
+  rc = read_wind_direction();
+#elif (SENSOR_TYPE == RK100_02)
+  rc = read_wind_speed();
+#elif (SENSOR_TYPE == RK500_13)
+  rc = read_rika_water_ec();
 #endif
   return rc;
 }

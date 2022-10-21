@@ -11,6 +11,8 @@
 #define SOLAR_PUB_SUB_TOPIC "value/%s/solar"
 #define PH_PUB_SUB_TOPIC "value/%s/ph"
 #define BULK_EC_PUB_SUB_TOPIC "value/%s/bulkec"
+#define WIND_DIRECTION_PUB_SUB_TOPIC "value/%s/wind_direction"
+#define WIND_SPEED_PUB_SUB_TOPIC "value/%s/wind_speed"
 
 /* Command Request & Response */
 #define CMD_REQUEST_TOPIC "cmd/%s/req"

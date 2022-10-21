@@ -52,6 +52,13 @@ char s_pyranometer[20] = { 0 };
 char s_ph[20] = { 0 };
 #elif (SENSOR_TYPE == ATLAS_EC)
 char s_ec[20] = { 0 };
+#elif (SENSOR_TYPE == RK110_02)
+char s_wind_direction[20] = { 0 };
+#elif (SENSOR_TYPE == RK100_02)
+char s_wind_speed[20] = { 0 };
+#elif (SENSOR_TYPE == RK500_13)
+char s_ec[20] = { 0 };
+char s_temperature[20] = { 0 };
 #endif
 
 char s_battery[20] = { 0 };
@@ -255,6 +262,8 @@ static char *gen_devinfo_resp(void) {
   char free_mem[20] = { 0 };
   char fw_version[SYSCFG_S_FWVERSION] = { 0 };
   char reconnect[SYSCFG_S_RECONNECT] = { 0 };
+  char s_send_interval[SYSCFG_S_SEND_INTERVAL] = { 0 };
+  int send_interval;
 
   esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &ip_info);
   esp_ip4addr_ntoa(&ip_info.ip, ip_addr, sizeof(ip_addr));
@@ -262,6 +271,8 @@ static char *gen_devinfo_resp(void) {
   snprintf(free_mem, sizeof(free_mem), "%d", xPortGetFreeHeapSize());
   syscfg_get(SYSCFG_I_FWVERSION, SYSCFG_N_FWVERSION, fw_version, sizeof(fw_version));
   syscfg_get(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, reconnect, sizeof(reconnect));
+  syscfg_get(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, s_send_interval, sizeof(s_send_interval));
+  send_interval = atoi(s_send_interval);
 
   root = gen_resp_obj("devinfo");
   farm_network = cJSON_CreateObject();
@@ -276,7 +287,7 @@ static char *gen_devinfo_resp(void) {
   cJSON_AddItemToObject(root, REQRES_K_IPADDRESS, cJSON_CreateString((char *)ip_addr));
   cJSON_AddItemToObject(root, REQRES_K_RSSI, cJSON_CreateNumber(ap_info.rssi));
 
-  cJSON_AddItemToObject(root, REQRES_K_SENDINTERVAL, cJSON_CreateNumber(MQTT_SEND_INTERVAL));
+  cJSON_AddItemToObject(root, REQRES_K_SENDINTERVAL, cJSON_CreateNumber(send_interval));
   if (!is_battery_model())
     cJSON_AddItemToObject(root, REQRES_K_POWERMODE, cJSON_CreateString("plug"));
   else
@@ -377,6 +388,13 @@ static void update_sensor_data_cmd_handler(cJSON *root) {
   sysevent_set(MB_WATER_PH_EVENT, s_ph);
 #elif (SENSOR_TYPE == ATLAS_EC)
   sysevent_set(I2C_EC_EVENT, s_ec);
+#elif (SENSOR_TYPE == RK110_02)
+  sysevent_set(MB_WIND_DIRECTION_EVENT, s_wind_direction);
+#elif (SENSOR_TYPE == RK100_02)
+  sysevent_set(MB_WIND_SPEED_EVENT, s_wind_speed);
+#elif (SENSOR_TYPE == RK500_13)
+  sysevent_set(MB_WATER_EC_EVENT, s_ec);
+  sysevent_set(MB_TEMPERATURE_EVENT, s_temperature);
 #endif
 
   if (is_battery_model()) {
@@ -880,6 +898,49 @@ void mqtt_publish_sensor_data(void) {
   sysevent_get(SYSEVENT_BASE, I2C_EC_EVENT, s_ec, sizeof(s_ec));
   if (s_ec[0]) {
     ret = mqtt_publish(mqtt_ec, gen_sensor_resp("water", s_ec, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
+  }
+#elif (SENSOR_TYPE == RK110_02)
+  char mqtt_wind_direction[80] = { 0 };
+  memset(s_wind_direction, 0x00, sizeof(s_wind_direction));
+  snprintf(mqtt_wind_direction, sizeof(mqtt_wind_direction), WIND_DIRECTION_PUB_SUB_TOPIC, device_id);
+  sysevent_get(SYSEVENT_BASE, MB_WIND_DIRECTION_EVENT, s_wind_direction, sizeof(s_wind_direction));
+  LOGI(TAG, "value : %s", s_wind_direction);
+  if (s_wind_direction[0]) {
+    ret = mqtt_publish(mqtt_wind_direction, gen_sensor_resp("air", s_wind_direction, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
+  }
+#elif (SENSOR_TYPE == RK100_02)
+  char mqtt_wind_speed[80] = { 0 };
+  snprintf(mqtt_wind_speed, sizeof(mqtt_wind_speed), WIND_SPEED_PUB_SUB_TOPIC, device_id);
+  sysevent_get(SYSEVENT_BASE, MB_WIND_SPEED_EVENT, s_wind_speed, sizeof(s_wind_speed));
+  if (s_wind_speed[0]) {
+    ret = mqtt_publish(mqtt_wind_speed, gen_sensor_resp("air", s_wind_speed, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
+  }
+
+#elif (SENSOR_TYPE == RK500_13)
+  char mqtt_ec[80] = { 0 };
+  char mqtt_temperature[80] = { 0 };
+  snprintf(mqtt_ec, sizeof(mqtt_ec), EC_PUB_SUB_TOPIC, device_id);
+  snprintf(mqtt_temperature, sizeof(mqtt_temperature), TEMPERATURE_PUB_SUB_TOPIC, device_id);
+  sysevent_get(SYSEVENT_BASE, MB_WATER_EC_EVENT, s_ec, sizeof(s_ec));
+  sysevent_get(SYSEVENT_BASE, MB_TEMPERATURE_EVENT, s_temperature, sizeof(s_temperature));
+  LOGI(TAG, "ec: %s, temp: %s", s_ec, s_temperature);
+  if (s_ec[0]) {
+    ret = mqtt_publish(mqtt_ec, gen_sensor_resp("water", s_ec, s_battery), 0);
+    if (ret != 0) {
+      FLOGI(TAG, "mqtt_publish error!");
+    }
+  }
+  if (s_temperature[0]) {
+    ret = mqtt_publish(mqtt_temperature, gen_sensor_resp("water", s_temperature, s_battery), 0);
     if (ret != 0) {
       FLOGI(TAG, "mqtt_publish error!");
     }

@@ -14,13 +14,16 @@
 #define SENS_BOARD_VER SENS_GLS_HW
 //#define SENS_BOARD_VER SENS_OLIMEX_HW
 
-#define SHT3X 1    /* Temperature and Humidity Sensor */
-#define SCD4X 2    /* CO2 and Temperature and Humidity */
-#define RK520_02 3 /* Soil EC Rika Sensor */
-#define SWSR7500 4 /* KD Solar Radiation */
-#define ATLAS_PH 5 /* Atlas pH Sensor */
-#define ATLAS_EC 6 /* Atlas EC Sensor */
-#define RK500_02 7 /* Water PH Rika Sensor */
+#define SHT3X 1     /* Temperature and Humidity Sensor */
+#define SCD4X 2     /* CO2 and Temperature and Humidity */
+#define RK520_02 3  /* Soil EC Rika Sensor */
+#define SWSR7500 4  /* KD Solar Radiation */
+#define ATLAS_PH 5  /* Atlas pH Sensor */
+#define ATLAS_EC 6  /* Atlas EC Sensor */
+#define RK500_02 7  /* Water PH Rika Sensor */
+#define RK110_02 8  /* Wind Direction Rika Sensor */
+#define RK100_02 9  /* Wind Speed Rika Sensor */
+#define RK500_13 10 /* Water EC Rika Sensor */
 
 #ifndef SENSOR_TYPE
 #define SENSOR_TYPE RK520_02
@@ -41,7 +44,8 @@
 #elif (SENSOR_TYPE == ATLAS_EC)
 #define ATLAS_EC_I2C_SDA_PIN 21
 #define ATLAS_EC_I2C_SCL_PIN 22
-#elif (SENSOR_TYPE == RK520_02 || SENSOR_TYPE == RK500_02)
+#elif (SENSOR_TYPE == RK520_02 || SENSOR_TYPE == RK500_02 || SENSOR_TYPE == RK100_02 || SENSOR_TYPE == RK110_02 || \
+       SENSOR_TYPE == RK500_13)
 // Greenlabs Board PIN numbers for U2RX and U2TX
 #define MB_RX_PIN 16
 #define MB_TX_PIN 17

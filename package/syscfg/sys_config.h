@@ -39,6 +39,10 @@
 #define SYSCFG_S_RECONNECT 20
 #define SYSCFG_I_RECONNECT CFG_DATA
 
+#define SYSCFG_N_SEND_INTERVAL "send_interval"
+#define SYSCFG_S_SEND_INTERVAL 10
+#define SYSCFG_I_SEND_INTERVAL CFG_DATA
+
 // syscfg for manufacturing data
 
 #define SYSCFG_N_HWVERSION "hw_version"
