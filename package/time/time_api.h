@@ -20,6 +20,9 @@
 
 #include <stdbool.h>
 
+#define KR_GMT_OFFSET 9  // UTC-9
+#define KR_DST_OFFSET 0  // No DST setting in Korea
+
 typedef struct _timezone {
   int index;
   char name[128];
@@ -27,30 +30,39 @@ typedef struct _timezone {
 } timezone_t;
 
 /**
- * @brief Initialize the sntp client.
+ * @brief Set NTP server with gmt and dst offset to get NTP time from the NTP servers.
+ *
+ * @param gmt_offset_sec
+ * @param dst_offset_sec
+ * @param server1 the NTP server #1 that will be used to get NTP time
+ * @param server2 the NTP server #2 that will be used to get NTP time
+ * @param server3 the NTP server #3 that will be used to get NTP time
  *
  */
-void tm_init_sntp(void);
+void tm_set_time(long gmt_offset_sec, int dst_offset_sec, const char* server1, const char* server2,
+                 const char* server3);
 
 /**
- * @brief Check if the timezone is already set.
- *
- * @return true timezone is already set.
- * @return false timezone is not set.
- */
-bool tm_is_timezone_set(void);
-
-/**
- * @brief Sync time with the ntp server.
- *
- */
-void tm_apply_timesync(void);
-
-/**
- * @brief Set the timezone to the system.
+ * @brief Set NTP server with timezone to get NTP time from the NTP servers.
  *
  * @param tz the timezone to be set.
+ * @param server1 the NTP server #1 that will be used to get NTP time
+ * @param server2 the NTP server #2 that will be used to get NTP time
+ * @param server3 the NTP server #3 that will be used to get NTP time
+ *
  */
-void tm_set_timezone(const char *tz);
+void tm_set_tztime(const char* tz, const char* server1, const char* server2, const char* server3);
+/**
+ * @brief Get NTP time and check if the result is successful or not.
+ *
+ * @return true : update success, false : failure
+ */
+bool tm_get_local_time(struct tm* info, uint32_t ms);
+
+/**
+ * @brief Update(Sync) NTP time from the NTP server.
+ *
+ */
+bool get_ntp_time(int tz_offset, int dst_offset);
 
 #endif /* _TIME_API_H_ */

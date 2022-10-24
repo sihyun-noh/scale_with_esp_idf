@@ -16,6 +16,7 @@
 #define STATUS_CONFIGURED (1 << 0) /* Device is configured after finishing easy setup progress */
 #define STATUS_ONBOARD (1 << 1)    /* Device onboard on the network */
 #define STATUS_FWUPDATE (1 << 2)   /* OTA FW Update */
+#define STATUS_NTPCHECK (1 << 3)   /* NTP Check status */
 
 /* Hardware Status */
 #define STATUS_RESET (1 << 0)    /* HW reset (factory reset) */
@@ -76,6 +77,19 @@ void sys_stat_set_fwupdate(uint8_t status) {
 int sys_stat_get_fwupdate(void) {
   EventBits_t bits = xEventGroupGetBits(sw_status_events);
   return ((bits & STATUS_FWUPDATE) == STATUS_FWUPDATE);
+}
+
+void sys_stat_set_ntpcheck(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(sw_status_events, STATUS_NTPCHECK);
+  } else {
+    xEventGroupClearBits(sw_status_events, STATUS_NTPCHECK);
+  }
+}
+
+int sys_stat_get_ntpcheck(void) {
+  EventBits_t bits = xEventGroupGetBits(sw_status_events);
+  return ((bits & STATUS_NTPCHECK) == STATUS_NTPCHECK);
 }
 
 /*----------------------------------------------------------------*/

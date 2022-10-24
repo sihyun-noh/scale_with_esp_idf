@@ -296,7 +296,6 @@ static char *gen_devinfo_resp(void) {
   cJSON_AddItemToObject(root, REQRES_K_UPTIME, cJSON_CreateString(uptime()));
   cJSON_AddItemToObject(root, REQRES_K_FREEMEM, cJSON_CreateString(free_mem));
   cJSON_AddItemToObject(root, REQRES_K_RECONNECT, cJSON_CreateString(reconnect));
-  cJSON_AddItemToObject(root, REQRES_K_TIMESTAMP, cJSON_CreateString(log_timestamp()));
 
   output = cJSON_Print(root);
 

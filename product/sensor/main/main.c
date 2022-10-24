@@ -23,6 +23,8 @@ const char* TAG = "main_app";
 
 sc_ctx_t* ctx = NULL;
 
+extern SemaphoreHandle_t transfer_mutex;
+
 extern void modbus_sensor_test(int mb_sensor);
 
 extern int sensor_init(void);
@@ -41,8 +43,6 @@ extern int start_file_server(uint32_t port);
 
 // static void generate_default_syscfg(void);
 static void check_model(void);
-
-RTC_DATA_ATTR uint8_t m_timezone_set;
 
 static operation_mode_t s_curr_mode;
 static int send_interval;
@@ -143,21 +143,6 @@ static void check_model(void) {
     set_battery_model(0);
 }
 
-static int set_time_zone(void) {
-  if (is_device_configured() && is_device_onboard()) {
-    if (!m_timezone_set || !is_battery_model()) {
-      if (tm_is_timezone_set() == false)
-        tm_init_sntp();
-
-      tm_apply_timesync();
-      tm_set_timezone("Asia/Seoul");
-      m_timezone_set = 1;
-    }
-    return 0;
-  }
-  return 1;
-}
-
 int system_init(void) {
   // Initialize NVS
   esp_err_t ret = nvs_flash_init();
@@ -244,22 +229,28 @@ void battery_loop_task(void) {
       case EASY_SETUP_MODE: {
         LOGI(TAG, "EASY_SETUP_MODE");
         create_easy_setup_task();
-        set_operation_mode(TIME_ZONE_SET_MODE);
-      } break;
-      case TIME_ZONE_SET_MODE: {
-        if (set_time_zone() == CHECK_OK)
-          set_operation_mode(MQTT_START_MODE);
+        set_operation_mode(MQTT_START_MODE);
       } break;
       case MQTT_START_MODE: {
-        start_mqttc();
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        set_operation_mode(SENSOR_PUB_MODE);
+        if (is_device_onboard()) {
+          LOGI(TAG, "MQTT_START_MODE");
+          start_mqttc();
+          vTaskDelay(1000 / portTICK_PERIOD_MS);
+          set_operation_mode(SENSOR_PUB_MODE);
+        }
       } break;
       case SENSOR_PUB_MODE: {
-        mqtt_publish_sensor_data();
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-        stop_mqttc();
-        set_operation_mode(SLEEP_MODE);
+        if (xSemaphoreTake(transfer_mutex, portMAX_DELAY) == pdTRUE) {
+          // Sensor data should be published when device is onboarding and the ntp update is not running.
+          if (is_device_onboard() && !is_ntp_check()) {
+            LOGI(TAG, "SENSOR_PUB_MODE");
+            mqtt_publish_sensor_data();
+            vTaskDelay(10000 / portTICK_PERIOD_MS);
+            stop_mqttc();
+            set_operation_mode(SLEEP_MODE);
+          }
+          xSemaphoreGive(transfer_mutex);
+        }
       } break;
       case OTA_FWUPDATE_MODE: {
         // Do not anything while OTA FW updating
@@ -291,22 +282,19 @@ void plugged_loop_task(void) {
       case EASY_SETUP_MODE: {
         LOGI(TAG, "EASY_SETUP_MODE");
         create_easy_setup_task();
-        set_operation_mode(TIME_ZONE_SET_MODE);
-      } break;
-      case TIME_ZONE_SET_MODE: {
-        if (set_time_zone() == CHECK_OK) {
-          set_operation_mode(MQTT_START_MODE);
-          start_file_server(8001);
-        }
+        set_operation_mode(MQTT_START_MODE);
       } break;
       case MQTT_START_MODE: {
         if (is_device_onboard()) {
+          LOGI(TAG, "MQTT_START_MODE!!!");
+          start_file_server(8001);
           start_mqttc();
+          set_operation_mode(SENSOR_READ_MODE);
         }
-        set_operation_mode(SENSOR_READ_MODE);
       } break;
       case SENSOR_READ_MODE: {
         if (is_device_onboard()) {
+          LOGI(TAG, "SENSOR_READ_MODE!!!");
           rc = sensor_read();
           if (rc == CHECK_OK)
             set_operation_mode(SENSOR_PUB_MODE);
@@ -320,13 +308,18 @@ void plugged_loop_task(void) {
         }
       } break;
       case SENSOR_PUB_MODE: {
-        if (is_device_onboard()) {
-          mqtt_publish_sensor_data();
-          set_operation_mode(SENSOR_READ_MODE);
-        } else {
-          set_operation_mode(SLEEP_MODE);
+        if (xSemaphoreTake(transfer_mutex, portMAX_DELAY) == pdTRUE) {
+          // Sensor data should be published when device is onboarding and ntp update is not running.
+          if (is_device_onboard() && !is_ntp_check()) {
+            LOGI(TAG, "SENSOR_PUB_MODE!!!");
+            mqtt_publish_sensor_data();
+            set_operation_mode(SENSOR_READ_MODE);
+            vTaskDelay(MQTT_SEND_INTERVAL * 1000 / portTICK_PERIOD_MS);
+          } else if (!is_device_onboard()) {
+            set_operation_mode(SLEEP_MODE);
+          }
+          xSemaphoreGive(transfer_mutex);
         }
-        vTaskDelay(send_interval * 1000 / portTICK_PERIOD_MS);
       } break;
       case OTA_FWUPDATE_MODE: {
         // Do not anything while OTA FW updating
@@ -354,9 +347,6 @@ void app_main(void) {
     return;
   }
 
-  if (m_timezone_set)
-    tm_set_timezone("Asia/Seoul");
-
   // Start interactive shell command line
   ctx = sc_init();
   if (ctx)
@@ -368,8 +358,9 @@ void app_main(void) {
   create_led_task();
 #endif
 
-  if (is_battery_model())
+  if (is_battery_model()) {
     battery_loop_task();
-  else
+  } else {
     plugged_loop_task();
+  }
 }

@@ -34,6 +34,9 @@
 #define is_fwupdate sys_stat_get_fwupdate
 #define set_fwupdate sys_stat_set_fwupdate
 
+#define is_ntp_check sys_stat_get_ntpcheck
+#define set_ntp_check sys_stat_set_ntpcheck
+
 extern int sys_stat_get_configured(void);
 extern void sys_stat_set_configured(uint8_t status);
 
@@ -42,6 +45,9 @@ extern void sys_stat_set_onboard(uint8_t status);
 
 extern int sys_stat_get_fwupdate(void);
 extern void sys_stat_set_fwupdate(uint8_t status);
+
+extern int sys_stat_get_ntpcheck(void);
+extern void sys_stat_set_ntpcheck(uint8_t status);
 
 extern int sys_stat_get_internet(void);
 extern void sys_stat_set_internet(uint8_t status);

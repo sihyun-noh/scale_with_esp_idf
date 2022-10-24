@@ -25,7 +25,9 @@
 #include "log.h"
 #include "time_api.h"
 
-static const char *TAG = "time";
+static bool s_ntp_failed = false;
+
+static const char* TAG = "time";
 
 timezone_t timezone_list[] = { { 1, "EST5EDT,M3.2.0,M11.1.0", "America/New_York" },
                                { 2, "PST8PDT,M3.2.0,M11.1.0", "America/Los_Angeles" },
@@ -48,52 +50,20 @@ timezone_t timezone_list[] = { { 1, "EST5EDT,M3.2.0,M11.1.0", "America/New_York"
                                { 19, "CET-1CEST,M3.5.0,M10.5.0/3", "Europe/Rome" },
                                { 20, "CET-1CEST,M3.5.0,M10.5.0/3", "Europe/Amsterdam" } };
 
-static void time_sync_notification_cb(struct timeval *tv) {
-  LOGI(TAG, "Notification of a time synchronization event");
+static int64_t micros() {
+  return esp_timer_get_time();
 }
 
-bool tm_is_timezone_set(void) {
-  time_t now;
-  struct tm timeinfo;
-
-  time(&now);
-  localtime_r(&now, &timeinfo);
-
-  // Is timezone set? if not, tm_year will be (1970 - 1900)
-  if (timeinfo.tm_year < (2016 - 1900)) {
-    LOGI(TAG, "Timezone is not set");
-    return false;
-  }
-  LOGI(TAG, "Timezone is set");
-  return true;
+static unsigned long millis() {
+  return (unsigned long)(esp_timer_get_time() / 1000ULL);
 }
 
-void tm_init_sntp(void) {
-  LOGI(TAG, "Initializing SNTP");
-  sntp_setoperatingmode(SNTP_OPMODE_POLL);
-  sntp_setservername(0, "pool.ntp.org");
-  sntp_set_time_sync_notification_cb(time_sync_notification_cb);
-  sntp_init();
+static void delay_ms(uint32_t ms) {
+  vTaskDelay(ms / portTICK_PERIOD_MS);
 }
 
-void tm_apply_timesync(void) {
-  time_t now = 0;
-  struct tm timeinfo = { 0 };
-  int retry = 0;
-  const int retry_count = 20;
-  while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++retry < retry_count) {
-    LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
-  }
-  time(&now);
-  localtime_r(&now, &timeinfo);
-}
-
-void tm_set_timezone(const char *tz) {
-  time_t now;
-  struct tm timeinfo;
-  timezone_t *tz_info = NULL;
-  char time_buff[64] = { 0 };
+static timezone_t* find_tzinfo(const char* tz) {
+  timezone_t* tz_info = NULL;
 
   int arr_size = sizeof(timezone_list) / sizeof(timezone_list[0]);
   for (int i = 0; i < arr_size; i++) {
@@ -102,15 +72,126 @@ void tm_set_timezone(const char *tz) {
       tz_info = &timezone_list[i];
     }
   }
+  return tz_info;
+}
 
-  if (tz_info == NULL) {
-    LOGE(TAG, "Invalid timezone");
-    return;
+static void set_time_zone(long offset, int daylight) {
+  char cst[17] = { 0 };
+  char cdt[17] = "DST";
+  char tz[33] = { 0 };
+
+  if (offset % 3600) {
+    sprintf(cst, "UTC%ld:%02u:%02u", offset / 3600, abs((offset % 3600) / 60), abs(offset % 60));
+  } else {
+    sprintf(cst, "UTC%ld", offset / 3600);
   }
-
-  setenv("TZ", tz_info->name, 1);
+  if (daylight != 3600) {
+    long tz_dst = offset - daylight;
+    if (tz_dst % 3600) {
+      sprintf(cdt, "DST%ld:%02u:%02u", tz_dst / 3600, abs((tz_dst % 3600) / 60), abs(tz_dst % 60));
+    } else {
+      sprintf(cdt, "DST%ld", tz_dst / 3600);
+    }
+  }
+  sprintf(tz, "%s%s", cst, cdt);
+  LOGI(TAG, "tz = %s", tz);
+  setenv("TZ", tz, 1);
   tzset();
-  localtime_r(&now, &timeinfo);
-  strftime(time_buff, sizeof(time_buff), "%c", &timeinfo);
-  LOGI(TAG, "The current date/time is: %s", time_buff);
+}
+
+static void set_local_time(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec) {
+  struct tm time;
+
+  time.tm_year = year - 1900;
+  time.tm_mon = month - 1;
+  time.tm_mday = day;
+  time.tm_hour = hour;
+  time.tm_min = min;
+  time.tm_sec = sec;
+
+  time_t t = mktime(&time);
+  LOGI(TAG, "Setting time = %s", asctime(&time));
+
+  if (!s_ntp_failed) {
+    struct timeval now = { .tv_sec = t };
+    settimeofday(&now, NULL);
+  } else {
+    struct timeval now = { .tv_sec = t + 20 };
+    settimeofday(&now, NULL);
+    s_ntp_failed = false;
+  }
+}
+
+void tm_set_time(long gmt_offset_sec, int dst_offset_sec, const char* server1, const char* server2,
+                 const char* server3) {
+  if (sntp_enabled()) {
+    sntp_stop();
+  }
+  sntp_setoperatingmode(SNTP_OPMODE_POLL);
+  sntp_setservername(0, (char*)server1);
+  sntp_setservername(1, (char*)server2);
+  sntp_setservername(2, (char*)server3);
+  sntp_init();
+  set_time_zone(-gmt_offset_sec, dst_offset_sec);
+}
+
+void tm_set_tztime(const char* tz, const char* server1, const char* server2, const char* server3) {
+  if (sntp_enabled()) {
+    sntp_stop();
+  }
+  sntp_setoperatingmode(SNTP_OPMODE_POLL);
+  sntp_setservername(0, (char*)server1);
+  sntp_setservername(1, (char*)server2);
+  sntp_setservername(2, (char*)server3);
+  sntp_init();
+  setenv("TZ", tz, 1);
+  tzset();
+}
+
+bool tm_get_local_time(struct tm* info, uint32_t ms) {
+  uint32_t start = millis();
+  time_t now;
+
+  while ((millis() - start) <= ms) {
+    time(&now);
+    localtime_r(&now, info);
+    if (info->tm_year > (2016 - 1900)) {
+      LOGI(TAG, "tm_get_local_time: Success to get NTP time !!!");
+      return true;
+    }
+    delay_ms(10);
+  }
+  LOGI(TAG, "tm_get_local_time: Failed to get NTP time !!!");
+  return false;
+}
+
+bool get_ntp_time(int tz_offset, int dst_offset) {
+  uint16_t year = 0;
+  uint8_t month = 0;
+  uint8_t day = 0;
+  uint8_t hour = 0;
+  uint8_t min = 0;
+  uint8_t sec = 0;
+
+  struct tm timeinfo = { 0 };
+
+  tm_get_local_time(&timeinfo, 5000);
+  // Get current time info and set them to variables.
+  year = timeinfo.tm_year + 1900;
+  month = timeinfo.tm_mon + 1;
+  day = timeinfo.tm_mday;
+  hour = timeinfo.tm_hour;
+  min = timeinfo.tm_min;
+  sec = timeinfo.tm_sec;
+
+  tm_set_time(3600 * tz_offset, 3600 * dst_offset, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
+
+  // delay time 20 sec
+  if (!tm_get_local_time(&timeinfo, 20000)) {
+    s_ntp_failed = true;
+    set_local_time(year, month, day, hour, min, sec);
+  } else {
+    s_ntp_failed = false;
+  }
+  return s_ntp_failed;
 }
