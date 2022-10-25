@@ -31,6 +31,10 @@ extern void mqtt_publish_actuator_data(void);
 
 static operation_mode_t s_curr_mode;
 
+static TickType_t g_last_ntp_check_time = 0;
+
+#define NTP_CHECK_TIME 3600  // 1 hour
+
 void set_operation_mode(operation_mode_t mode) {
   s_curr_mode = mode;
 }
@@ -90,19 +94,6 @@ static void check_model(void) {
     set_battery_model(1);
   else
     set_battery_model(0);
-}
-
-static int set_time_zone(void) {
-  if (is_device_configured() && is_device_onboard()) {
-    LOGI(TAG, "TIME_ZONE_SET_MODE");
-    if (tm_is_timezone_set() == false)
-      tm_init_sntp();
-
-    tm_apply_timesync();
-    tm_set_timezone("Asia/Seoul");
-    return 0;
-  }
-  return 1;
 }
 
 int system_init(void) {
@@ -182,8 +173,14 @@ void app_main(void) {
         set_operation_mode(TIME_ZONE_SET_MODE);
       } break;
       case TIME_ZONE_SET_MODE: {
-        if (!set_time_zone())
-          set_operation_mode(MQTT_START_MODE);
+        if (is_device_onboard()) {
+          struct tm time;
+          tm_set_time(3600 * KR_GMT_OFFSET, 3600 * KR_DST_OFFSET, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
+          if (tm_get_local_time(&time, 20000)) {
+            g_last_ntp_check_time = xTaskGetTickCount();
+            set_operation_mode(MQTT_START_MODE);
+          }
+        }
       } break;
       case MQTT_START_MODE: {
         if (is_device_onboard()) {
@@ -196,7 +193,15 @@ void app_main(void) {
       } break;
       case MONITOR_MODE: {
         if (is_device_onboard()) {
-          actuator_task();
+          if (xTaskGetTickCount() >= g_last_ntp_check_time + pdMS_TO_TICKS(NTP_CHECK_TIME * 1000)) {
+            LOGI(TAG, "Call get_ntp_time() !!!");
+            g_last_ntp_check_time = xTaskGetTickCount();
+            get_ntp_time(KR_GMT_OFFSET, KR_DST_OFFSET);
+          } else {
+            actuator_task();
+          }
+        } else {
+          set_operation_mode(SLEEP_MODE);
         }
       } break;
       case SLEEP_MODE: {
