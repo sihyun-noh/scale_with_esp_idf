@@ -8,7 +8,6 @@
 #include "event_ids.h"
 #include "easy_setup.h"
 #include "filelog.h"
-#include "time_api.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/projdefs.h>
@@ -29,14 +28,11 @@
 
 #define ROUTER_CHECK_TIME 600  // 10 min
 
-#define NTP_CHECK_TIME 3600  // 1 hour
-
 static const char *TAG = "MONITOR";
 static TaskHandle_t wifi_event_monitor_task_handle = NULL;
 
 static TickType_t g_last_router_check_time = 0;
 static TickType_t g_last_internet_check_time = 0;
-static TickType_t g_last_ntp_check_time = 0;
 
 static int g_internet_check_time = MAX_INTERNET_CHECK_TIME;
 
@@ -46,9 +42,6 @@ static int g_internet_ready = 0;
 static int g_network_state;
 static int g_rssi;
 static int g_ping_cnt;
-
-static bool g_first_ntp_check = false;
-SemaphoreHandle_t transfer_mutex;
 
 char *g_ping_addr[PING_ADDR_NUMBER] = { "8.8.8.8", "www.google.com" };
 
@@ -417,32 +410,6 @@ static int check_internet(void) {
   return internet_ready;
 }
 
-static void update_ntp_time(void) {
-  if (xSemaphoreTake(transfer_mutex, portMAX_DELAY) == pdTRUE) {
-    if (is_device_configured() && is_device_onboard()) {
-      set_ntp_check(1);
-      LOGI(TAG, "Call update_ntp_time() !!!");
-      struct tm time;
-      if (!g_first_ntp_check) {
-        // first time to check ntp server for getting correct time.
-        tm_set_time(3600 * KR_GMT_OFFSET, 3600 * KR_DST_OFFSET, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
-        if (tm_get_local_time(&time, 20000)) {
-          g_first_ntp_check = true;
-          g_last_ntp_check_time = xTaskGetTickCount();
-        }
-      } else {
-        if (xTaskGetTickCount() >= g_last_ntp_check_time + pdMS_TO_TICKS(NTP_CHECK_TIME * 1000)) {
-          g_last_ntp_check_time = xTaskGetTickCount();
-          LOGI(TAG, "Call get_ntp_time() !!!");
-          get_ntp_time(KR_GMT_OFFSET, KR_DST_OFFSET);
-        }
-      }
-      set_ntp_check(0);
-    }
-    xSemaphoreGive(transfer_mutex);
-  }
-}
-
 static void monitoring_task(void *pvParameters) {
   int ret = -1;
   uint8_t task_count = 0;
@@ -509,9 +476,6 @@ static void monitoring_task(void *pvParameters) {
       }
     }
 
-    // Update(Sync) NTP time from NTP servers in every hour
-    update_ntp_time();
-
     if (is_device_configured() && !is_device_onboard()) {
       SLOGI(TAG, "Device is disconnected from the farm network!!!");
       vTaskDelay(5000 / portTICK_PERIOD_MS);
@@ -556,13 +520,11 @@ int create_monitoring_task(void) {
 
 int monitoring_init(void) {
   monitor_semaphore = xSemaphoreCreateMutex();
-  transfer_mutex = xSemaphoreCreateMutex();
-  if (monitor_semaphore == NULL || transfer_mutex == NULL) {
+  if (monitor_semaphore == NULL) {
     return -1;
   }
 
   xSemaphoreGive(monitor_semaphore);
-  xSemaphoreGive(transfer_mutex);
 
   init_inked_list();
   return create_monitoring_task();
