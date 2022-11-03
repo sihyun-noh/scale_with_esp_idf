@@ -26,7 +26,6 @@
 #include "sys/queue.h"
 
 #define MONITOR_QUEUE_SIZE 32
-#define TASK_MAX_COUNT 100
 
 #define HEAP_MONITOR_CRITICAL 1024
 #define HEAP_MONITOR_WARNING 4096
@@ -46,29 +45,6 @@ int create_monitoring_task(void);
  */
 int monitoring_init(void);
 
-/**
- * @brief send to monitoring task the alarm signal of start task from current task.
- *
- * @param task_handle send to current tesk handle
- * @return int 0 on success, -1 on failure.
- */
-int is_run_task_monitor_alarm(TaskHandle_t task_handle);
-
-/**
- * @brief send to monitoring task the alarm signal of end task from current task.
- *
- * @param task_handle send to current tesk handle
- * @return int 0 on success, -1 on failure.
- */
-int is_run_task_monitor_remove(TaskHandle_t task_handle);
-
-/**
- * @brief send to monitoring task the run signal from current task.
- *        checking loop status.
- *
- * @param task_handle send to current tesk handle
- * @param status run signal is ture.
- */
-void is_run_task_heart_bit(TaskHandle_t task_handle, uint8_t status);
+TaskHandle_t get_monitoring_task_handle(void);
 
 #endif /* _MONITORING_H_ */

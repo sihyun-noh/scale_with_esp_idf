@@ -25,8 +25,6 @@
 #include "log.h"
 #include "time_api.h"
 
-static bool s_ntp_failed = false;
-
 static const char* TAG = "time";
 
 timezone_t timezone_list[] = { { 1, "EST5EDT,M3.2.0,M11.1.0", "America/New_York" },
@@ -49,10 +47,6 @@ timezone_t timezone_list[] = { { 1, "EST5EDT,M3.2.0,M11.1.0", "America/New_York"
                                { 18, "CET-1CEST,M3.5.0,M10.5.0/3", "Europe/Madrid" },
                                { 19, "CET-1CEST,M3.5.0,M10.5.0/3", "Europe/Rome" },
                                { 20, "CET-1CEST,M3.5.0,M10.5.0/3", "Europe/Amsterdam" } };
-
-static int64_t micros() {
-  return esp_timer_get_time();
-}
 
 static unsigned long millis() {
   return (unsigned long)(esp_timer_get_time() / 1000ULL);
@@ -110,16 +104,11 @@ static void set_local_time(uint16_t year, uint8_t month, uint8_t day, uint8_t ho
   time.tm_sec = sec;
 
   time_t t = mktime(&time);
-  LOGI(TAG, "Setting time = %s", asctime(&time));
 
-  if (!s_ntp_failed) {
-    struct timeval now = { .tv_sec = t };
-    settimeofday(&now, NULL);
-  } else {
-    struct timeval now = { .tv_sec = t + 20 };
-    settimeofday(&now, NULL);
-    s_ntp_failed = false;
-  }
+  struct timeval now = { .tv_sec = t };
+  settimeofday(&now, NULL);
+
+  LOGI(TAG, "Setting time = %s", asctime(&time));
 }
 
 void tm_set_time(long gmt_offset_sec, int dst_offset_sec, const char* server1, const char* server2,
@@ -131,6 +120,7 @@ void tm_set_time(long gmt_offset_sec, int dst_offset_sec, const char* server1, c
   sntp_setservername(0, (char*)server1);
   sntp_setservername(1, (char*)server2);
   sntp_setservername(2, (char*)server3);
+  // sntp_set_sync_interval(60 * 60 * 1000);  // Update time every hour
   sntp_init();
   set_time_zone(-gmt_offset_sec, dst_offset_sec);
 }
@@ -143,6 +133,7 @@ void tm_set_tztime(const char* tz, const char* server1, const char* server2, con
   sntp_setservername(0, (char*)server1);
   sntp_setservername(1, (char*)server2);
   sntp_setservername(2, (char*)server3);
+  // sntp_set_sync_interval(60 * 60 * 1000);  // Update time every hour
   sntp_init();
   setenv("TZ", tz, 1);
   tzset();
@@ -165,7 +156,9 @@ bool tm_get_local_time(struct tm* info, uint32_t ms) {
   return false;
 }
 
-bool get_ntp_time(int tz_offset, int dst_offset) {
+void set_ntp_time(void) {
+  time_t now;
+
   uint16_t year = 0;
   uint8_t month = 0;
   uint8_t day = 0;
@@ -175,7 +168,9 @@ bool get_ntp_time(int tz_offset, int dst_offset) {
 
   struct tm timeinfo = { 0 };
 
-  tm_get_local_time(&timeinfo, 5000);
+  time(&now);
+  localtime_r(&now, &timeinfo);
+
   // Get current time info and set them to variables.
   year = timeinfo.tm_year + 1900;
   month = timeinfo.tm_mon + 1;
@@ -184,14 +179,5 @@ bool get_ntp_time(int tz_offset, int dst_offset) {
   min = timeinfo.tm_min;
   sec = timeinfo.tm_sec;
 
-  tm_set_time(3600 * tz_offset, 3600 * dst_offset, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
-
-  // delay time 20 sec
-  if (!tm_get_local_time(&timeinfo, 20000)) {
-    s_ntp_failed = true;
-    set_local_time(year, month, day, hour, min, sec);
-  } else {
-    s_ntp_failed = false;
-  }
-  return s_ntp_failed;
+  set_local_time(year, month, day, hour, min, sec);
 }

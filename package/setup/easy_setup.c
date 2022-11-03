@@ -399,6 +399,6 @@ void create_easy_setup_task(void) {
   xTaskCreate((TaskFunction_t)easy_setup_task, "easy_setup", stack_size, NULL, task_priority, &easy_setup_handle);
 }
 
-int is_router_connect(void) {
-  return router_connect;
+bool is_running_setup_task(void) {
+  return (easy_setup_handle != NULL);
 }

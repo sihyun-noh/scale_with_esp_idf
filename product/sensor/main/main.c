@@ -19,9 +19,18 @@
 
 #include <string.h>
 
+#define DELAY_1SEC 1000
+#define DELAY_5SEC 5000
+#define DELAY_10SEC 10000
+#define DELAY_500MS 500
+
+#define NTP_CHECK_TIME 28800  // 8 hour
+
 const char* TAG = "main_app";
 
 sc_ctx_t* ctx = NULL;
+
+static TickType_t g_last_ntp_check_time = 0;
 
 extern void modbus_sensor_test(int mb_sensor);
 
@@ -44,10 +53,6 @@ static void check_model(void);
 
 static operation_mode_t s_curr_mode;
 static int send_interval;
-
-static TickType_t g_last_ntp_check_time = 0;
-
-#define NTP_CHECK_TIME 3600  // 1 hour
 
 void set_operation_mode(operation_mode_t mode) {
   s_curr_mode = mode;
@@ -92,6 +97,10 @@ static void reconnect_count(void) {
   memset(reconnect, 0, sizeof(reconnect));
   snprintf(reconnect, sizeof(reconnect), "%d", reconnect_cnt);
   syscfg_set(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, reconnect);
+}
+
+static void delay(uint32_t ms) {
+  vTaskDelay(ms / portTICK_PERIOD_MS);
 }
 
 #if 0
@@ -196,10 +205,12 @@ int system_init(void) {
 
 void battery_loop_task(void) {
   int rc = 0;
+  uint32_t delay_ms = 0;
 
   set_operation_mode(SENSOR_INIT_MODE);
 
   while (1) {
+    delay_ms = DELAY_500MS;
     switch (get_operation_mode()) {
       case SENSOR_INIT_MODE: {
         LOGI(TAG, "SENSOR_INIT_MODE");
@@ -231,15 +242,19 @@ void battery_loop_task(void) {
       case EASY_SETUP_MODE: {
         LOGI(TAG, "EASY_SETUP_MODE");
         create_easy_setup_task();
-        set_operation_mode(TIME_ZONE_SET_MODE);
+        set_operation_mode(NTP_TIME_MODE);
       } break;
-      case TIME_ZONE_SET_MODE: {
+      case NTP_TIME_MODE: {
         if (is_device_onboard()) {
           struct tm time;
           tm_set_time(3600 * KR_GMT_OFFSET, 3600 * KR_DST_OFFSET, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
           if (tm_get_local_time(&time, 20000)) {
-            g_last_ntp_check_time = xTaskGetTickCount();
+            // g_last_ntp_check_time = xTaskGetTickCount();
             set_operation_mode(MQTT_START_MODE);
+          }
+        } else {
+          if (!is_running_setup_task()) {
+            set_operation_mode(SLEEP_MODE);
           }
         }
       } break;
@@ -247,45 +262,46 @@ void battery_loop_task(void) {
         if (is_device_onboard()) {
           LOGI(TAG, "MQTT_START_MODE");
           start_mqttc();
-          vTaskDelay(1000 / portTICK_PERIOD_MS);
           set_operation_mode(SENSOR_PUB_MODE);
+          delay_ms = DELAY_1SEC;
+        } else {
+          set_operation_mode(SLEEP_MODE);
         }
       } break;
       case SENSOR_PUB_MODE: {
         // Sensor data should be published when device is onboarding and the ntp update is not running.
         if (is_device_onboard()) {
-          if (xTaskGetTickCount() >= g_last_ntp_check_time + pdMS_TO_TICKS(NTP_CHECK_TIME * 1000)) {
-            LOGI(TAG, "Call get_ntp_time() !!!");
-            g_last_ntp_check_time = xTaskGetTickCount();
-            get_ntp_time(KR_GMT_OFFSET, KR_DST_OFFSET);
-          } else {
-            LOGI(TAG, "SENSOR_PUB_MODE");
-            mqtt_publish_sensor_data();
-            vTaskDelay(10000 / portTICK_PERIOD_MS);
-            stop_mqttc();
-            set_operation_mode(SLEEP_MODE);
-          }
+          LOGI(TAG, "SENSOR_PUB_MODE");
+          mqtt_publish_sensor_data();
+          stop_mqttc();
+          set_operation_mode(SLEEP_MODE);
+          delay_ms = DELAY_1SEC;
+        } else {
+          set_operation_mode(SLEEP_MODE);
         }
       } break;
+      case NTP_UPDATE_MODE:
       case OTA_FWUPDATE_MODE: {
         // Do not anything while OTA FW updating
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        delay_ms = DELAY_1SEC;
       } break;
       case SLEEP_MODE: {
         LOGI(TAG, "SLEEP_MODE");
         sleep_timer_wakeup(send_interval);
       } break;
     }
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    delay(delay_ms);
   }
 }
 
 void plugged_loop_task(void) {
   int rc = 0;
+  uint32_t delay_ms = 0;
 
   set_operation_mode(SENSOR_INIT_MODE);
 
   while (1) {
+    delay_ms = DELAY_500MS;
     switch (get_operation_mode()) {
       case SENSOR_INIT_MODE: {
         if ((rc = sensor_init()) != SYSINIT_OK) {
@@ -297,15 +313,19 @@ void plugged_loop_task(void) {
       case EASY_SETUP_MODE: {
         LOGI(TAG, "EASY_SETUP_MODE");
         create_easy_setup_task();
-        set_operation_mode(TIME_ZONE_SET_MODE);
+        set_operation_mode(NTP_TIME_MODE);
       } break;
-      case TIME_ZONE_SET_MODE: {
+      case NTP_TIME_MODE: {
         if (is_device_onboard()) {
           struct tm time;
           tm_set_time(3600 * KR_GMT_OFFSET, 3600 * KR_DST_OFFSET, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
           if (tm_get_local_time(&time, 20000)) {
-            g_last_ntp_check_time = xTaskGetTickCount();
+            // g_last_ntp_check_time = xTaskGetTickCount();
             set_operation_mode(MQTT_START_MODE);
+          }
+        } else {
+          if (!is_running_setup_task()) {
+            set_operation_mode(SLEEP_MODE);
           }
         }
       } break;
@@ -315,6 +335,8 @@ void plugged_loop_task(void) {
           start_file_server(8001);
           start_mqttc();
           set_operation_mode(SENSOR_READ_MODE);
+        } else {
+          set_operation_mode(SLEEP_MODE);
         }
       } break;
       case SENSOR_READ_MODE: {
@@ -326,7 +348,7 @@ void plugged_loop_task(void) {
           } else {
             rc = ERR_SENSOR_READ;
             LOGE(TAG, "sensor read, error = [%d]", rc);
-            vTaskDelay(5000 / portTICK_PERIOD_MS);
+            delay_ms = DELAY_5SEC;
           }
         } else {
           set_operation_mode(SLEEP_MODE);
@@ -335,15 +357,25 @@ void plugged_loop_task(void) {
       case SENSOR_PUB_MODE: {
         // Sensor data should be published when device is onboarding and ntp update is not running.
         if (is_device_onboard()) {
+          LOGI(TAG, "SENSOR_PUB_MODE!!!");
+          mqtt_publish_sensor_data();
+          set_operation_mode(NTP_UPDATE_MODE);
+          delay_ms = (MQTT_SEND_INTERVAL * 1000);
+        } else {
+          set_operation_mode(SLEEP_MODE);
+        }
+      } break;
+      case NTP_UPDATE_MODE: {
+        if (is_device_onboard()) {
           if (xTaskGetTickCount() >= g_last_ntp_check_time + pdMS_TO_TICKS(NTP_CHECK_TIME * 1000)) {
-            LOGI(TAG, "Call get_ntp_time() !!!");
+            LOGI(TAG, "Call set_ntp_time() !!!");
+            set_ntp_time();
             g_last_ntp_check_time = xTaskGetTickCount();
-            get_ntp_time(KR_GMT_OFFSET, KR_DST_OFFSET);
-          } else {
-            LOGI(TAG, "SENSOR_PUB_MODE!!!");
-            mqtt_publish_sensor_data();
             set_operation_mode(SENSOR_READ_MODE);
-            vTaskDelay(MQTT_SEND_INTERVAL * 1000 / portTICK_PERIOD_MS);
+            delay_ms = DELAY_5SEC;
+          } else {
+            set_operation_mode(SENSOR_READ_MODE);
+            delay_ms = DELAY_1SEC;
           }
         } else {
           set_operation_mode(SLEEP_MODE);
@@ -351,19 +383,18 @@ void plugged_loop_task(void) {
       } break;
       case OTA_FWUPDATE_MODE: {
         // Do not anything while OTA FW updating
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        delay_ms = DELAY_1SEC;
       } break;
       case SLEEP_MODE: {
         // On the power plug model, entering sleep mode means that the router or internet status is unavailable, so we
         // use deep sleep mode to reconnect to the Wi-Fi router.
         reconnect_count();
         stop_mqttc();
-        vTaskDelay(5000 / portTICK_RATE_MS);
         sleep_timer_wakeup(30);
         set_operation_mode(SENSOR_INIT_MODE);
       } break;
     }
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    delay(delay_ms);
   }
 }
 

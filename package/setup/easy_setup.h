@@ -1,6 +1,8 @@
 #ifndef _EASY_SETUP_H_
 #define _EASY_SETUP_H_
 
+#include <stdbool.h>
+
 /**
  * @brief Initialize easy setup
  *
@@ -14,10 +16,10 @@ void create_easy_setup_task(void);
 void create_ethernet_easy_setup_task(void);
 
 /**
- * @brief Check connection with router
+ * @brief Check if setup taks is running
  *
- * @return int 0 on success, -1 on failure
+ * @return bool true if taks is running, false if task is done
  */
-int is_router_connect(void);
+bool is_running_setup_task(void);
 
 #endif /* _EASY_SETUP_H_ */

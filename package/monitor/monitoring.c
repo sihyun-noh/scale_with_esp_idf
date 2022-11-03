@@ -28,8 +28,10 @@
 
 #define ROUTER_CHECK_TIME 600  // 10 min
 
+extern char *uptime(void);
+
 static const char *TAG = "MONITOR";
-static TaskHandle_t wifi_event_monitor_task_handle = NULL;
+static TaskHandle_t monitor_task_handle = NULL;
 
 static TickType_t g_last_router_check_time = 0;
 static TickType_t g_last_internet_check_time = 0;
@@ -52,146 +54,22 @@ typedef enum {
   NO_INTERNET_CONNECTION,
 } network_status_t;
 
-typedef struct task_item {
-  uint8_t task_id;
-  char task_name[16];
-  uint8_t status;
-  uint32_t heart_bit_count;
-  TAILQ_ENTRY(task_item) next;
-} task_item_t;
-
-TAILQ_HEAD(task_item_head, task_item);
-typedef struct task_queue {
-  uint8_t task_num;
-  struct task_item_head head;
-} task_queue_t;
-
-SemaphoreHandle_t monitor_semaphore;
-static task_queue_t task_list;
-
-static int get_task_count(void) {
-  return task_list.task_num;
-}
-
-static void init_inked_list(void) {
-  TAILQ_INIT(&(task_list.head));
-  task_list.task_num = 0;
-}
-
-static int add_to_task_list(task_queue_t *q, uint8_t id, char *data) {
-  task_item_t *entry = (task_item_t *)calloc(1, sizeof(task_item_t));
-  if (entry) {
-    entry->task_id = id;
-    memcpy(entry->task_name, data, strlen(data));
-    TAILQ_INSERT_TAIL(&(q->head), entry, next);
-    LOGI(TAG, "register ID : %d", entry->task_id);
-    return 0;
-  }
-  return -1;
-}
-
-task_item_t *get_task_item(task_queue_t *q, uint8_t id) {
-  task_item_t *entry;
-  TAILQ_FOREACH(entry, &(q->head), next) {
-    if (entry->task_id == id) {
-      return entry;
-    }
-  }
-  return NULL;
-}
-
-task_item_t *get_task_item_with_name(task_queue_t *q, char *name) {
-  task_item_t *entry;
-  TAILQ_FOREACH(entry, &(q->head), next) {
-    if (strcmp(entry->task_name, name) == 0) {
-      return entry;
-    }
-  }
-  return NULL;
-}
-
-static void remove_to_task_list(task_queue_t *q, task_item_t *entry) {
-  TAILQ_REMOVE((&q->head), entry, next);
-  free(entry);
-  q->task_num--;
-}
-
-int is_run_task_monitor_remove(TaskHandle_t task_handle) {
-  if (xSemaphoreTake(monitor_semaphore, portMAX_DELAY) == pdTRUE) {
-    if (task_handle == NULL) {
-      return -1;
-    }
-    char *task_name = pcTaskGetName(task_handle);
-    task_item_t *entry = get_task_item_with_name(&task_list, task_handle);
-
-    if (eTaskGetState(task_handle) == eRunning) {
-      LOGI(TAG, "curr_tasK_alarm : %s", task_name);
-      remove_to_task_list(&task_list, entry);
-    }
-    xSemaphoreGive(monitor_semaphore);
-  }
-  return 0;
-}
-
-int is_run_task_monitor_alarm(TaskHandle_t task_handle) {
-  if (xSemaphoreTake(monitor_semaphore, portMAX_DELAY) == pdTRUE) {
-    if (task_handle == NULL) {
-      return -1;
-    }
-    char *task_name = pcTaskGetName(task_handle);
-    if (eTaskGetState(task_handle) == eRunning) {
-      LOGI(TAG, "curr_tasK_alarm : %s", task_name);
-      task_list.task_num++;
-      if (add_to_task_list(&task_list, task_list.task_num, task_name) == -1) {
-        task_list.task_num--;
-      }
-    }
-    xSemaphoreGive(monitor_semaphore);
-  }
-  return 0;
-}
-
-void is_run_task_heart_bit(TaskHandle_t task_handle, uint8_t status) {
-  task_item_t *entry;
-  task_queue_t *q = &task_list;
-  char *task_name = pcTaskGetName(task_handle);
-  TAILQ_FOREACH(entry, &(q->head), next) {
-    if (strcmp(entry->task_name, task_name) == 0) {
-      entry->status = status;
-    }
-  }
-}
-
-static void task_monitoring(int8_t entry_num) {
-  task_item_t *entry = NULL;
-  while (entry_num > 0) {
-    entry = get_task_item(&task_list, entry_num);
-    if (entry == NULL) {
-      LOGI(TAG, "invalid ID : %d", entry_num);
-      entry_num--;
-
-    } else {
-      if (entry->status) {
-        entry->status = false;
-        entry->heart_bit_count = 0;
-      } else {
-        entry->heart_bit_count++;
-      }
-
-      if (entry->heart_bit_count > TASK_MAX_COUNT) {
-        LOGI(TAG, "task_ID : %d", entry->task_id);
-        LOGI(TAG, "curr_task_name : %s", &(entry->task_name));
-        LOGI(TAG, "heart_bit_count : %d", entry->heart_bit_count);
-
-        sysevent_set(TASK_MONITOR_EVENT, &(entry->task_name));
-      }
-
-      entry_num--;
-    }
-  }
-}
-
+static int minHeap = 0;
 static void heap_monitoring(int warning_level, int critical_level) {
+  int freeHeap = xPortGetFreeHeapSize();
+  if (minHeap == 0 || freeHeap < minHeap) {
+    minHeap = freeHeap;
+  }
+
+  LOGI(TAG, "Free HeapSize = %d", freeHeap);
+  LOGI(TAG, "uptime = %s", uptime());
+
+  if (minHeap <= critical_level) {
+    SLOGE(TAG, "Heap critical level reached: %d", critical_level);
+  } else if (minHeap <= warning_level) {
+    SLOGW(TAG, "Heap warning level reached: %d", warning_level);
+  }
+#if 0
   char total_size[10] = { 0 };
   static int minHeap = 0;
   multi_heap_info_t heap_info;
@@ -229,6 +107,7 @@ static void heap_monitoring(int warning_level, int critical_level) {
     snprintf(total_size, sizeof(total_size), "%d", heap_info.total_free_bytes);
     sysevent_set(HEAP_WARNING_LEVEL_WARNING_EVENT, (char *)total_size);
   }
+#endif
 }
 
 // Monitoring internal functions for network connection status
@@ -411,13 +290,6 @@ static int check_internet(void) {
 }
 
 static void monitoring_task(void *pvParameters) {
-  int ret = -1;
-  uint8_t task_count = 0;
-  char res_event_msg[50] = { 0 };
-
-  is_run_task_monitor_alarm(wifi_event_monitor_task_handle);
-  task_count = get_task_count();
-
   if (!is_battery_model()) {
     set_wifi_state(NO_INTERNET_CONNECTION);
     set_wifi_led(NO_INTERNET_CONNECTION);
@@ -478,39 +350,23 @@ static void monitoring_task(void *pvParameters) {
 
     if (is_device_configured() && !is_device_onboard()) {
       SLOGI(TAG, "Device is disconnected from the farm network!!!");
-      vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
-
-    is_run_task_heart_bit(wifi_event_monitor_task_handle, true);
 
     heap_monitoring(HEAP_MONITOR_WARNING, HEAP_MONITOR_CRITICAL);
 
-    task_monitoring(task_count);
-
-    if (xSemaphoreTake(monitor_semaphore, portMAX_DELAY) == pdTRUE) {
-      task_count = task_list.task_num;
-      xSemaphoreGive(monitor_semaphore);
-    }
-
-    ret = sysevent_get(SYSEVENT_BASE, TASK_MONITOR_EVENT, &res_event_msg, sizeof(res_event_msg));
-    if (!ret) {
-      SLOGI(TAG, "TASK_MONITOR_EVENT : %s\n", res_event_msg);
-      memset(&res_event_msg, 0, sizeof(res_event_msg));
-    }
-
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
+    vTaskDelay(60000 / portTICK_PERIOD_MS);
   }
 
   vTaskDelete(NULL);
-  wifi_event_monitor_task_handle = NULL;
+  monitor_task_handle = NULL;
 }
 
 int create_monitoring_task(void) {
   UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
 
-  if (!wifi_event_monitor_task_handle) {
-    xTaskCreate(monitoring_task, "monitoring_task", 8192, NULL, task_priority, &wifi_event_monitor_task_handle);
-    if (!wifi_event_monitor_task_handle) {
+  if (!monitor_task_handle) {
+    xTaskCreate(monitoring_task, "monitoring_task", 8192, NULL, task_priority, &monitor_task_handle);
+    if (!monitor_task_handle) {
       SLOGI(TAG, "Monitoring_task Task Start Failed!");
       return -1;
     }
@@ -519,13 +375,9 @@ int create_monitoring_task(void) {
 }
 
 int monitoring_init(void) {
-  monitor_semaphore = xSemaphoreCreateMutex();
-  if (monitor_semaphore == NULL) {
-    return -1;
-  }
-
-  xSemaphoreGive(monitor_semaphore);
-
-  init_inked_list();
   return create_monitoring_task();
+}
+
+TaskHandle_t get_monitoring_task_handle(void) {
+  return monitor_task_handle;
 }

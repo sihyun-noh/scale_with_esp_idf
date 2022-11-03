@@ -60,9 +60,9 @@ void tm_set_tztime(const char* tz, const char* server1, const char* server2, con
 bool tm_get_local_time(struct tm* info, uint32_t ms);
 
 /**
- * @brief Update(Sync) NTP time from the NTP server.
+ * @brief Set the current time to the system time.
  *
  */
-bool get_ntp_time(int tz_offset, int dst_offset);
+void set_ntp_time(void);
 
 #endif /* _TIME_API_H_ */

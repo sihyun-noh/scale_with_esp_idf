@@ -36,26 +36,63 @@
 #define MAX_MUTEX_WAIT_MS 10
 #define MAX_MUTEX_WAIT_TICKS ((MAX_MUTEX_WAIT_MS + portTICK_PERIOD_MS - 1) / portTICK_PERIOD_MS)
 
+static SemaphoreHandle_t s_log_mutex = NULL;
 static log_level_t s_log_default_level = LOG_VERBOSE;
+
+void log_lock(void) {
+  if (!s_log_mutex) {
+    s_log_mutex = xSemaphoreCreateMutex();
+  }
+  if (xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED) {
+    return;
+  }
+  xSemaphoreTake(s_log_mutex, portMAX_DELAY);
+}
+
+void log_unlock(void) {
+  if (xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED) {
+    return;
+  }
+  xSemaphoreGive(s_log_mutex);
+}
+
+bool log_lock_timeout(void) {
+  if (!s_log_mutex) {
+    s_log_mutex = xSemaphoreCreateMutex();
+  }
+  if (xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED) {
+    return true;
+  }
+  return (xSemaphoreTake(s_log_mutex, MAX_MUTEX_WAIT_TICKS) == pdTRUE);
+}
 
 static bool should_output(log_level_t level_for_message, log_level_t level_for_tag) {
   return level_for_message <= level_for_tag;
 }
 
-char *log_timestamp() {
+char *log_timestamp(void) {
   static char timestamp[LOG_TIMESTAMP_SIZE];
+  static _lock_t bufferLock = 0;
 
   time_t now = time(NULL);
   struct tm *tm = localtime(&now);
+
+  _lock_acquire(&bufferLock);
   strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", tm);
+  _lock_release(&bufferLock);
 
   return timestamp;
 }
 
 void log_write(log_level_t level, const char *tag, const char *format, ...) {
+  if (!log_lock_timeout()) {
+    return;
+  }
+
   log_level_t level_for_tag = s_log_default_level;
 
   if (!should_output(level, level_for_tag)) {
+    log_unlock();
     return;
   }
 
@@ -63,6 +100,8 @@ void log_write(log_level_t level, const char *tag, const char *format, ...) {
   va_start(list, format);
   vprintf(format, list);
   va_end(list);
+
+  log_unlock();
 }
 
 void log_buffer_hex_internal(const char *tag, const void *buffer, uint16_t buff_len, log_level_t log_level) {

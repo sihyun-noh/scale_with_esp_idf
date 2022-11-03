@@ -66,6 +66,7 @@ char s_battery[20] = { 0 };
 char mqtt_request[128] = { 0 };
 char mqtt_response[128] = { 0 };
 
+#if 0
 static int minHeap = 0;
 static void heap_monitor_func(int warning_level, int critical_level) {
   int freeHeap = xPortGetFreeHeapSize();
@@ -83,6 +84,7 @@ static void heap_monitor_func(int warning_level, int critical_level) {
     SLOGW(TAG, "Heap warning level reached: %d", warning_level);
   }
 }
+#endif
 
 static double round_(float var) {
   // 37.66666 * 100 =3766.66
@@ -945,6 +947,5 @@ void mqtt_publish_sensor_data(void) {
     }
   }
 #endif
-
-  heap_monitor_func(8092, 4096);
+  // heap_monitor_func(8092, 4096);
 }

@@ -15,7 +15,7 @@
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
 #include "sysevent_impl.h"
-#include "monitoring.h"
+// #include "monitoring.h"
 #include "sys_status.h"
 
 #include <stdio.h>
@@ -428,9 +428,8 @@ static int sysevent_get_request(sysevent_ctx_t *ctx, TickType_t ticks_to_run) {
 void sysevent_loop_run_task(void *arg) {
   int ret = 0;
   sysevent_ctx_t *ctx = (sysevent_ctx_t *)arg;
-  // is_run_task_monitor_alarm(ctx->sysevent_loop_task);
+
   while (1) {
-    //  is_run_task_heart_bit(ctx->sysevent_loop_task, true);
     ret = sysevent_loop_run(ctx, 1000 / portTICK_RATE_MS);
     if (ret != 0) {
       break;
@@ -442,9 +441,8 @@ void sysevent_loop_run_task(void *arg) {
 void sysevent_get_task(void *arg) {
   int ret = 0;
   sysevent_ctx_t *ctx = (sysevent_ctx_t *)arg;
-  // is_run_task_monitor_alarm(ctx->sysevent_get_task);
+
   while (1) {
-    // is_run_task_heart_bit(ctx->sysevent_get_task, true);
     ret = sysevent_get_request(ctx, portMAX_DELAY);
     if (ret != 0) {
       break;
