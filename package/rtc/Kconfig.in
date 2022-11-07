@@ -1,0 +1,5 @@
+config SMARTFARM_RTC_DS3231_FEATURE
+  bool "SmartFarm RTC DS3231 feature"
+  default "y"
+  help
+    RTC DS3231 feature to support correct local time

@@ -98,6 +98,7 @@ int i2c_hal_init(int dev, int sda, int scl) {
       xSemaphoreGive(i2c_hal_data[bus].mutex);
     } else {
       i2c_hal_data[bus].ref_cnt++;
+      rc = ESP_OK;
     }
   }
 

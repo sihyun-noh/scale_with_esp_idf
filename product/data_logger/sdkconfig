@@ -173,6 +173,7 @@ CONFIG_DAC_FEATURE=y
 # end of SmartFarm PAL Configuration
 
 CONFIG_SMARTFARM_PING_FEATURE=y
+CONFIG_SMARTFARM_RTC_DS3231_FEATURE=y
 
 #
 # SmartFarm Sensors Configuration
