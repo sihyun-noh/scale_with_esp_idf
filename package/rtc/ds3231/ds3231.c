@@ -118,11 +118,11 @@ esp_err_t ds3231_init_desc(ds3231_dev_t *dev, const ds3231_dev_t *params) {
 
   /* TODO : Need to initialize the i2c driver */
   if ((res = i2c_init(DEV_I2C, DEV_I2C_SDA, DEV_I2C_SCL)) != 0) {
-    LOGI(TAG, "Could not initialize, error = %d\n", res);
+    LOGI(TAG, "Could not initialize, error = %d", res);
     return -1;
   }
 
-  LOGI(TAG, "Sensor Initialize success\n");
+  LOGI(TAG, "RTC Initialize success");
   return res;
 }
 

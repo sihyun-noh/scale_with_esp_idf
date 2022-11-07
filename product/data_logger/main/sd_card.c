@@ -7,6 +7,7 @@
 #include "log.h"
 #include "sysevent.h"
 #include "event_ids.h"
+#include "rtc_task.h"
 
 #define MOUNT_POINT "/sdcard"
 
@@ -69,6 +70,16 @@ void sdcard_init(void) {
   sdmmc_card_print_info(stdout, card);
 }
 
+void write_rtc_time(FILE *f) {
+  struct tm time = { 0 };
+
+  rtc_get_time(&time);
+  fprintf(f, "%04d-%02d-%02d,%02d:%02d:%02d, ", time.tm_year + 1900, time.tm_mon + 1, time.tm_mday,
+         time.tm_hour, time.tm_min, time.tm_sec);
+  LOGI(TAG, "%04d-%02d-%02d,%02d:%02d:%02d, ", time.tm_year + 1900, time.tm_mon + 1, time.tm_mday,
+         time.tm_hour, time.tm_min, time.tm_sec);
+}
+
 #if (SENSOR_TYPE == SHT3X)
 void write_temperature_humidity(void)
 {
@@ -85,6 +96,7 @@ void write_temperature_humidity(void)
   sysevent_get(SYSEVENT_BASE, I2C_HUMIDITY_EVENT, &s_humidity, sizeof(s_humidity));
   sysevent_get(SYSEVENT_BASE, I2C_TEMPERATURE_EVENT, &s_temperature, sizeof(s_temperature));
   if (s_temperature[0] && s_humidity[0]) {
+    write_rtc_time(f);
     fprintf(f, "%s,%s\n", s_temperature, s_humidity);
   }
 
@@ -110,6 +122,7 @@ void write_co2_temperature_humidity(void)
   sysevent_get(SYSEVENT_BASE, I2C_HUMIDITY_EVENT, &s_humidity, sizeof(s_humidity));
   sysevent_get(SYSEVENT_BASE, I2C_TEMPERATURE_EVENT, &s_temperature, sizeof(s_temperature));
   if (s_co2[0] && s_temperature[0] && s_humidity[0]) {
+    write_rtc_time(f);
     fprintf(f, "%s,%s,%s\n", s_co2, s_temperature, s_humidity);
   }
 
@@ -137,6 +150,7 @@ void write_rika_soil_ec(void)
   sysevent_get(SYSEVENT_BASE, MB_MOISTURE_EVENT, s_moisture, sizeof(s_moisture));
   sysevent_get(SYSEVENT_BASE, MB_TEMPERATURE_EVENT, s_temperature, sizeof(s_temperature));
   if (s_saturation_ec[0] && s_temperature[0] && s_moisture[0]) {
+    write_rtc_time(f);
     fprintf(f, "%s,%s,%s\n", s_saturation_ec, s_moisture, s_temperature);
   }
 
@@ -158,6 +172,7 @@ void write_rika_water_ph(void)
   }
   sysevent_get(SYSEVENT_BASE, MB_WATER_PH_EVENT, s_ph, sizeof(s_ph));
   if (s_ph[0]) {
+    write_rtc_time(f);
     fprintf(f, "%s\n", s_ph);
   }
 
@@ -179,6 +194,7 @@ void write_solar_radiation(void)
   }
   sysevent_get(SYSEVENT_BASE, MB_PYRANOMETER_EVENT, s_pyranometer, sizeof(s_pyranometer));
   if (s_pyranometer[0]) {
+    write_rtc_time(f);
     fprintf(f, "%s\n", s_pyranometer);
   }
 
@@ -200,6 +216,7 @@ void write_atlas_water_ph(void)
   }
   sysevent_get(SYSEVENT_BASE, I2C_PH_EVENT, s_ph, sizeof(s_ph));
   if (s_ph[0]) {
+    write_rtc_time(f);
     fprintf(f, "%s\n", s_ph);
   }
 
@@ -221,6 +238,7 @@ void write_atlas_water_ec(void)
   }
   sysevent_get(SYSEVENT_BASE, I2C_EC_EVENT, s_ec, sizeof(s_ec));
   if (s_ec[0]) {
+    write_rtc_time(f);
     fprintf(f, "%s\n", s_ec);
   }
 
@@ -242,6 +260,7 @@ void write_wind_direction(void)
   }
   sysevent_get(SYSEVENT_BASE, MB_WIND_DIRECTION_EVENT, s_wind_direction, sizeof(s_wind_direction));
   if (s_wind_direction[0]) {
+    write_rtc_time(f);
     fprintf(f, "%s\n", s_wind_direction);
   }
 
@@ -263,6 +282,7 @@ void write_wind_speed(void)
   }
   sysevent_get(SYSEVENT_BASE, MB_WIND_SPEED_EVENT, s_wind_speed, sizeof(s_wind_speed));
   if (s_wind_speed[0]) {
+    write_rtc_time(f);
     fprintf(f, "%s\n", s_wind_speed);
   }
 
@@ -286,6 +306,7 @@ void write_rika_water_ec(void)
   sysevent_get(SYSEVENT_BASE, MB_WATER_EC_EVENT, s_ec, sizeof(s_ec));
   sysevent_get(SYSEVENT_BASE, MB_TEMPERATURE_EVENT, s_temperature, sizeof(s_temperature));
   if (s_ec[0] && s_temperature[0]) {
+    write_rtc_time(f);
     fprintf(f, "%s,%s\n", s_ec, s_temperature);
   }
 

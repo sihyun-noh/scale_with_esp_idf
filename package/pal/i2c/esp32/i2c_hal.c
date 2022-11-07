@@ -185,3 +185,30 @@ int i2c_hal_write(int dev, uint16_t addr, const uint8_t *data, size_t len) {
 
   return HAL_I2C_NO_ERR;
 }
+
+int i2c_hal_write_regs(int dev, uint16_t addr, const void *reg, const uint8_t *data, size_t len) {
+  /* Check for invalid arguments given */
+  if (NULL == data || 0 == len) {
+    return HAL_I2C_INVALID_ARGS;
+  }
+
+  printf("i2c_hal_write_regs : dev = %d, addr = 0x%x\n", dev, addr);
+
+  i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+  i2c_master_start(cmd);
+  i2c_master_write_byte(cmd, ((uint8_t)addr << 1) | I2C_MASTER_WRITE, true);
+  if (reg)
+    i2c_master_write(cmd, (void *)reg, 1, true);
+  i2c_master_write(cmd, data, len, true);
+  i2c_master_stop(cmd);
+  esp_err_t rc = i2c_master_cmd_begin(dev, cmd, 1000 / portTICK_PERIOD_MS);
+  i2c_cmd_link_delete(cmd);
+
+  printf("i2c_hal_write_regs : rc = [%d]\n", rc);
+
+  if (ESP_OK != rc) {
+    return HAL_I2C_WRITE_ERR;
+  }
+
+  return HAL_I2C_NO_ERR;
+}

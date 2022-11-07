@@ -70,4 +70,9 @@ int i2c_hal_read(int dev, uint16_t addr, uint8_t *data, size_t len);
  */
 int i2c_hal_write(int dev, uint16_t addr, const uint8_t *data, size_t len);
 
+/**
+ *
+ */
+int i2c_hal_write_regs(int dev, uint16_t addr, const void *reg, const uint8_t *data, size_t len);
+
 #endif /* _I2C_HAL_H_ */

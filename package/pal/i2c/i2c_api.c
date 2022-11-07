@@ -60,14 +60,7 @@ int i2c_write_reg(int dev, uint16_t addr, uint8_t reg, uint8_t data, uint8_t fla
 
 /* Need to support the register with 10 and 16 bits */
 int i2c_write_regs(int dev, uint16_t addr, uint8_t reg, const uint8_t *data, size_t len, uint8_t flags) {
-  /* First set addr and register */
-  int ret = i2c_write_bytes(dev, addr, &reg, 1, flags);
-  if (ret < 0) {
-    return ret;
-  }
-
-  /* Then write data to the device */
-  return i2c_write_bytes(dev, addr, data, len, flags);
+  return i2c_hal_write_regs(dev, addr, &reg, data, len);
 }
 
 int i2c_write_byte(int dev, uint16_t addr, uint8_t data, uint8_t flags) {

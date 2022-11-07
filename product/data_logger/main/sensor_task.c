@@ -29,7 +29,7 @@
 
 #define MIN_READ_CNT 2
 
-#define SENSOR_TEST 1
+#define SENSOR_TEST 0
 
 typedef enum {
   RK_TH_SLAVE_ID = 0x01,     // Rika Temperature/Humidity sensor

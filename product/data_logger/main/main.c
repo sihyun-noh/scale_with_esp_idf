@@ -9,6 +9,7 @@
 #include "esp_sleep.h"
 #include "event_ids.h"
 #include "sysfile.h"
+#include "rtc_task.h"
 #include "config.h"
 #include "main.h"
 
@@ -107,6 +108,8 @@ int system_init(void) {
   check_model();
 
   sdcard_init();
+
+  rtc_time_init();
 
   return SYSINIT_OK;
 }
