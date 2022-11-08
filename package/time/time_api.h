@@ -20,6 +20,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define KR_GMT_OFFSET 9  // UTC-9
 #define KR_DST_OFFSET 0  // No DST setting in Korea
 
@@ -64,5 +68,9 @@ bool tm_get_local_time(struct tm* info, uint32_t ms);
  *
  */
 void set_ntp_time(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _TIME_API_H_ */

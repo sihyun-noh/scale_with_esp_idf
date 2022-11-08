@@ -7,7 +7,7 @@
 #include "icmp_echo_api.h"
 #include "event_ids.h"
 #include "easy_setup.h"
-#include "filelog.h"
+// #include "filelog.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/projdefs.h>
@@ -27,6 +27,9 @@
 #define MIN_INTERNET_CHECK_TIME 60   // 1 min
 
 #define ROUTER_CHECK_TIME 600  // 10 min
+
+#define DELAY_5SEC 5000   // 5sec
+#define DELAY_1MIN 60000  // 1min
 
 extern char *uptime(void);
 
@@ -221,7 +224,7 @@ static int check_farmnet(void) {
   } else {
     farmnet_ready = NOT_READY;
     SLOGI(TAG, "Not found gateway router ip address!!!");
-    FLOGI(TAG, "Not found gateway router ip address!!!");
+    // FLOGI(TAG, "Not found gateway router ip address!!!");
   }
 
   set_farmnet_state(farmnet_ready);
@@ -290,6 +293,8 @@ static int check_internet(void) {
 }
 
 static void monitoring_task(void *pvParameters) {
+  int delay_ms = DELAY_5SEC;
+
   if (!is_battery_model()) {
     set_wifi_state(NO_INTERNET_CONNECTION);
     set_wifi_led(NO_INTERNET_CONNECTION);
@@ -303,9 +308,10 @@ static void monitoring_task(void *pvParameters) {
         // First, check to see if the farmnet wifi connection status.
         if (check_farmnet() == READY) {
           SLOGI(TAG, "Success ping to farmnet");
-          FLOGI(TAG, "Success ping to farmnet");
+          // FLOGI(TAG, "Success ping to farmnet");
           set_wifi_state(ON_NETWORK);
           set_wifi_led(ON_NETWORK);
+          delay_ms = DELAY_1MIN;
         } else {
           // Set internet connection flag as lost
           // Reset g_last_internet_check_time
@@ -321,7 +327,7 @@ static void monitoring_task(void *pvParameters) {
           g_last_router_check_time = 0;
 
           SLOGI(TAG, "Failure ping to farmnet");
-          FLOGI(TAG, "Failure ping to farmnet");
+          // FLOGI(TAG, "Failure ping to farmnet");
 
           set_wifi_state(NO_ROUTER_CONNECTION);
           set_wifi_led(NO_ROUTER_CONNECTION);
@@ -354,7 +360,7 @@ static void monitoring_task(void *pvParameters) {
 
     heap_monitoring(HEAP_MONITOR_WARNING, HEAP_MONITOR_CRITICAL);
 
-    vTaskDelay(60000 / portTICK_PERIOD_MS);
+    vTaskDelay(pdMS_TO_TICKS(delay_ms));
   }
 
   vTaskDelete(NULL);

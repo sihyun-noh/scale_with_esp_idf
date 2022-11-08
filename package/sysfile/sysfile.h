@@ -3,6 +3,10 @@
 
 #include "esp32/spiffs_impl.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Register and mount SPIFFS to VFS with given path prefix.
  *
@@ -33,5 +37,9 @@ int sysfile_show_file(void);
  * @return int 0 on success, -1 on failure,
  */
 int write_log(const char *log_file_name, const char *log_data);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

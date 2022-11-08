@@ -21,6 +21,10 @@
 #include <stdint.h>
 #include <stdarg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Log level
  *
@@ -199,5 +203,9 @@ void log_write(log_level_t level, const char *tag, const char *format, ...);
     if (level <= LOG_DEFAULT_LEVEL)                      \
       LOG_DISP_LEVEL(level, tag, format, ##__VA_ARGS__); \
   } while (0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _LOG_H_ */

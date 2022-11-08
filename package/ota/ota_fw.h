@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum ota_err {
   OTA_OK = 0,
   OTA_ERR_ABORT = -1,
@@ -71,5 +75,9 @@ ota_state_t ota_fw_get_state(fw_ctx_t *fwctx);
  *
  */
 ota_err_t ota_fw_set_state(fw_ctx_t *fwctx, ota_state_t ota_state);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _OTA_FW_H_ */

@@ -5,6 +5,10 @@
 
 #include <cJSON.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // syscfg for configuration data
 
 #define SYSCFG_N_SSID "ssid"
@@ -43,6 +47,14 @@
 #define SYSCFG_S_SEND_INTERVAL 10
 #define SYSCFG_I_SEND_INTERVAL CFG_DATA
 
+#define SYSCFG_N_CPU0_RESET_REASON "reset0_reason"
+#define SYSCFG_S_CPU0_RESET_REASON 5
+#define SYSCFG_I_CPU0_RESET_REASON CFG_DATA
+
+#define SYSCFG_N_CPU1_RESET_REASON "reset1_reason"
+#define SYSCFG_S_CPU1_RESET_REASON 5
+#define SYSCFG_I_CPU1_RESET_REASON CFG_DATA
+
 // syscfg for manufacturing data
 
 #define SYSCFG_N_HWVERSION "hw_version"
@@ -69,11 +81,15 @@
 #define SYSCFG_S_REGIONCODE 10
 #define SYSCFG_I_REGIONCODE MFG_DATA
 
-extern int get_syscfg_idx(char *name);
-extern void dump_syscfg(void);
-extern void generate_syscfg(void);
-extern cJSON *dump_syscfg_to_json_object(void);
-extern cJSON *make_syscfg_json_object(void);
-extern char *make_syscfg_json(void);
+int get_syscfg_idx(char *name);
+void dump_syscfg(void);
+void generate_syscfg(void);
+cJSON *dump_syscfg_to_json_object(void);
+cJSON *make_syscfg_json_object(void);
+char *make_syscfg_json(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _SYS_CONFIG_H_ */

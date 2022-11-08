@@ -18,9 +18,14 @@
 #define _FILELOG_H_
 
 #include "log.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Used to write the system log to a file.
- * 
+ *
  * @param format format of the output log. see ``printf``
  * @param ... variables to be replaced into the log. see ``printf``
  * @return int 0 on success, -1 on failure,
@@ -44,19 +49,23 @@ int file_log_write(char *format, ...);
     }                                                                                  \
   } while (0)
 
-#define FLOGI(tag, format, ...)          \
-  do {                                   \
+#define FLOGI(tag, format, ...)           \
+  do {                                    \
     FILELOGI(tag, format, ##__VA_ARGS__); \
   } while (0)
 
-#define FLOGW(tag, format, ...)          \
-  do {                                   \
+#define FLOGW(tag, format, ...)           \
+  do {                                    \
     FILELOGW(tag, format, ##__VA_ARGS__); \
   } while (0)
 
-#define FLOGE(tag, format, ...)          \
-  do {                                   \
+#define FLOGE(tag, format, ...)           \
+  do {                                    \
     FILELOGE(tag, format, ##__VA_ARGS__); \
   } while (0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _FILELOG_H_ */

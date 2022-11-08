@@ -1,6 +1,10 @@
 #ifndef _SYSCFG_CMD_H_
 #define _SYSCFG_CMD_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Command to set a value of the system configuration key.
  *
@@ -82,5 +86,9 @@ int syscfg_dump_cmd(int argc, char **argv);
  * @breif Command to erase wifi and other information of nvs flash area
  */
 int nvs_erase_cmd(int argc, char **argv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _SYSCFG_CMD_H_ */

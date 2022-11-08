@@ -22,6 +22,10 @@
 
 #include "sysevent.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Event APIs for esp32 platform
  *
@@ -96,4 +100,9 @@ int sysevent_get_with_handler_impl(sysevent_ctx_t *ctx, const char *event_base, 
  */
 int sysevent_unregister_handler_impl(sysevent_ctx_t *ctx, const char *event_base, int event_id,
                                      event_handler_t event_handler);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _SYSEVENT_IMPL_H_ */

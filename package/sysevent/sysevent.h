@@ -21,6 +21,10 @@
 
 #include "esp_event.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Declare an event base
 ESP_EVENT_DECLARE_BASE(SYSEVENT_BASE);
 
@@ -84,5 +88,9 @@ int sysevent_get_with_handler(const char *event_base, int event_id, event_handle
  * @return int 0 on success, -1 on failure
  */
 int sysevent_unregister_handler(const char *event_base, int event_id, event_handler_t event_handler);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _SYSEVENT_H_ */

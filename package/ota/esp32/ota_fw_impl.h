@@ -3,6 +3,10 @@
 
 #include "ota_fw.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @breif OTA FW image state
  */
@@ -26,5 +30,9 @@ int ota_fw_reset_device_impl(fw_ctx_t* const fwctx);
 ota_fw_state_t ota_fw_get_state_impl(fw_ctx_t* const fwctx);
 
 int ota_fw_set_state_impl(fw_ctx_t* const fwctx, ota_fw_state_t fw_state);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _OTA_FW_IMPL_H_ */

@@ -21,6 +21,10 @@
 
 #define BASE_PATH "/spiffs"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Register and mount SPIFFS to VFS with given path prefix.
  *
@@ -51,5 +55,9 @@ int show_file_impl(void);
  * @return int 0 on success, -1 on failure,
  */
 int write_log_data_to_file_impl(const char *log_file_name, const char *log_data);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

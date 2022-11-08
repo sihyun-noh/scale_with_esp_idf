@@ -22,7 +22,7 @@
 #include "event_ids.h"
 #include "sysevent.h"
 #include "sys_status.h"
-#include "filelog.h"
+// #include "filelog.h"
 #include "main.h"
 
 #include <string.h>
@@ -216,8 +216,8 @@ int read_temperature_humidity(void) {
       if (err_cnt >= 100)
         return res;
     }
-    // Wait until 100 msec (cycle time) are over.
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    // Wait until 300 msec (cycle time) are over.
+    vTaskDelay(300 / portTICK_PERIOD_MS);
   }
 
   qsort(sht3x_temperature, MIN_READ_CNT, sizeof(float), float_compare);
@@ -236,7 +236,7 @@ int read_temperature_humidity(void) {
 
   if (is_battery_model()) {
     if (!alive_check_task() || sensor_comparison(memory_sensor_buf, sht3x_temperature_i2c, 0.5)) {
-      FLOGI(TAG, "temperature : %.2f, m_temperature : %.2f", sht3x_temperature_i2c, memory_sensor_buf);
+      LOGI(TAG, "temperature : %.2f, m_temperature : %.2f", sht3x_temperature_i2c, memory_sensor_buf);
       memory_sensor_buf = sht3x_temperature_i2c;
     } else {
       return SENSOR_NOT_PUB;
@@ -292,7 +292,7 @@ int read_co2_temperature_humidity(void) {
     if (is_battery_model()) {
       f_co2 = atof(s_co2);
       if (!alive_check_task() || sensor_comparison(memory_sensor_buf, f_co2, 40)) {
-        FLOGI(TAG, "co2 : %.2f, m_co2 : %.2f", f_co2, memory_sensor_buf);
+        LOGI(TAG, "co2 : %.2f, m_co2 : %.2f", f_co2, memory_sensor_buf);
         memory_sensor_buf = f_co2;
       } else {
         return SENSOR_NOT_PUB;
@@ -375,10 +375,10 @@ int read_soil_ec(void) {
 
       if (is_battery_model()) {
         LOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
-        FLOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
+        // FLOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
       } else {
         LOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
-        FLOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
+        // FLOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
       }
 
       vTaskDelay(500 / portTICK_RATE_MS);
@@ -413,10 +413,10 @@ int read_water_ph(void) {
 
       if (is_battery_model()) {
         LOGI(TAG, "ph : %.2f", f_ph);
-        FLOGI(TAG, "ph : %.2f", f_ph);
+        // FLOGI(TAG, "ph : %.2f", f_ph);
       } else {
         LOGI(TAG, "Power mode > ph : %.2f", f_ph);
-        FLOGI(TAG, "Power mode > ph : %.2f", f_ph);
+        // FLOGI(TAG, "Power mode > ph : %.2f", f_ph);
       }
 
       vTaskDelay(500 / portTICK_RATE_MS);
@@ -448,7 +448,7 @@ int read_solar_radiation(void) {
       memcpy(&u_pyranometer, value, 2);
       f_pyranometer = (float)(u_pyranometer / 10.00);
       LOGI(TAG, "pyranometer = %.2f", f_pyranometer);
-      FLOGI(TAG, "pyranometer = %.2f", f_pyranometer);
+      // FLOGI(TAG, "pyranometer = %.2f", f_pyranometer);
       snprintf(s_pyranometer, sizeof(s_pyranometer), "%.2f", f_pyranometer);
       sysevent_set(MB_PYRANOMETER_EVENT, s_pyranometer);
     }
@@ -560,10 +560,10 @@ int read_wind_direction(void) {
 
       if (is_battery_model()) {
         LOGI(TAG, "wind direction = %d", u_wind_direction);
-        FLOGI(TAG, "wind direction = %d", u_wind_direction);
+        // FLOGI(TAG, "wind direction = %d", u_wind_direction);
       } else {
         LOGI(TAG, "Power mode > wind direction = %d", u_wind_direction);
-        FLOGI(TAG, "Power mode > wind direction = %d", u_wind_direction);
+        // FLOGI(TAG, "Power mode > wind direction = %d", u_wind_direction);
       }
     }
   }
@@ -596,10 +596,10 @@ int read_wind_speed(void) {
 
       if (is_battery_model()) {
         LOGI(TAG, "wind speed = %.1f", f_wind_speed);
-        FLOGI(TAG, "wind speed = %.1f", f_wind_speed);
+        // FLOGI(TAG, "wind speed = %.1f", f_wind_speed);
       } else {
         LOGI(TAG, "Power mode > wind speed = %.1f", f_wind_speed);
-        FLOGI(TAG, "Power mode > wind speed = %.1f", f_wind_speed);
+        // FLOGI(TAG, "Power mode > wind speed = %.1f", f_wind_speed);
       }
     }
   }
@@ -660,10 +660,10 @@ int read_rika_water_ec(void) {
 
       if (is_battery_model()) {
         LOGI(TAG, "ec : %.2f, salinity : %.2f, temperature : %.2f", f_ec, f_sal, f_temp);
-        FLOGI(TAG, "ec : %.2f, salinity : %.2f, temperature : %.2f", f_ec, f_sal, f_temp);
+        // FLOGI(TAG, "ec : %.2f, salinity : %.2f, temperature : %.2f", f_ec, f_sal, f_temp);
       } else {
         LOGI(TAG, "Power mode > ec : %.2f, salinity : %.2f, temperature : %.2f", f_ec, f_sal, f_temp);
-        FLOGI(TAG, "Power mode > ec : %.2f, salinity : %.2f, temperature : %.2f", f_ec, f_sal, f_temp);
+        // FLOGI(TAG, "Power mode > ec : %.2f, salinity : %.2f, temperature : %.2f", f_ec, f_sal, f_temp);
       }
     }
   }

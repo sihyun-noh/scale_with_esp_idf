@@ -18,6 +18,10 @@
 
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Possible I2C slave address
 #define ATLAS_EC_I2C_ADDR_1 (0x64)
 
@@ -35,10 +39,10 @@ typedef struct {
  * @brief ATLAS_EC sensor device data structure type
  */
 typedef struct {
-  uint8_t bus;        /**< I2C bus at which sensor is connected */
-  uint8_t addr;       /**< I2C slave address of the sensor */
-  int sda_pin;        /**< I2C sda pin number */
-  int scl_pin;        /**< I2C scl pin number */
+  uint8_t bus;  /**< I2C bus at which sensor is connected */
+  uint8_t addr; /**< I2C slave address of the sensor */
+  int sda_pin;  /**< I2C sda pin number */
+  int scl_pin;  /**< I2C scl pin number */
 } atlas_ec_dev_t;
 
 typedef enum {
@@ -50,15 +54,15 @@ typedef enum {
   ATLAS_EC_CAL_CLEAR
 } atlas_ec_cal_mode_t;
 
-typedef enum {
-  ATLAS_EC_PROBE_CHECK = 0,
-  ATLAS_EC_PROBE_0_1,
-  ATLAS_EC_PROBE_1_0,
-  ATLAS_EC_PROBE_10
-} atlas_ec_probe_t;
+typedef enum { ATLAS_EC_PROBE_CHECK = 0, ATLAS_EC_PROBE_0_1, ATLAS_EC_PROBE_1_0, ATLAS_EC_PROBE_10 } atlas_ec_probe_t;
 
 int atlas_ec_init(atlas_ec_dev_t* dev, const atlas_ec_params_t* params);
 int atlas_ec_read(atlas_ec_dev_t* dev, char* ec);
 int atlas_ec_cal(atlas_ec_dev_t* dev, atlas_ec_cal_mode_t mode);
 int atlas_ec_probe(atlas_ec_dev_t* dev, atlas_ec_probe_t probe);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _ATLAS_EC_H_ */

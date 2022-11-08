@@ -17,6 +17,10 @@
 #ifndef _SHELL_CONSOLE_IMPL_PRIV_H_
 #define _SHELL_CONSOLE_IMPL_PRIV_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SC_MAX_CMDS 10
 
 /**
@@ -30,5 +34,9 @@ struct sc_ctx {
   esp_console_cmd_t *cmds[SC_MAX_CMDS];
   int cmd_count;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _SHELL_CONSOLE_IMPL_PRIV_H_ */

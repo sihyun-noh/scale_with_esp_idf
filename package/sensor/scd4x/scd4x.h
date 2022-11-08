@@ -1,3 +1,6 @@
+#ifndef _SCD4X_H_
+#define _SCD4X_H_
+
 /** @file scd4x.h
  *
  * @brief Device driver module for Sensirion SCD4x Co2 and Temperature and Humidity Sensors
@@ -14,6 +17,10 @@
  */
 
 #include <stdio.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // Possible I2C slave address
 #define SCD4X_I2C_ADDR_1 (0x62)
@@ -69,3 +76,9 @@ int scd4x_get_data_ready_flag(scd4x_dev_t* dev);
  * @return int 0 on success, -1 on error
  */
 int scd4x_read_measurement(scd4x_dev_t* dev, uint16_t* co2, float* temperature_deg_c, float* humidity_percent_rh);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#endif /* _SCD4X_H_ */

@@ -29,7 +29,7 @@ typedef enum {
   SENSOR_PUB_MODE,
   NTP_UPDATE_MODE,
   OTA_FWUPDATE_MODE,
-  SLEEP_MODE,
+  DEEP_SLEEP_MODE,
 } operation_mode_t;
 
 #endif /* _MAIN_H_ */

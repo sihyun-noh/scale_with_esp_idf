@@ -18,6 +18,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief The context of the MQTT client
  */
@@ -163,5 +167,9 @@ int mqtt_client_reconnect(mqtt_ctx_t *ctx);
  * @return int returns 0 if successful or -1 if failed
  */
 int mqtt_client_disconnect(mqtt_ctx_t *ctx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _MQTT_H_ */

@@ -7,7 +7,7 @@
 #include "syslog.h"
 #include "sysevent.h"
 #include "event_ids.h"
-#include "filelog.h"
+// #include "filelog.h"
 #include "sys_status.h"
 
 #define MAX_BUFFER_CNT 10
@@ -52,7 +52,7 @@ int read_battery_percentage(void) {
   voltage = uint16_average(&battery_voltage[1], MAX_BUFFER_CNT - 2);
   bat_percent = battery_calculate_percentage(voltage);
   LOGI(TAG, "battery percent: %.2f", bat_percent);
-  FLOGI(TAG, "battery percent: %.2f", bat_percent);
+  // FLOGI(TAG, "battery percent: %.2f", bat_percent);
 
   memset(s_bat_percent, 0, sizeof(s_bat_percent));
   snprintf(s_bat_percent, sizeof(s_bat_percent), "%.2f", bat_percent);

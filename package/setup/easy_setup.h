@@ -3,6 +3,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Initialize easy setup
  *
@@ -21,5 +25,9 @@ void create_ethernet_easy_setup_task(void);
  * @return bool true if taks is running, false if task is done
  */
 bool is_running_setup_task(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _EASY_SETUP_H_ */

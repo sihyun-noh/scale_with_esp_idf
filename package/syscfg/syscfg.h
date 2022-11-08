@@ -7,6 +7,10 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SYSCFG_VARIABLE_NAME_SIZE 32
 #define SYSCFG_VARIABLE_VALUE_SIZE 64
 
@@ -123,5 +127,9 @@ int syscfg_info(syscfg_type_t type);
  * @return int 0 on success, -1 on error
  */
 int nvs_erase(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _SYSCFG_H_ */

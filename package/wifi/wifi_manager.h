@@ -5,6 +5,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_SSID 64
 
 typedef struct {
@@ -113,5 +117,9 @@ int get_router_ipaddr(char *ip_addr, int addr_len);
  * @return int 0 on success, -1 on failure
  */
 int get_ap_info(ap_info_t *ap_info);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _WIFI_MANAGER_H_ */

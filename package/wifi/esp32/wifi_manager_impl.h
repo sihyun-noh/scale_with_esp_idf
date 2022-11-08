@@ -4,6 +4,10 @@
 #include "esp_wifi.h"
 #include "wifi_manager_private.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define AP_MODE 1
 #define STA_MODE 2
 
@@ -119,5 +123,9 @@ int get_router_ipaddr_impl(wifi_context_t *ctx, char *ip_addr, int addr_len);
  * @return int 0 on success, -1 on failure
  */
 int get_ap_info_impl(wifi_context_t *ctx, wifi_ap_record_t *ap_info);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _WIFI_MANAGER_IMPL_H_ */

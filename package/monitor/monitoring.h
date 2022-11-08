@@ -25,6 +25,10 @@
 
 #include "sys/queue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MONITOR_QUEUE_SIZE 32
 
 #define HEAP_MONITOR_CRITICAL 1024
@@ -46,5 +50,9 @@ int create_monitoring_task(void);
 int monitoring_init(void);
 
 TaskHandle_t get_monitoring_task_handle(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _MONITORING_H_ */

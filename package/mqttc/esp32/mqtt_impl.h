@@ -20,6 +20,10 @@
 
 #include "mqtt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief MQTT client instance that will be used by the MQTT client
  * It includes the MQTT configuration and client handle and the event callback function
@@ -118,5 +122,9 @@ int mqtt_client_reconnect_impl(mqtt_client_t *client);
  * @return int returns 0 on success, -1 on failure
  */
 int mqtt_client_disconnect_impl(mqtt_client_t *client);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _MQTT_IMPL_H_ */

@@ -1,7 +1,10 @@
+#ifndef _ICMP_ECHO_IMPL_H_
+#define _ICMP_ECHO_IMPL_H_
+
 /**
  * @file icmp_echo_impl.h
  *
- * @brief Type of ¡°ping¡± callback functions is provided by espressif.
+ * @brief Type of ï¿½ï¿½pingï¿½ï¿½ callback functions is provided by espressif.
  *
  * Created by Greenlabs, Smartfarm Team.
  * Copyright (c) 2022 Greenlabs Co. and/or its affiliates. All rights reserved.
@@ -18,6 +21,10 @@
 #include "lwip/netdb.h"
 #include "lwip/sockets.h"
 #include "ping/ping_sock.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 enum {
   PING_OK = 0,
@@ -54,3 +61,9 @@ void cmd_ping_on_ping_timeout(esp_ping_handle_t hdl, void *args);
  * @param args
  */
 void cmd_ping_on_ping_end(esp_ping_handle_t hdl, void *args);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#endif /* _ICMP_ECHO_IMPL_H_ */

@@ -18,6 +18,10 @@
 
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Possible I2C slave address
 #define ATLAS_PH_I2C_ADDR_1 (0x63)
 
@@ -35,10 +39,10 @@ typedef struct {
  * @brief ATLAS_PH sensor device data structure type
  */
 typedef struct {
-  uint8_t bus;        /**< I2C bus at which sensor is connected */
-  uint8_t addr;       /**< I2C slave address of the sensor */
-  int sda_pin;        /**< I2C sda pin number */
-  int scl_pin;        /**< I2C scl pin number */
+  uint8_t bus;  /**< I2C bus at which sensor is connected */
+  uint8_t addr; /**< I2C slave address of the sensor */
+  int sda_pin;  /**< I2C sda pin number */
+  int scl_pin;  /**< I2C scl pin number */
 } atlas_ph_dev_t;
 
 typedef enum {
@@ -52,4 +56,9 @@ typedef enum {
 int atlas_ph_init(atlas_ph_dev_t* dev, const atlas_ph_params_t* params);
 int atlas_ph_read(atlas_ph_dev_t* dev, char* ph);
 int atlas_ph_cal(atlas_ph_dev_t* dev, atlas_ph_cal_mode_t mode);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _ATLAS_PH_H_ */

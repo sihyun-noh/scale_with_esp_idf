@@ -113,7 +113,7 @@ clearEnvVariable() {
 checkDeviceConnect() {
   # 매개변수 없을 시에는 기본적으로 build 만 동작
   # Flash 일 경우 device 연결 확인 - 현재는 macOS, 추후 linux, window 확인 후 추가 예정
-  PORT_PATH=$(ls /dev/cu.usb*)
+  PORT_PATH=$(ls /dev/cu.usb* | fzf)
   echo "port port : $PORT_PATH"
 
   if [ -z ${PORT_PATH} ]; then

@@ -1,3 +1,10 @@
+#ifndef _ICMP_ECHO_API_H_
+#define _ICMP_ECHO_API_H_
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @file icmp_echo_api.h
  *
@@ -27,3 +34,9 @@
  * @return int success return "PING_OK (0)", fail return "PING_FAIL(1) or PING_ERR_UNKNOWN_HOST(3)"
  */
 int do_ping(char *host, uint8_t ping_count);
+
+#ifdef __cpluplus
+}
+#endif
+
+#endif /* _ICMP_ECHO_API_H_ */

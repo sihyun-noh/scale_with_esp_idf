@@ -3,6 +3,10 @@
 
 #include "esp_console.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct sc_ctx sc_ctx_t;
 
 /**
@@ -26,5 +30,9 @@ int sc_start_impl(sc_ctx_t *ctx);
  * @param ctx pointer to the shell context
  */
 void sc_stop_impl(sc_ctx_t *ctx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _SHELL_CONSOLE_IMPL_H_ */

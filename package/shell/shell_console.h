@@ -3,6 +3,10 @@
 
 #include "esp32/shell_console_impl.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief Initialize console configuration to use interactive command shell
  *
@@ -24,5 +28,9 @@ int sc_start(sc_ctx_t *ctx);
  * @param ctx pointer to the shell context
  */
 void sc_stop(sc_ctx_t *ctx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _SHELL_CONSOLE_H_ */

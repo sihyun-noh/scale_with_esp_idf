@@ -1,6 +1,10 @@
 #ifndef _MB_MASTER_PRIVATE_H_
 #define _MB_MASTER_PRIVATE_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
   MB_HOLDING_REG = 0x00,
   MB_INPUT_REG,
@@ -34,5 +38,9 @@ typedef struct {
   uint16_t reg_addr;
   uint16_t read_len;
 } mb_characteristic_info_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _MB_MASTER_PRIVATE_H_ */
