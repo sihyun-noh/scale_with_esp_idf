@@ -167,7 +167,7 @@ int i2c_hal_write(int dev, uint16_t addr, const uint8_t *data, size_t len) {
     return HAL_I2C_INVALID_ARGS;
   }
 
-  printf("i2c_hal_write : dev = %d, addr = 0x%x\n", dev, addr);
+  // printf("i2c_hal_write : dev = %d, addr = 0x%x\n", dev, addr);
 
   i2c_cmd_handle_t cmd = i2c_cmd_link_create();
   i2c_master_start(cmd);
@@ -177,7 +177,7 @@ int i2c_hal_write(int dev, uint16_t addr, const uint8_t *data, size_t len) {
   esp_err_t rc = i2c_master_cmd_begin(dev, cmd, 1000 / portTICK_PERIOD_MS);
   i2c_cmd_link_delete(cmd);
 
-  printf("i2c_hal_write : rc = [%d]\n", rc);
+  // printf("i2c_hal_write : rc = [%d]\n", rc);
 
   if (ESP_OK != rc) {
     return HAL_I2C_WRITE_ERR;
@@ -192,7 +192,7 @@ int i2c_hal_write_regs(int dev, uint16_t addr, const void *reg, const uint8_t *d
     return HAL_I2C_INVALID_ARGS;
   }
 
-  printf("i2c_hal_write_regs : dev = %d, addr = 0x%x\n", dev, addr);
+  // printf("i2c_hal_write_regs : dev = %d, addr = 0x%x\n", dev, addr);
 
   i2c_cmd_handle_t cmd = i2c_cmd_link_create();
   i2c_master_start(cmd);
@@ -204,7 +204,7 @@ int i2c_hal_write_regs(int dev, uint16_t addr, const void *reg, const uint8_t *d
   esp_err_t rc = i2c_master_cmd_begin(dev, cmd, 1000 / portTICK_PERIOD_MS);
   i2c_cmd_link_delete(cmd);
 
-  printf("i2c_hal_write_regs : rc = [%d]\n", rc);
+  // printf("i2c_hal_write_regs : rc = [%d]\n", rc);
 
   if (ESP_OK != rc) {
     return HAL_I2C_WRITE_ERR;

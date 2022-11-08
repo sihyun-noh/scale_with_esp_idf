@@ -26,6 +26,10 @@
 #include "sysfile.h"
 #include "config.h"
 
+#ifdef DS3231_I2C_SDA_PIN
+#include "rtc_task.h"
+#endif
+
 extern void stop_shell(void);
 extern int mqtt_start_cmd(int argc, char **argv);
 extern int mqtt_subscribe_cmd(int argc, char **argv);
@@ -220,6 +224,18 @@ static sc_cmd_t commands[] = {
       .name = "atlas_ec_probe",
       .help = "Atlas EC Sensor Probe",
       .func = atlas_ec_probe_cmd,
+  },
+#endif
+#ifdef DS3231_I2C_SDA_PIN
+  {
+      .name = "rtc_set_time",
+      .help = "Set RTC Time",
+      .func = rtc_set_time_cmd,
+  },
+  {
+      .name = "rtc_get_time",
+      .help = "Get RTC Time",
+      .func = rtc_get_time_cmd,
   },
 #endif
 };

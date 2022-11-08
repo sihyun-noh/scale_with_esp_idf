@@ -151,7 +151,8 @@ void battery_loop_task(void) {
       } break;
       case SLEEP_MODE: {
         LOGI(TAG, "SLEEP_MODE");
-        sleep_timer_wakeup(send_interval);
+        vTaskDelay(send_interval * 1000 / portTICK_PERIOD_MS);
+        set_operation_mode(SENSOR_READ_MODE);
       } break;
     }
     vTaskDelay(500 / portTICK_PERIOD_MS);

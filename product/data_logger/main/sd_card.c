@@ -340,9 +340,9 @@ void sdcard_write_data(void) {
   LOGI(TAG, "File written");
 
   // All done, unmount partition and disable SPI peripheral
-  esp_vfs_fat_sdcard_unmount(mount_point, card);
-  LOGI(TAG, "Card unmounted");
+  // esp_vfs_fat_sdcard_unmount(mount_point, card);
+  // LOGI(TAG, "Card unmounted");
 
   // deinitialize the bus after all devices are removed
-  spi_bus_free(host.slot);
+  // spi_bus_free(host.slot);
 }
