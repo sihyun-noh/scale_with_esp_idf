@@ -75,6 +75,32 @@ static void check_model(void) {
   set_battery_model(1);
 }
 
+int set_interval_cmd(int argc, char** argv) {
+  int interval = 0;
+
+  if (argc != 2) {
+    printf("Usage: 1 ~ 600 (sec)  <ex:set_interval 60>\n");
+    return -1;
+  }
+  interval = atoi(argv[1]);
+  if (interval < 1)
+    return -1;
+
+  syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, argv[1]);
+  send_interval = interval;
+
+  return 0;
+}
+
+int get_interval_cmd(int argc, char** argv) {
+  char s_send_interval[10] = { 0 };
+
+  syscfg_get(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, s_send_interval, sizeof(s_send_interval));
+  printf("INTERVAL: %d\n", atoi(s_send_interval));
+
+  return 0;
+}
+
 int system_init(void) {
   // Initialize NVS
   esp_err_t ret = nvs_flash_init();

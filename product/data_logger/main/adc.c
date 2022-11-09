@@ -40,7 +40,6 @@ int read_battery_percentage(void) {
   for (int i = 0; i < MAX_BUFFER_CNT; i++) {
     // Get the values and do something with them.
     battery_voltage[i] = read_battery_voltage(BATTERY_PORT, 2);
-    LOGI(TAG, "cali data: %d mV", battery_voltage[i]);
 
     // Wait until 50 msec (cycle time) are over.
     vTaskDelay(50 / portTICK_PERIOD_MS);
@@ -50,7 +49,7 @@ int read_battery_percentage(void) {
   qsort(battery_voltage, MAX_BUFFER_CNT, sizeof(uint16_t), uint16_compare);
   voltage = uint16_average(&battery_voltage[1], MAX_BUFFER_CNT - 2);
   bat_percent = battery_calculate_percentage(voltage);
-  LOGI(TAG, "battery percent: %.2f", bat_percent);
+  LOGI(TAG, "battery : %d mV (%.2f %%)", voltage, bat_percent);
 
   memset(s_bat_percent, 0, sizeof(s_bat_percent));
   snprintf(s_bat_percent, sizeof(s_bat_percent), "%.2f", bat_percent);
