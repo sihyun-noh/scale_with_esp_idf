@@ -19,8 +19,6 @@ const char* TAG = "main_app";
 
 sc_ctx_t* ctx = NULL;
 
-extern void modbus_sensor_test(int mb_sensor);
-
 extern int sensor_init(void);
 extern int sensor_read(void);
 extern int read_battery_percentage(void);
