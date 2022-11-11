@@ -31,6 +31,9 @@
 #define STATUS_EASY_SETUP_FAIL (1 << 3) /* Easy setup is not completed */
 #define STATUS_IDENTIFICATION (1 << 4)  /* Identification is running */
 
+#define STATUS_SDCARD_FAIL (1 << 5)  /* Identification is running */
+#define STATUS_RS485_CONN_FAIL (1 << 6)  /* Identification is running */
+
 static EventGroupHandle_t hw_status_events;
 static EventGroupHandle_t sw_status_events;
 static EventGroupHandle_t led_status_events;
@@ -189,6 +192,34 @@ void sys_stat_set_identification(uint8_t status) {
     xEventGroupClearBits(led_status_events, STATUS_IDENTIFICATION);
   }
 }
+
+int sys_stat_get_sdcard_fail(void) {
+  EventBits_t bits = xEventGroupGetBits(led_status_events);
+  return ((bits & STATUS_SDCARD_FAIL) == STATUS_SDCARD_FAIL);
+}
+
+void sys_stat_set_sdcard_fail(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(led_status_events, STATUS_SDCARD_FAIL);
+  } else {
+    xEventGroupClearBits(led_status_events, STATUS_SDCARD_FAIL);
+  }
+}
+
+
+int sys_stat_get_rs485_conn_fail(void) {
+  EventBits_t bits = xEventGroupGetBits(led_status_events);
+  return ((bits & STATUS_RS485_CONN_FAIL) == STATUS_RS485_CONN_FAIL);
+}
+
+void sys_stat_set_rs485_conn_fail(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(led_status_events, STATUS_RS485_CONN_FAIL);
+  } else {
+    xEventGroupClearBits(led_status_events, STATUS_RS485_CONN_FAIL);
+  }
+}
+
 
 int sys_stat_init(void) {
   sw_status_events = xEventGroupCreate();
