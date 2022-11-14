@@ -1,9 +1,38 @@
 #ifndef _SYS_STATUS_H_
 #define _SYS_STATUS_H_
 
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+// TODO: Please add the service event and hardware event that you want to monitor in the code below.
+
+/* Service Status */
+#define STATUS_CONFIGURED (1 << 0)         /* Device is configured after finishing easy setup progress */
+#define STATUS_ONBOARD (1 << 1)            /* Device onboard on the network */
+#define STATUS_FWUPDATE (1 << 2)           /* OTA FW Update */
+#define STATUS_MQTT_CONNECTED (1 << 3)     /* mqtt client is connected */
+#define STATUS_MQTT_SUBSCRIBED (1 << 4)    /* mqtt topic is subscribed */
+#define STATUS_MQTT_PUBLISHED (1 << 5)     /* mqtt topic/payload is published */
+#define STATUS_MQTT_INIT_FINISHED (1 << 6) /* mqtt client is initialized */
+
+/* Hardware Status */
+#define STATUS_RESET (1 << 0)    /* HW reset (factory reset) */
+#define STATUS_INTERNET (1 << 1) /* Indicator event when internet is available */
+#define STATUS_WIFI_AP (1 << 2)  /* Use event when WiFi AP mode comes up */
+#define STATUS_WIFI_STA (1 << 3) /* Use event when WiFi Sta mode comes up */
+#define STATUS_BATTERY (1 << 4)  /* Use event to check battery model */
+
+/* LED Status */
+#define STATUS_OK (1 << 0)              /* Normal operation */
+#define STATUS_LOW_BATTERY (1 << 1)     /* Battery is below 20% */
+#define STATUS_WIFI_FAIL (1 << 2)       /* WiFi is not connected */
+#define STATUS_EASY_SETUP_FAIL (1 << 3) /* Easy setup is not completed */
+#define STATUS_IDENTIFICATION (1 << 4)  /* Identification is running */
+#define STATUS_SDCARD_FAIL (1 << 5)     /* Identification is running */
+#define STATUS_RS485_CONN_FAIL (1 << 6) /* Identification is running */
 
 #define is_device_configured sys_stat_get_configured
 #define set_device_configured sys_stat_set_configured
@@ -44,6 +73,20 @@ extern "C" {
 #define is_rs485_conn_fail sys_stat_get_rs485_conn_fail
 #define set_rs485_conn_fail sys_stat_set_rs485_conn_fail
 
+#define is_mqtt_connected sys_stat_get_mqtt_connected
+#define set_mqtt_connected sys_stat_set_mqtt_connected
+
+#define is_mqtt_subscribed sys_stat_get_mqtt_subscribed
+#define set_mqtt_subscribed sys_stat_set_mqtt_subscribed
+
+#define is_mqtt_published sys_stat_get_mqtt_published
+#define set_mqtt_published sys_stat_set_mqtt_published
+
+#define is_mqtt_init_finished sys_stat_get_mqtt_init_finished
+#define set_mqtt_init_finished sys_stat_set_mqtt_init_finished
+
+#define wait_for_sw_event sys_stat_wait_for_swevent
+
 int sys_stat_get_configured(void);
 void sys_stat_set_configured(uint8_t status);
 
@@ -52,6 +95,18 @@ void sys_stat_set_onboard(uint8_t status);
 
 int sys_stat_get_fwupdate(void);
 void sys_stat_set_fwupdate(uint8_t status);
+
+int sys_stat_get_mqtt_connected(void);
+void sys_stat_set_mqtt_connected(uint8_t status);
+
+int sys_stat_get_mqtt_published(void);
+void sys_stat_set_mqtt_published(uint8_t status);
+
+int sys_stat_get_mqtt_subscribed(void);
+void sys_stat_set_mqtt_subscribed(uint8_t status);
+
+int sys_stat_get_mqtt_init_finished(void);
+void sys_stat_set_mqtt_init_finished(uint8_t status);
 
 int sys_stat_get_internet(void);
 void sys_stat_set_internet(uint8_t status);
@@ -84,6 +139,8 @@ int sys_stat_get_rs485_conn_fail(void);
 void sys_stat_set_rs485_conn_fail(uint8_t status);
 
 int sys_stat_init(void);
+
+int sys_stat_wait_for_swevent(int event, bool event_reset, int timeout_ms);
 
 #ifdef __cplusplus
 }

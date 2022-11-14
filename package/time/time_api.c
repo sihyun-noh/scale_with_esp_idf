@@ -25,6 +25,8 @@
 #include "log.h"
 #include "time_api.h"
 
+static bool s_ntp_failed = false;
+
 static const char* TAG = "time";
 
 timezone_t timezone_list[] = { { 1, "EST5EDT,M3.2.0,M11.1.0", "America/New_York" },
@@ -180,4 +182,35 @@ void set_ntp_time(void) {
   sec = timeinfo.tm_sec;
 
   set_local_time(year, month, day, hour, min, sec);
+}
+
+bool get_ntp_time(int tz_offset, int dst_offset) {
+  uint16_t year = 0;
+  uint8_t month = 0;
+  uint8_t day = 0;
+  uint8_t hour = 0;
+  uint8_t min = 0;
+  uint8_t sec = 0;
+
+  struct tm timeinfo = { 0 };
+
+  tm_get_local_time(&timeinfo, 5000);
+  // Get current time info and set them to variables.
+  year = timeinfo.tm_year + 1900;
+  month = timeinfo.tm_mon + 1;
+  day = timeinfo.tm_mday;
+  hour = timeinfo.tm_hour;
+  min = timeinfo.tm_min;
+  sec = timeinfo.tm_sec;
+
+  tm_set_time(3600 * tz_offset, 3600 * dst_offset, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
+
+  // delay time 20 sec
+  if (!tm_get_local_time(&timeinfo, 20000)) {
+    s_ntp_failed = true;
+    set_local_time(year, month, day, hour, min, sec);
+  } else {
+    s_ntp_failed = false;
+  }
+  return s_ntp_failed;
 }

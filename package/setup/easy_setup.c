@@ -20,7 +20,7 @@
 #include "syslog.h"
 #include "event_ids.h"
 #include "wifi_manager.h"
-// #include "filelog.h"
+#include "filelog.h"
 
 #include <sys/param.h>
 #include <freertos/FreeRTOS.h>

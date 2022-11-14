@@ -22,7 +22,7 @@
 #include "event_ids.h"
 #include "sysevent.h"
 #include "sys_status.h"
-// #include "filelog.h"
+#include "filelog.h"
 #include "main.h"
 
 #include <string.h>

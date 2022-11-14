@@ -7,6 +7,14 @@ extern "C" {
 
 #define MQTT_TASK_NAME "MQTT_TASK"
 
+#define MQTT_TIMEOUT 60
+#define MQTT_FLAG_TIMEOUT (MQTT_TIMEOUT * 1000 / portTICK_PERIOD_MS)
+
+#define QOS_0 0
+#define QOS_1 1
+#define NO_RETAIN 0
+#define RETAIN 1
+
 /**
  * @brief
  *
@@ -34,8 +42,10 @@ typedef struct mqtt_msg {
   uint32_t len;
 } mqtt_msg_t;
 
-int send_msg_to_mqtt_task(mqtt_msg_id_t id, void *data, uint32_t len);
+int start_mqttc(void);
+void stop_mqttc(void);
 void create_mqtt_task(void);
+int send_msg_to_mqtt_task(mqtt_msg_id_t id, void *data, uint32_t len);
 
 #ifdef __cplusplus
 }

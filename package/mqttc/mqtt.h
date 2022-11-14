@@ -17,6 +17,7 @@
 #define _MQTT_H_
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,16 +64,27 @@ typedef enum {
  * @brief Configuration structure for the MQTT client
  */
 typedef struct mqtt_config {
-  char *host;
-  int port;
-  char *uri;
-  char *username;
-  char *password;
-  char *client_id;
-  char *cert_pem;
-  char *client_cert_pem;
-  char *client_key_pem;
-  char *ds_data;
+  const char *host;
+  const char *uri;
+  unsigned int port;
+  const char *client_id;
+  const char *username;
+  const char *password;
+  const char *lwt_topic;
+  const char *lwt_msg;
+  int lwt_qos;
+  int lwt_retain;
+  int lwt_msg_len;
+  int disable_clean_session;
+  int keepalive;
+  bool disable_auto_reconnect;
+  void *user_context;
+  int task_prio;
+  int task_stack;
+  int buffer_size;
+  const char *cert_pem;
+  const char *client_cert_pem;
+  const char *client_key_pem;
   transport_type_t transport;
   mqtt_event_cb_fn_t event_cb_fn;
 } mqtt_config_t;

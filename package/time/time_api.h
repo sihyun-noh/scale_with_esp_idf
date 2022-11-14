@@ -56,6 +56,7 @@ void tm_set_time(long gmt_offset_sec, int dst_offset_sec, const char* server1, c
  *
  */
 void tm_set_tztime(const char* tz, const char* server1, const char* server2, const char* server3);
+
 /**
  * @brief Get NTP time and check if the result is successful or not.
  *
@@ -68,6 +69,8 @@ bool tm_get_local_time(struct tm* info, uint32_t ms);
  *
  */
 void set_ntp_time(void);
+
+bool get_ntp_time(int tz_offset, int dst_offset);
 
 #ifdef __cplusplus
 }

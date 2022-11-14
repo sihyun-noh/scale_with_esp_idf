@@ -12,7 +12,7 @@
 #define SENS_GLS_HW 20 /* Greenlabs HW */
 
 #define SENS_BOARD_VER SENS_GLS_HW
-//#define SENS_BOARD_VER SENS_OLIMEX_HW
+// #define SENS_BOARD_VER SENS_OLIMEX_HW
 
 #define SHT3X 1     /* Temperature and Humidity Sensor */
 #define SCD4X 2     /* CO2 and Temperature and Humidity */
@@ -99,9 +99,9 @@
  * Task Priority / Stack size
  ****************************************/
 #define SENS_MONITOR_TASK_PRIORITY (tskIDLE_PRIORITY + 5)
-#define SENS_MQTT_TASK_PRIORITY (tskIDLE_PRIORITY + 3)
-#define SENS_SETUP_TASK_PRIORITY (tskIDLE_PRIORITY + 3)
-#define SENS_OTAFW_TASK_PRIORITY (tskIDLE_PRIORITY + 3)
+#define SENS_MQTT_TASK_PRIORITY (tskIDLE_PRIORITY + 5)
+#define SENS_SETUP_TASK_PRIORITY (tskIDLE_PRIORITY + 5)
+#define SENS_OTAFW_TASK_PRIORITY (tskIDLE_PRIORITY + 5)
 
 #define SENS_MONITOR_TASK_STACK_SIZE (4096)
 #define SENS_MQTT_TASK_STACK_SIZE (4096)

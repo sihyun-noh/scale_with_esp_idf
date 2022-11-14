@@ -3,14 +3,20 @@
 #include <lwip/icmp.h>
 #include <lwip/inet_chksum.h>
 #include <lwip/netdb.h>
-#include "freertos/portable.h"
 #include "lwip/prot/icmp.h"
 #include "lwip/prot/ip.h"
+
+#include "freertos/portable.h"
+#include "freertos/FreeRTOS.h"
 
 #include "const.h"
 
 #include <stdio.h>
 #include <string.h>
+
+#define FLAG_TIMEOUT (60 * 1000 / portTICK_RATE_MS)
+
+// extern SemaphoreHandle_t mqtt_semaphore;
 
 int do_ping_lwip_impl(char *host, int seq) {
   int ret = PING_OK;
@@ -32,6 +38,7 @@ int do_ping_lwip_impl(char *host, int seq) {
   int ping_id = 0xABCD;
   int delta_time = 10;
 
+  // if ((mqtt_semaphore != NULL) && xSemaphoreTake(mqtt_semaphore, 2 * FLAG_TIMEOUT) == pdTRUE) {
   packet_size = sizeof(struct icmp_echo_hdr) + data_size;
   printf("packet_size = %d\n", packet_size);
 
@@ -130,6 +137,10 @@ exit:
   if (ret == PING_FAIL) {
     printf("ping fail = [%d]\n", seq);
   }
+  //    xSemaphoreGive(mqtt_semaphore);
+  //  } else {
+  //  printf("Cannot get mqtt semaphore!!!");
+  //}
 
   return ret;
 }

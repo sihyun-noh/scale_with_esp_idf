@@ -7,7 +7,7 @@
 #include "icmp_echo_api.h"
 #include "event_ids.h"
 #include "easy_setup.h"
-// #include "filelog.h"
+#include "filelog.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/projdefs.h>
@@ -23,13 +23,14 @@
 #define PING_ADDR_NUMBER 2          /* the number of ping address */
 #define PING_FAIL_COUNT_EACH_ADDR 5 /* the fail times for each ping address */
 
-#define MAX_INTERNET_CHECK_TIME 900  // 15 min
-#define MIN_INTERNET_CHECK_TIME 60   // 1 min
+#define MAX_INTERNET_CHECK_TIME 10800  // 3 hour // 900  // 15 min
+#define MIN_INTERNET_CHECK_TIME 60     // 1 min
 
-#define ROUTER_CHECK_TIME 600  // 10 min
+#define ROUTER_CHECK_TIME 3600  // 1 hour, 600, 10min
 
-#define DELAY_5SEC 5000   // 5sec
-#define DELAY_1MIN 60000  // 1min
+#define DELAY_5SEC 5000     // 5sec
+#define DELAY_1MIN 60000    // 1min
+#define DELAY_10MIN 600000  // 10min
 
 extern char *uptime(void);
 
@@ -311,7 +312,7 @@ static void monitoring_task(void *pvParameters) {
           // FLOGI(TAG, "Success ping to farmnet");
           set_wifi_state(ON_NETWORK);
           set_wifi_led(ON_NETWORK);
-          delay_ms = DELAY_1MIN;
+          delay_ms = DELAY_10MIN;
         } else {
           // Set internet connection flag as lost
           // Reset g_last_internet_check_time

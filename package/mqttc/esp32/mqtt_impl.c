@@ -95,16 +95,12 @@ static int apply_mqtt_config(esp_mqtt_client_config_t *esp_config, const mqtt_co
       esp_config->client_key_pem = config->client_key_pem;
       is_secure = true;
     }
-    if (config->ds_data) {
-      esp_config->ds_data = config->ds_data;
-      is_secure = true;
-    }
     if (is_secure == false) {
       ESP_LOGE(TAG, "Should be used certificate file for MQTT SSL/WSS");
       return -1;
     }
   } else if (config->transport == MQTT_TCP || config->transport == MQTT_WS) {
-    if (config->cert_pem || config->client_cert_pem || config->client_key_pem || config->ds_data) {
+    if (config->cert_pem || config->client_cert_pem || config->client_key_pem) {
       ESP_LOGE(TAG, "Invalid config for MQTT TCP/WS");
       return -1;
     }

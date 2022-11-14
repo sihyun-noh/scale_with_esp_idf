@@ -5,34 +5,12 @@
 #include <freertos/event_groups.h>
 #include <freertos/semphr.h>
 
+#include "sys_status.h"
+
 #define TAG "sys_status"
 #define dbg(format, args...) LOGI(TAG, format, ##args)
 #define dbgw(format, args...) LOGW(TAG, format, ##args)
 #define dbge(format, args...) LOGE(TAG, format, ##args)
-
-// TODO: Please add the service event and hardware event that you want to monitor in the code below.
-
-/* Service Status */
-#define STATUS_CONFIGURED (1 << 0) /* Device is configured after finishing easy setup progress */
-#define STATUS_ONBOARD (1 << 1)    /* Device onboard on the network */
-#define STATUS_FWUPDATE (1 << 2)   /* OTA FW Update */
-
-/* Hardware Status */
-#define STATUS_RESET (1 << 0)    /* HW reset (factory reset) */
-#define STATUS_INTERNET (1 << 1) /* Indicator event when internet is available */
-#define STATUS_WIFI_AP (1 << 2)  /* Use event when WiFi AP mode comes up */
-#define STATUS_WIFI_STA (1 << 3) /* Use event when WiFi Sta mode comes up */
-#define STATUS_BATTERY (1 << 4)  /* Use event to check battery model */
-
-/* LED Status */
-#define STATUS_OK (1 << 0)              /* Normal operation */
-#define STATUS_LOW_BATTERY (1 << 1)     /* Battery is below 20% */
-#define STATUS_WIFI_FAIL (1 << 2)       /* WiFi is not connected */
-#define STATUS_EASY_SETUP_FAIL (1 << 3) /* Easy setup is not completed */
-#define STATUS_IDENTIFICATION (1 << 4)  /* Identification is running */
-
-#define STATUS_SDCARD_FAIL (1 << 5)  /* Identification is running */
-#define STATUS_RS485_CONN_FAIL (1 << 6)  /* Identification is running */
 
 static EventGroupHandle_t hw_status_events;
 static EventGroupHandle_t sw_status_events;
@@ -79,6 +57,63 @@ void sys_stat_set_fwupdate(uint8_t status) {
 int sys_stat_get_fwupdate(void) {
   EventBits_t bits = xEventGroupGetBits(sw_status_events);
   return ((bits & STATUS_FWUPDATE) == STATUS_FWUPDATE);
+}
+
+void sys_stat_set_mqtt_connected(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(sw_status_events, STATUS_MQTT_CONNECTED);
+  } else {
+    xEventGroupClearBits(sw_status_events, STATUS_MQTT_CONNECTED);
+  }
+}
+
+int sys_stat_get_mqtt_connected(void) {
+  EventBits_t bits = xEventGroupGetBits(sw_status_events);
+  return ((bits & STATUS_MQTT_CONNECTED) == STATUS_MQTT_CONNECTED);
+}
+
+void sys_stat_set_mqtt_published(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(sw_status_events, STATUS_MQTT_PUBLISHED);
+  } else {
+    xEventGroupClearBits(sw_status_events, STATUS_MQTT_PUBLISHED);
+  }
+}
+
+int sys_stat_get_mqtt_published(void) {
+  EventBits_t bits = xEventGroupGetBits(sw_status_events);
+  return ((bits & STATUS_MQTT_PUBLISHED) == STATUS_MQTT_PUBLISHED);
+}
+
+void sys_stat_set_mqtt_subscribed(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(sw_status_events, STATUS_MQTT_SUBSCRIBED);
+  } else {
+    xEventGroupClearBits(sw_status_events, STATUS_MQTT_SUBSCRIBED);
+  }
+}
+
+int sys_stat_get_mqtt_subscribed(void) {
+  EventBits_t bits = xEventGroupGetBits(sw_status_events);
+  return ((bits & STATUS_MQTT_SUBSCRIBED) == STATUS_MQTT_SUBSCRIBED);
+}
+
+void sys_stat_set_mqtt_init_finished(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(sw_status_events, STATUS_MQTT_INIT_FINISHED);
+  } else {
+    xEventGroupClearBits(sw_status_events, STATUS_MQTT_INIT_FINISHED);
+  }
+}
+
+int sys_stat_get_mqtt_init_finished(void) {
+  EventBits_t bits = xEventGroupGetBits(sw_status_events);
+  return ((bits & STATUS_MQTT_INIT_FINISHED) == STATUS_MQTT_INIT_FINISHED);
+}
+
+int sys_stat_wait_for_swevent(int event, bool event_reset, int timeout_ms) {
+  EventBits_t bits = xEventGroupWaitBits(sw_status_events, event, event_reset, true, timeout_ms);
+  return ((bits & event) == event);
 }
 
 /*----------------------------------------------------------------*/
@@ -206,7 +241,6 @@ void sys_stat_set_sdcard_fail(uint8_t status) {
   }
 }
 
-
 int sys_stat_get_rs485_conn_fail(void) {
   EventBits_t bits = xEventGroupGetBits(led_status_events);
   return ((bits & STATUS_RS485_CONN_FAIL) == STATUS_RS485_CONN_FAIL);
@@ -219,7 +253,6 @@ void sys_stat_set_rs485_conn_fail(uint8_t status) {
     xEventGroupClearBits(led_status_events, STATUS_RS485_CONN_FAIL);
   }
 }
-
 
 int sys_stat_init(void) {
   sw_status_events = xEventGroupCreate();

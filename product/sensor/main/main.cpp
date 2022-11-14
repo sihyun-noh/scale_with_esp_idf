@@ -12,10 +12,12 @@
 #include "event_ids.h"
 #include "time_api.h"
 #include "monitoring.h"
-// #include "sysfile.h"
+#include "sysfile.h"
 #include "config.h"
-// #include "filelog.h"
+#include "filelog.h"
 #include "mqtt_task.h"
+#include "sensor_task.h"
+#include "adc.h"
 #include "main.h"
 #include "esp32/rom/rtc.h"
 
@@ -37,25 +39,18 @@ static TickType_t g_last_ntp_check_time = 0;
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 void modbus_sensor_test(int mb_sensor);
-
-int sensor_init(void);
-int sensor_read(void);
-int read_battery_percentage(void);
-
-int start_mqttc(void);
-void stop_mqttc(void);
 
 #if defined(CONFIG_LED_FEATURE)
 void create_led_task(void);
 #endif
+
+// extern int start_file_server(uint32_t port);
+
 #ifdef __cplusplus
 }
 #endif
-
-// extern void mqtt_publish_sensor_data(void);
-
-// extern int start_file_server(uint32_t port);
 
 static void check_model(void);
 
@@ -228,11 +223,9 @@ int system_init(void) {
 
   syslog_init();
 
-#if 0
   ret = init_sysfile();
   if (ret)
     return ERR_SPIFFS_INIT;
-#endif
 
   // Generate the default manufacturing data if there is no data in mfg partition.
   generate_syscfg();

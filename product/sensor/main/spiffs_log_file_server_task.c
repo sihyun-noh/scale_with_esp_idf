@@ -298,7 +298,6 @@ static void log_file_server_task(void *pvParameters) {
   /*  log file server start! */
   start_file_server(8000);
   while (1) {
-    // FLOGI(TAG, "TEST_greenlabs_smartfarm!");
     vTaskDelay(2000 / portTICK_PERIOD_MS);
   }
 }

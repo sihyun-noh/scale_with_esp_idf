@@ -7,7 +7,7 @@
 #include "syslog.h"
 #include "sysevent.h"
 #include "event_ids.h"
-// #include "filelog.h"
+#include "filelog.h"
 #include "sys_status.h"
 
 #define MAX_BUFFER_CNT 10
