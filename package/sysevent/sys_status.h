@@ -34,6 +34,12 @@
 #define is_fwupdate sys_stat_get_fwupdate
 #define set_fwupdate sys_stat_set_fwupdate
 
+#define is_sdcard_fail sys_stat_get_sdcard_fail
+#define set_sdcard_fail sys_stat_set_sdcard_fail
+
+#define is_rs485_conn_fail sys_stat_get_rs485_conn_fail
+#define set_rs485_conn_fail sys_stat_set_rs485_conn_fail
+
 extern int sys_stat_get_configured(void);
 extern void sys_stat_set_configured(uint8_t status);
 
@@ -66,6 +72,12 @@ extern void sys_stat_set_easy_setup_fail(uint8_t status);
 
 extern int sys_stat_get_identification(void);
 extern void sys_stat_set_identification(uint8_t status);
+
+extern int sys_stat_get_sdcard_fail(void);
+extern void sys_stat_set_sdcard_fail(uint8_t status);
+
+extern int sys_stat_get_rs485_conn_fail(void);
+extern void sys_stat_set_rs485_conn_fail(uint8_t status);
 
 extern int sys_stat_init(void);
 

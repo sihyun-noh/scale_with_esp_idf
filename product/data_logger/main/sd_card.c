@@ -8,6 +8,7 @@
 #include "sysevent.h"
 #include "event_ids.h"
 #include "rtc_task.h"
+#include "sys_status.h"
 
 #define MOUNT_POINT "/sdcard"
 
@@ -61,6 +62,8 @@ void sdcard_init(void) {
            "Failed to initialize the card (%s). "
            "Make sure SD card lines have pull-up resistors in place.",
            esp_err_to_name(ret));
+
+           set_sdcard_fail(1);
     }
     return;
   }
@@ -137,6 +140,7 @@ void write_rika_soil_ec(void)
   char s_saturation_ec[20] = { 0 };
   char s_moisture[20] = { 0 };
   char s_temperature[20] = { 0 };
+  char s_battery_level[10] = { 0 };
   const char *file_sensor = MOUNT_POINT"/rk520_02.csv";
 
   LOGI(TAG, "Opening file %s", file_sensor);
@@ -150,8 +154,11 @@ void write_rika_soil_ec(void)
   sysevent_get(SYSEVENT_BASE, MB_MOISTURE_EVENT, s_moisture, sizeof(s_moisture));
   sysevent_get(SYSEVENT_BASE, MB_TEMPERATURE_EVENT, s_temperature, sizeof(s_temperature));
   if (s_saturation_ec[0] && s_temperature[0] && s_moisture[0]) {
+    
+    sysevent_get(SYSEVENT_BASE,ADC_BATTERY_EVENT,s_battery_level,sizeof(s_battery_level));
     write_rtc_time(f);
-    fprintf(f, "%s,%s,%s\n", s_saturation_ec, s_moisture, s_temperature);
+    fprintf(f, "%s,%s,%s, %s\n", s_saturation_ec, s_moisture, s_temperature, s_battery_level);
+    
   }
 
   fclose(f);

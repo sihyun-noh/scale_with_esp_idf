@@ -328,8 +328,10 @@ int read_soil_ec(void) {
   for (int i = 0; i < num_characteristic; i++) {
     if (mb_master_read_characteristic(mb_characteristic[i].cid, mb_characteristic[i].name, value, &data_len) == -1) {
       LOGE(TAG, "Failed to read value");
+      set_rs485_conn_fail(1);
       res = -1;
     } else {
+      set_rs485_conn_fail(0);
       for (int k = 0; k < data_len; k++) {
         LOGI(TAG, "value[%d] = [0x%x]", k, value[k]);
       }

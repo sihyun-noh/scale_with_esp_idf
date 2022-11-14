@@ -26,7 +26,7 @@
 #define RK500_13 10 /* Water EC Rika Sensor */
 
 #ifndef SENSOR_TYPE
-#define SENSOR_TYPE SHT3X
+#define SENSOR_TYPE RK520_02
 #endif
 
 #define ACTUATOR_TYPE -1
@@ -88,6 +88,11 @@
 #endif
 
 #define BATTERY_PORT 6  // GPIO34
+
+#define LED_RED 25
+#define LED_GREEN 26
+#define LED_BLUE 12
+
 
 #define SDCARD_SPI_MISO 2
 #define SDCARD_SPI_MOSI 15
