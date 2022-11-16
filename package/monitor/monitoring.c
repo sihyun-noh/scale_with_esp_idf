@@ -23,10 +23,10 @@
 #define PING_ADDR_NUMBER 2          /* the number of ping address */
 #define PING_FAIL_COUNT_EACH_ADDR 5 /* the fail times for each ping address */
 
-#define MAX_INTERNET_CHECK_TIME 10800  // 3 hour // 900  // 15 min
+#define MAX_INTERNET_CHECK_TIME 10800  // 3 hour // 900, 15 min
 #define MIN_INTERNET_CHECK_TIME 60     // 1 min
 
-#define ROUTER_CHECK_TIME 3600  // 1 hour, 600, 10min
+#define ROUTER_CHECK_TIME 3600  // 1 hour // 600, 10min
 
 #define DELAY_5SEC 5000     // 5sec
 #define DELAY_1MIN 60000    // 1min

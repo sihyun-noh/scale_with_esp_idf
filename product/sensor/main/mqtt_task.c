@@ -127,11 +127,6 @@ static int mqtt_publish(char *topic, char *payload, int qos, int retain) {
         LOGI(TAG, "published qos0 data, topic: %s", topic);
       } else if (msg_id > 0) {
         LOGI(TAG, "published qos1 data, msg_id=%d, topic=%s", msg_id, topic);
-        if (wait_for_sw_event(STATUS_MQTT_PUBLISHED, true, MQTT_FLAG_TIMEOUT)) {
-          LOGI(TAG, "publish ack received, msg_id=%d", msg_id);
-        } else {
-          LOGW(TAG, "publish ack not received, msg_id=%d", msg_id);
-        }
       } else {
         LOGW(TAG, "failed to publish qos1, msg_id=%d", msg_id);
       }
@@ -149,7 +144,7 @@ static int mqtt_publish(char *topic, char *payload, int qos, int retain) {
         LOGI(TAG, "published data, topic: %s", topic);
         msg_id = 0;
       } else {
-        LOGW(TAG, "failed to publish qos1, msg_id=%d", msg_id);
+        LOGW(TAG, "failed to publish, msg_id=%d", msg_id);
       }
       xSemaphoreGive(mqtt_semaphore);
     } else {

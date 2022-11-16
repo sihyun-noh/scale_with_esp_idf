@@ -46,6 +46,7 @@ int start_mqttc(void);
 void stop_mqttc(void);
 void create_mqtt_task(void);
 int send_msg_to_mqtt_task(mqtt_msg_id_t id, void *data, uint32_t len);
+void mqtt_publish_sensor_data(void);
 
 #ifdef __cplusplus
 }

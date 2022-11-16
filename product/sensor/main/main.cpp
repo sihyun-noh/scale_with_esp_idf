@@ -46,7 +46,7 @@ void modbus_sensor_test(int mb_sensor);
 void create_led_task(void);
 #endif
 
-// extern int start_file_server(uint32_t port);
+extern int start_file_server(uint32_t port);
 
 #ifdef __cplusplus
 }
@@ -314,8 +314,7 @@ void battery_loop_task(void) {
         // Sensor data should be published when device is onboarding and the ntp update is not running.
         if (is_device_onboard()) {
           LOGI(TAG, "SENSOR_PUB_MODE");
-          // mqtt_publish_sensor_data();
-          send_msg_to_mqtt_task(MQTT_PUB_DATA_ID, NULL, 0);
+          mqtt_publish_sensor_data();
           stop_mqttc();
           set_operation_mode(DEEP_SLEEP_MODE);
           delay_ms = DELAY_1SEC;
@@ -375,7 +374,7 @@ void plugged_loop_task(void) {
       case MQTT_START_MODE: {
         if (is_device_onboard()) {
           LOGI(TAG, "MQTT_START_MODE!!!");
-          // start_file_server(8001);
+          start_file_server(8001);
           start_mqttc();
           set_operation_mode(SENSOR_READ_MODE);
         } else {
@@ -401,7 +400,6 @@ void plugged_loop_task(void) {
         // Sensor data should be published when device is onboarding and ntp update is not running.
         if (is_device_onboard()) {
           LOGI(TAG, "SENSOR_PUB_MODE!!!");
-          // mqtt_publish_sensor_data();
           send_msg_to_mqtt_task(MQTT_PUB_DATA_ID, NULL, 0);
           set_operation_mode(NTP_UPDATE_MODE);
           delay_ms = (MQTT_SEND_INTERVAL * 1000);
