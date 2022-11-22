@@ -58,62 +58,6 @@ typedef enum {
   NO_INTERNET_CONNECTION,
 } network_status_t;
 
-static int minHeap = 0;
-static void heap_monitoring(int warning_level, int critical_level) {
-  int freeHeap = xPortGetFreeHeapSize();
-  if (minHeap == 0 || freeHeap < minHeap) {
-    minHeap = freeHeap;
-  }
-
-  LOGI(TAG, "Free HeapSize = %d", freeHeap);
-  LOGI(TAG, "uptime = %s", uptime());
-
-  if (minHeap <= critical_level) {
-    SLOGE(TAG, "Heap critical level reached: %d", critical_level);
-  } else if (minHeap <= warning_level) {
-    SLOGW(TAG, "Heap warning level reached: %d", warning_level);
-  }
-#if 0
-  char total_size[10] = { 0 };
-  static int minHeap = 0;
-  multi_heap_info_t heap_info;
-  heap_caps_get_info(&heap_info, MALLOC_CAP_8BIT);
-  uint32_t freeHeap = heap_info.total_free_bytes;
-
-  if (minHeap == 0 || freeHeap < minHeap) {
-    minHeap = freeHeap;
-  }
-  if (minHeap <= critical_level) {
-    SLOGI(TAG, "Heap critical level reached: %d", critical_level);
-    SLOGI(TAG, "-------------------------------------------------------------");
-    SLOGI(TAG, "heap_track - total_free_bytes : %d", heap_info.total_free_bytes);
-    SLOGI(TAG, "heap_track - total_allocated_bytes : %d", heap_info.total_allocated_bytes);
-    SLOGI(TAG, "heap_track - largest_free_block : %d", heap_info.largest_free_block);
-    SLOGI(TAG, "heap_track - minimum_free_bytes : %d", heap_info.minimum_free_bytes);
-    SLOGI(TAG, "heap_track - allocated_blocks : %d", heap_info.allocated_blocks);
-    SLOGI(TAG, "heap_track - free_blocks : %d", heap_info.free_blocks);
-    SLOGI(TAG, "heap_track - total_blocks : %d", heap_info.total_blocks);
-    SLOGI(TAG, "-------------------------------------------------------------");
-    snprintf(total_size, sizeof(total_size), "%d", heap_info.total_free_bytes);
-    sysevent_set(HEAP_CRITICAL_LEVEL_WARNING_EVENT, (char *)total_size);
-
-  } else if (minHeap <= warning_level) {
-    SLOGW(TAG, "Heap warning level reached: %d", warning_level);
-    SLOGW(TAG, "-------------------------------------------------------------");
-    SLOGW(TAG, "heap_track - total_free_bytes : %d", heap_info.total_free_bytes);
-    SLOGW(TAG, "heap_track - total_allocated_bytes : %d", heap_info.total_allocated_bytes);
-    SLOGW(TAG, "heap_track - largest_free_block : %d", heap_info.largest_free_block);
-    SLOGW(TAG, "heap_track - minimum_free_bytes : %d", heap_info.minimum_free_bytes);
-    SLOGW(TAG, "heap_track - allocated_blocks : %d", heap_info.allocated_blocks);
-    SLOGW(TAG, "heap_track - free_blocks : %d", heap_info.free_blocks);
-    SLOGW(TAG, "heap_track - total_blocks : %d", heap_info.total_blocks);
-    SLOGW(TAG, "-------------------------------------------------------------");
-    snprintf(total_size, sizeof(total_size), "%d", heap_info.total_free_bytes);
-    sysevent_set(HEAP_WARNING_LEVEL_WARNING_EVENT, (char *)total_size);
-  }
-#endif
-}
-
 // Monitoring internal functions for network connection status
 
 static void set_wifi_state(int network_state) {
@@ -359,8 +303,6 @@ static void monitoring_task(void *pvParameters) {
       SLOGI(TAG, "Device is disconnected from the farm network!!!");
     }
 
-    heap_monitoring(HEAP_MONITOR_WARNING, HEAP_MONITOR_CRITICAL);
-
     vTaskDelay(pdMS_TO_TICKS(delay_ms));
   }
 
@@ -372,7 +314,7 @@ int create_monitoring_task(void) {
   UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
 
   if (!monitor_task_handle) {
-    xTaskCreate(monitoring_task, "monitoring_task", 8192, NULL, task_priority, &monitor_task_handle);
+    xTaskCreatePinnedToCore(monitoring_task, "monitoring_task", 8192, NULL, task_priority, &monitor_task_handle, 0);
     if (!monitor_task_handle) {
       SLOGI(TAG, "Monitoring_task Task Start Failed!");
       return -1;

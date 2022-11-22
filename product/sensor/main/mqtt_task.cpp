@@ -11,6 +11,8 @@
 #include "mqtt.h"
 #elif defined(USE_LWMQTTC)
 #include "esp_mqtt.h"
+#elif defined(USE_ASYNCMQTT)
+#include "AsyncMqttClient.h"
 #endif
 #include "syscfg.h"
 #include "config.h"
@@ -42,12 +44,11 @@ static QueueHandle_t mqtt_task_msg_queue;
 
 #if defined(USE_MQTTC)
 static mqtt_ctx_t *mqtt_ctx;
+#elif defined(USE_ASYNCMQTT)
+AsyncMqttClient mqtt_client;
 #endif
 
 #define MQTT_MSG_QUEUE_LEN 16
-
-#define HEAP_MONITOR_CRITICAL 1024
-#define HEAP_MONITOR_WARNING 4096
 
 static const char *TAG = "MQTT";
 
@@ -151,16 +152,35 @@ static int mqtt_publish(char *topic, char *payload, int qos, int retain) {
       LOGW(TAG, "Cannot get mqtt semaphore!!!");
     }
   }
+#elif defined(USE_ASYNCMQTT)
+  if (is_mqtt_init_finished() && is_mqtt_connected()) {
+    if ((mqtt_semaphore != NULL) && xSemaphoreTake(mqtt_semaphore, 2 * MQTT_FLAG_TIMEOUT) == pdTRUE) {
+      set_mqtt_published(0);
+      msg_id = mqtt_client.publish((const char *)topic, 0, false, (const char *)payload, strlen(payload));
+      if (msg_id > 0) {
+        LOGI(TAG, "published data, msg_id=%d, topic=%s", msg_id, topic);
+      } else {
+        LOGW(TAG, "failed to publish, msg_id=%d", msg_id);
+      }
+      xSemaphoreGive(mqtt_semaphore);
+    } else {
+      LOGW(TAG, "Cannot get mqtt semaphore!!!");
+    }
+  }
 #endif
   return msg_id;
 }
 
 static int mqtt_subscribe(char *topic, int qos) {
+  int msg_id;
 #if defined(USE_MQTTC)
-  int msg_id = mqtt_client_subscribe(mqtt_ctx, topic, qos);
+  msg_id = mqtt_client_subscribe(mqtt_ctx, topic, qos);
   return msg_id;
 #elif defined(USE_LWMQTTC)
   return esp_mqtt_subscribe(topic, qos) == true ? 0 : -1;
+#elif defined(USE_ASYNCMQTT)
+  msg_id = mqtt_client.subscribe(topic, qos);
+  return msg_id;
 #endif
 }
 
@@ -332,7 +352,7 @@ static char *gen_devinfo_resp(void) {
   syscfg_get(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, s_send_interval, sizeof(s_send_interval));
   send_interval = atoi(s_send_interval);
 
-  root = gen_resp_obj("devinfo");
+  root = gen_resp_obj((char *)"devinfo");
   farm_network = cJSON_CreateObject();
 
   cJSON_AddItemToObject(root, REQRES_K_FWVERSION, cJSON_CreateString(fw_version));
@@ -373,7 +393,7 @@ static char *gen_fwupdate_resp(int result) {
   char *output;
   char fw_version[SYSCFG_S_FWVERSION] = { 0 };
 
-  root = gen_resp_obj("fw_update");
+  root = gen_resp_obj((char *)"fw_update");
 
   if (result == 0) {
     cJSON_AddItemToObject(root, REQRES_K_STATE, cJSON_CreateString("success"));
@@ -400,7 +420,7 @@ static char *gen_syscfg_resp(cJSON *action, cJSON *result) {
   cJSON *root;
   char *output;
 
-  root = gen_resp_obj("syscfg");
+  root = gen_resp_obj((char *)"syscfg");
   cJSON_AddItemToObject(root, REQRES_K_ACTION, action);
   cJSON_AddItemToObject(root, REQRES_K_RESULT, result);
 
@@ -423,7 +443,7 @@ static void devinfo_cmd_handler(cJSON *root) {
 static void update_sensor_data_cmd_handler(cJSON *root) {
   (void)root;
 
-  mqtt_publish(mqtt_response, gen_default_resp("update"), 0, 0);
+  mqtt_publish(mqtt_response, gen_default_resp((char *)"update"), 0, 0);
 
 #if (SENSOR_TYPE == SHT3X)
   sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
@@ -464,7 +484,7 @@ static void update_sensor_data_cmd_handler(cJSON *root) {
 static void reset_device_cmd_handler(cJSON *root) {
   (void)root;
 
-  mqtt_publish(mqtt_response, gen_default_resp("reset"), 0, 0);
+  mqtt_publish(mqtt_response, gen_default_resp((char *)"reset"), 0, 0);
   SLOGI(TAG, "Resetting...");
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   esp_restart();
@@ -476,7 +496,7 @@ static void factory_reset_cmd_handler(cJSON *root) {
   if (syscfg_clear((syscfg_type_t)0) != 0) {
     LOGE(TAG, "Failed to sys CFG_DATA clear");
   }
-  mqtt_publish(mqtt_response, gen_default_resp("factory_reset"), 0, 0);
+  mqtt_publish(mqtt_response, gen_default_resp((char *)"factory_reset"), 0, 0);
   SLOGI(TAG, "Resetting...");
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   esp_restart();
@@ -497,7 +517,7 @@ static void wifi_change_cmd_handler(cJSON *root) {
     LOGI(TAG, "Got SSID = [%s] password = [%s]", farmssid, farmpw);
   }
   SLOGI(TAG, "Resetting...");
-  mqtt_publish(mqtt_response, gen_default_resp("wifi_change"), 0, 0);
+  mqtt_publish(mqtt_response, gen_default_resp((char *)"wifi_change"), 0, 0);
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   esp_restart();
 }
@@ -511,7 +531,7 @@ static void server_change_cmd_handler(cJSON *root) {
     LOGI(TAG, "Got server url = %s ", Server->valuestring);
   }
   SLOGI(TAG, "Resetting...");
-  mqtt_publish(mqtt_response, gen_default_resp("server_change"), 0, 0);
+  mqtt_publish(mqtt_response, gen_default_resp((char *)"server_change"), 0, 0);
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   esp_restart();
 }
@@ -520,14 +540,14 @@ static void serach_device_cmd_handler(cJSON *root) {
   (void)root;
 
   set_identification(1);
-  mqtt_publish(mqtt_response, gen_default_resp("search"), 0, 0);
+  mqtt_publish(mqtt_response, gen_default_resp((char *)"search"), 0, 0);
 }
 
 static void spiffs_format_cmd_handler(cJSON *root) {
   (void)root;
 
   sysfile_format();
-  mqtt_publish(mqtt_response, gen_default_resp("spiffs_format"), 0, 0);
+  mqtt_publish(mqtt_response, gen_default_resp((char *)"spiffs_format"), 0, 0);
   SLOGI(TAG, "Resetting...");
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   esp_restart();
@@ -768,17 +788,23 @@ void mqtt_msg_handler(mqtt_msg_t *mqtt_msg) {
 
 static void mqtt_event_callback(void *handler_args, int32_t event_id, void *event_data) {
   mqtt_event_data_t *event = (mqtt_event_data_t *)event_data;
-  mqtt_topic_payload_t mqtt = { 0 };
+  mqtt_topic_payload_t mqtt = {
+    0,
+  };
 
   switch (event_id) {
     case MQTT_EVT_ERROR: LOGI(TAG, "MQTT_EVT_ERROR !!!"); break;
     case MQTT_EVT_BEFORE_CONNECT: LOGI(TAG, "MQTT_EVT_BEFORE_CONNECT !!!"); break;
-    case MQTT_EVT_CONNECTED:
+    case MQTT_EVT_CONNECTED: {
+      int msg_id = 0;
       set_mqtt_connected(1);
+      msg_id = mqtt_subscribe(mqtt_request, 0);
       LOGI(TAG, "MQTT_EVT_CONNECTED !!!");
-      mqtt_subscribe(mqtt_request, 0);
-      // LOGI(TAG, "mqtt_subscribe, msg_id = %d", msg_id);
-      break;
+      LOGI(TAG, "mqtt_subscribe, msg_id = %d", msg_id);
+      if (msg_id < 0) {
+        mqtt_subscribe(mqtt_request, 0);
+      }
+    } break;
     case MQTT_EVT_DISCONNECTED:
       set_mqtt_connected(0);
       set_mqtt_published(0);
@@ -841,6 +867,7 @@ static void status_callback(esp_mqtt_status_t status) {
       set_mqtt_connected(0);
       set_mqtt_published(0);
       set_mqtt_subscribed(0);
+      set_mqtt_init_finished(0);
       LOGI(TAG, "MQTT_STATUS_DISCONNECTED !!!");
       break;
     default: break;
@@ -848,7 +875,60 @@ static void status_callback(esp_mqtt_status_t status) {
 }
 
 static void message_callback(const char *topic, const uint8_t *payload, size_t len, int qos, bool retained) {
+  mqtt_topic_payload_t mqtt = { 0 };
+
+  mqtt.topic = topic;
+  mqtt.topic_len = stelen(topic);
+  mqtt.payload = payload;
+  mqtt.payload_len = len;
+
+  send_msg_to_mqtt_task(MQTT_EVENT_ID, &mqtt, sizeof(mqtt_topic_payload_t));
+
   LOGI(TAG, "Incoming: %s => %s (len = %d, qos = %d, retain = %d)", topic, payload, (int)len, qos, retained);
+}
+
+#elif defined(USE_ASYNCMQTT)
+
+void mqtt_connect_callback(bool session_present) {
+  set_mqtt_connected(1);
+  mqtt_subscribe(mqtt_request, 0);
+  LOGI(TAG, "Connect to MQTT server");
+}
+
+void mqtt_disconnect_callback(AsyncMqttClientDisconnectReason reason) {
+  set_mqtt_connected(0);
+  set_mqtt_published(0);
+  set_mqtt_subscribed(0);
+  set_mqtt_init_finished(0);
+  LOGI(TAG, "Disconnect from MQTT server");
+}
+
+void mqtt_subscribe_callback(uint16_t packet_id, uint8_t qos) {
+  set_mqtt_subscribed(1);
+  LOGI(TAG, "subscribed mqtt data : msg_id = %d", packet_id);
+}
+
+void mqtt_unsubscribe_callback(uint16_t packet_id) {}
+
+void mqtt_message_callback(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len,
+                           size_t index, size_t total) {
+  mqtt_topic_payload_t mqtt = {
+    0,
+  };
+
+  mqtt.topic = topic;
+  mqtt.topic_len = strlen(topic);
+  mqtt.payload = payload;
+  mqtt.payload_len = len;
+
+  send_msg_to_mqtt_task(MQTT_EVENT_ID, &mqtt, sizeof(mqtt_topic_payload_t));
+
+  LOGI(TAG, "Incoming: %s => %s (len = %d)", topic, payload, (int)len);
+}
+
+void mqtt_publish_callback(uint16_t packet_id) {
+  set_mqtt_published(1);
+  LOGI(TAG, "published mqtt data : msg_id = %d", packet_id);
 }
 
 #endif
@@ -871,16 +951,18 @@ int start_mqttc(void) {
     return -1;
   }
 
+  int n_port = atoi(s_port);
+
+  LOGI(TAG, "Host IP address = %s, port = %d", s_host, n_port);
+
 #if defined(USE_LWMQTTC)
   esp_mqtt_start(s_host, s_port, "esp-mqtt", NULL, NULL);
 #elif defined(USE_MQTTC)
-  int n_port = atoi(s_port);
   mqtt_config_t config = {
+    .host = (const char *)s_host,
+    .port = (unsigned int)n_port,
     .transport = MQTT_TCP,
     .event_cb_fn = mqtt_event_callback,
-    // .uri = "mqtt://mqtt.eclipseprojects.io",
-    .host = s_host,
-    .port = n_port,
   };
 
   mqtt_ctx = mqtt_client_init(&config);
@@ -888,6 +970,11 @@ int start_mqttc(void) {
   if (ret != 0) {
     LOGE(TAG, "Failed to mqtt start");
   }
+#elif defined(USE_ASYNCMQTT)
+  IPAddress host_addr(192, 168, 50, 101);
+
+  mqtt_client.setServer(host_addr, n_port);
+  mqtt_client.connect();
 #endif
 
   syscfg_get(SYSCFG_I_DEVICEID, SYSCFG_N_DEVICEID, device_id, SYSCFG_S_DEVICEID);
@@ -909,6 +996,8 @@ void stop_mqttc(void) {
     mqtt_client_deinit(mqtt_ctx);
     mqtt_ctx = NULL;
   }
+#elif defined(USE_ASYNCMQTT)
+  mqtt_client.disconnect();
 #endif
   set_mqtt_init_finished(0);
 }
@@ -933,14 +1022,14 @@ void mqtt_publish_sensor_data(void) {
   sysevent_get(SYSEVENT_BASE, I2C_HUMIDITY_EVENT, &s_humidity, sizeof(s_humidity));
   sysevent_get(SYSEVENT_BASE, I2C_TEMPERATURE_EVENT, &s_temperature, sizeof(s_temperature));
   if (s_temperature[0]) {
-    ret = mqtt_publish(mqtt_temperature, gen_sensor_resp("air", s_temperature, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_temperature, gen_sensor_resp((char *)"air", s_temperature, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   if (s_humidity[0]) {
-    ret = mqtt_publish(mqtt_humidity, gen_sensor_resp("air", s_humidity, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_humidity, gen_sensor_resp((char *)"air", s_humidity, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
@@ -956,21 +1045,21 @@ void mqtt_publish_sensor_data(void) {
   sysevent_get(SYSEVENT_BASE, I2C_HUMIDITY_EVENT, &s_humidity, sizeof(s_humidity));
   sysevent_get(SYSEVENT_BASE, I2C_TEMPERATURE_EVENT, &s_temperature, sizeof(s_temperature));
   if (s_co2[0]) {
-    ret = mqtt_publish(mqtt_co2, gen_sensor_resp("air", s_co2, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_co2, gen_sensor_resp((char *)"air", s_co2, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   if (s_temperature[0]) {
-    ret = mqtt_publish(mqtt_temperature, gen_sensor_resp("air", s_temperature, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_temperature, gen_sensor_resp((char *)"air", s_temperature, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   if (s_humidity[0]) {
-    ret = mqtt_publish(mqtt_humidity, gen_sensor_resp("air", s_humidity, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_humidity, gen_sensor_resp((char *)"air", s_humidity, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
@@ -987,21 +1076,21 @@ void mqtt_publish_sensor_data(void) {
   sysevent_get(SYSEVENT_BASE, MB_MOISTURE_EVENT, s_moisture, sizeof(s_moisture));
   sysevent_get(SYSEVENT_BASE, MB_TEMPERATURE_EVENT, s_temperature, sizeof(s_temperature));
   if (s_saturation_ec[0]) {
-    ret = mqtt_publish(mqtt_saturation_ec, gen_sensor_resp("soil", s_saturation_ec, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_saturation_ec, gen_sensor_resp((char *)"soil", s_saturation_ec, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   if (s_temperature[0]) {
-    ret = mqtt_publish(mqtt_temperature, gen_sensor_resp("soil", s_temperature, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_temperature, gen_sensor_resp((char *)"soil", s_temperature, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   if (s_moisture[0]) {
-    ret = mqtt_publish(mqtt_humidity, gen_sensor_resp("soil", s_moisture, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_humidity, gen_sensor_resp((char *)"soil", s_moisture, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
@@ -1010,7 +1099,7 @@ void mqtt_publish_sensor_data(void) {
   if (s_bulk_ec[0] && s_temperature[0] && s_moisture[0]) {
     char mqtt_bulk_ec[80] = { 0 };
     snprintf(mqtt_bulk_ec, sizeof(mqtt_bulk_ec), BULK_EC_PUB_SUB_TOPIC, device_id);
-    ret = mqtt_publish(mqtt_bulk_ec, gen_sensor_bulkec_resp("log", s_bulk_ec, s_temperature, s_moisture), 0, 0);
+    ret = mqtt_publish(mqtt_bulk_ec, gen_sensor_bulkec_resp((char *)"log", s_bulk_ec, s_temperature, s_moisture), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
@@ -1020,7 +1109,7 @@ void mqtt_publish_sensor_data(void) {
   snprintf(mqtt_ph, sizeof(mqtt_ph), PH_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, MB_WATER_PH_EVENT, s_ph, sizeof(s_ph));
   if (s_ph[0]) {
-    ret = mqtt_publish(mqtt_ph, gen_sensor_resp("water", s_ph, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_ph, gen_sensor_resp((char *)"water", s_ph, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
@@ -1030,7 +1119,7 @@ void mqtt_publish_sensor_data(void) {
   snprintf(mqtt_pyranometer, sizeof(mqtt_pyranometer), SOLAR_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, MB_PYRANOMETER_EVENT, s_pyranometer, sizeof(s_pyranometer));
   if (s_pyranometer[0]) {
-    ret = mqtt_publish(mqtt_pyranometer, gen_sensor_resp("air", s_pyranometer, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_pyranometer, gen_sensor_resp((char *)"air", s_pyranometer, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
@@ -1040,7 +1129,7 @@ void mqtt_publish_sensor_data(void) {
   snprintf(mqtt_ph, sizeof(mqtt_ph), PH_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, I2C_PH_EVENT, s_ph, sizeof(s_ph));
   if (s_ph[0]) {
-    ret = mqtt_publish(mqtt_ph, gen_sensor_resp("water", s_ph, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_ph, gen_sensor_resp((char *)"water", s_ph, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
@@ -1050,7 +1139,7 @@ void mqtt_publish_sensor_data(void) {
   snprintf(mqtt_ec, sizeof(mqtt_ec), EC_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, I2C_EC_EVENT, s_ec, sizeof(s_ec));
   if (s_ec[0]) {
-    ret = mqtt_publish(mqtt_ec, gen_sensor_resp("water", s_ec, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_ec, gen_sensor_resp((char *)"water", s_ec, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
@@ -1062,7 +1151,7 @@ void mqtt_publish_sensor_data(void) {
   sysevent_get(SYSEVENT_BASE, MB_WIND_DIRECTION_EVENT, s_wind_direction, sizeof(s_wind_direction));
   LOGI(TAG, "value : %s", s_wind_direction);
   if (s_wind_direction[0]) {
-    ret = mqtt_publish(mqtt_wind_direction, gen_sensor_resp("air", s_wind_direction, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_wind_direction, gen_sensor_resp((char *)"air", s_wind_direction, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
@@ -1072,7 +1161,7 @@ void mqtt_publish_sensor_data(void) {
   snprintf(mqtt_wind_speed, sizeof(mqtt_wind_speed), WIND_SPEED_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, MB_WIND_SPEED_EVENT, s_wind_speed, sizeof(s_wind_speed));
   if (s_wind_speed[0]) {
-    ret = mqtt_publish(mqtt_wind_speed, gen_sensor_resp("air", s_wind_speed, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_wind_speed, gen_sensor_resp((char *)"air", s_wind_speed, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
@@ -1087,14 +1176,14 @@ void mqtt_publish_sensor_data(void) {
   sysevent_get(SYSEVENT_BASE, MB_TEMPERATURE_EVENT, s_temperature, sizeof(s_temperature));
   LOGI(TAG, "ec: %s, temp: %s", s_ec, s_temperature);
   if (s_ec[0]) {
-    ret = mqtt_publish(mqtt_ec, gen_sensor_resp("water", s_ec, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_ec, gen_sensor_resp((char *)"water", s_ec, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   if (s_temperature[0]) {
-    ret = mqtt_publish(mqtt_temperature, gen_sensor_resp("water", s_temperature, s_battery), 0, 0);
+    ret = mqtt_publish(mqtt_temperature, gen_sensor_resp((char *)"water", s_temperature, s_battery), 0, 0);
     if (ret < 0) {
       LOGI(TAG, "mqtt_publish error!");
     }
@@ -1175,6 +1264,15 @@ void create_mqtt_task(void) {
 
   // Initialize mqtt
   esp_mqtt_init(status_callback, message_callback, 256, 2000);
+
+#elif defined(USE_ASYNCMQTT)
+
+  mqtt_client.onConnect(mqtt_connect_callback);
+  mqtt_client.onDisconnect(mqtt_disconnect_callback);
+  mqtt_client.onSubscribe(mqtt_subscribe_callback);
+  mqtt_client.onUnsubscribe(mqtt_unsubscribe_callback);
+  mqtt_client.onMessage(mqtt_message_callback);
+  mqtt_client.onPublish(mqtt_publish_callback);
 
 #endif
 

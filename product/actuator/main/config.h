@@ -14,7 +14,7 @@
 #define MOTOR 2  /* forward and reverse motor type */
 
 #ifndef ACTUATOR_TYPE
-#define ACTUATOR_TYPE SWITCH
+#define ACTUATOR_TYPE MOTOR
 #endif
 
 #define SENSOR_TYPE -1

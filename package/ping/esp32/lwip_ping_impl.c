@@ -14,8 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define FLAG_TIMEOUT (60 * 1000 / portTICK_RATE_MS)
-
+// #define FLAG_TIMEOUT (60 * 1000 / portTICK_RATE_MS)
 // extern SemaphoreHandle_t mqtt_semaphore;
 
 int do_ping_lwip_impl(char *host, int seq) {
@@ -138,9 +137,9 @@ exit:
     printf("ping fail = [%d]\n", seq);
   }
   //    xSemaphoreGive(mqtt_semaphore);
-  //  } else {
-  //  printf("Cannot get mqtt semaphore!!!");
-  //}
+  // } else {
+  //   printf("Cannot get mqtt semaphore!!!");
+  // }
 
   return ret;
 }

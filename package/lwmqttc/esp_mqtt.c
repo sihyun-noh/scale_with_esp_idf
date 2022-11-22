@@ -5,7 +5,7 @@
 #include <lwmqtt.h>
 #include <string.h>
 
-#if defined(CONFIG_ESP_MQTT_TLS_ENABLE)
+#if defined(CONFIG_LWMQTT_TLS_ENABLE)
 #include "esp_tls_lwmqtt.h"
 #endif
 
@@ -41,14 +41,14 @@ static struct {
   char *client_id;
   char *username;
   char *password;
-} esp_mqtt_config = {0};
+} esp_mqtt_config = { 0 };
 
 static struct {
   char *topic;
   char *payload;
   int qos;
   bool retained;
-} esp_mqtt_lwt_config = {0};
+} esp_mqtt_lwt_config = { 0 };
 
 static bool esp_mqtt_running = false;
 static bool esp_mqtt_connected = false;
@@ -59,11 +59,11 @@ static esp_mqtt_message_callback_t esp_mqtt_message_callback = NULL;
 
 static lwmqtt_client_t esp_mqtt_client;
 
-static esp_lwmqtt_network_t esp_mqtt_network = {0};
+static esp_lwmqtt_network_t esp_mqtt_network = { 0 };
 
-#if defined(CONFIG_ESP_MQTT_TLS_ENABLE)
+#if defined(CONFIG_LWMQTT_TLS_ENABLE)
 static bool esp_mqtt_use_tls = false;
-static esp_tls_lwmqtt_network_t esp_mqtt_tls_network = {0};
+static esp_tls_lwmqtt_network_t esp_mqtt_tls_network = { 0 };
 #endif
 
 static esp_lwmqtt_timer_t esp_mqtt_timer1, esp_mqtt_timer2;
@@ -96,10 +96,10 @@ void esp_mqtt_init(esp_mqtt_status_callback_t scb, esp_mqtt_message_callback_t m
   esp_mqtt_select_mutex = xSemaphoreCreateMutex();
 
   // create queue
-  esp_mqtt_event_queue = xQueueCreate(CONFIG_ESP_MQTT_EVENT_QUEUE_SIZE, sizeof(esp_mqtt_event_t *));
+  esp_mqtt_event_queue = xQueueCreate(CONFIG_LWMQTT_EVENT_QUEUE_SIZE, sizeof(esp_mqtt_event_t *));
 }
 
-#if defined(CONFIG_ESP_MQTT_TLS_ENABLE)
+#if defined(CONFIG_LWMQTT_TLS_ENABLE)
 bool esp_mqtt_tls(bool enable, bool verify, const uint8_t *ca_buf, size_t ca_len) {
   // acquire mutex
   ESP_MQTT_LOCK_MAIN();
@@ -195,7 +195,7 @@ static bool esp_mqtt_process_connect() {
   lwmqtt_init(&esp_mqtt_client, esp_mqtt_write_buffer, esp_mqtt_buffer_size, esp_mqtt_read_buffer,
               esp_mqtt_buffer_size);
 
-#if defined(CONFIG_ESP_MQTT_TLS_ENABLE)
+#if defined(CONFIG_LWMQTT_TLS_ENABLE)
   if (esp_mqtt_use_tls) {
     lwmqtt_set_network(&esp_mqtt_client, &esp_mqtt_tls_network, esp_tls_lwmqtt_network_read,
                        esp_tls_lwmqtt_network_write);
@@ -211,7 +211,7 @@ static bool esp_mqtt_process_connect() {
 
   // initiate network connection
   lwmqtt_err_t err;
-#if defined(CONFIG_ESP_MQTT_TLS_ENABLE)
+#if defined(CONFIG_LWMQTT_TLS_ENABLE)
   if (esp_mqtt_use_tls) {
     err = esp_tls_lwmqtt_network_connect(&esp_mqtt_tls_network, esp_mqtt_config.host, esp_mqtt_config.port);
   } else {
@@ -235,7 +235,7 @@ static bool esp_mqtt_process_connect() {
   // wait for connection
   bool connected = false;
 
-#if defined(CONFIG_ESP_MQTT_TLS_ENABLE)
+#if defined(CONFIG_LWMQTT_TLS_ENABLE)
   if (esp_mqtt_use_tls) {
     err = esp_tls_lwmqtt_network_wait(&esp_mqtt_tls_network, &connected, esp_mqtt_command_timeout);
   } else {
@@ -340,7 +340,7 @@ static void esp_mqtt_process() {
     bool available = false;
 
     lwmqtt_err_t err;
-#if defined(CONFIG_ESP_MQTT_TLS_ENABLE)
+#if defined(CONFIG_LWMQTT_TLS_ENABLE)
     if (esp_mqtt_use_tls) {
       err = esp_tls_lwmqtt_network_select(&esp_mqtt_tls_network, &available, esp_mqtt_command_timeout);
     } else {
@@ -367,7 +367,7 @@ static void esp_mqtt_process() {
       // get available bytes
       size_t available_bytes = 0;
 
-#if defined(CONFIG_ESP_MQTT_TLS_ENABLE)
+#if defined(CONFIG_LWMQTT_TLS_ENABLE)
       if (esp_mqtt_use_tls) {
         err = esp_tls_lwmqtt_network_peek(&esp_mqtt_tls_network, &available_bytes, esp_mqtt_command_timeout);
       } else {
@@ -414,7 +414,7 @@ static void esp_mqtt_process() {
   ESP_MQTT_LOCK_MAIN();
 
 // disconnect network
-#if defined(CONFIG_ESP_MQTT_TLS_ENABLE)
+#if defined(CONFIG_LWMQTT_TLS_ENABLE)
   if (esp_mqtt_use_tls) {
     esp_tls_lwmqtt_network_disconnect(&esp_mqtt_tls_network);
   } else {
@@ -552,8 +552,8 @@ bool esp_mqtt_start(const char *host, const char *port, const char *client_id, c
 
   // create mqtt thread
   ESP_LOGI(ESP_MQTT_LOG_TAG, "esp_mqtt_start: create task");
-  BaseType_t ret = xTaskCreatePinnedToCore(esp_mqtt_run, "esp_mqtt", CONFIG_ESP_MQTT_TASK_STACK_SIZE, NULL,
-                                           CONFIG_ESP_MQTT_TASK_STACK_PRIORITY, &esp_mqtt_task, 1);
+  BaseType_t ret = xTaskCreatePinnedToCore(esp_mqtt_run, "esp_mqtt", CONFIG_LWMQTT_TASK_STACK_SIZE, NULL,
+                                           CONFIG_LWMQTT_TASK_STACK_PRIORITY, &esp_mqtt_task, 1);
   if (ret != pdPASS) {
     ESP_LOGW(ESP_MQTT_LOG_TAG, "esp_mqtt_start: failed to create task");
     ESP_MQTT_UNLOCK_MAIN();
@@ -637,7 +637,7 @@ bool esp_mqtt_publish(const char *topic, const uint8_t *payload, size_t len, int
   lwmqtt_message_t message;
   message.qos = (lwmqtt_qos_t)qos;
   message.retained = retained;
-  message.payload = (uint8_t*)payload;
+  message.payload = (uint8_t *)payload;
   message.payload_len = len;
 
   // publish message
@@ -679,7 +679,7 @@ void esp_mqtt_stop() {
   }
 
 // disconnect network
-#if defined(CONFIG_ESP_MQTT_TLS_ENABLE)
+#if defined(CONFIG_LWMQTT_TLS_ENABLE)
   if (esp_mqtt_use_tls) {
     esp_tls_lwmqtt_network_disconnect(&esp_mqtt_tls_network);
   } else {
