@@ -5,29 +5,29 @@
 // http://www.ecoscentric.com/ecospro/doc/html/ref/lwip-api-sequential-reference.html.
 // http://ww1.microchip.com/downloads/en/AppNotes/Atmel-42233-Using-the-lwIP-Network-Stack_AP-Note_AT04055.pdf
 
-#include "esp_lwmqtt.h"
+#include "lwmqttc.h"
 
-void esp_lwmqtt_timer_set(void *ref, uint32_t timeout) {
+void lwmqtt_timer_set(void *ref, uint32_t timeout) {
   // cast timer reference
-  esp_lwmqtt_timer_t *t = (esp_lwmqtt_timer_t *)ref;
+  lwmqtt_timer_t *t = (lwmqtt_timer_t *)ref;
 
   // set deadline
   t->deadline = (xTaskGetTickCount() * portTICK_PERIOD_MS) + timeout;
 }
 
-int32_t esp_lwmqtt_timer_get(void *ref) {
+int32_t lwmqtt_timer_get(void *ref) {
   // cast timer reference
-  esp_lwmqtt_timer_t *t = (esp_lwmqtt_timer_t *)ref;
+  lwmqtt_timer_t *t = (lwmqtt_timer_t *)ref;
 
   return (int32_t)t->deadline - (int32_t)(xTaskGetTickCount() * portTICK_PERIOD_MS);
 }
 
-lwmqtt_err_t esp_lwmqtt_network_connect(esp_lwmqtt_network_t *n, char *host, char *port) {
+lwmqtt_err_t lwmqtt_network_connect(lwmqtt_network_t *n, char *host, char *port) {
   // disconnect if not already the case
-  esp_lwmqtt_network_disconnect(n);
+  lwmqtt_network_disconnect(n);
 
   // prepare hints
-  struct addrinfo hints = {.ai_family = AF_INET, .ai_socktype = SOCK_STREAM};
+  struct addrinfo hints = { .ai_family = AF_INET, .ai_socktype = SOCK_STREAM };
 
   // lookup ip address (there is no way to configure a timeout)
   struct addrinfo *res;
@@ -74,7 +74,7 @@ lwmqtt_err_t esp_lwmqtt_network_connect(esp_lwmqtt_network_t *n, char *host, cha
   return LWMQTT_SUCCESS;
 }
 
-lwmqtt_err_t esp_lwmqtt_network_wait(esp_lwmqtt_network_t *n, bool *connected, uint32_t timeout) {
+lwmqtt_err_t lwmqtt_network_wait(lwmqtt_network_t *n, bool *connected, uint32_t timeout) {
   // prepare sets
   fd_set set;
   fd_set ex_set;
@@ -84,7 +84,7 @@ lwmqtt_err_t esp_lwmqtt_network_wait(esp_lwmqtt_network_t *n, bool *connected, u
   FD_SET(n->socket, &ex_set);
 
   // wait for data
-  struct timeval t = {.tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000};
+  struct timeval t = { .tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000 };
   int result = select(n->socket + 1, NULL, &set, &ex_set, &t);
   if (result < 0 || FD_ISSET(n->socket, &ex_set)) {
     close(n->socket);
@@ -104,7 +104,7 @@ lwmqtt_err_t esp_lwmqtt_network_wait(esp_lwmqtt_network_t *n, bool *connected, u
   return LWMQTT_SUCCESS;
 }
 
-void esp_lwmqtt_network_disconnect(esp_lwmqtt_network_t *n) {
+void lwmqtt_network_disconnect(lwmqtt_network_t *n) {
   // close socket if present
   if (n->socket) {
     close(n->socket);
@@ -112,7 +112,7 @@ void esp_lwmqtt_network_disconnect(esp_lwmqtt_network_t *n) {
   }
 }
 
-lwmqtt_err_t esp_lwmqtt_network_select(esp_lwmqtt_network_t *n, bool *available, uint32_t timeout) {
+lwmqtt_err_t lwmqtt_network_select(lwmqtt_network_t *n, bool *available, uint32_t timeout) {
   // prepare sets
   fd_set set;
   fd_set ex_set;
@@ -122,7 +122,7 @@ lwmqtt_err_t esp_lwmqtt_network_select(esp_lwmqtt_network_t *n, bool *available,
   FD_SET(n->socket, &ex_set);
 
   // wait for data
-  struct timeval t = {.tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000};
+  struct timeval t = { .tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000 };
   int result = select(n->socket + 1, &set, NULL, &ex_set, &t);
   if (result < 0 || FD_ISSET(n->socket, &ex_set)) {
     return LWMQTT_NETWORK_FAILED_READ;
@@ -134,7 +134,7 @@ lwmqtt_err_t esp_lwmqtt_network_select(esp_lwmqtt_network_t *n, bool *available,
   return LWMQTT_SUCCESS;
 }
 
-lwmqtt_err_t esp_lwmqtt_network_peek(esp_lwmqtt_network_t *n, size_t *available) {
+lwmqtt_err_t lwmqtt_network_peek(lwmqtt_network_t *n, size_t *available) {
   // check if socket is valid
   char buf;
   int ret = recv(n->socket, &buf, 1, MSG_PEEK | MSG_DONTWAIT);
@@ -151,12 +151,12 @@ lwmqtt_err_t esp_lwmqtt_network_peek(esp_lwmqtt_network_t *n, size_t *available)
   return LWMQTT_SUCCESS;
 }
 
-lwmqtt_err_t esp_lwmqtt_network_read(void *ref, uint8_t *buffer, size_t len, size_t *received, uint32_t timeout) {
+lwmqtt_err_t lwmqtt_network_read(void *ref, uint8_t *buffer, size_t len, size_t *received, uint32_t timeout) {
   // cast network reference
-  esp_lwmqtt_network_t *n = (esp_lwmqtt_network_t *)ref;
+  lwmqtt_network_t *n = (lwmqtt_network_t *)ref;
 
   // set timeout
-  struct timeval t = {.tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000};
+  struct timeval t = { .tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000 };
   int rc = setsockopt(n->socket, SOL_SOCKET, SO_RCVTIMEO, (char *)&t, sizeof(t));
   if (rc < 0) {
     return LWMQTT_NETWORK_FAILED_READ;
@@ -176,12 +176,12 @@ lwmqtt_err_t esp_lwmqtt_network_read(void *ref, uint8_t *buffer, size_t len, siz
   return LWMQTT_SUCCESS;
 }
 
-lwmqtt_err_t esp_lwmqtt_network_write(void *ref, uint8_t *buffer, size_t len, size_t *sent, uint32_t timeout) {
+lwmqtt_err_t lwmqtt_network_write(void *ref, uint8_t *buffer, size_t len, size_t *sent, uint32_t timeout) {
   // cast network reference
-  esp_lwmqtt_network_t *n = (esp_lwmqtt_network_t *)ref;
+  lwmqtt_network_t *n = (lwmqtt_network_t *)ref;
 
   // set timeout
-  struct timeval t = {.tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000};
+  struct timeval t = { .tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000 };
   int rc = setsockopt(n->socket, SOL_SOCKET, SO_SNDTIMEO, (char *)&t, sizeof(t));
   if (rc < 0) {
     return LWMQTT_NETWORK_FAILED_WRITE;
