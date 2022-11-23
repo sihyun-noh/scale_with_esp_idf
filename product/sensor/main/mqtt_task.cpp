@@ -10,7 +10,7 @@
 #if defined(USE_MQTTC)
 #include "mqtt.h"
 #elif defined(USE_LWMQTTC)
-#include "esp_mqtt.h"
+#include "mqttc.h"
 #elif defined(USE_ASYNCMQTT)
 #include "AsyncMqttClient.h"
 #endif
@@ -148,8 +148,8 @@ static int mqtt_publish(char *topic, char *payload, int qos, int retain) {
   if (is_mqtt_init_finished() && is_mqtt_connected()) {
     if ((mqtt_semaphore != NULL) && xSemaphoreTake(mqtt_semaphore, 2 * MQTT_FLAG_TIMEOUT) == pdTRUE) {
       set_mqtt_published(0);
-      if (esp_mqtt_publish((const char *)topic, (const uint8_t *)payload, strlen(payload), qos,
-                           (retain == 1) ? true : false)) {
+      if (lwmqtt_client_publish((const char *)topic, (const uint8_t *)payload, strlen(payload), qos,
+                                (retain == 1) ? true : false)) {
         LOGI(TAG, "published data, topic: %s", topic);
         msg_id = 0;
       } else {
@@ -185,7 +185,7 @@ static int mqtt_subscribe(char *topic, int qos) {
   msg_id = mqtt_client_subscribe(mqtt_ctx, topic, qos);
   return msg_id;
 #elif defined(USE_LWMQTTC)
-  return esp_mqtt_subscribe(topic, qos) == true ? 0 : -1;
+  return lwmqtt_client_subscribe(topic, qos) == true ? 0 : -1;
 #elif defined(USE_ASYNCMQTT)
   msg_id = mqtt_client.subscribe(topic, qos);
   return msg_id;
@@ -962,7 +962,7 @@ int start_mqttc(void) {
   LOGI(TAG, "Host IP address = %s, port = %d", s_host, n_port);
 
 #if defined(USE_LWMQTTC)
-  esp_mqtt_start(s_host, s_port, "esp-mqtt", NULL, NULL);
+  lwmqtt_client_start(s_host, s_port, "mqtt", NULL, NULL);
 #elif defined(USE_MQTTC)
   mqtt_config_t config = {
     .host = (const char *)s_host,
@@ -994,7 +994,7 @@ int start_mqttc(void) {
 
 void stop_mqttc(void) {
 #if defined(USE_LWMQTTC)
-  esp_mqtt_stop();
+  lwmqtt_client_stop();
 #elif defined(USE_MQTTC)
   if (mqtt_ctx) {
     mqtt_client_disconnect(mqtt_ctx);
@@ -1269,7 +1269,7 @@ void create_mqtt_task(void) {
 #if defined(USE_LWMQTTC)
 
   // Initialize mqtt
-  esp_mqtt_init(status_callback, message_callback, 256, 2000);
+  lwmqtt_client_init(status_callback, message_callback, 256, 2000);
 
 #elif defined(USE_ASYNCMQTT)
 
