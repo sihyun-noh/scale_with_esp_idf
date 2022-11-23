@@ -177,7 +177,7 @@ static void _dbg_list(syslog_list_t *list) {
     } else {
       mark = (char *)"";
     }
-    printf("%.64s (%d) %s\n", log->message, log->num, mark);
+    printf("%.64s (%ld) %s\n", log->message, log->num, mark);
     log = log->next;
   } while (log);
 }

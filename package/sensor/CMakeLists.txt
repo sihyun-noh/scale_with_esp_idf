@@ -1,4 +1,4 @@
-set(req driver freertos hal esp_adc_cal syslog pal)
+set(req driver freertos hal esp_adc syslog pal)
 
 set(srcs)
 set(includes)

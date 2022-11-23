@@ -26,7 +26,7 @@
 #define RK500_13 10 /* Water EC Rika Sensor */
 
 #ifndef SENSOR_TYPE
-#define SENSOR_TYPE RK520_02
+#define SENSOR_TYPE SHT3X
 #endif
 
 #define ACTUATOR_TYPE -1

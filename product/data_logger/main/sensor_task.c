@@ -182,7 +182,7 @@ int sensor_init(void) {
     LOGI(TAG, "Success to initialize modbus master");
   }
 
-  vTaskDelay(1000 / portTICK_RATE_MS);
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
 
   mb_master_register_characteristic(&mb_characteristic[0], num_characteristic);
 #endif
@@ -362,7 +362,7 @@ int read_soil_ec(void) {
         LOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
       }
 
-      vTaskDelay(500 / portTICK_RATE_MS);
+      vTaskDelay(500 / portTICK_PERIOD_MS);
     }
   }
   return res;
@@ -398,7 +398,7 @@ int read_water_ph(void) {
         LOGI(TAG, "Power mode > ph : %.2f", f_ph);
       }
 
-      vTaskDelay(500 / portTICK_RATE_MS);
+      vTaskDelay(500 / portTICK_PERIOD_MS);
     }
   }
   return res;

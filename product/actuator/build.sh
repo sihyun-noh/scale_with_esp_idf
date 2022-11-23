@@ -62,7 +62,7 @@ PARENT_PATH="${PROD_PATH%/*/*}"
 TOOL_PATH="${PARENT_PATH}/"thirdparty/esp
 
 #esp-idf version
-ESP_IDF_VER="v4.4.1"
+ESP_IDF_VER="v5.0-rc1"
 
 # get esp-idf
 downloadSdk() {
@@ -107,6 +107,8 @@ checkDeviceConnect() {
 }
 
 prodBuild() {
+    idf.py add-dependency espressif/mdns^1.0.7
+    idf.py add-dependency espressif/esp-modbus^1.0.5
     mkdir -p build
     cd build
     cmake .. -G Ninja

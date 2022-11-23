@@ -206,7 +206,7 @@ void app_main(void) {
       } break;
       case SLEEP_MODE: {
         stop_mqttc();
-        vTaskDelay(5000 / portTICK_RATE_MS);
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
         sleep_timer_wakeup(30);
         set_operation_mode(SYSTEM_INIT_MODE);
       } break;
