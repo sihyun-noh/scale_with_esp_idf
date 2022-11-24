@@ -69,7 +69,7 @@ static int mqtt_subscribe(char *topic, int qos) {
 static void mqtt_event_callback(void *handler_args, int32_t event_id, void *event_data) {
   mqtt_event_data_t *event = (mqtt_event_data_t *)event_data;
 
-  printf("Event id: %d\n", event_id);
+  printf("Event id: %ld\n", event_id);
   printf("event msg_id = %d\n", event->msg_id);
   switch (event_id) {
     case MQTT_EVT_ERROR: printf("event MQTT_EVT_ERROR\n"); break;

@@ -107,8 +107,6 @@ checkDeviceConnect() {
 }
 
 prodBuild() {
-    idf.py add-dependency espressif/mdns^1.0.7
-    idf.py add-dependency espressif/esp-modbus^1.0.5
     mkdir -p build
     cd build
     cmake .. -G Ninja

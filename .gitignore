@@ -2,7 +2,6 @@ build/
 product/**/build
 product/**/managed_components
 product/**/dependencies.lock
-product/**/main/idf_component.yml
 .vscode/
 .DS_Store
 .cache

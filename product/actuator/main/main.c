@@ -15,6 +15,7 @@
 #include "config.h"
 
 #include <string.h>
+#include <time.h>
 
 static const char *TAG = "main_app";
 
@@ -174,7 +175,7 @@ void app_main(void) {
       } break;
       case TIME_ZONE_SET_MODE: {
         if (is_device_onboard()) {
-          struct tm time;
+          struct tm time = { 0 };
           tm_set_time(3600 * KR_GMT_OFFSET, 3600 * KR_DST_OFFSET, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
           if (tm_get_local_time(&time, 20000)) {
             g_last_ntp_check_time = xTaskGetTickCount();
