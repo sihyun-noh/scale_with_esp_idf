@@ -1,3 +1,5 @@
+#include "esp_mac.h"
+
 #include "log.h"
 #include "AsyncMqttClient.hpp"
 

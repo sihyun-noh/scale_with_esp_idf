@@ -552,15 +552,9 @@ bool esp_mqtt_start(const char *host, const char *port, const char *client_id, c
   }
 
   // create mqtt thread
-<<<<<<< HEAD
-  ESP_LOGI(ESP_MQTT_LOG_TAG, "esp_mqtt_start: create task");
+  LOGI(ESP_MQTT_LOG_TAG, "esp_mqtt_start: create task");
   BaseType_t ret = xTaskCreatePinnedToCore(esp_mqtt_run, "esp_mqtt", CONFIG_LWMQTT_TASK_STACK_SIZE, NULL,
                                            CONFIG_LWMQTT_TASK_STACK_PRIORITY, &esp_mqtt_task, 1);
-=======
-  LOGI(ESP_MQTT_LOG_TAG, "esp_mqtt_start: create task");
-  BaseType_t ret = xTaskCreatePinnedToCore(esp_mqtt_run, "esp_mqtt", CONFIG_ESP_MQTT_TASK_STACK_SIZE, NULL,
-                                           CONFIG_ESP_MQTT_TASK_STACK_PRIORITY, &esp_mqtt_task, 1);
->>>>>>> 2b76f46 (feat : Modify codes to upgrade IDF v5.0)
   if (ret != pdPASS) {
     LOGW(ESP_MQTT_LOG_TAG, "esp_mqtt_start: failed to create task");
     ESP_MQTT_UNLOCK_MAIN();

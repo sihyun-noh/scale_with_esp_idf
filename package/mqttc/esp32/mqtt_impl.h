@@ -18,6 +18,8 @@
 
 #include <stdint.h>
 
+#include <mqtt_client.h>
+
 #include "mqtt.h"
 
 #ifdef __cplusplus
