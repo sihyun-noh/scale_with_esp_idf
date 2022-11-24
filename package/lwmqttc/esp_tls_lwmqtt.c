@@ -1,6 +1,8 @@
 #include <lwip/netdb.h>
 #include <string.h>  // needed
 
+#include "log.h"
+
 // mbed TLS documentation: https://tls.mbed.org
 
 #include "esp_tls_lwmqtt.h"
@@ -8,7 +10,7 @@
 static void esp_tls_log(const char *name, int ret) {
   char str[256];
   mbedtls_strerror(ret, str, 256);
-  ESP_LOGE("esp-mqtt", "%s: %s (%d)", name, str, ret);
+  LOGE("esp-mqtt", "%s: %s (%d)", name, str, ret);
 }
 
 lwmqtt_err_t esp_tls_lwmqtt_network_connect(esp_tls_lwmqtt_network_t *n, char *host, char *port) {
@@ -86,9 +88,9 @@ lwmqtt_err_t esp_tls_lwmqtt_network_connect(esp_tls_lwmqtt_network_t *n, char *h
   if (n->verify) {
     uint32_t flags = mbedtls_ssl_get_verify_result(&n->ssl);
     if (flags != 0) {
-      char verify_buf[100] = {0};
+      char verify_buf[100] = { 0 };
       mbedtls_x509_crt_verify_info(verify_buf, sizeof(verify_buf), "  ! ", flags);
-      ESP_LOGE("esp-mqtt", "%mbedtls_ssl_get_verify_result: %s (%d)", verify_buf, flags);
+      LOGE("esp-mqtt", "%mbedtls_ssl_get_verify_result: %s (%d)", verify_buf, flags);
     }
   }
 
@@ -112,7 +114,7 @@ lwmqtt_err_t esp_tls_lwmqtt_network_wait(esp_tls_lwmqtt_network_t *n, bool *conn
   FD_SET(n->socket.fd, &ex_set);
 
   // wait for data
-  struct timeval t = {.tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000};
+  struct timeval t = { .tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000 };
   int result = select(n->socket.fd + 1, NULL, &set, &ex_set, &t);
   if (result < 0 || FD_ISSET(n->socket.fd, &ex_set)) {
     return LWMQTT_NETWORK_FAILED_CONNECT;
@@ -157,7 +159,7 @@ lwmqtt_err_t esp_tls_lwmqtt_network_select(esp_tls_lwmqtt_network_t *n, bool *av
   FD_SET(n->socket.fd, &ex_set);
 
   // wait for data
-  struct timeval t = {.tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000};
+  struct timeval t = { .tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000 };
   int result = select(n->socket.fd + 1, &set, NULL, &ex_set, &t);
   if (result < 0 || FD_ISSET(n->socket.fd, &ex_set)) {
     return LWMQTT_NETWORK_FAILED_READ;
@@ -171,7 +173,7 @@ lwmqtt_err_t esp_tls_lwmqtt_network_select(esp_tls_lwmqtt_network_t *n, bool *av
 
 lwmqtt_err_t esp_tls_lwmqtt_network_peek(esp_tls_lwmqtt_network_t *n, size_t *available, uint32_t timeout) {
   // set timeout
-  struct timeval t = {.tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000};
+  struct timeval t = { .tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000 };
   int rc = setsockopt(n->socket.fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&t, sizeof(t));
   if (rc < 0) {
     return LWMQTT_NETWORK_FAILED_READ;
@@ -211,7 +213,7 @@ lwmqtt_err_t esp_tls_lwmqtt_network_read(void *ref, uint8_t *buffer, size_t len,
   esp_tls_lwmqtt_network_t *n = (esp_tls_lwmqtt_network_t *)ref;
 
   // set timeout
-  struct timeval t = {.tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000};
+  struct timeval t = { .tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000 };
   int rc = setsockopt(n->socket.fd, SOL_SOCKET, SO_RCVTIMEO, (char *)&t, sizeof(t));
   if (rc < 0) {
     return LWMQTT_NETWORK_FAILED_READ;
@@ -237,7 +239,7 @@ lwmqtt_err_t esp_tls_lwmqtt_network_write(void *ref, uint8_t *buffer, size_t len
   esp_tls_lwmqtt_network_t *n = (esp_tls_lwmqtt_network_t *)ref;
 
   // set timeout
-  struct timeval t = {.tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000};
+  struct timeval t = { .tv_sec = timeout / 1000, .tv_usec = (timeout % 1000) * 1000 };
   int rc = setsockopt(n->socket.fd, SOL_SOCKET, SO_SNDTIMEO, (char *)&t, sizeof(t));
   if (rc < 0) {
     return LWMQTT_NETWORK_FAILED_WRITE;

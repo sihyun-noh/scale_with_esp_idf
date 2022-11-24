@@ -1,9 +1,10 @@
-#include <esp_log.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
 #include <freertos/task.h>
 #include <lwmqtt.h>
 #include <string.h>
+
+#include "log.h"
 
 #if defined(CONFIG_LWMQTT_TLS_ENABLE)
 #include "esp_tls_lwmqtt.h"
@@ -121,7 +122,7 @@ bool esp_mqtt_tls(bool enable, bool verify, const uint8_t *ca_buf, size_t ca_len
 
   // check ca certificate
   if (verify && (!ca_buf || ca_len <= 0)) {
-    ESP_LOGE(ESP_MQTT_LOG_TAG, "esp_mqtt_tls: ca_buf must be not NULL when verify is enabled.");
+    LOGE(ESP_MQTT_LOG_TAG, "esp_mqtt_tls: ca_buf must be not NULL when verify is enabled.");
     ESP_MQTT_UNLOCK_MAIN();
     return false;
   }
@@ -170,7 +171,7 @@ static void esp_mqtt_message_handler(lwmqtt_client_t *client, void *ref, lwmqtt_
 
   // queue event
   if (xQueueSend(esp_mqtt_event_queue, &evt, 0) != pdTRUE) {
-    ESP_LOGE(ESP_MQTT_LOG_TAG, "xQueueSend: queue is full, dropping message");
+    LOGE(ESP_MQTT_LOG_TAG, "xQueueSend: queue is full, dropping message");
     free(evt);
   }
 }
@@ -222,7 +223,7 @@ static bool esp_mqtt_process_connect() {
 #endif
 
   if (err != LWMQTT_SUCCESS) {
-    ESP_LOGE(ESP_MQTT_LOG_TAG, "esp_lwmqtt_network_connect: %d", err);
+    LOGE(ESP_MQTT_LOG_TAG, "esp_lwmqtt_network_connect: %d", err);
     return false;
   }
 
@@ -246,7 +247,7 @@ static bool esp_mqtt_process_connect() {
 #endif
 
   if (err != LWMQTT_SUCCESS) {
-    ESP_LOGE(ESP_MQTT_LOG_TAG, "esp_lwmqtt_network_wait: %d", err);
+    LOGE(ESP_MQTT_LOG_TAG, "esp_lwmqtt_network_wait: %d", err);
     return false;
   }
 
@@ -280,7 +281,7 @@ static bool esp_mqtt_process_connect() {
   err =
       lwmqtt_connect(&esp_mqtt_client, options, will.topic.len ? &will : NULL, &return_code, esp_mqtt_command_timeout);
   if (err != LWMQTT_SUCCESS) {
-    ESP_LOGE(ESP_MQTT_LOG_TAG, "lwmqtt_connect: %d", err);
+    LOGE(ESP_MQTT_LOG_TAG, "lwmqtt_connect: %d", err);
     return false;
   }
 
@@ -291,7 +292,7 @@ static void esp_mqtt_process() {
   // connection loop
   for (;;) {
     // log attempt
-    ESP_LOGI(ESP_MQTT_LOG_TAG, "esp_mqtt_process: begin connection attempt");
+    LOGI(ESP_MQTT_LOG_TAG, "esp_mqtt_process: begin connection attempt");
 
     // acquire mutex
     ESP_MQTT_LOCK_MAIN();
@@ -299,7 +300,7 @@ static void esp_mqtt_process() {
     // make connection attempt
     if (esp_mqtt_process_connect()) {
       // log success
-      ESP_LOGI(ESP_MQTT_LOG_TAG, "esp_mqtt_process: connection attempt successful");
+      LOGI(ESP_MQTT_LOG_TAG, "esp_mqtt_process: connection attempt successful");
 
       // set flag
       esp_mqtt_connected = true;
@@ -315,7 +316,7 @@ static void esp_mqtt_process() {
     ESP_MQTT_UNLOCK_MAIN();
 
     // log fail
-    ESP_LOGW(ESP_MQTT_LOG_TAG, "esp_mqtt_process: connection attempt failed");
+    LOGW(ESP_MQTT_LOG_TAG, "esp_mqtt_process: connection attempt failed");
 
     // delay loop by 1s and yield to other processes
     vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -351,7 +352,7 @@ static void esp_mqtt_process() {
 #endif
 
     if (err != LWMQTT_SUCCESS) {
-      ESP_LOGE(ESP_MQTT_LOG_TAG, "esp_lwmqtt_network_select: %d", err);
+      LOGE(ESP_MQTT_LOG_TAG, "esp_lwmqtt_network_select: %d", err);
       ESP_MQTT_UNLOCK_SELECT();
       break;
     }
@@ -378,7 +379,7 @@ static void esp_mqtt_process() {
 #endif
 
       if (err != LWMQTT_SUCCESS) {
-        ESP_LOGE(ESP_MQTT_LOG_TAG, "esp_lwmqtt_network_peek: %d", err);
+        LOGE(ESP_MQTT_LOG_TAG, "esp_lwmqtt_network_peek: %d", err);
         ESP_MQTT_UNLOCK_MAIN();
         break;
       }
@@ -388,7 +389,7 @@ static void esp_mqtt_process() {
       if (available_bytes > 0) {
         err = lwmqtt_yield(&esp_mqtt_client, available_bytes, esp_mqtt_command_timeout);
         if (err != LWMQTT_SUCCESS) {
-          ESP_LOGE(ESP_MQTT_LOG_TAG, "lwmqtt_yield: %d", err);
+          LOGE(ESP_MQTT_LOG_TAG, "lwmqtt_yield: %d", err);
           ESP_MQTT_UNLOCK_MAIN();
           break;
         }
@@ -398,7 +399,7 @@ static void esp_mqtt_process() {
     // do mqtt background work
     err = lwmqtt_keep_alive(&esp_mqtt_client, esp_mqtt_command_timeout);
     if (err != LWMQTT_SUCCESS) {
-      ESP_LOGE(ESP_MQTT_LOG_TAG, "lwmqtt_keep_alive: %d", err);
+      LOGE(ESP_MQTT_LOG_TAG, "lwmqtt_keep_alive: %d", err);
       ESP_MQTT_UNLOCK_MAIN();
       break;
     }
@@ -432,7 +433,7 @@ static void esp_mqtt_process() {
   ESP_MQTT_UNLOCK_MAIN();
 
   // log event
-  ESP_LOGI(ESP_MQTT_LOG_TAG, "esp_mqtt_process: lost connection");
+  LOGI(ESP_MQTT_LOG_TAG, "esp_mqtt_process: lost connection");
 
   // call callback if existing
   if (esp_mqtt_status_callback) {
@@ -490,7 +491,7 @@ bool esp_mqtt_start(const char *host, const char *port, const char *client_id, c
 
   // check if already running
   if (esp_mqtt_running) {
-    ESP_LOGW(ESP_MQTT_LOG_TAG, "esp_mqtt_start: already running");
+    LOGW(ESP_MQTT_LOG_TAG, "esp_mqtt_start: already running");
     ESP_MQTT_UNLOCK_MAIN();
     return true;
   }
@@ -551,11 +552,17 @@ bool esp_mqtt_start(const char *host, const char *port, const char *client_id, c
   }
 
   // create mqtt thread
+<<<<<<< HEAD
   ESP_LOGI(ESP_MQTT_LOG_TAG, "esp_mqtt_start: create task");
   BaseType_t ret = xTaskCreatePinnedToCore(esp_mqtt_run, "esp_mqtt", CONFIG_LWMQTT_TASK_STACK_SIZE, NULL,
                                            CONFIG_LWMQTT_TASK_STACK_PRIORITY, &esp_mqtt_task, 1);
+=======
+  LOGI(ESP_MQTT_LOG_TAG, "esp_mqtt_start: create task");
+  BaseType_t ret = xTaskCreatePinnedToCore(esp_mqtt_run, "esp_mqtt", CONFIG_ESP_MQTT_TASK_STACK_SIZE, NULL,
+                                           CONFIG_ESP_MQTT_TASK_STACK_PRIORITY, &esp_mqtt_task, 1);
+>>>>>>> 2b76f46 (feat : Modify codes to upgrade IDF v5.0)
   if (ret != pdPASS) {
-    ESP_LOGW(ESP_MQTT_LOG_TAG, "esp_mqtt_start: failed to create task");
+    LOGW(ESP_MQTT_LOG_TAG, "esp_mqtt_start: failed to create task");
     ESP_MQTT_UNLOCK_MAIN();
     return false;
   }
@@ -575,7 +582,7 @@ bool esp_mqtt_subscribe(const char *topic, int qos) {
 
   // check if still connected
   if (!esp_mqtt_connected) {
-    ESP_LOGW(ESP_MQTT_LOG_TAG, "esp_mqtt_subscribe: not connected");
+    LOGW(ESP_MQTT_LOG_TAG, "esp_mqtt_subscribe: not connected");
     ESP_MQTT_UNLOCK_MAIN();
     return false;
   }
@@ -585,7 +592,7 @@ bool esp_mqtt_subscribe(const char *topic, int qos) {
       lwmqtt_subscribe_one(&esp_mqtt_client, lwmqtt_string(topic), (lwmqtt_qos_t)qos, esp_mqtt_command_timeout);
   if (err != LWMQTT_SUCCESS) {
     esp_mqtt_error = true;
-    ESP_LOGE(ESP_MQTT_LOG_TAG, "lwmqtt_subscribe_one: %d", err);
+    LOGE(ESP_MQTT_LOG_TAG, "lwmqtt_subscribe_one: %d", err);
     ESP_MQTT_UNLOCK_MAIN();
     return false;
   }
@@ -602,7 +609,7 @@ bool esp_mqtt_unsubscribe(const char *topic) {
 
   // check if still connected
   if (!esp_mqtt_connected) {
-    ESP_LOGW(ESP_MQTT_LOG_TAG, "esp_mqtt_unsubscribe: not connected");
+    LOGW(ESP_MQTT_LOG_TAG, "esp_mqtt_unsubscribe: not connected");
     ESP_MQTT_UNLOCK_MAIN();
     return false;
   }
@@ -611,7 +618,7 @@ bool esp_mqtt_unsubscribe(const char *topic) {
   lwmqtt_err_t err = lwmqtt_unsubscribe_one(&esp_mqtt_client, lwmqtt_string(topic), esp_mqtt_command_timeout);
   if (err != LWMQTT_SUCCESS) {
     esp_mqtt_error = true;
-    ESP_LOGE(ESP_MQTT_LOG_TAG, "lwmqtt_unsubscribe_one: %d", err);
+    LOGE(ESP_MQTT_LOG_TAG, "lwmqtt_unsubscribe_one: %d", err);
     ESP_MQTT_UNLOCK_MAIN();
     return false;
   }
@@ -628,7 +635,7 @@ bool esp_mqtt_publish(const char *topic, const uint8_t *payload, size_t len, int
 
   // check if still connected
   if (!esp_mqtt_connected) {
-    ESP_LOGW(ESP_MQTT_LOG_TAG, "esp_mqtt_publish: not connected");
+    LOGW(ESP_MQTT_LOG_TAG, "esp_mqtt_publish: not connected");
     ESP_MQTT_UNLOCK_MAIN();
     return false;
   }
@@ -644,7 +651,7 @@ bool esp_mqtt_publish(const char *topic, const uint8_t *payload, size_t len, int
   lwmqtt_err_t err = lwmqtt_publish(&esp_mqtt_client, lwmqtt_string(topic), message, esp_mqtt_command_timeout);
   if (err != LWMQTT_SUCCESS) {
     esp_mqtt_error = true;
-    ESP_LOGE(ESP_MQTT_LOG_TAG, "lwmqtt_publish: %d", err);
+    LOGE(ESP_MQTT_LOG_TAG, "lwmqtt_publish: %d", err);
     ESP_MQTT_UNLOCK_MAIN();
     return false;
   }
@@ -671,7 +678,7 @@ void esp_mqtt_stop() {
   if (esp_mqtt_connected) {
     lwmqtt_err_t err = lwmqtt_disconnect(&esp_mqtt_client, esp_mqtt_command_timeout);
     if (err != LWMQTT_SUCCESS) {
-      ESP_LOGE(ESP_MQTT_LOG_TAG, "lwmqtt_disconnect: %d", err);
+      LOGE(ESP_MQTT_LOG_TAG, "lwmqtt_disconnect: %d", err);
     }
 
     // set flag
@@ -690,7 +697,7 @@ void esp_mqtt_stop() {
 #endif
 
   // kill mqtt task
-  ESP_LOGI(ESP_MQTT_LOG_TAG, "esp_mqtt_stop: deleting task");
+  LOGI(ESP_MQTT_LOG_TAG, "esp_mqtt_stop: deleting task");
   vTaskDelete(esp_mqtt_task);
 
   // set flag

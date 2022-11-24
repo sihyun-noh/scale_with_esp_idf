@@ -22,6 +22,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "esp_wifi_types.h"
 #include "esp_event.h"
 #include "esp_event_base.h"
 #include "esp_netif_types.h"
@@ -31,7 +32,7 @@
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
 
-#include "esp_log.h"
+#include "log.h"
 #include "sys/queue.h"
 
 /**
@@ -141,14 +142,14 @@ static void event_msg_remove_list_all(void);
 
 static int event_msg_add_list(event_msg_t *event_msg) {
   if (event_msg_cnt >= MAX_EVENT_MSG) {
-    ESP_LOGI(TAG, "Internal Event messsage list is full");
+    LOGI(TAG, "Internal Event messsage list is full");
     event_msg_remove_list_all();
     return -1;
   }
 
   event_msg_internal_t *item = calloc(1, sizeof(event_msg_internal_t));
   if (item == NULL) {
-    ESP_LOGE(TAG, "event_msg_add_list: failed to alloc event_msg_internal");
+    LOGE(TAG, "event_msg_add_list: failed to alloc event_msg_internal");
     return -1;
   }
 
@@ -158,7 +159,7 @@ static int event_msg_add_list(event_msg_t *event_msg) {
   if (event_msg->event_data_len > 0) {
     item->event_msg.event_data = calloc(1, event_msg->event_data_len);
     if (item->event_msg.event_data == NULL) {
-      ESP_LOGE(TAG, "event_msg_add_list: failed to alloc event_data");
+      LOGE(TAG, "event_msg_add_list: failed to alloc event_data");
       free(item);
       return -1;
     }
@@ -221,7 +222,7 @@ static void event_msg_remove_list_all(void) {
 static int event_handler_add_list(event_req_t *event_req) {
   event_handler_internal_t *item = calloc(1, sizeof(event_handler_internal_t));
   if (item == NULL) {
-    ESP_LOGE(TAG, "event_handler_add_list: failed to alloc event_handler_internal");
+    LOGE(TAG, "event_handler_add_list: failed to alloc event_handler_internal");
     return -1;
   }
 
@@ -275,7 +276,7 @@ static void event_handler_remove_list_all(void) {
 }
 
 static void sysevent_handler(void *handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
-  ESP_LOGI(TAG, "sysevent_handler: event_base=%s, event_id=%d, event_data=%p", event_base, event_id, event_data);
+  LOGI(TAG, "sysevent_handler: event_base=%s, event_id=%d, event_data=%p", event_base, event_id, event_data);
 
   char ip_addr[32] = { 0 };
   char buf_monitor[50] = { 0 };
@@ -295,7 +296,7 @@ static void sysevent_handler(void *handler_arg, esp_event_base_t event_base, int
         event_msg.event_data = (char *)calloc(1, event_msg.event_data_len + 1);
         if (event_msg.event_data) {
           memcpy(event_msg.event_data, ip_addr, event_msg.event_data_len);
-          ESP_LOGI(TAG, "sysevent_handler: event data = %s", (char *)event_msg.event_data);
+          LOGI(TAG, "sysevent_handler: event data = %s", (char *)event_msg.event_data);
         }
       }
     } else if (event_base == SYSEVENT_BASE) {
@@ -304,7 +305,7 @@ static void sysevent_handler(void *handler_arg, esp_event_base_t event_base, int
         event_msg.event_data = (char *)calloc(1, event_msg.event_data_len + 1);
         if (event_msg.event_data) {
           memcpy(event_msg.event_data, event_data, event_msg.event_data_len);
-          ESP_LOGI(TAG, "sysevent_handler: event data = %s", (char *)event_msg.event_data);
+          LOGI(TAG, "sysevent_handler: event data = %s", (char *)event_msg.event_data);
         }
       }
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_CONNECTED) {
@@ -315,7 +316,7 @@ static void sysevent_handler(void *handler_arg, esp_event_base_t event_base, int
         event_msg.event_data = (char *)calloc(1, event_msg.event_data_len + 1);
         if (event_msg.event_data) {
           memcpy(event_msg.event_data, buf_monitor, event_msg.event_data_len);
-          ESP_LOGI(TAG, "sysevent_handler: event data = %s", buf_monitor);
+          LOGI(TAG, "sysevent_handler: event data = %s", buf_monitor);
         }
       }
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) {
@@ -328,7 +329,7 @@ static void sysevent_handler(void *handler_arg, esp_event_base_t event_base, int
         event_msg.event_data = (char *)calloc(1, event_msg.event_data_len + 1);
         if (event_msg.event_data) {
           memcpy(event_msg.event_data, buf_monitor, event_msg.event_data_len);
-          ESP_LOGI(TAG, "sysevent_handler: event data = %s", buf_monitor);
+          LOGI(TAG, "sysevent_handler: event data = %s", buf_monitor);
         }
       }
     }
@@ -394,7 +395,7 @@ static int sysevent_get_request(sysevent_ctx_t *ctx, TickType_t ticks_to_run) {
           }
         }
       } else if (event_req.event_handler) {
-        ESP_LOGI(TAG, "Call event_handler for %s and %d", event_req.event_base, event_req.event_id);
+        LOGI(TAG, "Call event_handler for %s and %d", event_req.event_base, event_req.event_id);
         event_req.event_handler(event_req.handler_data);
       }
       // Remove the event message from the internal event message list
@@ -403,7 +404,7 @@ static int sysevent_get_request(sysevent_ctx_t *ctx, TickType_t ticks_to_run) {
       if (event_req.event_handler && event_req.cmd == REQ_REGISTER_EVENT_HANDLER) {
         // If event_handler needs to be called, add it to the event_handler list and call it later when the event
         // occurs.
-        ESP_LOGI(TAG, "Add %s and %d to event_handler list for later calls", event_req.event_base, event_req.event_id);
+        LOGI(TAG, "Add %s and %d to event_handler list for later calls", event_req.event_base, event_req.event_id);
         event_handler_add_list(&event_req);
       } else if (event_req.event_handler && event_req.cmd == REQ_UNREGISTER_EVENT_HANDLER) {
         event_handler_internal_t *handler_item =
@@ -459,7 +460,7 @@ sysevent_ctx_t *sysevent_create_impl(void) {
   if (ctx == NULL) {
     ctx = (sysevent_ctx_t *)calloc(1, sizeof(sysevent_ctx_t));
     if (ctx == NULL) {
-      ESP_LOGE(TAG, "Failed to allocate memory for sysevent context");
+      LOGE(TAG, "Failed to allocate memory for sysevent context");
       goto err_ctx;
     }
 
@@ -473,40 +474,40 @@ sysevent_ctx_t *sysevent_create_impl(void) {
     }
     ctx->sysevent_sem = xSemaphoreCreateMutex();
     if (ctx->sysevent_sem == NULL) {
-      ESP_LOGE(TAG, "Failed to create sysevent message semaphore");
+      LOGE(TAG, "Failed to create sysevent message semaphore");
       goto err_sysevent_sem;
     }
     ctx->sysevent_handler_sem = xSemaphoreCreateMutex();
     if (ctx->sysevent_handler_sem == NULL) {
-      ESP_LOGE(TAG, "Failed to create sysevent handler semaphore");
+      LOGE(TAG, "Failed to create sysevent handler semaphore");
       goto err_sysevent_handler_sem;
     }
 
     esp_err_t ret = esp_event_loop_create_default();
     if (ret != ESP_OK) {
-      ESP_LOGE(TAG, "Failed to create esp_event_loop_handler");
+      LOGE(TAG, "Failed to create esp_event_loop_handler");
       goto err_loop_create;
     }
 
     ret = esp_event_handler_instance_register(ESP_EVENT_ANY_BASE, ESP_EVENT_ANY_ID, &sysevent_handler, NULL,
                                               &ctx->sysevent_handler_instance);
     if (ret != ESP_OK) {
-      ESP_LOGE(TAG, "Failed to register sysevent handler");
+      LOGE(TAG, "Failed to register sysevent handler");
       goto err_handler_reg;
     }
 
     if (xTaskCreate(&sysevent_loop_run_task, "sysevent_loop_run_task", 4096, ctx, 5, &ctx->sysevent_loop_task) !=
         pdTRUE) {
-      ESP_LOGE(TAG, "Failed to create sysevent loop task");
+      LOGE(TAG, "Failed to create sysevent loop task");
       goto err_loop_task_create;
     }
 
     if (xTaskCreate(&sysevent_get_task, "sysevent_get_task", 4096, ctx, 5, &ctx->sysevent_get_task) != pdTRUE) {
-      ESP_LOGE(TAG, "Failed to create sysevent get task");
+      LOGE(TAG, "Failed to create sysevent get task");
       goto err_get_task_create;
     }
 
-    ESP_LOGI(TAG, "Sysevent context created");
+    LOGI(TAG, "Sysevent context created");
   }
   return ctx;
 
@@ -602,10 +603,10 @@ int sysevent_get_impl(sysevent_ctx_t *ctx, const char *event_base, int event_id,
     goto _exit;
   }
 
-  // ESP_LOGI(TAG, "Wait for event_base = %s, event_id = %d", event_base, event_id);
+  // LOGI(TAG, "Wait for event_base = %s, event_id = %d", event_base, event_id);
 
   if (xQueueReceive(ctx->sysevent_res, &event_msg, portMAX_DELAY) == pdTRUE) {
-    //   ESP_LOGI(TAG, "Got event_base = %s, event_id = %d", event_msg.event_base, event_msg.event_id);
+    //   LOGI(TAG, "Got event_base = %s, event_id = %d", event_msg.event_base, event_msg.event_id);
     if (strcmp(event_msg.event_base, NO_EVENT_BASE) == 0 && event_msg.event_id == NO_EVENT_ID) {
       // No event in accordance with event base and event id
       goto _exit;
@@ -631,7 +632,7 @@ int sysevent_get_with_handler_impl(sysevent_ctx_t *ctx, const char *event_base, 
                                    event_handler_t event_handler, void *handler_data) {
   int ret = -1;
   if (ctx == NULL || event_base == NULL || event_handler == NULL) {
-    ESP_LOGI(TAG, "sysevent_get_with_handler_impl : Invalid parameter");
+    LOGI(TAG, "sysevent_get_with_handler_impl : Invalid parameter");
     return ret;
   }
 
@@ -658,7 +659,7 @@ int sysevent_unregister_handler_impl(sysevent_ctx_t *ctx, const char *event_base
                                      event_handler_t event_handler) {
   int ret = -1;
   if (ctx == NULL || event_base == NULL || event_handler == NULL) {
-    ESP_LOGI(TAG, "sysevent_unregister_handler_impl : Invalid parameter");
+    LOGI(TAG, "sysevent_unregister_handler_impl : Invalid parameter");
     return ret;
   }
 

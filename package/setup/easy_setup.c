@@ -27,6 +27,9 @@
 #include <freertos/event_groups.h>
 #include <esp_https_server.h>
 
+#include "esp_mac.h"
+#include "esp_wifi_types.h"
+
 #include "time_api.h"
 #include "cJSON.h"
 #include "mdns.h"
