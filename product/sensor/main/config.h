@@ -91,11 +91,6 @@
 #define LED_BLUE 25
 
 /*****************************************
- * Config
- ****************************************/
-#define MQTT_SEND_INTERVAL 30
-
-/*****************************************
  * Task Priority / Stack size
  ****************************************/
 #define SENS_MONITOR_TASK_PRIORITY (tskIDLE_PRIORITY + 5)

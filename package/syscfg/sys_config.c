@@ -207,6 +207,7 @@ void generate_syscfg(void) {
 #elif (IRRIGATION_TYPE == CHILD)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLICH");
 #endif
+    syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
   }
   syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
   if (power_mode[0] == 0) {

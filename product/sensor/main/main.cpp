@@ -156,7 +156,7 @@ int sleep_timer_wakeup(int wakeup_time_sec) {
 
 static void reconnect_count(void) {
   int reconnect_cnt = 0;
-  char reconnect[20] = { 0 };
+  char reconnect[SYSCFG_S_RECONNECT] = { 0 };
 
   syscfg_get(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, reconnect, sizeof(reconnect));
   if (reconnect[0]) {
@@ -174,9 +174,9 @@ static void delay(uint32_t ms) {
 }
 
 static void check_model(void) {
-  char model_name[10] = { 0 };
-  char power_mode[10] = { 0 };
-  char s_send_interval[10] = { 0 };
+  char model_name[SYSCFG_S_MODELNAME] = { 0 };
+  char power_mode[SYSCFG_S_POWERMODE] = { 0 };
+  char s_send_interval[SYSCFG_S_SEND_INTERVAL] = { 0 };
 
   syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
   syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
@@ -235,9 +235,11 @@ int system_init(void) {
 
   create_mqtt_task();
 
-  ret = monitoring_init();
-  if (ret)
-    return ERR_MONITORING_INIT;
+  if (!is_battery_model()) {
+    ret = monitoring_init();
+    if (ret)
+      return ERR_MONITORING_INIT;
+  }
 
   LOGI(TAG, "CPU0 reset reason: ");
   get_reset_reason(0);
@@ -403,7 +405,7 @@ void plugged_loop_task(void) {
           LOGI(TAG, "SENSOR_PUB_MODE!!!");
           send_msg_to_mqtt_task(MQTT_PUB_DATA_ID, NULL, 0);
           set_operation_mode(NTP_UPDATE_MODE);
-          delay_ms = (MQTT_SEND_INTERVAL * 1000);
+          delay_ms = (send_interval * 1000);
         } else {
           set_operation_mode(DEEP_SLEEP_MODE);
         }
