@@ -316,16 +316,21 @@ static char *gen_sensor_bulkec_resp(char *resp_type, char *ec, char *temp, char 
 static char *gen_devinfo_resp(void) {
   /*
   {
-    "type":"devinfo",
-    "id" : "GLSTH-0EADBEEFFEE9",
-    "fw_version": "1.0.0",
-    "farm_network" : {"ssid": "connected_farm_network-ssid", "channel": 1},
-    "ip_address" : "192.168.50.100",
-    "rssi" : "30",
-    "send_interval" : 180,
-    "power": "battery",
-    "uptime" : "",
-    "timestamp" : "2022-05-02 15:07:18"
+    "type": "devinfo",
+    "id":   "GLSSE-349454F52B24",
+    "timestamp":    "2022-11-08 17:53:07",
+    "fw_version":   "SENS_RK520_02_1.0.2-aff650-DVT",
+    "farm_network": {
+            "ssid": "COMFAST_TEST_IOT",
+            "channel":      1
+    },
+    "ip_address":   "192.168.50.6",
+    "rssi": -35,
+    "send_interval":        30,
+    "power":        "battery",
+    "uptime":       "0:00:17",
+    "free_mem":     "128436",
+    "reconnect":    "1"
   }
   */
   cJSON *root, *farm_network;
@@ -939,6 +944,10 @@ int start_mqttc(void) {
   char device_id[SYSCFG_S_DEVICEID] = { 0 };
 
   syscfg_get(SYSCFG_I_FARMIP, SYSCFG_N_FARMIP, farmip, sizeof(farmip));
+  syscfg_get(SYSCFG_I_DEVICEID, SYSCFG_N_DEVICEID, device_id, SYSCFG_S_DEVICEID);
+
+  snprintf(mqtt_request, sizeof(mqtt_request), CMD_REQUEST_TOPIC, device_id);
+  snprintf(mqtt_response, sizeof(mqtt_response), CMD_RESPONSE_TOPIC, device_id);
 
   if (!farmip[0]) {
     return -1;
@@ -977,11 +986,6 @@ int start_mqttc(void) {
   mqtt_client.connect();
 #endif
 
-  syscfg_get(SYSCFG_I_DEVICEID, SYSCFG_N_DEVICEID, device_id, SYSCFG_S_DEVICEID);
-
-  snprintf(mqtt_request, sizeof(mqtt_request), CMD_REQUEST_TOPIC, device_id);
-  snprintf(mqtt_response, sizeof(mqtt_response), CMD_RESPONSE_TOPIC, device_id);
-
   set_mqtt_init_finished(1);
   return ret;
 }
@@ -992,7 +996,6 @@ void stop_mqttc(void) {
 #elif defined(USE_MQTTC)
   if (mqtt_ctx) {
     mqtt_client_disconnect(mqtt_ctx);
-    mqtt_client_stop(mqtt_ctx);
     mqtt_client_deinit(mqtt_ctx);
     mqtt_ctx = NULL;
   }

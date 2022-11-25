@@ -240,11 +240,6 @@ static int check_internet(void) {
 static void monitoring_task(void *pvParameters) {
   int delay_ms = DELAY_5SEC;
 
-  if (!is_battery_model()) {
-    set_wifi_state(NO_INTERNET_CONNECTION);
-    set_wifi_led(NO_INTERNET_CONNECTION);
-  }
-
   while (1) {
     // Do not need to check if the device's wifi connection status during the easy setup progress.
     // Only check if connection status of farm network or internet after device is onboarding on the network.

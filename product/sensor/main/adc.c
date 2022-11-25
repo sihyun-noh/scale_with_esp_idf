@@ -72,15 +72,17 @@ int read_battery_percentage(void) {
  *
  * @return percent value
  */
+#define MAX_BATTERY 4200
+#define LOW_BATTERY 2700
 static float battery_calculate_percentage(uint16_t voltage) {
   float percent;
 
-  if (voltage >= 4200) {
+  if (voltage >= MAX_BATTERY) {
     percent = 100;
-  } else if (voltage < 2400) {
+  } else if (voltage < LOW_BATTERY) {
     percent = 0;
   } else {
-    percent = ((float)(voltage - 2400) / 1800) * 100;
+    percent = ((float)(voltage - LOW_BATTERY) / (MAX_BATTERY - LOW_BATTERY)) * 100;
   }
 
   return percent;

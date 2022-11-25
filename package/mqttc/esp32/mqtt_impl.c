@@ -129,7 +129,6 @@ mqtt_client_t *mqtt_client_init_impl(mqtt_config_t *config) {
 
 void mqtt_client_deinit_impl(mqtt_client_t *client) {
   if (client && client->handle) {
-    esp_mqtt_client_stop(client->handle);
     esp_mqtt_client_destroy(client->handle);
   }
 }

@@ -39,7 +39,7 @@
 #define WIFI_CONNECTED BIT0
 #define WIFI_DISCONNECT BIT1
 
-#define MAX_RETRY_CONNECT 50
+#define MAX_RETRY_CONNECT 5
 
 typedef enum {
   UNCONFIGURED_MODE = 0,
@@ -324,10 +324,11 @@ void easy_setup_task(void *pvParameters) {
           curr_mode = PAIRING_MODE;
           s_retry_connect++;
           xEventGroupClearBits(s_wifi_event_group, WIFI_DISCONNECT);
-          vTaskDelay((300 * 1000) / portTICK_PERIOD_MS);
+          vTaskDelay((5000) / portTICK_PERIOD_MS);
           if (s_retry_connect >= MAX_RETRY_CONNECT) {
-            // curr_mode = UNPAIRED_MODE;
+            set_wifi_fail(1);
             s_retry_connect = 0;
+            exit = 1;
           }
         } else {
           LOGE(TAG, "UNEXPECTED EVENT");
@@ -366,9 +367,11 @@ void easy_setup_task(void *pvParameters) {
       } break;
     }
     if (exit) {
-      set_gateway_address();
-      set_device_onboard(1);
-      set_device_configured(1);
+      if (!is_wifi_fail()) {
+        set_gateway_address();
+        set_device_onboard(1);
+        set_device_configured(1);
+      }
       break;
     }
     vTaskDelay(500 / portTICK_PERIOD_MS);
