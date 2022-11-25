@@ -1,4 +1,4 @@
-#define USE_ASYNCMQTT
+#define USE_MQTTC
 
 #include "cJSON.h"
 #include "syslog.h"
