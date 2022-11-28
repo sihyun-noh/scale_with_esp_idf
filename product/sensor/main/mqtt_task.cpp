@@ -135,6 +135,8 @@ static int mqtt_publish(char *topic, char *payload, int qos, int retain) {
     } else {
       LOGW(TAG, "Cannot get mqtt semaphore!!!");
     }
+  } else {
+    LOGW(TAG, "mqtt connection may be problem...");
   }
 #elif defined(USE_LWMQTTC)
   if (is_mqtt_init_finished() && is_mqtt_connected()) {
@@ -811,6 +813,9 @@ static void mqtt_event_callback(void *handler_args, int32_t event_id, void *even
       set_mqtt_subscribed(0);
       set_mqtt_init_finished(0);
       LOGI(TAG, "MQTT_EVT_DISCONNECTED !!!");
+      stop_mqttc();
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      start_mqttc();
       break;
     case MQTT_EVT_SUBSCRIBED:
       set_mqtt_subscribed(1);
