@@ -116,6 +116,12 @@ static double round_(float var) {
   return (double)(value / 100);
 }
 
+static int mqtt_reconnect(void) {
+#if defined(USE_MQTTC)
+  return mqtt_client_reconnect(mqtt_ctx);
+#endif
+}
+
 static int mqtt_publish(char *topic, char *payload, int qos, int retain) {
   int msg_id = -1;
 
@@ -811,11 +817,8 @@ static void mqtt_event_callback(void *handler_args, int32_t event_id, void *even
       set_mqtt_connected(0);
       set_mqtt_published(0);
       set_mqtt_subscribed(0);
-      set_mqtt_init_finished(0);
       LOGI(TAG, "MQTT_EVT_DISCONNECTED !!!");
-      stop_mqttc();
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
-      start_mqttc();
+      mqtt_reconnect();
       break;
     case MQTT_EVT_SUBSCRIBED:
       set_mqtt_subscribed(1);
@@ -872,7 +875,6 @@ static void status_callback(esp_mqtt_status_t status) {
       set_mqtt_connected(0);
       set_mqtt_published(0);
       set_mqtt_subscribed(0);
-      set_mqtt_init_finished(0);
       LOGI(TAG, "MQTT_STATUS_DISCONNECTED !!!");
       break;
     default: break;
@@ -904,7 +906,6 @@ void mqtt_disconnect_callback(AsyncMqttClientDisconnectReason reason) {
   set_mqtt_connected(0);
   set_mqtt_published(0);
   set_mqtt_subscribed(0);
-  set_mqtt_init_finished(0);
   LOGI(TAG, "Disconnect from MQTT server");
 }
 
