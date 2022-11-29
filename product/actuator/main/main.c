@@ -1,4 +1,5 @@
 #include "easy_setup.h"
+#include "freertos/projdefs.h"
 #include "nvs_flash.h"
 #include "shell_console.h"
 #include "syscfg.h"
@@ -6,41 +7,118 @@
 #include "sysevent.h"
 #include "sys_status.h"
 #include "syslog.h"
-#include "wifi_manager.h"
 #include "esp_sleep.h"
 #include "event_ids.h"
 #include "time_api.h"
 #include "monitoring.h"
-#include "main.h"
+#include "sysfile.h"
 #include "config.h"
+#include "filelog.h"
+#include "mqtt_task.h"
+#include "main.h"
+#include "esp32/rom/rtc.h"
 
 #include <string.h>
 #include <time.h>
 
-static const char *TAG = "main_app";
+#define DELAY_1SEC 1000
+#define DELAY_5SEC 5000
+#define DELAY_10SEC 10000
+#define DELAY_500MS 500
 
-sc_ctx_t *ctx = NULL;
+#define NTP_CHECK_TIME 28800  // 8 hour
 
-extern int actuator_init(void);
-extern void actuator_task(void);
-static void generate_default_sysmfg(void);
-static void check_model(void);
+const char* TAG = "main_app";
 
-extern int start_mqttc(void);
-extern void stop_mqttc(void);
-extern void mqtt_publish_actuator_data(void);
-
-static operation_mode_t s_curr_mode;
+sc_ctx_t* ctx = NULL;
 
 static TickType_t g_last_ntp_check_time = 0;
 
-#define NTP_CHECK_TIME 3600  // 1 hour
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern int actuator_init(void);
+extern void actuator_task(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+static void check_model(void);
+
+static operation_mode_t s_curr_mode;
+
+void get_reset_reason(int icore) {
+  RESET_REASON rc = NO_MEAN;
+  char reset_reason[5] = { 0 };
+
+  rc = rtc_get_reset_reason(icore);
+  snprintf(reset_reason, sizeof(reset_reason), "%d", (int)rc);
+  if (icore == 0) {
+    syscfg_set(SYSCFG_I_CPU0_RESET_REASON, SYSCFG_N_CPU0_RESET_REASON, reset_reason);
+  } else if (icore == 1) {
+    syscfg_set(SYSCFG_I_CPU1_RESET_REASON, SYSCFG_N_CPU1_RESET_REASON, reset_reason);
+  }
+
+  switch (rc) {
+    case POWERON_RESET:
+      LOGI(TAG, "POWERON_RESET"); /**<1, Vbat power on reset*/
+      break;
+    case SW_RESET:
+      LOGI(TAG, "SW_RESET"); /**<3, Software reset digital core*/
+      break;
+    case OWDT_RESET:
+      LOGI(TAG, "OWDT_RESET"); /**<4, Legacy watch dog reset digital core*/
+      break;
+    case DEEPSLEEP_RESET:
+      LOGI(TAG, "DEEPSLEEP_RESET"); /**<5, Deep Sleep reset digital core*/
+      break;
+    case SDIO_RESET:
+      LOGI(TAG, "SDIO_RESET"); /**<6, Reset by SLC module, reset digital core*/
+      break;
+    case TG0WDT_SYS_RESET:
+      LOGI(TAG, "TG0WDT_SYS_RESET"); /**<7, Timer Group0 Watch dog reset digital core*/
+      break;
+    case TG1WDT_SYS_RESET:
+      LOGI(TAG, "TG1WDT_SYS_RESET"); /**<8, Timer Group1 Watch dog reset digital core*/
+      break;
+    case RTCWDT_SYS_RESET:
+      LOGI(TAG, "RTCWDT_SYS_RESET"); /**<9, RTC Watch dog Reset digital core*/
+      break;
+    case INTRUSION_RESET:
+      LOGI(TAG, "INTRUSION_RESET"); /**<10, Instrusion tested to reset CPU*/
+      break;
+    case TGWDT_CPU_RESET:
+      LOGI(TAG, "TGWDT_CPU_RESET"); /**<11, Time Group reset CPU*/
+      break;
+    case SW_CPU_RESET:
+      LOGI(TAG, "SW_CPU_RESET"); /**<12, Software reset CPU*/
+      break;
+    case RTCWDT_CPU_RESET:
+      LOGI(TAG, "RTCWDT_CPU_RESET"); /**<13, RTC Watch dog Reset CPU*/
+      break;
+    case EXT_CPU_RESET:
+      LOGI(TAG, "EXT_CPU_RESET"); /**<14, for APP CPU, reseted by PRO CPU*/
+      break;
+    case RTCWDT_BROWN_OUT_RESET:
+      LOGI(TAG, "RTCWDT_BROWN_OUT_RESET"); /**<15, Reset when the vdd voltage is not stable*/
+      break;
+    case RTCWDT_RTC_RESET:
+      LOGI(TAG, "RTCWDT_RTC_RESET"); /**<16, RTC Watch dog reset digital core and rtc module*/
+      break;
+    default: LOGI(TAG, "NO_MEAN"); break;
+  }
+}
 
 void set_operation_mode(operation_mode_t mode) {
   s_curr_mode = mode;
 }
 
 operation_mode_t get_operation_mode(void) {
+  if (is_fwupdate()) {
+    s_curr_mode = OTA_FWUPDATE_MODE;
+  }
   return s_curr_mode;
 }
 
@@ -49,7 +127,11 @@ operation_mode_t get_operation_mode(void) {
  *
  * @note This function is called in shell_command_impl.c
  */
+#ifdef __cplusplus
+extern "C" void stop_shell(void) {
+#else
 void stop_shell(void) {
+#endif
   if (ctx) {
     sc_stop(ctx);
   }
@@ -63,28 +145,28 @@ int sleep_timer_wakeup(int wakeup_time_sec) {
   return ret;
 }
 
-/* The code below is only used for testing purpose until manufacturing data is applied */
-static void generate_default_sysmfg(void) {
-  char model_name[10] = { 0 };
-  char power_mode[10] = { 0 };
+static void reconnect_count(void) {
+  int reconnect_cnt = 0;
+  char reconnect[SYSCFG_S_RECONNECT] = { 0 };
 
-  syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
-  if (model_name[0] == 0) {
-#if (ACTUATOR_TYPE == SWITCH)
-    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLASW");
-#elif (ACTUATOR_TYPE == MOTOR)
-    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLAMT");
-#endif
+  syscfg_get(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, reconnect, sizeof(reconnect));
+  if (reconnect[0]) {
+    reconnect_cnt = atoi(reconnect);
   }
-  syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
-  if (power_mode[0] == 0) {
-    syscfg_set(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, "P");
-  }
+  reconnect_cnt++;
+  LOGI(TAG, "reconnect count = %d", reconnect_cnt);
+  memset(reconnect, 0, sizeof(reconnect));
+  snprintf(reconnect, sizeof(reconnect), "%d", reconnect_cnt);
+  syscfg_set(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, reconnect);
+}
+
+static void delay(uint32_t ms) {
+  vTaskDelay(ms / portTICK_PERIOD_MS);
 }
 
 static void check_model(void) {
-  char model_name[10] = { 0 };
-  char power_mode[10] = { 0 };
+  char model_name[SYSCFG_S_MODELNAME] = { 0 };
+  char power_mode[SYSCFG_S_POWERMODE] = { 0 };
 
   syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
   syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
@@ -125,45 +207,39 @@ int system_init(void) {
 
   syslog_init();
 
+  ret = init_sysfile();
+  if (ret)
+    return ERR_SPIFFS_INIT;
+
   // Generate the default manufacturing data if there is no data in mfg partition.
-  generate_default_sysmfg();
+  generate_syscfg();
 
   check_model();
 
-  ret = monitoring_init();
-  if (ret)
-    return ERR_MONITORING_INIT;
+  create_mqtt_task();
+
+  LOGI(TAG, "CPU0 reset reason: ");
+  get_reset_reason(0);
+  LOGI(TAG, "CPU1 reset reason: ");
+  get_reset_reason(1);
 
   return SYSINIT_OK;
 }
 
-void app_main(void) {
-  int rc = SYSINIT_OK;
+void actuator_loop_task(void) {
+  int rc = 0;
+  uint32_t delay_ms = 0;
 
-  set_operation_mode(SYSTEM_INIT_MODE);
+  set_operation_mode(ACTUATOR_INIT_MODE);
 
   while (1) {
+    delay_ms = DELAY_500MS;
     switch (get_operation_mode()) {
-      case SYSTEM_INIT_MODE: {
-        LOGI(TAG, "SYSTEM_INIT_MODE");
-        if ((rc = system_init()) != SYSINIT_OK) {
-          LOGE(TAG, "Failed to initialize device, error = [%d]", rc);
-          return;
-        } else {
-          // Start interactive shell command line
-          ctx = sc_init();
-          if (ctx) {
-            sc_start(ctx);
-          }
-          set_device_onboard(0);
-          set_operation_mode(ACTUATOR_INIT_MODE);
-        }
-      } break;
       case ACTUATOR_INIT_MODE: {
         LOGI(TAG, "ACTUATOR_INIT_MODE");
         if ((rc = actuator_init()) != SYSINIT_OK) {
           LOGI(TAG, "Could not initialize actuator");
-          set_operation_mode(SLEEP_MODE);
+          set_operation_mode(DEEP_SLEEP_MODE);
         } else {
           set_operation_mode(EASY_SETUP_MODE);
         }
@@ -171,9 +247,9 @@ void app_main(void) {
       case EASY_SETUP_MODE: {
         LOGI(TAG, "EASY_SETUP_MODE");
         create_ethernet_easy_setup_task();
-        set_operation_mode(TIME_ZONE_SET_MODE);
+        set_operation_mode(NTP_TIME_MODE);
       } break;
-      case TIME_ZONE_SET_MODE: {
+      case NTP_TIME_MODE: {
         if (is_device_onboard()) {
           struct tm time = { 0 };
           tm_set_time(3600 * KR_GMT_OFFSET, 3600 * KR_DST_OFFSET, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
@@ -185,33 +261,72 @@ void app_main(void) {
       } break;
       case MQTT_START_MODE: {
         if (is_device_onboard()) {
+          LOGI(TAG, "MQTT_START_MODE!!!");
           start_mqttc();
-          mqtt_publish_actuator_data();
-          set_operation_mode(MONITOR_MODE);
+          set_operation_mode(MQTT_PUB_INIT);
         } else {
-          set_operation_mode(SLEEP_MODE);
+          set_operation_mode(DEEP_SLEEP_MODE);
+        }
+      } break;
+      case MQTT_PUB_INIT: {
+        if (is_device_onboard()) {
+          if (is_mqtt_init_finished() && is_mqtt_connected()) {
+            send_msg_to_mqtt_task(MQTT_PUB_DATA_ID, NULL, 0);
+            set_operation_mode(MONITOR_MODE);
+          }
+        } else {
+          set_operation_mode(DEEP_SLEEP_MODE);
         }
       } break;
       case MONITOR_MODE: {
         if (is_device_onboard()) {
           if (xTaskGetTickCount() >= g_last_ntp_check_time + pdMS_TO_TICKS(NTP_CHECK_TIME * 1000)) {
-            LOGI(TAG, "Call get_ntp_time() !!!");
+            LOGI(TAG, "Call set_ntp_time() !!!");
+            set_ntp_time();
             g_last_ntp_check_time = xTaskGetTickCount();
-            get_ntp_time(KR_GMT_OFFSET, KR_DST_OFFSET);
+            delay_ms = DELAY_5SEC;
           } else {
             actuator_task();
           }
         } else {
-          set_operation_mode(SLEEP_MODE);
+          set_operation_mode(DEEP_SLEEP_MODE);
         }
       } break;
-      case SLEEP_MODE: {
+      case OTA_FWUPDATE_MODE: {
+        // Do not anything while OTA FW updating
+        delay_ms = DELAY_1SEC;
+      } break;
+      case DEEP_SLEEP_MODE: {
+        // On the power plug model, entering sleep mode means that the router or internet status is unavailable, so we
+        // use deep sleep mode to reconnect to the Wi-Fi router.
+        reconnect_count();
         stop_mqttc();
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
         sleep_timer_wakeup(30);
-        set_operation_mode(SYSTEM_INIT_MODE);
+        set_operation_mode(ACTUATOR_INIT_MODE);
       } break;
     }
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    delay(delay_ms);
   }
+}
+
+#ifdef __cplusplus
+extern "C" void app_main(void) {
+#else
+void app_main(void) {
+#endif
+  int rc = SYSINIT_OK;
+
+  if ((rc = system_init()) != SYSINIT_OK) {
+    LOGE(TAG, "Failed to initialize device, error = [%d]", rc);
+    return;
+  }
+
+  // Start interactive shell command line
+  ctx = sc_init();
+  if (ctx)
+    sc_start(ctx);
+
+  set_device_onboard(0);
+
+  actuator_loop_task();
 }

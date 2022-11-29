@@ -14,7 +14,7 @@
 #define MOTOR 2  /* forward and reverse motor type */
 
 #ifndef ACTUATOR_TYPE
-#define ACTUATOR_TYPE MOTOR
+#define ACTUATOR_TYPE SWITCH
 #endif
 
 #define SENSOR_TYPE -1
@@ -28,16 +28,15 @@
 /*****************************************
  * Config
  ****************************************/
-#define MQTT_SEND_INTERVAL 0
 
 /*****************************************
  * Task Priority / Stack size
  ****************************************/
 #define ACT_MONITOR_TASK_PRIORITY (tskIDLE_PRIORITY + 5)
-#define ACT_MQTT_TASK_PRIORITY (tskIDLE_PRIORITY + 3)
-#define ACT_SETUP_TASK_PRIORITY (tskIDLE_PRIORITY + 3)
-#define ACT_OTAFW_TASK_PRIORITY (tskIDLE_PRIORITY + 3)
-#define ACT_ACTUATOR_TASK_PRIORITY (tskIDLE_PRIORITY + 3)
+#define ACT_MQTT_TASK_PRIORITY (tskIDLE_PRIORITY + 5)
+#define ACT_SETUP_TASK_PRIORITY (tskIDLE_PRIORITY + 5)
+#define ACT_OTAFW_TASK_PRIORITY (tskIDLE_PRIORITY + 5)
+#define ACT_ACTUATOR_TASK_PRIORITY (tskIDLE_PRIORITY + 5)
 
 #define ACT_MONITOR_TASK_STACK_SIZE (4096)
 #define ACT_MQTT_TASK_STACK_SIZE (4096)
