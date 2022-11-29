@@ -34,14 +34,138 @@
 #define DEFAULT_MAX_STA_CONN 4
 
 static const char *TAG = "wifi-manager";
+
 static bool b_connected;
+static bool b_wifi_init_done = false;
+static bool b_wifi_started = false;
+
 struct wifi_context {
   SemaphoreHandle_t wifi_mutex;
   esp_netif_t *ap_netif;
   esp_netif_t *sta_netif;
+  bool use_static_buffers;
 };
 
-static int is_wifi_sta_ready() {
+static esp_netif_t *esp_netifs[ESP_IF_MAX] = { NULL, NULL, NULL };
+
+/* Private functions */
+
+esp_interface_t get_esp_netif_interface(esp_netif_t *esp_netif) {
+  for (int i = 0; i < ESP_IF_MAX; i++) {
+    if (esp_netifs[i] != NULL && esp_netifs[i] == esp_netif) {
+      return (esp_interface_t)i;
+    }
+  }
+  return ESP_IF_MAX;
+}
+
+void add_esp_interface_netif(esp_interface_t interface, esp_netif_t *esp_netif) {
+  if (interface < ESP_IF_MAX) {
+    esp_netifs[interface] = esp_netif;
+  }
+}
+
+esp_netif_t *get_esp_interface_netif(esp_interface_t interface) {
+  if (interface < ESP_IF_MAX) {
+    return esp_netifs[interface];
+  }
+  return NULL;
+}
+
+bool net_init(void) {
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+#if CONFIG_IDF_TARGET_ESP32
+    uint8_t mac[8];
+    if (esp_efuse_mac_get_default(mac) == ESP_OK) {
+      esp_base_mac_addr_set(mac);
+    }
+#endif
+    initialized = (esp_netif_init() == ESP_OK);
+    if (!initialized) {
+      LOGE(TAG, "esp_netif_init failed!!!");
+    }
+  }
+  return initialized;
+}
+
+static bool wifi_init(bool b_use_static_buffers) {
+  if (!b_wifi_init_done) {
+    b_wifi_init_done = true;
+    if (!net_init()) {
+      b_wifi_init_done = false;
+      return b_wifi_init_done;
+    }
+
+    if (esp_netifs[ESP_IF_WIFI_AP] == NULL) {
+      esp_netifs[ESP_IF_WIFI_AP] = esp_netif_create_default_wifi_ap();
+    }
+    if (esp_netifs[ESP_IF_WIFI_STA] == NULL) {
+      esp_netifs[ESP_IF_WIFI_STA] = esp_netif_create_default_wifi_sta();
+    }
+
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+
+    if (!b_use_static_buffers) {
+      cfg.static_tx_buf_num = 0;
+      cfg.dynamic_tx_buf_num = 32;
+      cfg.tx_buf_type = 1;
+      cfg.cache_tx_buf_num = 4;  // can't be zero!
+      cfg.static_rx_buf_num = 4;
+      cfg.dynamic_rx_buf_num = 32;
+    }
+    esp_err_t err = esp_wifi_init(&cfg);
+    if (err) {
+      LOGE(TAG, "esp_wifi_init failed = %d", err);
+      b_wifi_init_done = false;
+      return b_wifi_init_done;
+    }
+  }
+  return b_wifi_init_done;
+}
+
+static bool wifi_deinit(void) {
+  if (b_wifi_init_done) {
+    b_wifi_init_done = !(esp_wifi_deinit() == ESP_OK);
+  }
+  return !b_wifi_init_done;
+}
+
+static bool wifi_start(void) {
+  if (b_wifi_started) {
+    return true;
+  }
+
+  b_wifi_started = true;
+  esp_err_t err = esp_wifi_start();
+  if (err != ESP_OK) {
+    b_wifi_started = false;
+    LOGE(TAG, "WiFi started error = %d", err);
+    return b_wifi_started;
+  }
+
+  return b_wifi_started;
+}
+
+static bool wifi_stop(void) {
+  esp_err_t err;
+  if (!b_wifi_started) {
+    return true;
+  }
+
+  b_wifi_started = false;
+  err = esp_wifi_stop();
+  if (err) {
+    LOGE(TAG, "Could not stop WiFi %d", err);
+    b_wifi_started = true;
+    return false;
+  }
+
+  return wifi_deinit();
+}
+
+static int is_wifi_sta_ready(void) {
   int wait_count = 0;
   wifi_mode_t wifi_mode = WIFI_MODE_NULL;
 
@@ -60,7 +184,76 @@ static int is_wifi_sta_ready() {
   return (wait_count == 0) ? 1 : 0;
 }
 
-wifi_context_t *wifi_init_impl() {
+static wifi_mode_t get_wifi_mode(void) {
+  if (!b_wifi_init_done || !b_wifi_started) {
+    return WIFI_MODE_NULL;
+  }
+  wifi_mode_t wifi_mode;
+  if (esp_wifi_get_mode(&wifi_mode) != ESP_OK) {
+    LOGE(TAG, "WiFi not started...");
+    return WIFI_MODE_NULL;
+  }
+  return wifi_mode;
+}
+
+static bool set_wifi_mode(wifi_mode_t mode) {
+  wifi_mode_t curr_wifi_mode = get_wifi_mode();
+
+  if (curr_wifi_mode = mode) {
+    return true;
+  }
+
+  if (!curr_wifi_mode && mode) {
+    if (!wifi_init(false)) {
+      return false;
+    }
+  } else if (curr_wifi_mode && !mode) {
+    return wifi_stop();
+  }
+
+  esp_err_t err;
+  err = esp_wifi_set_mode(mode);
+  if (err) {
+    LOGE(TAG, "Could not set wifi mode = %d", err);
+    return false;
+  }
+
+  if (!wifi_start()) {
+    return false;
+  }
+
+  return true;
+}
+
+static bool enable_ap_mode(bool enable) {
+  wifi_mode_t curr_wifi_mode = get_wifi_mode();
+  bool is_enabled = ((curr_wifi_mode & WIFI_MODE_AP) != 0);
+
+  if (is_enabled != enable) {
+    if (enable) {
+      return set_wifi_mode((wifi_mode_t)(curr_wifi_mode | WIFI_MODE_AP));
+    }
+    return set_wifi_mode((wifi_mode_t)(curr_wifi_mode & (~WIFI_MODE_AP)));
+  }
+
+  return true;
+}
+
+static bool enable_sta_mode(bool enable) {
+  wifi_mode_t curr_wifi_mode = get_wifi_mode();
+  bool is_enabled = ((curr_wifi_mode & WIFI_MODE_STA) != 0);
+
+  if (is_enabled != enable) {
+    if (enable) {
+      return set_wifi_mode((wifi_mode_t)(curr_wifi_mode | WIFI_MODE_STA));
+    }
+    return set_wifi_mode((wifi_mode_t)(curr_wifi_mode & (~WIFI_MODE_STA)));
+  }
+
+  return true;
+}
+
+wifi_context_t *wifi_init_impl(void) {
   static wifi_context_t *ctx = NULL;
 
   if (ctx == NULL) {
@@ -77,19 +270,14 @@ wifi_context_t *wifi_init_impl() {
       goto err_wifi_mutex;
     }
 
-    ret = esp_netif_init();
-    if (ret != ESP_OK) {
-      SLOGE(TAG, "Netif initializing failed");
-      goto err_netif;
-    }
+    add_esp_interface_netif(ESP_IF_WIFI_AP, ctx->ap_netif);
+    add_esp_interface_netif(ESP_IF_WIFI_STA, ctx->sta_netif);
 
     xSemaphoreGive(ctx->wifi_mutex);
   }
 
   return ctx;
 
-err_netif:
-  vSemaphoreDelete(ctx->wifi_mutex);
 err_wifi_mutex:
 err_ctx:
   free(ctx);
@@ -107,6 +295,101 @@ void wifi_deinit_impl(wifi_context_t *ctx) {
   ctx = NULL;
 }
 
+int wifi_ap_mode_impl(wifi_context_t *ctx, const char *ssid, const char *password, int channel) {
+  int ret = -1;
+
+  if (ctx == NULL) {
+    return ret;
+  }
+
+  xSemaphoreTake(ctx->wifi_mutex, portMAX_DELAY);
+
+  if (!enable_ap_mode(true)) {
+    LOGE(TAG, "Enable AP first!");
+    goto _error;
+  }
+
+  if (!ssid || *ssid == 0) {
+    LOGE(TAG, "SSID missing!");
+    goto _error;
+  }
+
+  if (password && (strlen(password) > 0 && strlen(password) < 8)) {
+    LOGE(TAG, "Password too short!");
+    goto _error;
+  }
+
+  wifi_config_t conf;
+  wifi_config_t curr_conf;
+
+  wifi_softap_config(&conf, ssid, password, channel, WIFI_AUTH_WPA2_PSK, 0, DEFAULT_MAX_STA_CONN, false);
+  esp_err_t err = esp_wifi_get_config((wifi_interface_t)WIFI_IP_AP, &curr_conf);
+
+  if (err) {
+    LOGE(TAG, "Get AP config failed!");
+    goto _error;
+  }
+
+  if (!softap_config_equal(conf, curr_conf)) {
+    err = esp_wifi_set_config((wifi_interface_t)WIFI_IF_AP, &conf);
+    if (err) {
+      LOGE(TAG, "Set AP config failed!");
+      goto _error;
+    }
+  }
+
+  ret = 0;
+
+_error:
+  xSemaphoreGive(ctx->wifi_mutex);
+  return ret;
+}
+
+int wifi_sta_mode_impl(wifi_context_t *ctx) {
+  if (ctx == NULL) {
+    return -1;
+  }
+
+  int ret = 0;
+
+  xSemaphoreTake(ctx->wifi_mutex, portMAX_DELAY);
+
+  if (!enable_sta_mode(true)) {
+    LOGE(TAG, "Enable STA first!");
+    ret = -1;
+  }
+
+  // Disable power saving mode of STA.
+  esp_wifi_set_ps(WIFI_PS_NONE);
+
+  xSemaphoreGive(ctx->wifi_mutex);
+  return ret;
+}
+
+int wifi_stop_mode_impl(wifi_context_t *ctx) {
+  if (ctx == NULL) {
+    return -1;
+  }
+
+  xSemaphoreTake(ctx->wifi_mutex, portMAX_DELAY);
+
+  bool b_wifi_stop = false;
+
+  if (b_connected) {
+    if (ESP_OK != esp_wifi_disconnect()) {
+      goto _error;
+    }
+    b_connected = false;
+  }
+
+  b_wifi_stop = set_wifi_mode(NULL);
+
+_error:
+  xSemaphoreGive(ctx->wifi_mutex);
+  return (b_wifi_stop == true) ? 0 : -1;
+}
+
+#if 0
 int wifi_ap_mode_impl(wifi_context_t *ctx, const char *ssid, const char *password) {
   if (ctx == NULL || ssid == NULL || password == NULL) {
     return -1;
@@ -232,10 +515,21 @@ _error:
   xSemaphoreGive(ctx->wifi_mutex);
   return (ret == ESP_OK) ? 0 : -1;
 }
+#endif
 
 int wifi_connect_ap_impl(wifi_context_t *ctx, const char *ssid, const char *password) {
-  if (ctx == NULL || ssid == NULL || password == NULL) {
+  if (ctx == NULL) {
     LOGE(TAG, "Invalid arguments");
+    return -1;
+  }
+
+  if (!ssid || *ssid == 0x00 || strlen(ssid) > 32) {
+    LOGE(TAG, "SSID too long or missing!");
+    return -1;
+  }
+
+  if (!password || *password == 0x00 || (password && strlen(password) > 64)) {
+    LOGE(TAG, "password too long or missing!");
     return -1;
   }
 
@@ -259,7 +553,6 @@ int wifi_connect_ap_impl(wifi_context_t *ctx, const char *ssid, const char *pass
   LOGI(TAG, "wifi_connect_ap: ssid:%s password:%s", ssid, password);
 
   esp_wifi_set_config(WIFI_IF_STA, &wifi_config);
-  esp_wifi_start();
 
   if (is_wifi_sta_ready()) {
     LOGI(TAG, "Wifi station mode is ready");
@@ -355,11 +648,16 @@ int wifi_get_current_mode_impl(wifi_context_t *ctx) {
     return wifi_mode;
   }
 
+  if (!b_wifi_init_done || !b_wifi_started) {
+    return wifi_mode;
+  }
+
   // mutex lock
   xSemaphoreTake(ctx->wifi_mutex, portMAX_DELAY);
   esp_err_t rc = esp_wifi_get_mode(&wifi_mode);
   if (rc != ESP_OK) {
     LOGI(TAG, "Failed to get current wifi mode, rc = %d", rc);
+    wifi_mode = WIFI_MODE_NULL;
   }
   xSemaphoreGive(ctx->wifi_mutex);
   return wifi_mode;
@@ -402,4 +700,8 @@ int get_ap_info_impl(wifi_context_t *ctx, wifi_ap_record_t *ap_info) {
 
   esp_err_t rc = esp_wifi_sta_get_ap_info(ap_info);
   return (rc == ESP_OK) ? 0 : -1;
+}
+
+bool enable_sta_mode(bool enable) {
+  wifi_mode_t current_mode =
 }
