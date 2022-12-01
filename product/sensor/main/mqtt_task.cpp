@@ -619,7 +619,7 @@ static cJSON *syscfg_action(char *action) {
   char op[SYSCFG_OP_SIZE + 1] = { 0 };
   char var_name[SYSCFG_VARIABLE_NAME_SIZE] = { 0 };
   char var_value[SYSCFG_VARIABLE_VALUE_SIZE] = { 0 };
-  char *result_val = REQRES_V_ERR_SYSCFG_FAIL;
+  char *result_val = (char *)REQRES_V_ERR_SYSCFG_FAIL;
 
   /* Get operation type, name, value from action string */
   /* (e.g.) action : set power_mode P or get power_mode */
@@ -633,7 +633,7 @@ static cJSON *syscfg_action(char *action) {
   if (!strncmp(op, REQRES_V_SYSCFG_SET, strlen(REQRES_V_SYSCFG_SET))) {
     /* Execute "syscfg set action" */
     if (!syscfg_set_action(var_name, var_value)) {
-      result_val = REQRES_V_SYSCFG_OK;
+      result_val = (char *)REQRES_V_SYSCFG_OK;
     }
     result = cJSON_CreateString(result_val);
   }
@@ -793,9 +793,9 @@ void mqtt_msg_handler(mqtt_msg_t *mqtt_msg) {
 
 static void mqtt_event_callback(void *handler_args, int32_t event_id, void *event_data) {
   mqtt_event_data_t *event = (mqtt_event_data_t *)event_data;
-  mqtt_topic_payload_t mqtt = {
-    0,
-  };
+  mqtt_topic_payload_t mqtt;
+
+  memset(&mqtt, 0x00, sizeof(mqtt));
 
   switch (event_id) {
     case MQTT_EVT_ERROR: LOGI(TAG, "MQTT_EVT_ERROR !!!"); break;
@@ -917,9 +917,7 @@ void mqtt_unsubscribe_callback(uint16_t packet_id) {}
 
 void mqtt_message_callback(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len,
                            size_t index, size_t total) {
-  mqtt_topic_payload_t mqtt = {
-    0,
-  };
+  mqtt_topic_payload_t mqtt = { 0 };
 
   mqtt.topic = topic;
   mqtt.topic_len = strlen(topic);
@@ -967,12 +965,13 @@ int start_mqttc(void) {
 #if defined(USE_LWMQTTC)
   lwmqtt_client_start(s_host, s_port, "mqtt", NULL, NULL);
 #elif defined(USE_MQTTC)
-  mqtt_config_t config = {
-    .host = (const char *)s_host,
-    .port = (unsigned int)n_port,
-    .transport = MQTT_TCP,
-    .event_cb_fn = mqtt_event_callback,
-  };
+  mqtt_config_t config;
+  memset(&config, 0x00, sizeof(config));
+
+  config.host = (const char *)s_host;
+  config.port = (unsigned int)n_port;
+  config.transport = MQTT_TCP;
+  config.event_cb_fn = mqtt_event_callback;
 
   mqtt_ctx = mqtt_client_init(&config);
   ret = mqtt_client_start(mqtt_ctx);

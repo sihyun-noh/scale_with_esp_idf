@@ -27,6 +27,7 @@
 #include "icmp_echo_cmd.h"
 #include "sysfile.h"
 #include "config.h"
+#include "wifi_manager.h"
 
 #ifdef DS3231_I2C_SDA_PIN
 #include "rtc_task.h"
@@ -39,6 +40,7 @@ extern int mqtt_start_cmd(int argc, char **argv);
 extern int mqtt_subscribe_cmd(int argc, char **argv);
 extern int mqtt_publish_cmd(int argc, char **argv);
 extern char *uptime(void);
+
 #if (SENSOR_TYPE == ATLAS_PH)
 extern int atlas_ph_cal_cmd(int argc, char **argv);
 #elif (SENSOR_TYPE == ATLAS_EC)
@@ -113,6 +115,26 @@ static int free_mem(int argc, char **argv) {
   printf("Show free heap memory\n");
   int freeHeap = xPortGetFreeHeapSize();
   printf("Free HeapSize = %d\n", freeHeap);
+  return 0;
+}
+
+static int scan_network(int argc, char **argv) {
+  printf("Scan nearby AP network\n");
+
+  uint16_t scan_num = 0;
+  ap_info_t *ap_info_list = NULL;
+  uint16_t scan_ap_num = wifi_scan_network(false, false, false, 500, 1, NULL, NULL);
+  if (scan_ap_num > 0) {
+    ap_info_list = get_wifi_scan_list(&scan_num);
+    if (ap_info_list) {
+      printf("scan ap num [%d], [%d]\n", scan_ap_num, scan_num);
+      for (int i = 0; i < scan_num; i++) {
+        printf("ap_info_list[%d].ssid = %s\n", i, ap_info_list[i].ssid);
+        printf("ap_info_list[%d].rssi = %d\n", i, ap_info_list[i].rssi);
+      }
+      free(ap_info_list);
+    }
+  }
   return 0;
 }
 
@@ -222,6 +244,11 @@ static sc_cmd_t commands[] = {
       .name = "free_mem",
       .help = "Get free heap memory",
       .func = free_mem,
+  },
+  {
+      .name = "scan_network",
+      .help = "Scan AP network",
+      .func = scan_network,
   },
 #if (SENSOR_TYPE == ATLAS_PH)
   {

@@ -7,11 +7,11 @@
 extern "C" {
 #endif
 
-void dbg_syslog(void);
-void publish_syslog(void);
-char *get_dump_syslog(void);
-int syslog(char *format, ...);
-void syslog_init(void);
+extern void dbg_syslog(void);
+extern void publish_syslog(void);
+extern char *get_dump_syslog(void);
+extern int syslog(const char *format, ...);
+extern void syslog_init(void);
 
 #define SYSLOG_FORMAT(letter, format) #letter " (%s) %s: " format "\r\n"
 

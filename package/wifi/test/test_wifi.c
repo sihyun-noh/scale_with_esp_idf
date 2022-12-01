@@ -3,7 +3,7 @@
 #include "wifi_manager.h"
 #include "log.h"
 
-static const char *TAG = "nuity_wifi_test";
+static const char *TAG = "unity_wifi_test";
 
 TEST_CASE("test to wifi_init().", "[wifi_init]") {
   TEST_ASSERT_EQUAL(0, wifi_user_init());

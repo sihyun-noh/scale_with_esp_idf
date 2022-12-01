@@ -11,6 +11,9 @@ extern "C" {
 #define AP_MODE 1
 #define STA_MODE 2
 
+#define WIFI_SCAN_FAILED (-1)
+#define WIFI_SCAN_RUNNING (-2)
+
 typedef struct wifi_context wifi_context_t;
 
 /**
@@ -82,7 +85,12 @@ int wifi_disconnect_ap_impl(wifi_context_t *ctx);
  * @param waitSec Inactive time. Unit seconds.
  * @return int 0 on success, -1 on failure
  */
-int wifi_scan_network_impl(wifi_context_t *ctx, scan_network_result_t *userdata, bool block, int waitSec);
+int wifi_scan_network_impl(wifi_context_t *ctx, bool async, bool show_hidden, bool passive, uint32_t max_ms_per_chan,
+                           uint8_t channel, const char *ssid, const uint8_t *bssid);
+
+int get_wifi_scan_status_impl(wifi_context_t *ctx);
+
+wifi_ap_record_t *get_wifi_scan_list_impl(wifi_context_t *ctx, uint16_t *scan_num);
 
 /**
  * @brief Get current wifi mode (AP or Station)
@@ -122,7 +130,7 @@ int get_router_ipaddr_impl(wifi_context_t *ctx, char *ip_addr, int addr_len);
  *
  * @return int 0 on success, -1 on failure
  */
-int get_ap_info_impl(wifi_context_t *ctx, wifi_ap_record_t *ap_info);
+int get_ap_info_impl(wifi_context_t *ctx, ap_info_t *ap_info);
 
 #ifdef __cplusplus
 }

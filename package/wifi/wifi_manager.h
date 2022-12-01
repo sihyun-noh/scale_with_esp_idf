@@ -9,13 +9,6 @@
 extern "C" {
 #endif
 
-#define MAX_SSID 64
-
-typedef struct {
-  char ssid[MAX_SSID];
-  int rssi;
-} ap_info_t;
-
 /**
  * @brief Initialize the underlying Wi-fi
  *
@@ -80,7 +73,12 @@ int wifi_disconnect_ap(void);
  * @param waitSec Inactive time. Unit seconds.
  * @return int 0 on success, -1 on failure
  */
-int wifi_scan_network(scan_network_result_t *userdata, bool block, int waitSec);
+int wifi_scan_network(bool async, bool show_hidden, bool passive, uint32_t max_ms_per_chan, uint8_t channel,
+                      const char *ssid, const uint8_t *bssid);
+
+int get_wifi_scan_status(void);
+
+ap_info_t *get_wifi_scan_list(uint16_t *scan_num);
 
 /**
  * @brief Get current wifi mode (AP or Station)
