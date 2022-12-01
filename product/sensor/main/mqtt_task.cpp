@@ -118,6 +118,7 @@ static double round_(float var) {
 
 static int mqtt_reconnect(void) {
 #if defined(USE_MQTTC)
+  LOGI(TAG, "Reconnect to the MQTT server!!!");
   return mqtt_client_reconnect(mqtt_ctx);
 #endif
 }
@@ -881,6 +882,7 @@ static void status_callback(esp_mqtt_status_t status) {
       set_mqtt_published(0);
       set_mqtt_subscribed(0);
       LOGI(TAG, "MQTT_STATUS_DISCONNECTED !!!");
+      // TODO : Need to call mqtt_reconnect when mqtt connection is lost
       break;
     default: break;
   }
@@ -912,6 +914,7 @@ void mqtt_disconnect_callback(AsyncMqttClientDisconnectReason reason) {
   set_mqtt_published(0);
   set_mqtt_subscribed(0);
   LOGI(TAG, "Disconnect from MQTT server");
+  // TODO : Need to call mqtt_reconnect when mqtt connection is lost
 }
 
 void mqtt_subscribe_callback(uint16_t packet_id, uint8_t qos) {
