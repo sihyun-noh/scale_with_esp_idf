@@ -460,84 +460,82 @@ static esp_netif_t *get_esp_interface_netif(esp_interface_t interface) {
     return (b_wifi_stop == true) ? 0 : -1;
   }
 
-#if 0
-int wifi_ap_mode_impl(wifi_context_t *ctx, const char *ssid, const char *password) {
-  if (ctx == NULL) {
-    return -1;
-  }
+  int wifi_ap_mode_impl(wifi_context_t * ctx, const char *ssid, const char *password) {
+    if (ctx == NULL) {
+      return -1;
+    }
 
-  if (!enable_ap_mode(true)) {
-    LOGE(TAG, "Enable AP first!");
-    return -1;
-  }
+    if (!enable_ap_mode(true)) {
+      LOGE(TAG, "Enable AP first!");
+      return -1;
+    }
 
-  if (!ssid || *ssid == 0) {
-    LOGE(TAG, "SSID missing!");
-    return -1;
-  }
+    if (!ssid || *ssid == 0) {
+      LOGE(TAG, "SSID missing!");
+      return -1;
+    }
 
-  if (password && (strlen(password) > 0 && strlen(password) < 8)) {
-    LOGE(TAG, "Password too short!");
-    return -1;
-  }
+    if (password && (strlen(password) > 0 && strlen(password) < 8)) {
+      LOGE(TAG, "Password too short!");
+      return -1;
+    }
 
-  wifi_config_t conf;
-  wifi_config_t curr_conf;
+    wifi_config_t conf;
+    wifi_config_t curr_conf;
 
-  wifi_softap_config(&conf, ssid, password, DEFAULT_WIFI_CHANNEL, WIFI_AUTH_WPA2_PSK, 0, DEFAULT_MAX_STA_CONN, false);
-  esp_err_t err = esp_wifi_get_config((wifi_interface_t)WIFI_IF_AP, &curr_conf);
+    wifi_softap_config(&conf, ssid, password, DEFAULT_WIFI_CHANNEL, WIFI_AUTH_WPA2_PSK, 0, DEFAULT_MAX_STA_CONN, false);
+    esp_err_t err = esp_wifi_get_config((wifi_interface_t)WIFI_IF_AP, &curr_conf);
 
-  if (err) {
-    LOGE(TAG, "Get AP config failed!");
-    return -1;
-  }
-
-  if (!softap_config_equal(&conf, &curr_conf)) {
-    err = esp_wifi_set_config((wifi_interface_t)WIFI_IF_AP, &conf);
     if (err) {
-      LOGE(TAG, "Set AP config failed!");
+      LOGE(TAG, "Get AP config failed!");
       return -1;
     }
+
+    if (!softap_config_equal(&conf, &curr_conf)) {
+      err = esp_wifi_set_config((wifi_interface_t)WIFI_IF_AP, &conf);
+      if (err) {
+        LOGE(TAG, "Set AP config failed!");
+        return -1;
+      }
+    }
+
+    return 0;
   }
 
-  return 0;
-}
-
-int wifi_sta_mode_impl(wifi_context_t *ctx) {
-  if (ctx == NULL) {
-    return -1;
-  }
-
-  if (!enable_sta_mode(true)) {
-    LOGE(TAG, "Enable STA first!");
-    return -1;
-  }
-
-  // Disable power saving mode of STA.
-  esp_wifi_set_ps(WIFI_PS_NONE);
-
-  return 0;
-}
-
-int wifi_stop_mode_impl(wifi_context_t *ctx) {
-  if (ctx == NULL) {
-    return -1;
-  }
-
-  bool b_wifi_stop = false;
-
-  if (b_connected) {
-    if (ESP_OK != esp_wifi_disconnect()) {
+  int wifi_sta_mode_impl(wifi_context_t * ctx) {
+    if (ctx == NULL) {
       return -1;
     }
-    b_connected = false;
+
+    if (!enable_sta_mode(true)) {
+      LOGE(TAG, "Enable STA first!");
+      return -1;
+    }
+
+    // Disable power saving mode of STA.
+    esp_wifi_set_ps(WIFI_PS_NONE);
+
+    return 0;
   }
 
-  b_wifi_stop = set_wifi_mode(WIFI_MODE_NULL);
+  int wifi_stop_mode_impl(wifi_context_t * ctx) {
+    if (ctx == NULL) {
+      return -1;
+    }
 
-  return (b_wifi_stop == true) ? 0 : -1;
-}
-#endif
+    bool b_wifi_stop = false;
+
+    if (b_connected) {
+      if (ESP_OK != esp_wifi_disconnect()) {
+        return -1;
+      }
+      b_connected = false;
+    }
+
+    b_wifi_stop = set_wifi_mode(WIFI_MODE_NULL);
+
+    return (b_wifi_stop == true) ? 0 : -1;
+  }
 
   int wifi_connect_ap_impl(wifi_context_t * ctx, const char *ssid, const char *password) {
     if (ctx == NULL) {
