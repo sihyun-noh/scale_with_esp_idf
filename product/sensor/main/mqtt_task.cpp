@@ -120,6 +120,9 @@ static int mqtt_reconnect(void) {
 #if defined(USE_MQTTC)
   LOGI(TAG, "Reconnect to the MQTT server!!!");
   return mqtt_client_reconnect(mqtt_ctx);
+#else
+  // TODO : Implement mqtt_reconnect code in other mqtt module
+  return 0;
 #endif
 }
 
@@ -867,15 +870,15 @@ static void mqtt_task_restart(void *unused) {
 }
 #endif
 
-static void status_callback(esp_mqtt_status_t status) {
+static void status_callback(mqtt_status_t status) {
   switch (status) {
-    case ESP_MQTT_STATUS_CONNECTED:
+    case MQTT_STATUS_CONNECTED:
       // Subscribe
       set_mqtt_connected(1);
       mqtt_subscribe(mqtt_request, 0);
       LOGI(TAG, "MQTT_STATUS_CONNECTED !!!");
       break;
-    case ESP_MQTT_STATUS_DISCONNECTED:
+    case MQTT_STATUS_DISCONNECTED:
       set_mqtt_connected(0);
       set_mqtt_published(0);
       set_mqtt_subscribed(0);
@@ -889,9 +892,9 @@ static void status_callback(esp_mqtt_status_t status) {
 static void message_callback(const char *topic, const uint8_t *payload, size_t len, int qos, bool retained) {
   mqtt_topic_payload_t mqtt = { 0 };
 
-  mqtt.topic = topic;
-  mqtt.topic_len = stelen(topic);
-  mqtt.payload = payload;
+  mqtt.topic = (char *)topic;
+  mqtt.topic_len = strlen(topic);
+  mqtt.payload = (char *)payload;
   mqtt.payload_len = len;
 
   send_msg_to_mqtt_task(MQTT_EVENT_ID, &mqtt, sizeof(mqtt_topic_payload_t));

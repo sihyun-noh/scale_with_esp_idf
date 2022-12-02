@@ -42,8 +42,8 @@ static uint32_t scan_started = 0;
 static uint32_t scan_timeout = 10000;
 
 struct wifi_context {
-  esp_netif_t *ap_netif;
-  esp_netif_t *sta_netif;
+  esp_interface_t ap_netif;
+  esp_interface_t sta_netif;
   bool use_static_buffers;
 };
 
@@ -54,21 +54,6 @@ static wifi_ap_record_t scan_ap_list[DEFAULT_SCAN_LIST_SIZE] = { 0 };
 
 static long millis(void) {
   return (unsigned long)(esp_timer_get_time() / 1000ULL);
-}
-
-static esp_interface_t get_esp_netif_interface(esp_netif_t *esp_netif) {
-  for (int i = 0; i < ESP_IF_MAX; i++) {
-    if (esp_netifs[i] != NULL && esp_netifs[i] == esp_netif) {
-      return (esp_interface_t)i;
-    }
-  }
-  return ESP_IF_MAX;
-}
-
-static void add_esp_interface_netif(esp_interface_t interface, esp_netif_t *esp_netif) {
-  if (interface < ESP_IF_MAX) {
-    esp_netifs[interface] = esp_netif;
-  }
 }
 
 static esp_netif_t *get_esp_interface_netif(esp_interface_t interface) {
@@ -92,6 +77,7 @@ static bool net_init(void) {
     if (!initialized) {
       LOGE(TAG, "esp_netif_init failed!!!");
     }
+    LOGI(TAG, "esp_netif_init() !!!");
   }
   return initialized;
 }
@@ -199,6 +185,7 @@ static bool wifi_init(bool b_use_static_buffers) {
       b_wifi_init_done = false;
       return b_wifi_init_done;
     }
+    LOGI(TAG, "wifi_init()!!!");
   }
   return b_wifi_init_done;
 }
@@ -206,6 +193,7 @@ static bool wifi_init(bool b_use_static_buffers) {
 static bool wifi_deinit(void) {
   if (b_wifi_init_done) {
     b_wifi_init_done = !(esp_wifi_deinit() == ESP_OK);
+    LOGI(TAG, "wifi_deinit()!!!");
   }
   return !b_wifi_init_done;
 }
@@ -222,7 +210,7 @@ static bool wifi_start(void) {
     LOGE(TAG, "WiFi started error = %d", err);
     return b_wifi_started;
   }
-
+  LOGI(TAG, "wifi_start()!!!");
   return b_wifi_started;
 }
 
@@ -239,7 +227,7 @@ static bool wifi_stop(void) {
     b_wifi_started = true;
     return false;
   }
-
+  LOGI(TAG, "wifi_stop()!!!");
   return wifi_deinit();
 }
 
@@ -277,15 +265,19 @@ static wifi_mode_t get_wifi_mode(void) {
 static bool set_wifi_mode(wifi_mode_t mode) {
   wifi_mode_t curr_wifi_mode = get_wifi_mode();
 
+  LOGI(TAG, "set_wifi_mode: curr_mode = %d, set_mode = %d", curr_wifi_mode, mode);
+
   if (curr_wifi_mode == mode) {
     return true;
   }
 
   if (!curr_wifi_mode && mode) {
+    LOGI(TAG, "Call wifi_init()!");
     if (!wifi_init(false)) {
       return false;
     }
   } else if (curr_wifi_mode && !mode) {
+    LOGI(TAG, "Call wifi_stop()!");
     return wifi_stop();
   }
 
@@ -296,6 +288,7 @@ static bool set_wifi_mode(wifi_mode_t mode) {
     return false;
   }
 
+  LOGI(TAG, "Call wifi_start()!");
   if (!wifi_start()) {
     return false;
   }
@@ -352,8 +345,9 @@ wifi_context_t *wifi_init_impl(void) {
   if (ctx == NULL) {
     ctx = (wifi_context_t *)calloc(1, sizeof(struct wifi_context));
     if (ctx) {
-      add_esp_interface_netif(ESP_IF_WIFI_AP, ctx->ap_netif);
-      add_esp_interface_netif(ESP_IF_WIFI_STA, ctx->sta_netif);
+      ctx->ap_netif = ESP_IF_WIFI_AP;
+      ctx->sta_netif = ESP_IF_WIFI_STA;
+      ctx->use_static_buffers = false;
     }
   }
 
@@ -565,7 +559,7 @@ int wifi_scan_network_impl(wifi_context_t *ctx, bool async, bool show_hidden, bo
     return WIFI_SCAN_RUNNING;
   }
 
-  if (wait_for_hw_event(STATUS_WIFI_SCAN_DONE, 10000)) {
+  if (wait_for_hw_event(STATUS_WIFI_SCAN_DONE, scan_timeout)) {
     scan_count = scan_done();
   }
 
@@ -630,12 +624,13 @@ int get_sta_ipaddr_impl(wifi_context_t *ctx, char *ip_addr, int addr_len) {
   if (ctx == NULL || ip_addr == NULL || addr_len == 0) {
     return -1;
   }
-  if (ctx->sta_netif == NULL) {
+  esp_netif_t *sta_netif = get_esp_interface_netif(ctx->sta_netif);
+  if (sta_netif == NULL) {
     return -1;
   }
 
   esp_netif_ip_info_t ip_info;
-  esp_netif_get_ip_info(ctx->sta_netif, &ip_info);
+  esp_netif_get_ip_info(sta_netif, &ip_info);
 
   snprintf(ip_addr, addr_len, IPSTR, IP2STR(&ip_info.ip));
   return 0;
@@ -645,12 +640,13 @@ int get_router_ipaddr_impl(wifi_context_t *ctx, char *ip_addr, int addr_len) {
   if (ctx == NULL || ip_addr == NULL || addr_len == 0) {
     return -1;
   }
-  if (ctx->sta_netif == NULL) {
+  esp_netif_t *sta_netif = get_esp_interface_netif(ctx->sta_netif);
+  if (sta_netif == NULL) {
     return -1;
   }
 
   esp_netif_ip_info_t ip_info;
-  esp_netif_get_ip_info(ctx->sta_netif, &ip_info);
+  esp_netif_get_ip_info(sta_netif, &ip_info);
 
   snprintf(ip_addr, addr_len, IPSTR, IP2STR(&ip_info.gw));
   return 0;
