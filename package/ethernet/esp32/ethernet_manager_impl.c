@@ -19,6 +19,7 @@
 #include "freertos/task.h"
 #include "esp_netif.h"
 #include "esp_eth.h"
+#include "esp_eth_mac.h"
 #include "esp_event.h"
 #include "log.h"
 // #include "driver/gpio.h"

@@ -33,7 +33,7 @@
 
 static esp_adc_cal_characteristics_t adc1_chars;
 
-bool adc_hal_calibration_init(void) {
+bool adc_hal_calib_init(void) {
   esp_err_t ret;
   bool cali_enable = false;
 

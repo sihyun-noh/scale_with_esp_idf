@@ -95,10 +95,12 @@ fi
 # tool setup & env setting
 cd ${TOOL_PATH}/esp-idf
 
-./install.sh esp32
+./install.sh all
 
 # exit 0
 . export.sh
+
+export IDF_TARGET=esp32s3
 
 # build or menuconfig .etc...
 cd ${PROD_PATH}

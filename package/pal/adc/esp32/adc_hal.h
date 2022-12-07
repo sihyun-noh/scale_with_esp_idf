@@ -26,7 +26,7 @@
  *
  * @return bool true on success, false on failure
  */
-bool adc_hal_calibration_init(void);
+bool adc_hal_calib_init(void);
 
 /**
  * @brief   Convenience function for reading adc value ESP32

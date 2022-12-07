@@ -19,7 +19,7 @@
 #include "esp32/adc_hal.h"
 
 bool adc_calibration_init(void) {
-  return adc_hal_calibration_init();
+  return adc_hal_calib_init();
 }
 
 int adc_read(uint8_t chan) {

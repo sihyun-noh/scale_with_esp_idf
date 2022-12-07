@@ -17,7 +17,7 @@
 
 const char* TAG = "main_app";
 
-sc_ctx_t* ctx = NULL;
+sc_ctx_t* sc_ctx = NULL;
 
 extern int sensor_init(void);
 extern int sensor_read(void);
@@ -45,8 +45,8 @@ operation_mode_t get_operation_mode(void) {
  * @note This function is called in shell_command_impl.c
  */
 void stop_shell(void) {
-  if (ctx) {
-    sc_stop(ctx);
+  if (sc_ctx) {
+    sc_stop(sc_ctx);
   }
 }
 
@@ -195,9 +195,9 @@ void app_main(void) {
   }
 
   // Start interactive shell command line
-  ctx = sc_init();
-  if (ctx)
-    sc_start(ctx);
+  sc_ctx = sc_init();
+  if (sc_ctx)
+    sc_start(sc_ctx);
 
   battery_loop_task();
 }
