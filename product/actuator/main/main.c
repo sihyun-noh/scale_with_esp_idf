@@ -29,7 +29,7 @@
 
 const char* TAG = "main_app";
 
-sc_ctx_t* ctx = NULL;
+sc_ctx_t* sc_ctx = NULL;
 
 static TickType_t g_last_ntp_check_time = 0;
 
@@ -131,8 +131,8 @@ extern "C" void stop_shell(void) {
 #else
 void stop_shell(void) {
 #endif
-  if (ctx) {
-    sc_stop(ctx);
+  if (sc_ctx) {
+    sc_stop(sc_ctx);
   }
 }
 
@@ -321,9 +321,9 @@ void app_main(void) {
   }
 
   // Start interactive shell command line
-  ctx = sc_init();
-  if (ctx)
-    sc_start(ctx);
+  sc_ctx = sc_init();
+  if (sc_ctx)
+    sc_start(sc_ctx);
 
   set_device_onboard(0);
 

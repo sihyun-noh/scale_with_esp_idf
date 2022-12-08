@@ -1,6 +1,15 @@
 set(req freertos log mdns time syscfg syslog sysevent wifi esp_https_server json ping monitor ethernet)
 set(certs "certs/cacert.pem" "certs/prvtkey.pem")
-idf_component_register(SRCS "easy_setup.c" "mdns.c" "ethernet_easy_setup.c"
+
+if(CONFIG_SMARTFARM_ETHERNET_FEATURE)
+  list(APPEND srcs 
+    "ethernet_easy_setup.c" "mdns.c")
+else()
+  list(APPEND srcs 
+    "easy_setup.c" "mdns.c")
+endif()
+
+idf_component_register(SRCS "${srcs}"
     INCLUDE_DIRS "."
     REQUIRES ${req}
     EMBED_TXTFILES ${certs})
