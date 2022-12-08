@@ -27,6 +27,14 @@ checkArgVariable() {
 }
 
 if [ -z ${1} ] || [[ ${1} = "build" ]] || [[ ${1} = "flash" ]]; then
+  echo "Please select target chipset. 1: ESP32, 2: ESP32S3"
+  read CHIPSET_ID
+  if [ ${CHIPSET_ID} = "1" ]; then
+    export IDF_TARGET=esp32
+  elif [ ${CHIPSET_ID} = "2" ]; then
+    export IDF_TARGET=esp32s3
+  fi
+
   echo "Please select product. 1: On/Off Type, 2 : Forward/Reverse Type  "
   read SELECT_NUM
 
@@ -79,7 +87,7 @@ fi
 # tool setup & env setting
 cd ${TOOL_PATH}/esp-idf
 
-./install.sh esp32
+./install.sh all
 
 # exit 0
 . export.sh
@@ -97,7 +105,13 @@ clearEnvVariable() {
 checkDeviceConnect() {
   # 매개변수 없을 시에는 기본적으로 build 만 동작
   # Flash 일 경우 device 연결 확인 - 현재는 macOS, 추후 linux, window 확인 후 추가 예정
-  PORT_PATH=$(ls /dev/cu.usb*)
+  # check if fuzzy finder command exists
+  which fzf &>/dev/null
+  if [ $? == 0 ] ; then
+    PORT_PATH=$(ls /dev/cu.usb* | fzf)
+  else
+    PORT_PATH=$(ls /dev/cu.usb*)
+  fi
 
   if [ -z ${PORT_PATH} ]; then
     echo "Device is not connected. Not possible flash / monitoring."
