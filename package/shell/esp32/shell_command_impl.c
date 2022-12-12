@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include "esp_system.h"
 #include "nvs_flash.h"
+#include "esp_idf_version.h"
 
 #include <freertos/FreeRTOS.h>
 
@@ -138,6 +139,12 @@ static int scan_network(int argc, char **argv) {
   return 0;
 }
 
+static int sdk_version(int argc, char **argv) {
+  const char *idf_ver = esp_get_idf_version();
+  printf("idf_version = %s\n", idf_ver);
+  return 0;
+}
+
 /** @brief Assign the command structure that will be used in shell command */
 static sc_cmd_t commands[] = {
   {
@@ -249,6 +256,11 @@ static sc_cmd_t commands[] = {
       .name = "scan_network",
       .help = "Scan AP network",
       .func = scan_network,
+  },
+  {
+      .name = "sdk_version",
+      .help = "Get IDF-SDK version",
+      .func = sdk_version,
   },
 #if (SENSOR_TYPE == ATLAS_PH)
   {
