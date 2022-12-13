@@ -38,7 +38,8 @@ extern char *uptime(void);
 extern void mqtt_publish_sensor_data(void);
 #endif
 
-SemaphoreHandle_t mqtt_semaphore;
+SemaphoreHandle_t pub_mutex;
+SemaphoreHandle_t msg_mutex;
 static TaskHandle_t mqtt_task_handle;
 static QueueHandle_t mqtt_task_msg_queue;
 
@@ -131,7 +132,7 @@ static int mqtt_publish(char *topic, char *payload, int qos, int retain) {
 
 #if defined(USE_MQTTC)
   if (is_mqtt_init_finished() && is_mqtt_connected()) {
-    if ((mqtt_semaphore != NULL) && xSemaphoreTake(mqtt_semaphore, 2 * MQTT_FLAG_TIMEOUT) == pdTRUE) {
+    if ((pub_mutex != NULL) && xSemaphoreTake(pub_mutex, 2 * MQTT_FLAG_TIMEOUT) == pdTRUE) {
       set_mqtt_published(0);
       msg_id = mqtt_client_publish(mqtt_ctx, topic, payload, strlen(payload), qos, retain);
       if (qos == QOS_0) {
@@ -141,14 +142,14 @@ static int mqtt_publish(char *topic, char *payload, int qos, int retain) {
       } else {
         LOGW(TAG, "failed to publish qos1, msg_id=%d", msg_id);
       }
-      xSemaphoreGive(mqtt_semaphore);
+      xSemaphoreGive(pub_mutex);
     } else {
       LOGW(TAG, "Cannot get mqtt semaphore!!!");
     }
   }
 #elif defined(USE_LWMQTTC)
   if (is_mqtt_init_finished() && is_mqtt_connected()) {
-    if ((mqtt_semaphore != NULL) && xSemaphoreTake(mqtt_semaphore, 2 * MQTT_FLAG_TIMEOUT) == pdTRUE) {
+    if ((pub_mutex != NULL) && xSemaphoreTake(pub_mutex, 2 * MQTT_FLAG_TIMEOUT) == pdTRUE) {
       set_mqtt_published(0);
       if (lwmqtt_client_publish((const char *)topic, (const uint8_t *)payload, strlen(payload), qos,
                                 (retain == 1) ? true : false)) {
@@ -157,14 +158,14 @@ static int mqtt_publish(char *topic, char *payload, int qos, int retain) {
       } else {
         LOGW(TAG, "failed to publish, msg_id=%d", msg_id);
       }
-      xSemaphoreGive(mqtt_semaphore);
+      xSemaphoreGive(pub_mutex);
     } else {
       LOGW(TAG, "Cannot get mqtt semaphore!!!");
     }
   }
 #elif defined(USE_ASYNCMQTT)
   if (is_mqtt_init_finished() && is_mqtt_connected()) {
-    if ((mqtt_semaphore != NULL) && xSemaphoreTake(mqtt_semaphore, 2 * MQTT_FLAG_TIMEOUT) == pdTRUE) {
+    if ((pub_mutex != NULL) && xSemaphoreTake(pub_mutex, 2 * MQTT_FLAG_TIMEOUT) == pdTRUE) {
       set_mqtt_published(0);
       msg_id = mqtt_client.publish((const char *)topic, 0, false, (const char *)payload, strlen(payload));
       if (msg_id > 0) {
@@ -172,7 +173,7 @@ static int mqtt_publish(char *topic, char *payload, int qos, int retain) {
       } else {
         LOGW(TAG, "failed to publish, msg_id=%d", msg_id);
       }
-      xSemaphoreGive(mqtt_semaphore);
+      xSemaphoreGive(pub_mutex);
     } else {
       LOGW(TAG, "Cannot get mqtt semaphore!!!");
     }
@@ -1205,10 +1206,12 @@ void mqtt_publish_sensor_data(void) {
 }
 
 int send_msg_to_mqtt_task(mqtt_msg_id_t id, void *data, uint32_t len) {
+  int rc = 0;
   mqtt_msg_t mqtt_msg;
   mqtt_topic_payload_t *p_data = NULL;
   mqtt_topic_payload_t *p_mqtt = NULL;
 
+  xSemaphoreTake(msg_mutex, portMAX_DELAY);
   memset(&mqtt_msg, 0x00, sizeof(mqtt_msg_t));
 
   if ((id == MQTT_EVENT_ID) && data && len) {
@@ -1245,10 +1248,11 @@ int send_msg_to_mqtt_task(mqtt_msg_id_t id, void *data, uint32_t len) {
       }
       free(p_mqtt);
     }
-    return -1;
+    rc = -1;
   }
 
-  return 0;
+  xSemaphoreGive(msg_mutex);
+  return rc;
 }
 
 static void mqtt_task(void *params) {
@@ -1265,10 +1269,11 @@ static void mqtt_task(void *params) {
 }
 
 void create_mqtt_task(void) {
-  mqtt_semaphore = xSemaphoreCreateMutex();
+  pub_mutex = xSemaphoreCreateMutex();
+  msg_mutex = xSemaphoreCreateMutex();
   mqtt_task_msg_queue = xQueueCreate(MQTT_MSG_QUEUE_LEN, sizeof(mqtt_msg_t));
 
-  if (mqtt_task_msg_queue == NULL || mqtt_semaphore == NULL) {
+  if (mqtt_task_msg_queue == NULL || pub_mutex == NULL || msg_mutex == NULL) {
     return;
   }
 
