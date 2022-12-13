@@ -10,6 +10,7 @@
 #include "event_ids.h"
 #include "sysfile.h"
 #include "rtc_task.h"
+#include "msc.h"
 #include "config.h"
 #include "main.h"
 
@@ -137,6 +138,8 @@ int system_init(void) {
   rtc_time_init();
 
   create_led_task();
+
+  create_usb_host_msc_task();
 
   return SYSINIT_OK;
 }
