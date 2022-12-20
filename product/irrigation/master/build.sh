@@ -26,42 +26,8 @@ checkArgVariable() {
   fi
 }
 
-if [ -z ${1} ] || [[ ${1} = "build" ]] || [[ ${1} = "flash" ]]; then
-  echo "Please select product. 1: Temp & Humi, 2 : CO2 TH, 3 : Soil EC, 4 : Solar Radiation, 5 : Atlas pH, 6 : Atlas EC, 7 : Water PH, 8 : Wind Direction, 9 : Wind Speed, 10 : Water EC"
-  read SELECT_NUM
-
-  if [ ${SELECT_NUM} = "1" ]; then
-    PRODUCT_NAME="SHT3X"
-  elif [ ${SELECT_NUM} = "2" ]; then
-    PRODUCT_NAME="SCD4X"
-  elif [ ${SELECT_NUM} = "3" ]; then
-    PRODUCT_NAME="RK520_02"
-  elif [ ${SELECT_NUM} = "4" ]; then
-    PRODUCT_NAME="SWSR7500"
-  elif [ ${SELECT_NUM} = "5" ]; then
-    PRODUCT_NAME="ATLAS_PH"
-  elif [ ${SELECT_NUM} = "6" ]; then
-    PRODUCT_NAME="ATLAS_EC"
-  elif [ ${SELECT_NUM} = "7" ]; then
-    PRODUCT_NAME="RK500_02"
-  elif [ ${SELECT_NUM} = "8" ]; then
-    PRODUCT_NAME="RK110_02"
-  elif [ ${SELECT_NUM} = "9" ]; then
-    PRODUCT_NAME="RK100_02"
-  elif [ ${SELECT_NUM} = "10" ]; then
-    PRODUCT_NAME="RK500_13"
-  fi
-
-  echo "select ${PRODUCT_NAME}"
-  export CURRENT_PROJECT=${PRODUCT_NAME}
-
-  DEFINED_PROD=$(grep -h '#define SENSOR_TYPE*' main/config.h)
-  COMPILE_PROD="#define SENSOR_TYPE ${PRODUCT_NAME}"
-
-  if [ -n "${DEFINED_PROD}" ]; then
-    perl -pi -e "s/${DEFINED_PROD}/${COMPILE_PROD}/g" main/config.h
-  fi
-fi
+PRODUCT_NAME="MASTER"
+export CURRENT_PROJECT=${PRODUCT_NAME}
 
 if [ ${#} -eq 0 ]; then
   echo "start build project"
@@ -113,7 +79,7 @@ clearEnvVariable() {
 checkDeviceConnect() {
   # 매개변수 없을 시에는 기본적으로 build 만 동작
   # Flash 일 경우 device 연결 확인 - 현재는 macOS, 추후 linux, window 확인 후 추가 예정
-  PORT_PATH=$(ls /dev/cu.usb* | fzf)
+  PORT_PATH=$(ls /dev/cu.usb*)
   echo "port port : $PORT_PATH"
 
   if [ -z ${PORT_PATH} ]; then

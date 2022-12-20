@@ -17,9 +17,9 @@ set(PROJECT_VERSION_FILE "${PROJECT_VERSION_MAJOR}_${PROJECT_VERSION_MINOR}_${PR
 set(PROJECT_STAGE "DVT")
 
 # Set project name
-set(PROJECT_NAME "SENS_$ENV{CURRENT_PROJECT}")
+set(PROJECT_NAME "IRRIGATION_$ENV{CURRENT_PROJECT}")
 message("project name : ${PROJECT_NAME}")
-set(PROJECT_TYPE "SENSOR")
+set(PROJECT_TYPE "IRRIGATION")
 
 # Get the current commit hash
 execute_process(

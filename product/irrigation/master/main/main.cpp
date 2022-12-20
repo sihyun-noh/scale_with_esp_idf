@@ -12,11 +12,8 @@
 #include "event_ids.h"
 #include "time_api.h"
 #include "monitoring.h"
-#include "sysfile.h"
 #include "config.h"
 #include "filelog.h"
-#include "mqtt_task.h"
-#include "sensor_task.h"
 #include "adc.h"
 #include "main.h"
 #include "esp32/rom/rtc.h"
@@ -41,13 +38,11 @@ static TickType_t g_last_ntp_check_time = 0;
 extern "C" {
 #endif
 
-void modbus_sensor_test(int mb_sensor);
-
+int actuator_init(void);
+int actuator_task(void);
 #if defined(CONFIG_LED_FEATURE)
 void create_led_task(void);
 #endif
-
-extern int start_file_server(uint32_t port);
 
 #ifdef __cplusplus
 }
@@ -125,9 +120,6 @@ void set_operation_mode(operation_mode_t mode) {
 }
 
 operation_mode_t get_operation_mode(void) {
-  if (is_fwupdate()) {
-    s_curr_mode = OTA_FWUPDATE_MODE;
-  }
   return s_curr_mode;
 }
 
@@ -224,16 +216,10 @@ int system_init(void) {
 
   syslog_init();
 
-  ret = init_sysfile();
-  if (ret)
-    return ERR_SPIFFS_INIT;
-
   // Generate the default manufacturing data if there is no data in mfg partition.
   generate_syscfg();
 
   check_model();
-
-  create_mqtt_task();
 
   ret = monitoring_init();
   if (ret)
@@ -247,194 +233,54 @@ int system_init(void) {
   return SYSINIT_OK;
 }
 
-void battery_loop_task(void) {
+void loop_task(void) {
   int rc = 0;
   uint32_t delay_ms = 0;
 
-  set_operation_mode(SENSOR_INIT_MODE);
+  set_operation_mode(ACTUATOR_INIT_MODE);
 
   while (1) {
     delay_ms = DELAY_500MS;
     switch (get_operation_mode()) {
-      case SENSOR_INIT_MODE: {
-        LOGI(TAG, "SENSOR_INIT_MODE");
-        if ((rc = sensor_init()) != SYSINIT_OK) {
-          LOGI(TAG, "Could not initialize sensor");
+      case ACTUATOR_INIT_MODE: {
+        LOGI(TAG, "ACTUATOR_INIT_MODE");
+        if ((rc = actuator_init()) != SYSINIT_OK) {
+          LOGI(TAG, "Could not initialize actuator");
           set_operation_mode(DEEP_SLEEP_MODE);
         } else {
-          set_operation_mode(SENSOR_READ_MODE);
-        }
-      } break;
-      case SENSOR_READ_MODE: {
-        LOGI(TAG, "SENSOR_READ_MODE");
-        rc = sensor_read();
-        if (rc == CHECK_OK) {
-          if (read_battery_percentage() != CHECK_OK) {
-            // Failed to read battery percentage, it will be set 0
-            sysevent_set(ADC_BATTERY_EVENT, (char*)"0");
-          }
           set_operation_mode(EASY_SETUP_MODE);
-        } else if (rc == SENSOR_NOT_PUB) {
-          set_operation_mode(DEEP_SLEEP_MODE);
-        } else {
-          rc = ERR_SENSOR_READ;
-          LOGE(TAG, "sensor read, error = [%d]", rc);
-          // FLOGI(TAG, "sensor read, error = [%d]", rc);
-          set_operation_mode(DEEP_SLEEP_MODE);
         }
       } break;
       case EASY_SETUP_MODE: {
         LOGI(TAG, "EASY_SETUP_MODE");
         create_easy_setup_task();
-        set_operation_mode(NTP_TIME_MODE);
+        set_operation_mode(ESP_NOW_START_MODE);
       } break;
-      case NTP_TIME_MODE: {
+      case ESP_NOW_START_MODE: {
         if (is_device_onboard()) {
-          struct tm timeinfo = { 0 };
-          tm_set_time(3600 * KR_GMT_OFFSET, 3600 * KR_DST_OFFSET, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
-          if (tm_get_local_time(&timeinfo, 20000)) {
-            set_operation_mode(MQTT_START_MODE);
-          }
-        } else {
-          if (!is_running_setup_task()) {
-            set_operation_mode(DEEP_SLEEP_MODE);
-          }
-        }
-      } break;
-      case MQTT_START_MODE: {
-        if (is_device_onboard()) {
-          LOGI(TAG, "MQTT_START_MODE");
-          start_mqttc();
-          set_operation_mode(SENSOR_PUB_MODE);
+          LOGI(TAG, "ESP_NOW_START_MODE");
+          //start_esp_now();
+          set_operation_mode(MONITOR_MODE);
           delay_ms = DELAY_1SEC;
         } else {
           set_operation_mode(DEEP_SLEEP_MODE);
         }
       } break;
-      case SENSOR_PUB_MODE: {
-        // Sensor data should be published when device is onboarding and the ntp update is not running.
+      case MONITOR_MODE: {
         if (is_device_onboard()) {
-          LOGI(TAG, "SENSOR_PUB_MODE");
-          mqtt_publish_sensor_data();
-          stop_mqttc();
+          LOGI(TAG, "MONITOR_MODE");
+          actuator_task();
+          //esp_now_publish_actuator_data();
+          //stop_esp_now();
           set_operation_mode(DEEP_SLEEP_MODE);
           delay_ms = DELAY_1SEC;
         } else {
           set_operation_mode(DEEP_SLEEP_MODE);
         }
-      } break;
-      case NTP_UPDATE_MODE:
-      case OTA_FWUPDATE_MODE: {
-        // Do not anything while OTA FW updating
-        delay_ms = DELAY_1SEC;
       } break;
       case DEEP_SLEEP_MODE: {
         LOGI(TAG, "DEEP_SLEEP_MODE");
         sleep_timer_wakeup(send_interval);
-      } break;
-    }
-    delay(delay_ms);
-  }
-}
-
-void plugged_loop_task(void) {
-  int rc = 0;
-  uint32_t delay_ms = 0;
-
-  set_operation_mode(SENSOR_INIT_MODE);
-
-  while (1) {
-    delay_ms = DELAY_500MS;
-    switch (get_operation_mode()) {
-      case SENSOR_INIT_MODE: {
-        if ((rc = sensor_init()) != SYSINIT_OK) {
-          LOGI(TAG, "Could not initialize SHT3x sensor");
-        } else {
-          set_operation_mode(EASY_SETUP_MODE);
-        }
-      } break;
-      case EASY_SETUP_MODE: {
-        LOGI(TAG, "EASY_SETUP_MODE");
-        create_easy_setup_task();
-        set_operation_mode(NTP_TIME_MODE);
-      } break;
-      case NTP_TIME_MODE: {
-        if (is_device_onboard()) {
-          struct tm timeinfo = { 0 };
-          tm_set_time(3600 * KR_GMT_OFFSET, 3600 * KR_DST_OFFSET, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
-          if (tm_get_local_time(&timeinfo, 20000)) {
-            g_last_ntp_check_time = xTaskGetTickCount();
-            set_operation_mode(MQTT_START_MODE);
-          }
-        } else {
-          if (!is_running_setup_task()) {
-            set_operation_mode(DEEP_SLEEP_MODE);
-          }
-        }
-      } break;
-      case MQTT_START_MODE: {
-        if (is_device_onboard()) {
-          LOGI(TAG, "MQTT_START_MODE!!!");
-          start_file_server(8001);
-          start_mqttc();
-          set_operation_mode(SENSOR_READ_MODE);
-        } else {
-          set_operation_mode(DEEP_SLEEP_MODE);
-        }
-      } break;
-      case SENSOR_READ_MODE: {
-        if (is_device_onboard()) {
-          LOGI(TAG, "SENSOR_READ_MODE!!!");
-          rc = sensor_read();
-          if (rc == CHECK_OK) {
-            set_operation_mode(SENSOR_PUB_MODE);
-          } else {
-            rc = ERR_SENSOR_READ;
-            LOGE(TAG, "sensor read, error = [%d]", rc);
-            delay_ms = DELAY_5SEC;
-          }
-        } else {
-          set_operation_mode(DEEP_SLEEP_MODE);
-        }
-      } break;
-      case SENSOR_PUB_MODE: {
-        // Sensor data should be published when device is onboarding and ntp update is not running.
-        if (is_device_onboard()) {
-          LOGI(TAG, "SENSOR_PUB_MODE!!!");
-          send_msg_to_mqtt_task(MQTT_PUB_DATA_ID, NULL, 0);
-          set_operation_mode(NTP_UPDATE_MODE);
-          delay_ms = (MQTT_SEND_INTERVAL * 1000);
-        } else {
-          set_operation_mode(DEEP_SLEEP_MODE);
-        }
-      } break;
-      case NTP_UPDATE_MODE: {
-        if (is_device_onboard()) {
-          if (xTaskGetTickCount() >= g_last_ntp_check_time + pdMS_TO_TICKS(NTP_CHECK_TIME * 1000)) {
-            LOGI(TAG, "Call set_ntp_time() !!!");
-            set_ntp_time();
-            g_last_ntp_check_time = xTaskGetTickCount();
-            set_operation_mode(SENSOR_READ_MODE);
-            delay_ms = DELAY_5SEC;
-          } else {
-            set_operation_mode(SENSOR_READ_MODE);
-            delay_ms = DELAY_1SEC;
-          }
-        } else {
-          set_operation_mode(DEEP_SLEEP_MODE);
-        }
-      } break;
-      case OTA_FWUPDATE_MODE: {
-        // Do not anything while OTA FW updating
-        delay_ms = DELAY_1SEC;
-      } break;
-      case DEEP_SLEEP_MODE: {
-        // On the power plug model, entering sleep mode means that the router or internet status is unavailable, so we
-        // use deep sleep mode to reconnect to the Wi-Fi router.
-        reconnect_count();
-        stop_mqttc();
-        sleep_timer_wakeup(30);
-        set_operation_mode(SENSOR_INIT_MODE);
       } break;
     }
     delay(delay_ms);
@@ -464,9 +310,5 @@ void app_main(void) {
   create_led_task();
 #endif
 
-  if (is_battery_model()) {
-    battery_loop_task();
-  } else {
-    plugged_loop_task();
-  }
+  loop_task();
 }
