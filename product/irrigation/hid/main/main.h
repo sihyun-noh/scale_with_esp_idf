@@ -15,15 +15,13 @@ typedef enum {
 
 typedef enum {
   CHECK_OK,
-  SENSOR_NOT_PUB,
-  ERR_SENSOR_READ,
   ERR_BATTERY_READ,
 } err_system_t;
 
 typedef enum {
-  SENSOR_INIT_MODE = 0,
-  SENSOR_READ_MODE,
-  SENSOR_PUB_MODE,
+  HID_INIT_MODE = 0,
+  HID_READ_MODE,
+  HID_DISPLAY_MODE,
   SLEEP_MODE
 } operation_mode_t;
 

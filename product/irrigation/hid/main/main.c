@@ -9,8 +9,6 @@
 #include "esp_sleep.h"
 #include "event_ids.h"
 #include "sysfile.h"
-#include "rtc_task.h"
-#include "msc.h"
 #include "config.h"
 #include "main.h"
 
@@ -20,8 +18,6 @@ const char* TAG = "main_app";
 
 sc_ctx_t* sc_ctx = NULL;
 
-extern int sensor_init(void);
-extern int sensor_read(void);
 extern int read_battery_percentage(void);
 extern void sdcard_init(void);
 extern void sdcard_write_data(void);
@@ -135,54 +131,34 @@ int system_init(void) {
 
   sdcard_init();
 
-  rtc_time_init();
-
   create_led_task();
-
-  create_usb_host_msc_task();
 
   return SYSINIT_OK;
 }
 
-void battery_loop_task(void) {
+void loop_task(void) {
   int rc = 0;
 
-  set_operation_mode(SENSOR_INIT_MODE);
+  set_operation_mode(HID_INIT_MODE);
 
   while (1) {
     switch (get_operation_mode()) {
-      case SENSOR_INIT_MODE: {
-        LOGI(TAG, "SENSOR_INIT_MODE");
-        if ((rc = sensor_init()) != SYSINIT_OK) {
-          LOGI(TAG, "Could not initialize sensor");
-          set_operation_mode(SLEEP_MODE);
-        } else {
-          set_operation_mode(SENSOR_READ_MODE);
-        }
+      case HID_INIT_MODE: {
+        LOGI(TAG, "HID_INIT_MODE");
+          set_operation_mode(HID_READ_MODE);
       } break;
-      case SENSOR_READ_MODE: {
-        LOGI(TAG, "SENSOR_READ_MODE");
-        rc = sensor_read();
-        if (rc == CHECK_OK) {
-          if (read_battery_percentage() != CHECK_OK) {
-            // Failed to read battery percentage, it will be set 0
-            sysevent_set(ADC_BATTERY_EVENT, "0");
-          }
-          set_operation_mode(SENSOR_PUB_MODE);
-        } else {
-          rc = ERR_SENSOR_READ;
-          LOGE(TAG, "sensor read, error = [%d]", rc);
-          set_operation_mode(SLEEP_MODE);
-        }
+      case HID_READ_MODE: {
+        LOGI(TAG, "HID_READ_MODE");
+        set_operation_mode(HID_DISPLAY_MODE);
       } break;
-      case SENSOR_PUB_MODE: {
-        sdcard_write_data();
+      case HID_DISPLAY_MODE: {
+        LOGI(TAG, "HID_DISPLAY_MODE");
         set_operation_mode(SLEEP_MODE);
       } break;
       case SLEEP_MODE: {
         LOGI(TAG, "SLEEP_MODE");
         vTaskDelay(send_interval * 1000 / portTICK_PERIOD_MS);
-        set_operation_mode(SENSOR_READ_MODE);
+        set_operation_mode(HID_READ_MODE);
       } break;
     }
     vTaskDelay(500 / portTICK_PERIOD_MS);
@@ -202,5 +178,5 @@ void app_main(void) {
   if (sc_ctx)
     sc_start(sc_ctx);
 
-  battery_loop_task();
+  loop_task();
 }
