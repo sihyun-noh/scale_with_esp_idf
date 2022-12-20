@@ -38,7 +38,8 @@ extern char *uptime(void);
 extern void mqtt_publish_actuator_data(void);
 #endif
 
-SemaphoreHandle_t mqtt_semaphore;
+SemaphoreHandle_t pub_mutex;
+SemaphoreHandle_t msg_mutex;
 static TaskHandle_t mqtt_task_handle;
 static QueueHandle_t mqtt_task_msg_queue;
 
@@ -82,6 +83,9 @@ static int mqtt_reconnect(void) {
 #if defined(USE_MQTTC)
   LOGI(TAG, "Reconnect to the MQTT server!!!");
   return mqtt_client_reconnect(mqtt_ctx);
+#else
+  // TODO : Implement mqtt_reconnect code in other mqtt module
+  return 0;
 #endif
 }
 
@@ -90,7 +94,7 @@ static int mqtt_publish(char *topic, char *payload, int qos, int retain) {
 
 #if defined(USE_MQTTC)
   if (is_mqtt_init_finished() && is_mqtt_connected()) {
-    if ((mqtt_semaphore != NULL) && xSemaphoreTake(mqtt_semaphore, 2 * MQTT_FLAG_TIMEOUT) == pdTRUE) {
+    if ((pub_mutex != NULL) && xSemaphoreTake(pub_mutex, 2 * MQTT_FLAG_TIMEOUT) == pdTRUE) {
       set_mqtt_published(0);
       msg_id = mqtt_client_publish(mqtt_ctx, topic, payload, strlen(payload), qos, retain);
       if (qos == QOS_0) {
@@ -111,14 +115,14 @@ static int mqtt_publish(char *topic, char *payload, int qos, int retain) {
           LOGW(TAG, "failed to publish qos1, msg_id=%d", msg_id);
         }
       }
-      xSemaphoreGive(mqtt_semaphore);
+      xSemaphoreGive(pub_mutex);
     } else {
       LOGW(TAG, "Cannot get mqtt semaphore!!!");
     }
   }
 #elif defined(USE_LWMQTTC)
   if (is_mqtt_init_finished() && is_mqtt_connected()) {
-    if ((mqtt_semaphore != NULL) && xSemaphoreTake(mqtt_semaphore, 2 * MQTT_FLAG_TIMEOUT) == pdTRUE) {
+    if ((pub_mutex != NULL) && xSemaphoreTake(pub_mutex, 2 * MQTT_FLAG_TIMEOUT) == pdTRUE) {
       set_mqtt_published(0);
       if (lwmqtt_client_publish((const char *)topic, (const uint8_t *)payload, strlen(payload), qos,
                                 (retain == 1) ? true : false)) {
@@ -127,14 +131,14 @@ static int mqtt_publish(char *topic, char *payload, int qos, int retain) {
       } else {
         LOGW(TAG, "failed to publish, msg_id=%d", msg_id);
       }
-      xSemaphoreGive(mqtt_semaphore);
+      xSemaphoreGive(pub_mutex);
     } else {
       LOGW(TAG, "Cannot get mqtt semaphore!!!");
     }
   }
 #elif defined(USE_ASYNCMQTT)
   if (is_mqtt_init_finished() && is_mqtt_connected()) {
-    if ((mqtt_semaphore != NULL) && xSemaphoreTake(mqtt_semaphore, 2 * MQTT_FLAG_TIMEOUT) == pdTRUE) {
+    if ((pub_mutex != NULL) && xSemaphoreTake(pub_mutex, 2 * MQTT_FLAG_TIMEOUT) == pdTRUE) {
       set_mqtt_published(0);
       msg_id = mqtt_client.publish((const char *)topic, 0, false, (const char *)payload, strlen(payload));
       if (msg_id > 0) {
@@ -142,7 +146,7 @@ static int mqtt_publish(char *topic, char *payload, int qos, int retain) {
       } else {
         LOGW(TAG, "failed to publish, msg_id=%d", msg_id);
       }
-      xSemaphoreGive(mqtt_semaphore);
+      xSemaphoreGive(pub_mutex);
     } else {
       LOGW(TAG, "Cannot get mqtt semaphore!!!");
     }
@@ -851,7 +855,7 @@ static cJSON *syscfg_action(char *action) {
   char op[SYSCFG_OP_SIZE + 1] = { 0 };
   char var_name[SYSCFG_VARIABLE_NAME_SIZE] = { 0 };
   char var_value[SYSCFG_VARIABLE_VALUE_SIZE] = { 0 };
-  char *result_val = REQRES_V_ERR_SYSCFG_FAIL;
+  char *result_val = (char *)REQRES_V_ERR_SYSCFG_FAIL;
 
   /* Get operation type, name, value from action string */
   /* (e.g.) action : set power_mode P or get power_mode */
@@ -865,7 +869,7 @@ static cJSON *syscfg_action(char *action) {
   if (!strncmp(op, REQRES_V_SYSCFG_SET, strlen(REQRES_V_SYSCFG_SET))) {
     /* Execute "syscfg set action" */
     if (!syscfg_set_action(var_name, var_value)) {
-      result_val = REQRES_V_SYSCFG_OK;
+      result_val = (char *)REQRES_V_SYSCFG_OK;
     }
     result = cJSON_CreateString(result_val);
   }
@@ -1039,9 +1043,9 @@ void mqtt_msg_handler(mqtt_msg_t *mqtt_msg) {
 
 static void mqtt_event_callback(void *handler_args, int32_t event_id, void *event_data) {
   mqtt_event_data_t *event = (mqtt_event_data_t *)event_data;
-  mqtt_topic_payload_t mqtt = {
-    0,
-  };
+  mqtt_topic_payload_t mqtt;
+
+  memset(&mqtt, 0x00, sizeof(mqtt));
 
   switch (event_id) {
     case MQTT_EVT_ERROR: LOGI(TAG, "MQTT_EVT_ERROR !!!"); break;
@@ -1061,7 +1065,6 @@ static void mqtt_event_callback(void *handler_args, int32_t event_id, void *even
       set_mqtt_published(0);
       set_mqtt_subscribed(0);
       LOGI(TAG, "MQTT_EVT_DISCONNECTED !!!");
-      // TODO : Reconnect to the MQTT server (call mqtt_reconnect) when connection is lost
       mqtt_reconnect();
       break;
     case MQTT_EVT_SUBSCRIBED:
@@ -1107,20 +1110,20 @@ static void mqtt_task_restart(void *unused) {
 }
 #endif
 
-static void status_callback(esp_mqtt_status_t status) {
+static void status_callback(mqtt_status_t status) {
   switch (status) {
-    case ESP_MQTT_STATUS_CONNECTED:
+    case MQTT_STATUS_CONNECTED:
       // Subscribe
       set_mqtt_connected(1);
       mqtt_subscribe(mqtt_request, 0);
       LOGI(TAG, "MQTT_STATUS_CONNECTED !!!");
       break;
-    case ESP_MQTT_STATUS_DISCONNECTED:
+    case MQTT_STATUS_DISCONNECTED:
       set_mqtt_connected(0);
       set_mqtt_published(0);
       set_mqtt_subscribed(0);
       LOGI(TAG, "MQTT_STATUS_DISCONNECTED !!!");
-      // TODO : Reconnect to the MQTT server (call mqtt_reconnect) when connection is lost
+      // TODO : Need to call mqtt_reconnect when mqtt connection is lost
       break;
     default: break;
   }
@@ -1129,9 +1132,9 @@ static void status_callback(esp_mqtt_status_t status) {
 static void message_callback(const char *topic, const uint8_t *payload, size_t len, int qos, bool retained) {
   mqtt_topic_payload_t mqtt = { 0 };
 
-  mqtt.topic = topic;
-  mqtt.topic_len = stelen(topic);
-  mqtt.payload = payload;
+  mqtt.topic = (char *)topic;
+  mqtt.topic_len = strlen(topic);
+  mqtt.payload = (char *)payload;
   mqtt.payload_len = len;
 
   send_msg_to_mqtt_task(MQTT_EVENT_ID, &mqtt, sizeof(mqtt_topic_payload_t));
@@ -1152,7 +1155,7 @@ void mqtt_disconnect_callback(AsyncMqttClientDisconnectReason reason) {
   set_mqtt_published(0);
   set_mqtt_subscribed(0);
   LOGI(TAG, "Disconnect from MQTT server");
-  // TODO : Reconnect to the MQTT server (call mqtt_reconnect) when connection is lost
+  // TODO : Need to call mqtt_reconnect when mqtt connection is lost
 }
 
 void mqtt_subscribe_callback(uint16_t packet_id, uint8_t qos) {
@@ -1164,9 +1167,7 @@ void mqtt_unsubscribe_callback(uint16_t packet_id) {}
 
 void mqtt_message_callback(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len,
                            size_t index, size_t total) {
-  mqtt_topic_payload_t mqtt = {
-    0,
-  };
+  mqtt_topic_payload_t mqtt = { 0 };
 
   mqtt.topic = topic;
   mqtt.topic_len = strlen(topic);
@@ -1214,12 +1215,13 @@ int start_mqttc(void) {
 #if defined(USE_LWMQTTC)
   lwmqtt_client_start(s_host, s_port, "mqtt", NULL, NULL);
 #elif defined(USE_MQTTC)
-  mqtt_config_t config = {
-    .host = (const char *)s_host,
-    .port = (unsigned int)n_port,
-    .transport = MQTT_TCP,
-    .event_cb_fn = mqtt_event_callback,
-  };
+  mqtt_config_t config;
+  memset(&config, 0x00, sizeof(config));
+
+  config.host = (const char *)s_host;
+  config.port = (unsigned int)n_port;
+  config.transport = MQTT_TCP;
+  config.event_cb_fn = mqtt_event_callback;
 
   mqtt_ctx = mqtt_client_init(&config);
   ret = mqtt_client_start(mqtt_ctx);
@@ -1277,10 +1279,12 @@ void mqtt_publish_actuator_data(void) {
 }
 
 int send_msg_to_mqtt_task(mqtt_msg_id_t id, void *data, uint32_t len) {
+  int rc = 0;
   mqtt_msg_t mqtt_msg;
   mqtt_topic_payload_t *p_data = NULL;
   mqtt_topic_payload_t *p_mqtt = NULL;
 
+  xSemaphoreTake(msg_mutex, portMAX_DELAY);
   memset(&mqtt_msg, 0x00, sizeof(mqtt_msg_t));
 
   if ((id == MQTT_EVENT_ID) && data && len) {
@@ -1317,10 +1321,11 @@ int send_msg_to_mqtt_task(mqtt_msg_id_t id, void *data, uint32_t len) {
       }
       free(p_mqtt);
     }
-    return -1;
+    rc = -1;
   }
 
-  return 0;
+  xSemaphoreGive(msg_mutex);
+  return rc;
 }
 
 static void mqtt_task(void *params) {
@@ -1337,10 +1342,11 @@ static void mqtt_task(void *params) {
 }
 
 void create_mqtt_task(void) {
-  mqtt_semaphore = xSemaphoreCreateMutex();
+  pub_mutex = xSemaphoreCreateMutex();
+  msg_mutex = xSemaphoreCreateMutex();
   mqtt_task_msg_queue = xQueueCreate(MQTT_MSG_QUEUE_LEN, sizeof(mqtt_msg_t));
 
-  if (mqtt_task_msg_queue == NULL || mqtt_semaphore == NULL) {
+  if (mqtt_task_msg_queue == NULL || pub_mutex == NULL || msg_mutex == NULL) {
     return;
   }
 
