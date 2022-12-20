@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 
 # Set SmartFarm IoT framework component package
 set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../../../package)
@@ -27,6 +27,7 @@ execute_process(
 
 # Pass the FW version to the source code to write the version string to flash (mfg_data).
 set(FW_VERSION "${PROJECT_NAME}_${PROJECT_VERSION}-${GIT_COMMIT_HASH}-${PROJECT_STAGE}")
+string(TOLOWER "${PROJECT_VERSION}-${GIT_COMMIT_HASH}-${PROJECT_STAGE}" PROJECT_VER)
 add_definitions(-DFW_VERSION="${FW_VERSION}")
 configure_file(version_config.h.in ${CMAKE_BINARY_DIR}/version_config.h)
 include_directories(${CMAKE_BINARY_DIR})

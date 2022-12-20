@@ -14,7 +14,14 @@
 #define SENS_BOARD_VER SENS_GLS_HW
 // #define SENS_BOARD_VER SENS_OLIMEX_HW
 
-#define SENSOR_TYPE -1
+#define MASTER 1
+#define HID    2
+#define CHILD  3
+
+#define IRRIGATION_TYPE CHILD
+
+#define SENSOR_TYPE     -1
+#define ACTUATOR_TYPE   -1
 
 #define BATTERY_PORT 6  // GPIO34
 
