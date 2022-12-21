@@ -112,8 +112,8 @@ int do_ping_lwip_impl(char *host, int seq) {
     pecho = (struct icmp_echo_hdr *)(reply_buf + (IPH_HL(iphdr) * 4));
 
     if ((pecho->id == ping_id) && (pecho->seqno == htons(seq + 1))) {
-      printf("[%s] %d bytes from %s: icmp_seq=%d time=%d ms\n", __FUNCTION__, sizeof(struct icmp_echo_hdr),
-             (char *)inet_ntoa(from_addr.sin_addr), htons(pecho->seqno), (reply_time - ping_time) * portTICK_RATE_MS);
+      printf("[%s] %d bytes from %s: icmp_seq=%d time=%ld ms\n", __FUNCTION__, sizeof(struct icmp_echo_hdr),
+             (char *)inet_ntoa(from_addr.sin_addr), htons(pecho->seqno), (reply_time - ping_time) * portTICK_PERIOD_MS);
     } else {
       ret = PING_FAIL;
       goto exit;

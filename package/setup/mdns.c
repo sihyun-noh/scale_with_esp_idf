@@ -16,6 +16,7 @@
 #include "log.h"
 #include "mdns.h"
 #include "syscfg.h"
+#include "esp_mac.h"
 
 #define CONFIG_MDNS_INSTANCE "mDNS SensorNode"
 

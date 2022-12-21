@@ -21,6 +21,7 @@
 #include "esp_err.h"
 #include "esp_netif.h"
 #include "esp_wifi.h"
+#include "esp_mac.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "log.h"
@@ -360,12 +361,10 @@ void wifi_deinit_impl(wifi_context_t *ctx) {
   }
 }
 
-int wifi_ap_mode_impl(wifi_context_t *ctx, const char *ssid, const char *password, int channel) {
+int wifi_ap_mode_impl(wifi_context_t *ctx, const char *ssid, const char *password) {
   if (ctx == NULL) {
     return -1;
   }
-
-  xSemaphoreTake(ctx->wifi_mutex, portMAX_DELAY);
 
   if (!enable_ap_mode(true)) {
     LOGE(TAG, "Enable AP first!");
@@ -385,15 +384,15 @@ int wifi_ap_mode_impl(wifi_context_t *ctx, const char *ssid, const char *passwor
   wifi_config_t conf;
   wifi_config_t curr_conf;
 
-  wifi_softap_config(&conf, ssid, password, channel, WIFI_AUTH_WPA2_PSK, 0, DEFAULT_MAX_STA_CONN, false);
-  esp_err_t err = esp_wifi_get_config((wifi_interface_t)WIFI_IP_AP, &curr_conf);
+  wifi_softap_config(&conf, ssid, password, DEFAULT_WIFI_CHANNEL, WIFI_AUTH_WPA2_PSK, 0, DEFAULT_MAX_STA_CONN, false);
+  esp_err_t err = esp_wifi_get_config((wifi_interface_t)WIFI_IF_AP, &curr_conf);
 
   if (err) {
     LOGE(TAG, "Get AP config failed!");
     return -1;
   }
 
-  if (!softap_config_equal(conf, curr_conf)) {
+  if (!softap_config_equal(&conf, &curr_conf)) {
     err = esp_wifi_set_config((wifi_interface_t)WIFI_IF_AP, &conf);
     if (err) {
       LOGE(TAG, "Set AP config failed!");

@@ -1,4 +1,4 @@
-set(req freertos log mdns time syscfg syslog sysevent wifi esp_https_server json ping monitor ethernet)
+set(req freertos log mdns time syscfg syslog sysevent wifi esp_hw_support esp_https_server json ping monitor ethernet)
 set(certs "certs/cacert.pem" "certs/prvtkey.pem")
 
 if(CONFIG_SMARTFARM_ETHERNET_FEATURE)

@@ -9,6 +9,8 @@
 #include "easy_setup.h"
 #include "filelog.h"
 
+#include "esp_wifi_types.h"
+
 #include <freertos/FreeRTOS.h>
 #include <freertos/projdefs.h>
 #include <freertos/event_groups.h>

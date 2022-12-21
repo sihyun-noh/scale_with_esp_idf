@@ -22,6 +22,9 @@
 #include "wifi_manager.h"
 #include "filelog.h"
 
+#include "esp_wifi_types.h"
+#include "esp_mac.h"
+
 #include <sys/param.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>
