@@ -166,6 +166,7 @@ void generate_syscfg(void) {
   char region_code[SYSCFG_S_REGIONCODE] = { 0 };
   char power_mode[SYSCFG_S_POWERMODE] = { 0 };
   char send_interval[SYSCFG_S_SEND_INTERVAL] = { 0 };
+  char reconnect[SYSCFG_S_RECONNECT] = { 0 };
 
   /* Check if syscfg variable exists and set default value if not present */
   syscfg_get(SYSCFG_I_SERIALNO, SYSCFG_N_SERIALNO, serial_no, sizeof(serial_no));
@@ -189,9 +190,9 @@ void generate_syscfg(void) {
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSWP");
 #elif (SENSOR_TYPE == ATLAS_EC || SENSOR_TYPE == RK500_13)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSWE");
-#elif (SENSOR_TYPE == RK100_02)
-    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSWD");
 #elif (SENSOR_TYPE == RK110_02)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSWD");
+#elif (SENSOR_TYPE == RK100_02)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSWS");
 #endif
 #if (ACTUATOR_TYPE == SWITCH)
@@ -244,5 +245,9 @@ void generate_syscfg(void) {
       syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, "60");
     else
       syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, "30");
+  }
+  syscfg_get(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, reconnect, sizeof(reconnect));
+  if (reconnect[0] == 0) {
+    syscfg_set(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, "0");
   }
 }

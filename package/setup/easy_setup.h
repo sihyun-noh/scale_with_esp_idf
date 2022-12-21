@@ -7,6 +7,15 @@
 extern "C" {
 #endif
 
+#if defined(CONFIG_SMARTFARM_ETHERNET)
+/**
+ * @brief Initialize ethernet easy setup
+ *
+ */
+void create_ethernet_easy_setup_task(void);
+
+#else
+
 /**
  * @brief Initialize easy setup
  *
@@ -14,17 +23,12 @@ extern "C" {
 void create_easy_setup_task(void);
 
 /**
- * @brief Initialize ethernet easy setup
- *
- */
-void create_ethernet_easy_setup_task(void);
-
-/**
  * @brief Check if setup taks is running
  *
  * @return bool true if taks is running, false if task is done
  */
 bool is_running_setup_task(void);
+#endif  // CONFIG_SMARTFARM_ETHERNET
 
 #ifdef __cplusplus
 }

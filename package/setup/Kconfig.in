@@ -1,4 +1,4 @@
-config SMARTFRAM_EASYSETUP_FEATURE
+config SMARTFARM_EASYSETUP_FEATURE
   bool "SmartFarm EasySetup feature"
   default "y"
   help

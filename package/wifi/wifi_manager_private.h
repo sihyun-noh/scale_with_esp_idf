@@ -5,18 +5,15 @@
 extern "C" {
 #endif
 
-typedef void (*scan_done_handler_t)(void *userdata);
+#define BSSID_LEN 6
+#define MAX_SSID 33
 
-/**
- * @brief The context of the Wi-Fi Network Scan
- */
-typedef struct scan_network_result {
-  int scan_done;
-  int scan_ap_num;
-  int scan_ap_req_count;
-  void *scan_ap_list;
-  scan_done_handler_t scan_done_handler;
-} scan_network_result_t;
+typedef struct {
+  uint8_t bssid[BSSID_LEN];
+  uint8_t ssid[MAX_SSID];
+  uint8_t primary_channel;
+  int rssi;
+} ap_info_t;
 
 #ifdef __cplusplus
 }

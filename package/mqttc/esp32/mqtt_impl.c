@@ -65,37 +65,34 @@ static int apply_mqtt_config(esp_mqtt_client_config_t *esp_config, const mqtt_co
     return -1;
   }
   if (config->uri) {
-    esp_config->broker.address.uri = config->uri;
+    esp_config->uri = config->uri;
   }
   if (config->host) {
-    esp_config->broker.address.hostname = config->host;
+    esp_config->host = config->host;
   }
   if (config->port) {
-    esp_config->broker.address.port = config->port;
-  }
-  if (config->transport) {
-    esp_config->broker.address.transport = config->transport;
+    esp_config->port = config->port;
   }
   if (config->username) {
-    esp_config->credentials.username = config->username;
+    esp_config->username = config->username;
   }
   if (config->password) {
-    esp_config->credentials.authentication.password = config->password;
+    esp_config->password = config->password;
   }
   if (config->client_id) {
-    esp_config->credentials.client_id = config->client_id;
+    esp_config->client_id = config->client_id;
   }
   if (config->transport == MQTT_SSL || config->transport == MQTT_WSS) {
-    if (config->server_cert_pem) {
-      esp_config->broker.verification.certificate = config->server_cert_pem;
+    if (config->cert_pem) {
+      esp_config->cert_pem = config->cert_pem;
       is_secure = true;
     }
     if (config->client_cert_pem) {
-      esp_config->credentials.authentication.certificate = config->client_cert_pem;
+      esp_config->client_cert_pem = config->client_cert_pem;
       is_secure = true;
     }
     if (config->client_key_pem) {
-      esp_config->credentials.authentication.key = config->client_key_pem;
+      esp_config->client_key_pem = config->client_key_pem;
       is_secure = true;
     }
     if (is_secure == false) {
@@ -103,7 +100,7 @@ static int apply_mqtt_config(esp_mqtt_client_config_t *esp_config, const mqtt_co
       return -1;
     }
   } else if (config->transport == MQTT_TCP || config->transport == MQTT_WS) {
-    if (config->server_cert_pem || config->client_cert_pem || config->client_key_pem) {
+    if (config->cert_pem || config->client_cert_pem || config->client_key_pem) {
       ESP_LOGE(TAG, "Invalid config for MQTT TCP/WS");
       return -1;
     }
@@ -132,7 +129,6 @@ mqtt_client_t *mqtt_client_init_impl(mqtt_config_t *config) {
 
 void mqtt_client_deinit_impl(mqtt_client_t *client) {
   if (client && client->handle) {
-    esp_mqtt_client_stop(client->handle);
     esp_mqtt_client_destroy(client->handle);
   }
 }

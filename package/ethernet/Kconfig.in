@@ -1,5 +1,5 @@
-config SMARTFRAM_ETHERNET_FEATURE
+config SMARTFARM_ETHERNET_FEATURE
   bool "SmartFarm Ethernet feature"
   default "y"
   help
-    Ethernet support for actuator
+    Ethernet feature that supports actuator

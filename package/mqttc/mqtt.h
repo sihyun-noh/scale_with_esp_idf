@@ -66,8 +66,7 @@ typedef enum {
 typedef struct mqtt_config {
   const char *host;
   const char *uri;
-  const char *path;
-  uint32_t port;
+  unsigned int port;
   const char *client_id;
   const char *username;
   const char *password;
@@ -76,18 +75,18 @@ typedef struct mqtt_config {
   int lwt_qos;
   int lwt_retain;
   int lwt_msg_len;
-  bool disable_clean_session;
+  int disable_clean_session;
   int keepalive;
   bool disable_auto_reconnect;
+  void *user_context;
   int task_prio;
   int task_stack;
   int buffer_size;
-  const char *server_cert_pem;
+  const char *cert_pem;
   const char *client_cert_pem;
   const char *client_key_pem;
   transport_type_t transport;
   mqtt_event_cb_fn_t event_cb_fn;
-  void *user_context;
 } mqtt_config_t;
 
 /**

@@ -6,8 +6,6 @@
 #include <esp_wifi.h>
 #include <nvs_flash.h>
 
-#include "log.h"
-
 #define WIFI_SSID ""
 #define WIFI_PASS ""
 
@@ -32,7 +30,7 @@ static void connect() {
   use_tls = !use_tls;
 
   // start mqtt
-  LOGI("test", "starting mqtt (tls=%d)", use_tls);
+  ESP_LOGI("test", "starting mqtt (tls=%d)", use_tls);
   esp_mqtt_tls(use_tls, true, server_root_cert_pem_start, server_root_cert_pem_end - server_root_cert_pem_start);
   esp_mqtt_start(MQTT_HOST, use_tls ? MQTTS_PORT : MQTT_PORT, "esp-mqtt", MQTT_USER, MQTT_PASS);
 }
@@ -66,7 +64,8 @@ static void event_handler(void *event_handler_arg, esp_event_base_t event_base, 
 
         break;
 
-      case SYSTEM_EVENT_STA_GOT_IP: break;
+      case SYSTEM_EVENT_STA_GOT_IP:
+        break;
 
       case SYSTEM_EVENT_STA_DISCONNECTED:
         // reconnect Wi-Fi
@@ -74,7 +73,8 @@ static void event_handler(void *event_handler_arg, esp_event_base_t event_base, 
 
         break;
 
-      default: break;
+      default:
+        break;
     }
   }
 }
@@ -88,12 +88,13 @@ static void status_callback(esp_mqtt_status_t status) {
       break;
 
     case ESP_MQTT_STATUS_DISCONNECTED:
-    default: break;
+    default:
+      break;
   }
 }
 
 static void message_callback(const char *topic, const uint8_t *payload, size_t len, int qos, bool retained) {
-  LOGI("test", "incoming: %s => %s (len=%d qos=%d ret=%d)", topic, payload, (int)len, qos, retained);
+  ESP_LOGI("test", "incoming: %s => %s (len=%d qos=%d ret=%d)", topic, payload, (int)len, qos, retained);
 }
 
 void app_main() {
@@ -124,7 +125,7 @@ void app_main() {
   ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, NULL));
 
   // prepare Wi-Fi config
-  wifi_config_t wifi_config = { .sta = { .ssid = WIFI_SSID, .password = WIFI_PASS } };
+  wifi_config_t wifi_config = {.sta = {.ssid = WIFI_SSID, .password = WIFI_PASS}};
   ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
   ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
 

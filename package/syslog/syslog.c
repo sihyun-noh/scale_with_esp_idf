@@ -72,7 +72,7 @@ void syslog_init(void) {
   xSemaphoreGive(syslog_mutex);
 }
 
-static syslog_t *create_syslog(char *message) {
+static syslog_t *create_syslog(const char *message) {
   static uint32_t lognum = 0;
 
   syslog_t *item;
@@ -177,7 +177,7 @@ static void _dbg_list(syslog_list_t *list) {
     } else {
       mark = (char *)"";
     }
-    printf("%.64s (%ld) %s\n", log->message, log->num, mark);
+    printf("%.64s (%d) %s\n", log->message, log->num, mark);
     log = log->next;
   } while (log);
 }
@@ -268,7 +268,7 @@ void publish_syslog(void) {
   cloud_log((char *)"-------------- END OF SYSLOG DUMP --------------");
 }
 
-int _syslog(char *message) {
+int _syslog(const char *message) {
   syslog_t *item;
   uint32_t remaining;
   uint32_t required;
@@ -307,7 +307,7 @@ int _syslog(char *message) {
   return 0;
 }
 
-int syslog(char *format, ...) {
+int syslog(const char *format, ...) {
   int ret;
   char buff[SYSLOG_MAX_MSG_SIZE] = {
     0,

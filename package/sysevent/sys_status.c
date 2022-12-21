@@ -1,6 +1,7 @@
 #include "syslog.h"
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/event_groups.h>
 #include <freertos/semphr.h>
@@ -111,8 +112,9 @@ int sys_stat_get_mqtt_init_finished(void) {
   return ((bits & STATUS_MQTT_INIT_FINISHED) == STATUS_MQTT_INIT_FINISHED);
 }
 
-int sys_stat_wait_for_swevent(int event, bool event_reset, int timeout_ms) {
-  EventBits_t bits = xEventGroupWaitBits(sw_status_events, event, event_reset, true, timeout_ms);
+bool sys_stat_wait_for_swevent(int event, int timeout_ms) {
+  TickType_t xTicksToWait = timeout_ms / portTICK_PERIOD_MS;
+  EventBits_t bits = xEventGroupWaitBits(sw_status_events, event, pdFALSE, pdTRUE, xTicksToWait);
   return ((bits & event) == event);
 }
 
@@ -170,6 +172,38 @@ void sys_stat_set_battery_model(uint8_t status) {
   } else {
     xEventGroupClearBits(hw_status_events, STATUS_BATTERY);
   }
+}
+
+void sys_stat_set_wifi_scanning(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(hw_status_events, STATUS_WIFI_SCANNING);
+  } else {
+    xEventGroupClearBits(hw_status_events, STATUS_WIFI_SCANNING);
+  }
+}
+
+int sys_stat_get_wifi_scanning(void) {
+  EventBits_t bits = xEventGroupGetBits(hw_status_events);
+  return ((bits & STATUS_WIFI_SCANNING) == STATUS_WIFI_SCANNING);
+}
+
+void sys_stat_set_wifi_scan_done(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(hw_status_events, STATUS_WIFI_SCAN_DONE);
+  } else {
+    xEventGroupClearBits(hw_status_events, STATUS_WIFI_SCAN_DONE);
+  }
+}
+
+int sys_stat_get_wifi_scan_done(void) {
+  EventBits_t bits = xEventGroupGetBits(hw_status_events);
+  return ((bits & STATUS_WIFI_SCAN_DONE) == STATUS_WIFI_SCAN_DONE);
+}
+
+bool sys_stat_wait_for_hwevent(int event, int timeout_ms) {
+  TickType_t xTicksToWait = timeout_ms / portTICK_PERIOD_MS;
+  EventBits_t bits = xEventGroupWaitBits(hw_status_events, event, pdFALSE, pdTRUE, xTicksToWait);
+  return ((bits & event) == event);
 }
 
 /*----------------------------------------------------------------*/

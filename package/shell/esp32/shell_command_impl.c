@@ -21,12 +21,14 @@
 #include <stdio.h>
 #include "esp_system.h"
 #include "nvs_flash.h"
+#include "esp_idf_version.h"
 
 #include <freertos/FreeRTOS.h>
 
 #include "icmp_echo_cmd.h"
 #include "sysfile.h"
 #include "config.h"
+#include "wifi_manager.h"
 
 #ifdef DS3231_I2C_SDA_PIN
 #include "rtc_task.h"
@@ -35,12 +37,11 @@ extern int get_interval_cmd(int argc, char **argv);
 #endif
 
 extern void stop_shell(void);
-#ifdef CONFIG_SMARTFARM_MQTT_FEATURE
 extern int mqtt_start_cmd(int argc, char **argv);
 extern int mqtt_subscribe_cmd(int argc, char **argv);
 extern int mqtt_publish_cmd(int argc, char **argv);
-#endif
 extern char *uptime(void);
+
 #if (SENSOR_TYPE == ATLAS_PH)
 extern int atlas_ph_cal_cmd(int argc, char **argv);
 #elif (SENSOR_TYPE == ATLAS_EC)
@@ -118,6 +119,32 @@ static int free_mem(int argc, char **argv) {
   return 0;
 }
 
+static int scan_network(int argc, char **argv) {
+  printf("Scan nearby AP network\n");
+
+  uint16_t scan_num = 0;
+  ap_info_t *ap_info_list = NULL;
+  uint16_t scan_ap_num = wifi_scan_network(false, false, false, 500, 1, NULL, NULL);
+  if (scan_ap_num > 0) {
+    ap_info_list = get_wifi_scan_list(&scan_num);
+    if (ap_info_list) {
+      printf("scan ap num [%d], [%d]\n", scan_ap_num, scan_num);
+      for (int i = 0; i < scan_num; i++) {
+        printf("ap_info_list[%d].ssid = %s\n", i, ap_info_list[i].ssid);
+        printf("ap_info_list[%d].rssi = %d\n", i, ap_info_list[i].rssi);
+      }
+      free(ap_info_list);
+    }
+  }
+  return 0;
+}
+
+static int sdk_version(int argc, char **argv) {
+  const char *idf_ver = esp_get_idf_version();
+  printf("idf_version = %s\n", idf_ver);
+  return 0;
+}
+
 /** @brief Assign the command structure that will be used in shell command */
 static sc_cmd_t commands[] = {
   {
@@ -190,7 +217,6 @@ static sc_cmd_t commands[] = {
       .help = "Publish syslog message",
       .func = syslog_pub,
   },
-#ifdef CONFIG_SMARTFARM_MQTT_FEATURE
   {
       .name = "mqtt_start",
       .help = "Start MQTT client >> mqtt_start host port",
@@ -206,7 +232,6 @@ static sc_cmd_t commands[] = {
       .help = "Publish MQTT topic >> mqtt_publish topic payload qos",
       .func = mqtt_publish_cmd,
   },
-#endif
   {
       .name = "uptime",
       .help = "Device running time",
@@ -226,6 +251,16 @@ static sc_cmd_t commands[] = {
       .name = "free_mem",
       .help = "Get free heap memory",
       .func = free_mem,
+  },
+  {
+      .name = "scan_network",
+      .help = "Scan AP network",
+      .func = scan_network,
+  },
+  {
+      .name = "sdk_version",
+      .help = "Get IDF-SDK version",
+      .func = sdk_version,
   },
 #if (SENSOR_TYPE == ATLAS_PH)
   {

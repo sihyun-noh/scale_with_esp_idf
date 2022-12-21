@@ -19,11 +19,13 @@ extern "C" {
 #define STATUS_MQTT_INIT_FINISHED (1 << 6) /* mqtt client is initialized */
 
 /* Hardware Status */
-#define STATUS_RESET (1 << 0)    /* HW reset (factory reset) */
-#define STATUS_INTERNET (1 << 1) /* Indicator event when internet is available */
-#define STATUS_WIFI_AP (1 << 2)  /* Use event when WiFi AP mode comes up */
-#define STATUS_WIFI_STA (1 << 3) /* Use event when WiFi Sta mode comes up */
-#define STATUS_BATTERY (1 << 4)  /* Use event to check battery model */
+#define STATUS_RESET (1 << 0)          /* HW reset (factory reset) */
+#define STATUS_INTERNET (1 << 1)       /* Indicator event when internet is available */
+#define STATUS_WIFI_AP (1 << 2)        /* Use event when WiFi AP mode comes up */
+#define STATUS_WIFI_STA (1 << 3)       /* Use event when WiFi Sta mode comes up */
+#define STATUS_BATTERY (1 << 4)        /* Use event to check battery model */
+#define STATUS_WIFI_SCANNING (1 << 5)  /* wifi scanning */
+#define STATUS_WIFI_SCAN_DONE (1 << 6) /* wifi scanning done */
 
 /* LED Status */
 #define STATUS_OK (1 << 0)              /* Normal operation */
@@ -51,6 +53,12 @@ extern "C" {
 
 #define is_battery_model sys_stat_get_battery_model
 #define set_battery_model sys_stat_set_battery_model
+
+#define is_wifi_scanning sys_stat_get_wifi_scanning
+#define set_wifi_scanning sys_stat_set_wifi_scanning
+
+#define is_wifi_scan_done sys_stat_get_wifi_scan_done
+#define set_wifi_scan_done sys_stat_set_wifi_scan_done
 
 #define is_low_battery sys_stat_get_low_battery
 #define set_low_battery sys_stat_set_low_battery
@@ -86,6 +94,7 @@ extern "C" {
 #define set_mqtt_init_finished sys_stat_set_mqtt_init_finished
 
 #define wait_for_sw_event sys_stat_wait_for_swevent
+#define wait_for_hw_event sys_stat_wait_for_hwevent
 
 int sys_stat_get_configured(void);
 void sys_stat_set_configured(uint8_t status);
@@ -120,6 +129,12 @@ void sys_stat_set_wifi_sta(uint8_t status);
 int sys_stat_get_battery_model(void);
 void sys_stat_set_battery_model(uint8_t status);
 
+int sys_stat_get_wifi_scanning(void);
+void sys_stat_set_wifi_scanning(uint8_t status);
+
+int sys_stat_get_wifi_scan_done(void);
+void sys_stat_set_wifi_scan_done(uint8_t status);
+
 int sys_stat_get_low_battery(void);
 void sys_stat_set_low_battery(uint8_t status);
 
@@ -140,7 +155,8 @@ void sys_stat_set_rs485_conn_fail(uint8_t status);
 
 int sys_stat_init(void);
 
-int sys_stat_wait_for_swevent(int event, bool event_reset, int timeout_ms);
+bool sys_stat_wait_for_swevent(int event, int timeout_ms);
+bool sys_stat_wait_for_hwevent(int event, int timeout_ms);
 
 #ifdef __cplusplus
 }

@@ -22,10 +22,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "esp_wifi_types.h"
 #include "esp_event.h"
 #include "esp_event_base.h"
-#include "esp_netif_types.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/portmacro.h"
 #include "freertos/task.h"
@@ -332,6 +330,10 @@ static void sysevent_handler(void *handler_arg, esp_event_base_t event_base, int
           LOGI(TAG, "sysevent_handler: event data = %s", buf_monitor);
         }
       }
+    } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_SCAN_DONE) {
+      set_wifi_scan_done(1);
+      set_wifi_scanning(0);
+      LOGI(TAG, "sysevent_handler : WIFI_SCAN_DONE!!!");
     }
   }
 
@@ -432,7 +434,7 @@ void sysevent_loop_run_task(void *arg) {
   sysevent_ctx_t *ctx = (sysevent_ctx_t *)arg;
 
   while (1) {
-    ret = sysevent_loop_run(ctx, 1000 / portTICK_PERIOD_MS);
+    ret = sysevent_loop_run(ctx, 1000 / portTICK_RATE_MS);
     if (ret != 0) {
       break;
     }

@@ -8,7 +8,6 @@
 #include "event_ids.h"
 #include "easy_setup.h"
 #include "filelog.h"
-#include "esp_wifi_types.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/projdefs.h>
@@ -240,11 +239,6 @@ static int check_internet(void) {
 
 static void monitoring_task(void *pvParameters) {
   int delay_ms = DELAY_5SEC;
-
-  if (!is_battery_model()) {
-    set_wifi_state(NO_INTERNET_CONNECTION);
-    set_wifi_led(NO_INTERNET_CONNECTION);
-  }
 
   while (1) {
     // Do not need to check if the device's wifi connection status during the easy setup progress.

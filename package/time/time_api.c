@@ -22,7 +22,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_sntp.h"
-#include "esp_timer.h"
 #include "log.h"
 #include "time_api.h"
 

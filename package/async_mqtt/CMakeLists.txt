@@ -1,3 +1,4 @@
+if(CONFIG_SMARTFARM_ASYNC_MQTT_FEATURE)
 set(srcs
   "AsyncTCP.cpp"
   "AsyncMqttClient.cpp"
@@ -23,5 +24,6 @@ set(srcs
 
 idf_component_register(SRCS ${srcs}
   INCLUDE_DIRS "." "mqttlib" "mqttlib/Packets" "mqttlib/Packets/Out"
-  REQUIRES freertos lwip syslog esp_timer asio esp_hw_support
+  REQUIRES lwip syslog esp_timer asio
 )
+endif()

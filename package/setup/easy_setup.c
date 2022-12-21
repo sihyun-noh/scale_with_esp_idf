@@ -27,14 +27,12 @@
 #include <freertos/event_groups.h>
 #include <esp_https_server.h>
 
-#include "esp_mac.h"
-#include "esp_wifi_types.h"
-
 #include "time_api.h"
 #include "cJSON.h"
 #include "mdns.h"
 
 #define WIFI_PASS "!ALfE42vcchYpFQyPuCN*v_w"
+#define PREFIX_SSID "COMFAST"
 
 /* The event group allows multiple bits for each event, but we only care about two events:
  * - we are connected to the AP with an IP
@@ -42,7 +40,7 @@
 #define WIFI_CONNECTED BIT0
 #define WIFI_DISCONNECT BIT1
 
-#define MAX_RETRY_CONNECT 50
+#define MAX_RETRY_CONNECT 5
 
 typedef enum {
   UNCONFIGURED_MODE = 0,
@@ -82,6 +80,42 @@ static void set_gateway_address(void) {
     syscfg_set(SYSCFG_I_GATEWAYIP, SYSCFG_N_GATEWAYIP, router_ip);
   }
 }
+
+static char *get_best_wifi_ssid(void) {
+  // scan nearby AP networks
+  char *ssid = NULL;
+  int best_rssi = -999, best_id = -1;
+
+  uint16_t actual_ap_num = 0;
+  ap_info_t *ap_info_list = NULL;
+
+  uint16_t scan_ap_num = wifi_scan_network(false, false, false, 500, 1, NULL, NULL);
+
+  if (scan_ap_num > 0) {
+    ap_info_list = get_wifi_scan_list(&actual_ap_num);
+    if (ap_info_list) {
+      LOGI(TAG, "Scan AP num = [%d], [%d]", scan_ap_num, actual_ap_num);
+      for (int i = 0; i < actual_ap_num; i++) {
+        LOGI(TAG, "Scan WiFi SSID = [%s], RSSI = [%d]", (char *)ap_info_list[i].ssid, ap_info_list[i].rssi);
+        if (strstr((char *)ap_info_list[i].ssid, PREFIX_SSID)) {
+          if (best_rssi < ap_info_list[i].rssi) {
+            best_rssi = ap_info_list[i].rssi;
+            best_id = i;
+          }
+        }
+      }
+      LOGI(TAG, "best_rssi = %d, best_id = %d", best_rssi, best_id);
+      if (best_rssi != -999 && best_id != -1) {
+        int ssid_len = strlen((char *)ap_info_list[best_id].ssid);
+        ssid = calloc(1, ssid_len + 1);
+        strncpy(ssid, (char *)ap_info_list[best_id].ssid, ssid_len);
+        return ssid;
+      }
+    }
+  }
+  return NULL;
+}
+
 /**
  * @brief An HTTP GET handler
  *
@@ -306,8 +340,16 @@ void easy_setup_task(void *pvParameters) {
         curr_mode = STA_CONNECT_MODE;
       } break;
       case STA_CONNECT_MODE: {
+        char *best_ssid;
         vTaskDelay(500 / portTICK_PERIOD_MS);
         wifi_sta_mode();
+        if ((best_ssid = get_best_wifi_ssid()) && strcmp(farmssid, best_ssid) != 0) {
+          snprintf(farmssid, sizeof(farmssid), "%s", best_ssid);
+          syscfg_set(SYSCFG_I_SSID, SYSCFG_N_SSID, farmssid);
+        }
+        if (best_ssid) {
+          free(best_ssid);
+        }
         wifi_connect_ap(farmssid, farmpw);
         LOGI(TAG, "Connecting to AP with SSID:%s password:%s", farmssid, farmpw);
         curr_mode = CONFIRM_MODE;
@@ -327,10 +369,11 @@ void easy_setup_task(void *pvParameters) {
           curr_mode = PAIRING_MODE;
           s_retry_connect++;
           xEventGroupClearBits(s_wifi_event_group, WIFI_DISCONNECT);
-          vTaskDelay((300 * 1000) / portTICK_PERIOD_MS);
+          vTaskDelay((5000) / portTICK_PERIOD_MS);
           if (s_retry_connect >= MAX_RETRY_CONNECT) {
-            // curr_mode = UNPAIRED_MODE;
+            set_wifi_fail(1);
             s_retry_connect = 0;
+            exit = 1;
           }
         } else {
           LOGE(TAG, "UNEXPECTED EVENT");
@@ -369,9 +412,11 @@ void easy_setup_task(void *pvParameters) {
       } break;
     }
     if (exit) {
-      set_gateway_address();
-      set_device_onboard(1);
-      set_device_configured(1);
+      if (!is_wifi_fail()) {
+        set_gateway_address();
+        set_device_onboard(1);
+        set_device_configured(1);
+      }
       break;
     }
     vTaskDelay(500 / portTICK_PERIOD_MS);
