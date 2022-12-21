@@ -1572,6 +1572,12 @@ CONFIG_FMB_EVENT_QUEUE_TIMEOUT=20
 # end of Modbus configuration
 
 #
+# ESP-ASIO
+#
+# CONFIG_ASIO_SSL_SUPPORT is not set
+# end of ESP-ASIO
+
+#
 # mDNS
 #
 CONFIG_MDNS_MAX_INTERFACES=3
@@ -1596,12 +1602,6 @@ CONFIG_MDNS_PREDEF_NETIF_AP=y
 CONFIG_MDNS_PREDEF_NETIF_ETH=y
 # end of MDNS Predefined interfaces
 # end of mDNS
-
-#
-# ESP-ASIO
-#
-# CONFIG_ASIO_SSL_SUPPORT is not set
-# end of ESP-ASIO
 # end of Component config
 
 # Deprecated options for backward compatibility
