@@ -8,6 +8,6 @@ if(CONFIG_SMARTFARM_ETHERNET_FEATURE)
     list(APPEND includes ".")
 endif()
 
-idf_component_register(SRCS ${srcs} 
+idf_component_register(SRCS ${srcs}
     INCLUDE_DIRS ${includes}
     REQUIRES ${req})
