@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(COMPONENT_REQUIRES mbedtls)
 # Set SmartFarm IoT framework component package
 set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../../../package)
+set(EXCLUDE_COMPONENTS "LovyanGFX lvgl")
 
 # Set project version
 set(PROJECT_VERSION_MAJOR 1)

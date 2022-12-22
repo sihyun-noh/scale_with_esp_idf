@@ -1,0 +1,7 @@
+[submodule "package/LovyanGFX"]
+	path = package/LovyanGFX
+	url = https://github.com/lovyan03/LovyanGFX.git
+	branch = develop
+[submodule "package/lvgl"]
+	path = package/lvgl
+	url = https://github.com/lvgl/lvgl.git
