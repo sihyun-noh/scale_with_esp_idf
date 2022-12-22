@@ -1,4 +1,13 @@
-set(req freertos log esp_event syslog ethernet)
-idf_component_register(SRCS "ethernet_manager.c" "esp32/ethernet_manager_impl.c"
-    INCLUDE_DIRS "."
+set(req freertos log esp_event esp_eth syslog)
+
+set(srcs)
+set(includes)
+
+if(CONFIG_SMARTFARM_ETHERNET_FEATURE)
+    list(APPEND srcs "ethernet_manager.c" "esp32/ethernet_manager_impl.c")
+    list(APPEND includes ".")
+endif()
+
+idf_component_register(SRCS ${srcs}
+    INCLUDE_DIRS ${includes}
     REQUIRES ${req})

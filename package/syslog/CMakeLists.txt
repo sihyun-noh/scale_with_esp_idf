@@ -1,5 +1,14 @@
 set(req sysfile)
+
+set(srcs)
+set(includes)
+
+if(CONFIG_SMARTFARM_SYSLOG_FEATURE)
+    list(APPEND srcs "log.c" "syslog.c" "filelog.c")
+    list(APPEND includes ".")
+endif()
+
 idf_component_register(
-  SRCS "log.c" "syslog.c" "filelog.c"
-  INCLUDE_DIRS "."
+  SRCS ${srcs}
+  INCLUDE_DIRS ${includes}
   REQUIRES ${req})
