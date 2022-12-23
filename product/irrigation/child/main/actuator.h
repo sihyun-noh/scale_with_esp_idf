@@ -9,9 +9,9 @@ extern "C" {
 
 int valve_init(void);
 
-int valve_open(void);
+void valve_open(void);
 
-int valve_close(void);
+void valve_close(void);
 
 #ifdef __cplusplus
 }

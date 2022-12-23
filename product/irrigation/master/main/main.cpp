@@ -219,8 +219,6 @@ int system_init(void) {
   if (ret)
     return ERR_MONITORING_INIT;
 
-  valve_init();
-
   pump_init();
 
   LOGI(TAG, "CPU0 reset reason: ");

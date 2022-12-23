@@ -27,30 +27,18 @@ int valve_init(void) {
   return 0;
 }
 
-int valve_open(void) {
-  int res;
-
-  res = gpio_write(SOL_PW, 1);
-  if (res)
-    return res;
-
+void valve_open(void) {
+  gpio_write(SOL_ON, 0);
   vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-  res = gpio_write(SOL_ON, 0);
-
-  return res;
+  gpio_write(SOL_PW, 1);
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  gpio_write(SOL_PW, 0);
 }
 
-int valve_close(void) {
-  int res;
-
-  res = gpio_write(SOL_PW, 0);
-  if (res)
-    return res;
-
+void valve_close(void) {
+  gpio_write(SOL_ON, 1);
   vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-  res = gpio_write(SOL_ON, 1);
-
-  return res;
+  gpio_write(SOL_PW, 1);
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  gpio_write(SOL_PW, 0);
 }
