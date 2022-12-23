@@ -15,6 +15,7 @@
 #include "config.h"
 #include "filelog.h"
 #include "adc.h"
+#include "actuator.h"
 #include "main.h"
 #include "esp32/rom/rtc.h"
 
@@ -38,8 +39,6 @@ static TickType_t g_last_ntp_check_time = 0;
 extern "C" {
 #endif
 
-int actuator_init(void);
-int actuator_task(void);
 #if defined(CONFIG_LED_FEATURE)
 void create_led_task(void);
 #endif
@@ -167,21 +166,16 @@ static void delay(uint32_t ms) {
 
 static void check_model(void) {
   char model_name[10] = { 0 };
-  char power_mode[10] = { 0 };
   char s_send_interval[10] = { 0 };
 
   syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
-  syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
   syscfg_get(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, s_send_interval, sizeof(s_send_interval));
   send_interval = atoi(s_send_interval);
 
-  LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
+  LOGI(TAG, "model_name : %s, power_mode : %s", model_name, "B");
   LOGI(TAG, "send_interval : %d", send_interval);
 
-  if (!strncmp(power_mode, "B", 1))
-    set_battery_model(1);
-  else
-    set_battery_model(0);
+  set_battery_model(1);
 }
 
 int system_init(void) {
@@ -225,6 +219,10 @@ int system_init(void) {
   if (ret)
     return ERR_MONITORING_INIT;
 
+  valve_init();
+
+  pump_init();
+
   LOGI(TAG, "CPU0 reset reason: ");
   get_reset_reason(0);
   LOGI(TAG, "CPU1 reset reason: ");
@@ -234,23 +232,13 @@ int system_init(void) {
 }
 
 void loop_task(void) {
-  int rc = 0;
   uint32_t delay_ms = 0;
 
-  set_operation_mode(ACTUATOR_INIT_MODE);
+  set_operation_mode(EASY_SETUP_MODE);
 
   while (1) {
     delay_ms = DELAY_500MS;
     switch (get_operation_mode()) {
-      case ACTUATOR_INIT_MODE: {
-        LOGI(TAG, "ACTUATOR_INIT_MODE");
-        if ((rc = actuator_init()) != SYSINIT_OK) {
-          LOGI(TAG, "Could not initialize actuator");
-          set_operation_mode(DEEP_SLEEP_MODE);
-        } else {
-          set_operation_mode(EASY_SETUP_MODE);
-        }
-      } break;
       case EASY_SETUP_MODE: {
         LOGI(TAG, "EASY_SETUP_MODE");
         create_easy_setup_task();
@@ -269,7 +257,6 @@ void loop_task(void) {
       case MONITOR_MODE: {
         if (is_device_onboard()) {
           LOGI(TAG, "MONITOR_MODE");
-          actuator_task();
           //esp_now_publish_actuator_data();
           //stop_esp_now();
           set_operation_mode(DEEP_SLEEP_MODE);
