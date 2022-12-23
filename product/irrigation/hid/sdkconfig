@@ -414,7 +414,7 @@ CONFIG_PARTITION_TABLE_MD5=y
 #
 # SmartFarm Controller Configuration
 #
-CONFIG_LED_FEATURE=y
+# CONFIG_LED_FEATURE is not set
 # end of SmartFarm Controller Configuration
 
 # CONFIG_SMARTFARM_ETHERNET_FEATURE is not set
@@ -1976,12 +1976,6 @@ CONFIG_LV_BUILD_EXAMPLES=y
 # end of LVGL configuration
 
 #
-# ESP-ASIO
-#
-# CONFIG_ASIO_SSL_SUPPORT is not set
-# end of ESP-ASIO
-
-#
 # mDNS
 #
 CONFIG_MDNS_MAX_INTERFACES=3
@@ -2037,6 +2031,12 @@ CONFIG_FMB_EVENT_QUEUE_TIMEOUT=20
 # CONFIG_FMB_TIMER_PORT_ENABLED is not set
 # CONFIG_FMB_TIMER_USE_ISR_DISPATCH_METHOD is not set
 # end of Modbus configuration
+
+#
+# ESP-ASIO
+#
+# CONFIG_ASIO_SSL_SUPPORT is not set
+# end of ESP-ASIO
 # end of Component config
 
 # Deprecated options for backward compatibility

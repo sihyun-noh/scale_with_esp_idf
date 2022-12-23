@@ -21,7 +21,6 @@ sc_ctx_t* sc_ctx = NULL;
 extern int read_battery_percentage(void);
 extern void sdcard_init(void);
 extern void sdcard_write_data(void);
-extern void create_led_task(void);
 
 static void check_model(void);
 
@@ -130,8 +129,6 @@ int system_init(void) {
   check_model();
 
   sdcard_init();
-
-  create_led_task();
 
   return SYSINIT_OK;
 }

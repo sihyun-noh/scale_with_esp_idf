@@ -2,18 +2,8 @@
 #define _CONFIG_H_
 
 /******************************************
- * Board version
+ * Board : ESP32S3
  *****************************************/
-#define SENS_OLIMEX_HW 10
-
-#define SENS_TTGO_HW1 11
-#define SENS_TTGO_HW3 (SENS_TTGO_HW1 + 2)
-
-#define SENS_GLS_HW 20 /* Greenlabs HW */
-
-#define SENS_BOARD_VER SENS_GLS_HW
-//#define SENS_BOARD_VER SENS_OLIMEX_HW
-
 #define MASTER 1
 #define HID    2
 #define CHILD  3
@@ -24,10 +14,6 @@
 #define ACTUATOR_TYPE   -1
 
 #define BATTERY_PORT 6  // GPIO34
-
-#define LED_RED 25
-#define LED_GREEN 26
-#define LED_BLUE 12
 
 #define SDCARD_SPI_MISO 2
 #define SDCARD_SPI_MOSI 15
