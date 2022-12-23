@@ -2,18 +2,8 @@
 #define _CONFIG_H_
 
 /******************************************
- * Board version
+ * Board : ESP32
  *****************************************/
-#define SENS_OLIMEX_HW 10
-
-#define SENS_TTGO_HW1 11
-#define SENS_TTGO_HW3 (SENS_TTGO_HW1 + 2)
-
-#define SENS_GLS_HW 20 /* Greenlabs HW */
-
-#define SENS_BOARD_VER SENS_GLS_HW
-// #define SENS_BOARD_VER SENS_OLIMEX_HW
-
 #define MASTER 1
 #define HID    2
 #define CHILD  3
@@ -25,22 +15,14 @@
 
 #define BATTERY_PORT 6  // GPIO34
 
-#define LED_RED 33
+#define SOL_PW  21
+#define SOL_ON  22
+
+#define FUNC_KEY1  12
+#define FUNC_KEY2  13
+
+#define LED_RED   27
 #define LED_GREEN 26
-#define LED_BLUE 25
-
-/*****************************************
- * Config
- ****************************************/
-#define MQTT_SEND_INTERVAL 30
-
-/*****************************************
- * Task Priority / Stack size
- ****************************************/
-#define SENS_MONITOR_TASK_PRIORITY (tskIDLE_PRIORITY + 5)
-#define SENS_SETUP_TASK_PRIORITY (tskIDLE_PRIORITY + 5)
-
-#define SENS_MONITOR_TASK_STACK_SIZE (4096)
-#define SENS_SETUP_TASK_STACK_SIZE (4096)
+#define LED_BLUE  25
 
 #endif /* _CONFIG_H_ */

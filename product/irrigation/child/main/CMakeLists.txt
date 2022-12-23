@@ -1,4 +1,4 @@
-idf_component_register(SRCS "main.cpp" "adc.c" "utils.c" "actuator_task.c"
+idf_component_register(SRCS "main.cpp" "adc.c" "utils.c" "actuator.c"
                       INCLUDE_DIRS ".")
 
 if(CONFIG_LED_FEATURE)
