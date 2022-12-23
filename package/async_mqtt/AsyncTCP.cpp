@@ -22,6 +22,12 @@
 #include "log.h"
 #include "AsyncTCP.h"
 
+#if defined(ESP_IDF_VERSION)
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+#include "freertos/FreeRTOS.h"
+#endif
+#endif
+
 #include "string.h"
 
 extern "C" {
@@ -90,7 +96,13 @@ typedef struct {
   };
 } lwip_event_packet_t;
 
+#if defined(ESP_IDF_VERSION)
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+static QueueHandle_t _async_queue;
+#else
 static xQueueHandle _async_queue;
+#endif
+#endif
 static TaskHandle_t _async_service_task_handle = NULL;
 
 SemaphoreHandle_t _slots_lock;

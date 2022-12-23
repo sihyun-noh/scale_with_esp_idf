@@ -1,4 +1,9 @@
-set(req lwip syslog esp_timer asio)
+
+if (IDF_VERSION_MAJOR GREATER_EQUAL 5)
+  set(req freertos lwip syslog esp_timer asio esp_hw_support)
+elseif (IDF_VERSION_MAJOR GREATER_EQUAL 4)
+  set(req lwip syslog esp_timer asio)
+endif()
 
 set(srcs)
 set(includes)

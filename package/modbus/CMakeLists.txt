@@ -1,4 +1,8 @@
-set(req freemodbus syslog)
+if (IDF_VERSION_MAJOR GREATER_EQUAL 5)
+  set(req esp-modbus syslog)
+elseif (IDF_VERSION_MAJOR GREATER_EQUAL 4)
+  set(req freemodbus syslog)
+endif()
 
 set(srcs)
 set(includes)
