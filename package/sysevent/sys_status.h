@@ -36,6 +36,10 @@ extern "C" {
 #define STATUS_SDCARD_FAIL (1 << 5)     /* Identification is running */
 #define STATUS_RS485_CONN_FAIL (1 << 6) /* Identification is running */
 
+/* Actuator Status */
+#define STATUS_OPEN  (1 << 0) /* Open  */
+#define STATUS_ERROR (1 << 1) /* Error */
+
 #define is_device_configured sys_stat_get_configured
 #define set_device_configured sys_stat_set_configured
 
@@ -95,6 +99,12 @@ extern "C" {
 
 #define wait_for_sw_event sys_stat_wait_for_swevent
 #define wait_for_hw_event sys_stat_wait_for_hwevent
+
+#define is_actuator_open sys_stat_get_actuator_open
+#define set_actuator_open sys_stat_set_actuator_open
+
+#define is_actuator_err sys_stat_get_actuator_err
+#define set_actuator_err sys_stat_set_actuator_err
 
 int sys_stat_get_configured(void);
 void sys_stat_set_configured(uint8_t status);
@@ -157,6 +167,12 @@ int sys_stat_init(void);
 
 bool sys_stat_wait_for_swevent(int event, int timeout_ms);
 bool sys_stat_wait_for_hwevent(int event, int timeout_ms);
+
+int sys_stat_get_actuator_open(void);
+void sys_stat_set_actuator_open(uint8_t status);
+
+int sys_stat_get_actuator_err(void);
+void sys_stat_set_actuator_err(uint8_t status);
 
 #ifdef __cplusplus
 }

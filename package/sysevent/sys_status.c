@@ -16,6 +16,7 @@
 static EventGroupHandle_t hw_status_events;
 static EventGroupHandle_t sw_status_events;
 static EventGroupHandle_t led_status_events;
+static EventGroupHandle_t actuator_status_events;
 
 /*----------------------------------------------------------------*/
 /*                      Service Status                            */
@@ -288,6 +289,32 @@ void sys_stat_set_rs485_conn_fail(uint8_t status) {
   }
 }
 
+int sys_stat_get_actuator_open(void) {
+  EventBits_t bits = xEventGroupGetBits(actuator_status_events);
+  return ((bits & STATUS_OPEN) == STATUS_OPEN);
+}
+
+void sys_stat_set_actuator_open(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(actuator_status_events, STATUS_OPEN);
+  } else {
+    xEventGroupClearBits(actuator_status_events, STATUS_OPEN);
+  }
+}
+
+int sys_stat_get_actuator_err(void) {
+  EventBits_t bits = xEventGroupGetBits(actuator_status_events);
+  return ((bits & STATUS_ERROR) == STATUS_ERROR);
+}
+
+void sys_stat_set_actuator_err(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(actuator_status_events, STATUS_ERROR);
+  } else {
+    xEventGroupClearBits(actuator_status_events, STATUS_ERROR);
+  }
+}
+
 int sys_stat_init(void) {
   sw_status_events = xEventGroupCreate();
   if (sw_status_events == NULL) {
@@ -304,6 +331,12 @@ int sys_stat_init(void) {
   led_status_events = xEventGroupCreate();
   if (led_status_events == NULL) {
     dbge("Failed to create event group for LED status");
+    return -1;
+  }
+
+  actuator_status_events = xEventGroupCreate();
+  if (actuator_status_events == NULL) {
+    dbge("Failed to create event group for actuator status");
     return -1;
   }
 

@@ -25,43 +25,18 @@ static void led_task(void* pvParameters) {
   } else {
     LOGI(TAG, "led_task start");
     while (1) {
-      if (is_low_battery()) {
+      if (is_actuator_err()) {
         led_on(LED_RED);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         led_off(LED_RED);
-      } else if (is_wifi_fail()) {
-        led_on(LED_BLUE);
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-        led_off(LED_BLUE);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-      } else if (is_easy_setup_fail()) {
+      } else if (is_actuator_open()) {
         led_on(LED_GREEN);
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-        led_off(LED_GREEN);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-      } else if (is_identification()) {
-        set_identification(0);
-        for (int i = 0; i < 3; i++) {
-          led_on(LED_RED);
-          led_off(LED_BLUE);
-          vTaskDelay(1000 / portTICK_PERIOD_MS);
-          led_off(LED_RED);
-          led_on(LED_GREEN);
-          vTaskDelay(1000 / portTICK_PERIOD_MS);
-          led_off(LED_GREEN);
-          led_on(LED_BLUE);
-          vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
+        led_off(LED_GREEN);
       } else {
-        if (is_battery_model()) {
-          led_off(LED_RED);
-          led_off(LED_GREEN);
-          led_off(LED_BLUE);
-        } else {
-          led_on(LED_RED);
-          led_on(LED_GREEN);
-          led_on(LED_BLUE);
-        }
+        led_on(LED_BLUE);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        led_off(LED_BLUE);
       }
       vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
