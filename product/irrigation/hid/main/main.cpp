@@ -6,11 +6,13 @@
 #include "sysevent.h"
 #include "sys_status.h"
 #include "syslog.h"
+#include "wifi_manager.h"
 #include "esp_sleep.h"
 #include "event_ids.h"
 #include "sysfile.h"
 #include "config.h"
 #include "main.h"
+#include "esp_now.h"
 
 #include <string.h>
 
@@ -136,6 +138,14 @@ int system_init(void) {
   if (ret)
     return ERR_NVS_FLASH;
 
+  ret = wifi_user_init();
+  if (ret)
+    return ERR_WIFI_INIT;
+
+  ret = wifi_espnow_mode();
+  if (ret)
+    return ERR_WIFI_INIT;
+
   ret = syscfg_init();
   if (ret)
     return ERR_SYSCFG_INIT;
@@ -166,10 +176,18 @@ int system_init(void) {
 }
 
 void loop_task(void) {
-  set_operation_mode(HID_INIT_MODE);
+  set_operation_mode(ESP_NOW_INIT_MODE);
 
   while (1) {
     switch (get_operation_mode()) {
+      case ESP_NOW_INIT_MODE: {
+        LOGI(TAG, "ESP-NOW INIT MODE");
+        if (esp_now_init()) {
+          LOGE(TAG, "ESP_ERR_ESPNOW_INTERNAL");
+          set_operation_mode(DEEP_SLEEP_MODE);
+        }
+        set_operation_mode(HID_INIT_MODE);
+      } break;
       case HID_INIT_MODE: {
         // LOGI(TAG, "HID_INIT_MODE");
         set_operation_mode(HID_READ_MODE);
@@ -180,10 +198,10 @@ void loop_task(void) {
       } break;
       case HID_DISPLAY_MODE: {
         // LOGI(TAG, "HID_DISPLAY_MODE");
-        set_operation_mode(SLEEP_MODE);
+        set_operation_mode(DEEP_SLEEP_MODE);
       } break;
-      case SLEEP_MODE: {
-        // LOGI(TAG, "SLEEP_MODE");
+      case DEEP_SLEEP_MODE: {
+        // LOGI(TAG, "DEEP_SLEEP_MODE");
         //  vTaskDelay(send_interval * 1000 / portTICK_PERIOD_MS);
         set_operation_mode(HID_READ_MODE);
       } break;

@@ -19,10 +19,11 @@ typedef enum {
 } err_system_t;
 
 typedef enum {
-  HID_INIT_MODE = 0,
+  ESP_NOW_INIT_MODE = 0,
+  HID_INIT_MODE,
   HID_READ_MODE,
   HID_DISPLAY_MODE,
-  SLEEP_MODE
+  DEEP_SLEEP_MODE,
 } operation_mode_t;
 
 #endif /* _MAIN_H_ */
