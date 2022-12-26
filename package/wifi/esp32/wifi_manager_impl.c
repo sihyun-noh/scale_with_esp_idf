@@ -668,3 +668,31 @@ int get_ap_info_impl(wifi_context_t *ctx, ap_info_t *ap_info) {
   }
   return (rc == ESP_OK) ? 0 : -1;
 }
+
+int wifi_espnow_mode_impl(wifi_context_t *ctx) {
+  if (ctx == NULL) {
+    return -1;
+  }
+  esp_err_t ret = ESP_OK;
+
+  // Initialize wifi driver
+  wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+  ret = esp_wifi_init(&cfg);
+  if (ret != ESP_OK) {
+    LOGE(TAG, "Failed to init wifi mode");
+    goto _error;
+  }
+
+  // Set WiFi AP and start it
+  ret = esp_wifi_set_mode(WIFI_MODE_AP);
+  if (ret != ESP_OK) {
+    LOGE(TAG, "Failed to set WiFi AP mode");
+    goto _error;
+  }
+  ret = esp_wifi_start();
+
+  esp_wifi_set_protocol(WIFI_MODE_AP, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR);
+
+_error:
+  return (ret == ESP_OK) ? 0 : -1;
+}

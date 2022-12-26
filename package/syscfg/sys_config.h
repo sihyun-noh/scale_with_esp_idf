@@ -55,6 +55,10 @@ extern "C" {
 #define SYSCFG_S_CPU1_RESET_REASON 5
 #define SYSCFG_I_CPU1_RESET_REASON CFG_DATA
 
+#define SYSCFG_N_MASTER_ADDR "master_addr"
+#define SYSCFG_S_MASTER_ADDR 16
+#define SYSCFG_I_MASTER_ADDR CFG_DATA
+
 // syscfg for manufacturing data
 
 #define SYSCFG_N_HWVERSION "hw_version"

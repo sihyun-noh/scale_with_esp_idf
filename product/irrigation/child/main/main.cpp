@@ -18,6 +18,7 @@
 #include "actuator.h"
 #include "main.h"
 #include "esp32/rom/rtc.h"
+#include "espnow.h"
 
 #include <string.h>
 #include <time.h>
@@ -29,11 +30,13 @@
 
 #define NTP_CHECK_TIME 28800  // 8 hour
 
-const char* TAG = "main_app";
+const char* TAG = "child_app";
 
 sc_ctx_t* sc_ctx = NULL;
 
 static TickType_t g_last_ntp_check_time = 0;
+
+static uint8_t master_addr[ESP_NOW_ETH_ALEN] = { 0x30, 0xae, 0xa4 ,0x9b, 0xac, 0xd1};
 
 #ifdef __cplusplus
 extern "C" {
@@ -231,6 +234,7 @@ int system_init(void) {
 
 void loop_task(void) {
   uint32_t delay_ms = 0;
+  char s_master_addr[SYSCFG_S_MACADDRESS] = { 0 };
 
   set_operation_mode(EASY_SETUP_MODE);
 
@@ -239,13 +243,26 @@ void loop_task(void) {
     switch (get_operation_mode()) {
       case EASY_SETUP_MODE: {
         LOGI(TAG, "EASY_SETUP_MODE");
-        create_easy_setup_task();
+
+        syscfg_get(SYSCFG_I_MASTER_ADDR, SYSCFG_N_MASTER_ADDR, s_master_addr, sizeof(s_master_addr));
+        if (s_master_addr[0] == 0) {
+          snprintf(s_master_addr, sizeof(s_master_addr), "%02X%02X%02X%02X%02X%02X", master_addr[0], master_addr[1], master_addr[2], master_addr[3], master_addr[4], master_addr[5]);
+          syscfg_set(SYSCFG_I_MASTER_ADDR, SYSCFG_N_MASTER_ADDR, s_master_addr);
+        }
+        sysevent_set(UNICAST_ADDR, s_master_addr);
+
+        if (wifi_espnow_mode()) {
+          LOGI(TAG, "Could not initialize esp_now");
+          set_operation_mode(DEEP_SLEEP_MODE);
+        }
+        espnow_init();
+
         set_operation_mode(ESP_NOW_START_MODE);
       } break;
       case ESP_NOW_START_MODE: {
         if (is_device_onboard()) {
           LOGI(TAG, "ESP_NOW_START_MODE");
-          //start_esp_now();
+          start_esp_now();
           set_operation_mode(MONITOR_MODE);
           delay_ms = DELAY_1SEC;
         } else {
@@ -257,7 +274,7 @@ void loop_task(void) {
           LOGI(TAG, "MONITOR_MODE");
           //esp_now_publish_actuator_data();
           //stop_esp_now();
-          set_operation_mode(DEEP_SLEEP_MODE);
+          // set_operation_mode(DEEP_SLEEP_MODE);
           delay_ms = DELAY_1SEC;
         } else {
           set_operation_mode(DEEP_SLEEP_MODE);

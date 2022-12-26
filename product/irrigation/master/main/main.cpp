@@ -18,6 +18,7 @@
 #include "actuator.h"
 #include "main.h"
 #include "esp32/rom/rtc.h"
+#include "espnow.h"
 
 #include <string.h>
 #include <time.h>
@@ -34,6 +35,8 @@ const char* TAG = "main_app";
 sc_ctx_t* sc_ctx = NULL;
 
 static TickType_t g_last_ntp_check_time = 0;
+
+static uint8_t child_addr[ESP_NOW_ETH_ALEN] = { 0x34, 0x94, 0x54, 0xf5, 0x2b, 0x25 };
 
 #ifdef __cplusplus
 extern "C" {
@@ -231,6 +234,7 @@ int system_init(void) {
 
 void loop_task(void) {
   uint32_t delay_ms = 0;
+  char s_child_addr[SYSCFG_S_MACADDRESS] = { 0 };
 
   set_operation_mode(EASY_SETUP_MODE);
 
@@ -239,13 +243,26 @@ void loop_task(void) {
     switch (get_operation_mode()) {
       case EASY_SETUP_MODE: {
         LOGI(TAG, "EASY_SETUP_MODE");
-        create_easy_setup_task();
+
+        syscfg_get(SYSCFG_I_MASTER_ADDR, SYSCFG_N_MASTER_ADDR, s_child_addr, sizeof(s_child_addr));
+        if (s_child_addr[0] == 0) {
+          snprintf(s_child_addr, sizeof(s_child_addr), "%02X%02X%02X%02X%02X%02X", child_addr[0], child_addr[1], child_addr[2], child_addr[3], child_addr[4], child_addr[5]);
+          syscfg_set(SYSCFG_I_MASTER_ADDR, SYSCFG_N_MASTER_ADDR, s_child_addr);
+        }
+        sysevent_set(UNICAST_ADDR, s_child_addr);
+
+        if (wifi_espnow_mode()) {
+          LOGI(TAG, "Could not initialize esp_now");
+          set_operation_mode(DEEP_SLEEP_MODE);
+        }
+        espnow_init();
+
         set_operation_mode(ESP_NOW_START_MODE);
       } break;
       case ESP_NOW_START_MODE: {
         if (is_device_onboard()) {
           LOGI(TAG, "ESP_NOW_START_MODE");
-          //start_esp_now();
+          start_esp_now();
           set_operation_mode(MONITOR_MODE);
           delay_ms = DELAY_1SEC;
         } else {
@@ -257,7 +274,8 @@ void loop_task(void) {
           LOGI(TAG, "MONITOR_MODE");
           //esp_now_publish_actuator_data();
           //stop_esp_now();
-          set_operation_mode(DEEP_SLEEP_MODE);
+          // set_operation_mode(DEEP_SLEEP_MODE);
+          send_msg_to_esp_now((uint8_t *)"valve,on", 8);
           delay_ms = DELAY_1SEC;
         } else {
           set_operation_mode(DEEP_SLEEP_MODE);

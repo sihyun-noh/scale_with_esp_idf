@@ -43,6 +43,10 @@ typedef enum {
 #define LOG_DEFAULT_LEVEL LOG_INFO
 #endif
 
+#ifndef LOG_LOCAL_LEVEL
+#define LOG_LOCAL_LEVEL LOG_INFO
+#endif
+
 /**
  * @brief Function which returns timestamp to be used in log output
  *
