@@ -90,7 +90,7 @@ bool save_hid_config(const char *flow, const char *start_time, const char *zones
       pch = (char *)strpbrk(beg, ",");
     }
     if (beg) {
-      cfg.zones[i] = atoi(beg);
+      cfg.zones[i++] = atoi(beg);
     }
     cfg.zone_cnt = i;
     for (i = 0; i < cfg.zone_cnt; i++) {
