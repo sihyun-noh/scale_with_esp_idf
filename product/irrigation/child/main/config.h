@@ -22,7 +22,7 @@
 #define FUNC_KEY2  13
 
 #define LED_RED   27
-#define LED_GREEN 26
-#define LED_BLUE  25
+#define LED_GREEN 25
+#define LED_BLUE  26
 
 #endif /* _CONFIG_H_ */

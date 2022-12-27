@@ -16,15 +16,14 @@
 #define BATTERY_PORT 6  // GPIO34
 
 #define PUMP_ON 17
-#define SOL_PW  21
-#define SOL_ON  22
 
 #define WATER_FLOW  4
+
 #define FUNC_KEY1  12
 #define FUNC_KEY2  13
 
 #define LED_RED   27
-#define LED_GREEN 26
-#define LED_BLUE  25
+#define LED_GREEN 25
+#define LED_BLUE  26
 
 #endif /* _CONFIG_H_ */
