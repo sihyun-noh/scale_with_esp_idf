@@ -40,6 +40,7 @@ static TickType_t g_last_ntp_check_time = 0;
 extern "C" {
 #endif
 
+void create_key_task(void);
 #if defined(CONFIG_LED_FEATURE)
 void create_led_task(void);
 #endif
@@ -225,6 +226,8 @@ int system_init(void) {
     return ERR_MONITORING_INIT;
 
   valve_init();
+
+  create_key_task();
 
   LOGI(TAG, "CPU0 reset reason: ");
   get_reset_reason(0);
