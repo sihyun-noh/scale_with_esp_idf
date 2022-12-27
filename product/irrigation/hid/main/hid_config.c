@@ -1,0 +1,102 @@
+#include "syslog.h"
+#include "syscfg.h"
+#include "hid_config.h"
+
+#include <stdlib.h>
+#include <string.h>
+
+static const char *TAG = "hid_config";
+
+static time_t generate_start_time(int hour, int min) {
+  time_t now;
+  struct tm timeinfo = { 0 };
+
+  time(&now);
+  localtime_r(&now, &timeinfo);
+
+  timeinfo.tm_hour = hour;
+  timeinfo.tm_min = min;
+
+  LOGI(TAG, "Year:%d,Mon:%d,Hour:%d,Min:%d,Sec:%d", timeinfo.tm_year, timeinfo.tm_mon, timeinfo.tm_hour,
+       timeinfo.tm_min, timeinfo.tm_sec);
+
+  return mktime(&timeinfo);
+}
+
+void show_timestamp(time_t now) {
+  char timestamp[80] = { 0 };
+
+  struct tm *tm = localtime(&now);
+  strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", tm);
+  LOGI(TAG, "timestamp = %s", timestamp);
+}
+
+bool read_hid_config(config_t *cfg) {
+  if (syscfg_get_blob(CFG_DATA, "hid_config", cfg, sizeof(config_t))) {
+    return false;
+  }
+  return true;
+}
+
+bool save_hid_config(const char *flow, const char *start_time, const char *zones) {
+  config_t cfg;
+  memset(&cfg, 0x00, sizeof(config_t));
+
+  int flow_rate = 0;
+  int i = 0, zone = 0;
+  int hour = 0, min = 0;
+  char *beg = NULL, *pch = NULL;
+
+  if (!flow || !start_time) {
+    LOGW(TAG, "flow and start_time should be filled!!!");
+    return false;
+  }
+  flow_rate = atoi(flow);
+  if (flow_rate <= 0) {
+    LOGW(TAG, "flow rate cannot be 0 or negative");
+  } else {
+    cfg.flow_rate = flow_rate;
+  }
+  LOGI(TAG, "flow data = %s, zones = %s, start_time = %s", flow, zones, start_time);
+  if (start_time) {
+    beg = start_time;
+    pch = (char *)strpbrk(beg, ":");
+    while (pch != NULL) {
+      *pch = '\0';
+      hour = atoi(beg);
+      beg = pch + 1;
+      pch = (char *)strpbrk(beg, ":");
+    }
+    if (beg) {
+      min = atoi(beg);
+    }
+    LOGI(TAG, "%d:%d", hour, min);
+    time_t now = time(NULL);
+    show_timestamp(now);
+    time_t tm = generate_start_time(hour, min);
+    show_timestamp(tm);
+    cfg.start_time = tm;
+  }
+  if (zones) {
+    beg = zones;
+    pch = (char *)strpbrk(beg, ",");
+    while (pch != NULL) {
+      *pch = '\0';
+      zone = atoi(beg);
+      if (zone >= 1 && zone <= 6) {
+        cfg.zones[i++] = zone;
+      }
+      beg = pch + 1;
+      pch = (char *)strpbrk(beg, ",");
+    }
+    if (beg) {
+      cfg.zones[i] = atoi(beg);
+    }
+    cfg.zone_cnt = i;
+    for (i = 0; i < cfg.zone_cnt; i++) {
+      LOGI(TAG, "zones[%d] = %d", i, cfg.zones[i]);
+    }
+  }
+  syscfg_set_blob(CFG_DATA, "hid_config", &cfg, sizeof(config_t));
+  return true;
+}

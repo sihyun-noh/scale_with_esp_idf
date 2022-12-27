@@ -1,5 +1,8 @@
-#include "freertos/projdefs.h"
+// #include "freertos/projdefs.h"
 #include "nvs_flash.h"
+#include "esp_timer.h"
+#include "esp_now.h"
+
 #include "shell_console.h"
 #include "syscfg.h"
 #include "sys_config.h"
@@ -12,7 +15,6 @@
 #include "sysfile.h"
 #include "config.h"
 #include "main.h"
-#include "esp_now.h"
 
 #include <string.h>
 
@@ -38,12 +40,9 @@ void display_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 void touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data);
 
 static void lv_tick_task(void *arg);
-static void gui_task(void *pvParameter);
+static void lvgl_timer_task(void *pvParameter);
 
-// static void main_ctrl_app(void);
-
-static void lv_tick_task(void *arg);
-const char *TAG = "main_app";
+static const char *TAG = "main_app";
 
 sc_ctx_t *sc_ctx = NULL;
 
@@ -176,34 +175,29 @@ int system_init(void) {
 }
 
 void loop_task(void) {
-  set_operation_mode(ESP_NOW_INIT_MODE);
+  set_operation_mode(INIT_MODE);
 
   while (1) {
     switch (get_operation_mode()) {
-      case ESP_NOW_INIT_MODE: {
-        LOGI(TAG, "ESP-NOW INIT MODE");
+      case INIT_MODE: {
+        LOGI(TAG, "INIT_MODE");
         if (esp_now_init()) {
           LOGE(TAG, "ESP_ERR_ESPNOW_INTERNAL");
-          set_operation_mode(DEEP_SLEEP_MODE);
+          set_operation_mode(SLEEP_MODE);
+        } else {
+          set_operation_mode(CONNECT_MODE);
         }
-        set_operation_mode(HID_INIT_MODE);
       } break;
-      case HID_INIT_MODE: {
-        // LOGI(TAG, "HID_INIT_MODE");
-        set_operation_mode(HID_READ_MODE);
+      case CONNECT_MODE: {
+        LOGI(TAG, "CONNECT_MODE");
+        set_operation_mode(RUNNING_MODE);
       } break;
-      case HID_READ_MODE: {
-        // LOGI(TAG, "HID_READ_MODE");
-        set_operation_mode(HID_DISPLAY_MODE);
+      case RUNNING_MODE: {
+        set_operation_mode(SLEEP_MODE);
       } break;
-      case HID_DISPLAY_MODE: {
-        // LOGI(TAG, "HID_DISPLAY_MODE");
-        set_operation_mode(DEEP_SLEEP_MODE);
-      } break;
-      case DEEP_SLEEP_MODE: {
-        // LOGI(TAG, "DEEP_SLEEP_MODE");
+      case SLEEP_MODE: {
         //  vTaskDelay(send_interval * 1000 / portTICK_PERIOD_MS);
-        set_operation_mode(HID_READ_MODE);
+        set_operation_mode(RUNNING_MODE);
       } break;
     }
     vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -253,46 +247,10 @@ void touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data) {
  * you should lock on the very same semaphore! */
 SemaphoreHandle_t xGuiSemaphore;
 
-static void gui_task(void *pvParameter) {
+static void lvgl_timer_task(void *pvParameter) {
   (void)pvParameter;
 
   xGuiSemaphore = xSemaphoreCreateMutex();
-
-  // Initialize LovyanGFX
-  lcd.init();
-
-  // Initialize lvgl
-  lv_init();
-
-  // Setting display to landscape
-  lcd.setRotation(lcd.getRotation() ^ 1);
-
-  // LVGL : Setting up buffer to use for display
-  lv_disp_draw_buf_init(&draw_buf, buf, NULL, screenWidth * 10);
-
-  // LVGL : Setup and Initialize the display device driver
-  static lv_disp_drv_t disp_drv;
-  lv_disp_drv_init(&disp_drv);
-  disp_drv.hor_res = screenWidth;
-  disp_drv.ver_res = screenHeight;
-  disp_drv.flush_cb = display_flush;
-  disp_drv.draw_buf = &draw_buf;
-  lv_disp_drv_register(&disp_drv);
-
-  // LVGL : Setup & Initialize the input device driver
-  static lv_indev_drv_t indev_drv;
-  lv_indev_drv_init(&indev_drv);
-  indev_drv.type = LV_INDEV_TYPE_POINTER;
-  indev_drv.read_cb = touchpad_read;
-  lv_indev_drv_register(&indev_drv);
-
-  /* Create and start a periodic timer interrupt to call lv_tick_inc */
-  const esp_timer_create_args_t periodic_timer_args = { .callback = &lv_tick_task, .name = "periodic_gui" };
-  esp_timer_handle_t periodic_timer;
-  ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
-  ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, LV_TICK_PERIOD_MS * 1000));
-
-  ui_init();
 
   while (1) {
     // Delay 1 tick (FreeRTOS tick is 10ms)
@@ -323,7 +281,46 @@ void app_main(void) {
     sc_start(sc_ctx);
   }
 
-  xTaskCreatePinnedToCore(gui_task, "gui", 4096 * 2, NULL, tskIDLE_PRIORITY, NULL, 0);
+  // Initialize LovyanGFX
+  lcd.init();
+
+  // Initialize lvgl
+  lv_init();
+
+  // Setting display to landscape
+  lcd.setRotation(lcd.getRotation() ^ 1);
+
+  // LVGL : Setting up buffer to use for display
+  lv_disp_draw_buf_init(&draw_buf, buf, NULL, screenWidth * 10);
+
+  // LVGL : Setup and Initialize the display device driver
+  static lv_disp_drv_t disp_drv;
+  lv_disp_drv_init(&disp_drv);
+  disp_drv.hor_res = screenWidth;
+  disp_drv.ver_res = screenHeight;
+  disp_drv.flush_cb = display_flush;
+  disp_drv.draw_buf = &draw_buf;
+  lv_disp_drv_register(&disp_drv);
+
+  // LVGL : Setup & Initialize the input device driver
+  static lv_indev_drv_t indev_drv;
+  lv_indev_drv_init(&indev_drv);
+  indev_drv.type = LV_INDEV_TYPE_POINTER;
+  indev_drv.read_cb = touchpad_read;
+  lv_indev_drv_register(&indev_drv);
+  // Configuration is completed.
+
+  // Create and start a periodic timer interrupt to call lv_tick_inc
+  LOGI(TAG, "Install LVGL tick timer");
+  // Tick interface for LVGL (using esp_timer to generate 2ms periodic event)
+  const esp_timer_create_args_t lvgl_tick_timer_args = { .callback = &lv_tick_task, .name = "lvgl_tick" };
+  esp_timer_handle_t lvgl_tick_timer = NULL;
+  ESP_ERROR_CHECK(esp_timer_create(&lvgl_tick_timer_args, &lvgl_tick_timer));
+  ESP_ERROR_CHECK(esp_timer_start_periodic(lvgl_tick_timer, LV_TICK_PERIOD_MS * 1000));
+
+  ui_init();
+
+  xTaskCreatePinnedToCore(lvgl_timer_task, "lvgl_timer", 4096 * 2, NULL, tskIDLE_PRIORITY, NULL, 0);
 
   loop_task();
 }
