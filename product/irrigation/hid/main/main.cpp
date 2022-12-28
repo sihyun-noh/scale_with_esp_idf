@@ -137,6 +137,10 @@ int system_init(void) {
   if (ret)
     return ERR_NVS_FLASH;
 
+  ret = wifi_user_init();
+  if (ret)
+    return ERR_WIFI_INIT;
+
   ret = wifi_espnow_mode();
   if (ret)
     return ERR_WIFI_INIT;
