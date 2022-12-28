@@ -41,6 +41,7 @@ extern "C" {
 #endif
 
 void create_key_task(void);
+void create_control_task(void);
 #if defined(CONFIG_LED_FEATURE)
 void create_led_task(void);
 #endif
@@ -228,6 +229,8 @@ int system_init(void) {
   pump_init();
 
   create_key_task();
+
+  create_control_task();
 
   LOGI(TAG, "CPU0 reset reason: ");
   get_reset_reason(0);
