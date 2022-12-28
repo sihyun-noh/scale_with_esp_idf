@@ -225,153 +225,155 @@ int check_sleep_time(void) {
  
 static void control_task(void* pvParameters) {
   irrigation_message_t send_message;
-  switch (controlStatus) {
-    case CEHCK_ADDR:
-      // 각 device mac addr 존재 여부 판단... 확인 완료 시 check mode 단계..
-      set_addr();
-      set_control_status(REGISTER_CB);
+  for (;;) {
+    switch (controlStatus) {
+      case CEHCK_ADDR:
+        vTaskDelay(5000 / portTICK_PERIOD_MS);
+        // 각 device mac addr 존재 여부 판단... 확인 완료 시 check mode 단계..
+        set_addr();
+        set_control_status(REGISTER_CB);
 
-      LOGI(TAG, "ADDR CHECK DONE !!"); 
-      vTaskDelay(2000 / portTICK_PERIOD_MS);
-      break;
+        LOGI(TAG, "ADDR CHECK DONE !!"); 
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        break;
 
-    case REGISTER_CB:
-      // send / receive message callback 등록
-      esp_now_register_recv_cb(on_data_recv);
-      esp_now_register_send_cb(on_data_sent_cb);
- 
-      LOGI(TAG, "REGISTER CALLBACK DONE !!");
-      set_control_status(SYNC_TIME);
-      vTaskDelay(2000 / portTICK_PERIOD_MS);
-      break;
- 
-    case SYNC_TIME:
-      // master 시간을 기준으로 message 생성하여 broadcasting
-      // 각 device 에서는 전달받은 시간 값으로 time sync
-      uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-      memset(&send_message, 0x00, sizeof(send_message));
-      send_message.sender_type = TIME_SYNC;
-      send_message.current_time = get_current_time();
-      //esp_now_send(broadcastAddress, (uint8_t *) &send_message, sizeof(send_message));
+      case REGISTER_CB:
+        // send / receive message callback 등록
+        esp_now_register_recv_cb(on_data_recv);
+        esp_now_register_send_cb(on_data_sent_cb);
+  
+        LOGI(TAG, "REGISTER CALLBACK DONE !!");
+        set_control_status(SYNC_TIME);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        break;
+  
+      case SYNC_TIME:
+        // master 시간을 기준으로 message 생성하여 broadcasting
+        // 각 device 에서는 전달받은 시간 값으로 time sync
+        uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+        memset(&send_message, 0x00, sizeof(send_message));
+        send_message.sender_type = TIME_SYNC;
+        send_message.current_time = get_current_time();
+        //esp_now_send(broadcastAddress, (uint8_t *) &send_message, sizeof(send_message));
 
-      LOGI(TAG, "HID/CHILD TIME SYNC !!");
-      set_control_status(CHECK_SCEHDULE);
- 
-      vTaskDelay(2000 / portTICK_PERIOD_MS);
-      break;
- 
-    case WAIT_STATE:
-      // 시간 체크 sleep mode 진입 여부 확인...
-      // ESP Now 를 통해 message 받을 때 까지 대기 상태
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
-      break;
- 
-    case CHECK_SCEHDULE:
-      // 현재 시간과 관수 스케쥴 시간을 비교 하는 단계.
-      // 스케쥴 시간에 도달하면 valve on 과 함께 관수 시작
-      
-      if (setConfig) {  // 설정된 config가 있을 경우에 config 에 따라 스케줄 관리 시작
-        if (!flowStart) {
-          double diffTime = difftime(flowStartTime, get_current_time());
- 
-          if (diffTime < 2.0 && diffTime > (-10.0)) {
-            set_control_status(CHILD_VALVE_ON);
-            LOGI(TAG, "START FLOW!!");
-            flowStart = true;
+        LOGI(TAG, "HID/CHILD TIME SYNC !!");
+        set_control_status(CHECK_SCEHDULE);
+  
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        break;
+  
+      case WAIT_STATE:
+        // 시간 체크 sleep mode 진입 여부 확인...
+        // ESP Now 를 통해 message 받을 때 까지 대기 상태
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        break;
+  
+      case CHECK_SCEHDULE:
+        // 현재 시간과 관수 스케쥴 시간을 비교 하는 단계.
+        // 스케쥴 시간에 도달하면 valve on 과 함께 관수 시작
+        
+        if (setConfig) {  // 설정된 config가 있을 경우에 config 에 따라 스케줄 관리 시작
+          if (!flowStart) {
+            double diffTime = difftime(flowStartTime, get_current_time());
+  
+            if (diffTime < 2.0 && diffTime > (-10.0)) {
+              set_control_status(CHILD_VALVE_ON);
+              LOGI(TAG, "START FLOW!!");
+              flowStart = true;
+            }
+          } else {
+            if (flowDoneCnt >= zoneFlowCnt) {
+              set_control_status(COMPLETE);
+            } else {
+              LOGI(TAG, "START NEXT CHILD FLOW!!");
+              set_control_status(CHILD_VALVE_ON);
+            }
           }
         } else {
-          if (flowDoneCnt >= zoneFlowCnt) {
-            set_control_status(COMPLETE);
-          } else {
-            LOGI(TAG, "START NEXT CHILD FLOW!!");
-            set_control_status(CHILD_VALVE_ON);
+          int remainSleepTime = check_sleep_time();
+          if (remainSleepTime > 0) {
+            uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+            memset(&send_message, 0x00, sizeof(send_message));
+            send_message.sender_type = SET_SLEEP;
+            send_message.current_time = get_current_time();
+            send_message.remain_time_sleep = remainSleepTime;
+            //esp_now_send(broadcastAddress, (uint8_t *) &send_message, sizeof(send_message));
+            LOGI(TAG, "SEND DEEP SLEEP MSG ");
+            set_control_status(WAIT_STATE);
           }
         }
-      } else {
-        int remainSleepTime = check_sleep_time();
-        if (remainSleepTime > 0) {
-          uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-          memset(&send_message, 0x00, sizeof(send_message));
-          send_message.sender_type = SET_SLEEP;
-          send_message.current_time = get_current_time();
-          send_message.remain_time_sleep = remainSleepTime;
-          //esp_now_send(broadcastAddress, (uint8_t *) &send_message, sizeof(send_message));
-          LOGI(TAG, "SEND DEEP SLEEP MSG ");
-          set_control_status(WAIT_STATE);
+  
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        break;
+  
+      case CHECK_FLOW:
+        // 유량 체크 후 HID 에 유량 값 전달...
+        // 일정 값마다...또는 일정 시간마다 아래 메세지 전달... --> 추가 논의 필요.
+        /*
+        memset(&send_message, 0x00, sizeof(send_message));
+        send_message.sender_type = FLOW_STATUS;
+        send_message.deviceId = flowOrder[flowDoneCnt]; //  valve 를 on 할 child number
+        send_message.flow_value = get_flow_value();
+        send_message.current_time = get_current_time();
+        esp_now_send(macAddress[0][], (uint8_t *) &send_message, sizeof(send_message));
+        */
+
+        // 유량 체크, 설정값과 차이가 20리터 이내로 들어올 경우 valve off 하도록... -> 테스트 후 값 변경 필요.
+        if (get_flow_value() >= (flowSettingValue - 20) ) {
+          set_control_status(CHILD_VALVE_OFF);
         }
-      }
- 
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
-      break;
- 
-    case CHECK_FLOW:
-      // 유량 체크 후 HID 에 유량 값 전달...
-      // 일정 값마다...또는 일정 시간마다 아래 메세지 전달... --> 추가 논의 필요.
-      /*
-      memset(&send_message, 0x00, sizeof(send_message));
-      send_message.sender_type = FLOW_STATUS;
-      send_message.deviceId = flowOrder[flowDoneCnt]; //  valve 를 on 할 child number
-      send_message.flow_value = get_flow_value();
-      send_message.current_time = get_current_time();
-      esp_now_send(macAddress[0][], (uint8_t *) &send_message, sizeof(send_message));
-      */
+  
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        break;
+  
+      case CHILD_VALVE_ON:
+        // 관수 스케줄에 따라 pump / zone pump on, off 컨트롤
+        // 관수 시작 시 : zone valve on -> pump on
+        memset(&send_message, 0x00, sizeof(send_message));
+        send_message.sender_type = SET_VALVE_ON;
+        send_message.deviceId = flowOrder[flowDoneCnt]; //  valve 를 on 할 child number
+        send_message.current_time = get_current_time();
+        //esp_now_send(macAddress[flowOrder[flowDoneCnt]][], (uint8_t *) &send_message, sizeof(send_message));
+        LOGI(TAG, "CHILD -%d VALVE ON !!", flowOrder[flowDoneCnt]);
+        set_control_status(WAIT_STATE);
+  
+        break;
+  
+      case CHILD_VALVE_OFF:
+        // 관수 스케줄에 따라 pump / zone pump on, off 컨트롤
+        // 관수 중지 시 : pump off -> zone valve on
+        stop_flow();
+  
+        memset(&send_message, 0x00, sizeof(send_message));
+        send_message.sender_type = SET_VALVE_OFF;
+        send_message.deviceId = flowOrder[flowDoneCnt]; //  valve 를 off 할 child number
+        send_message.current_time = get_current_time();
+        //esp_now_send(macAddress[flowOrder[flowDoneCnt]][], (uint8_t *) &send_message, sizeof(send_message));
+        LOGI(TAG, "CHILD - %d VALVE OFF !!", flowOrder[flowDoneCnt]);
+        set_control_status(WAIT_STATE);
+  
+        break;
+  
+      case COMPLETE:
+        // 관수 스케줄대로 모든 관수가 종료된 상태.
+        // 추가 관수 여부 확인..--> wait config 모드로
+        memset(&send_message, 0x00, sizeof(send_message));
+        send_message.sender_type = ALL_COMPLETE;
+        send_message.current_time = get_current_time();
+        //esp_now_send(macAddress[0][], (uint8_t *) &send_message, sizeof(send_message));
 
-      // 유량 체크, 설정값과 차이가 20리터 이내로 들어올 경우 valve off 하도록... -> 테스트 후 값 변경 필요.
-      if (get_flow_value() >= (flowSettingValue - 20) ) {
-        set_control_status(CHILD_VALVE_OFF);
-      }
- 
-      vTaskDelay(2000 / portTICK_PERIOD_MS);
-      break;
- 
-    case CHILD_VALVE_ON:
-      // 관수 스케줄에 따라 pump / zone pump on, off 컨트롤
-      // 관수 시작 시 : zone valve on -> pump on
-      memset(&send_message, 0x00, sizeof(send_message));
-      send_message.sender_type = SET_VALVE_ON;
-      send_message.deviceId = flowOrder[flowDoneCnt]; //  valve 를 on 할 child number
-      send_message.current_time = get_current_time();
-      //esp_now_send(macAddress[flowOrder[flowDoneCnt]][], (uint8_t *) &send_message, sizeof(send_message));
-      LOGI(TAG, "CHILD -%d VALVE ON !!", flowOrder[flowDoneCnt]);
-      set_control_status(WAIT_STATE);
- 
-      break;
- 
-    case CHILD_VALVE_OFF:
-      // 관수 스케줄에 따라 pump / zone pump on, off 컨트롤
-      // 관수 중지 시 : pump off -> zone valve on
-      stop_flow();
- 
-      memset(&send_message, 0x00, sizeof(send_message));
-      send_message.sender_type = SET_VALVE_OFF;
-      send_message.deviceId = flowOrder[flowDoneCnt]; //  valve 를 off 할 child number
-      send_message.current_time = get_current_time();
-      //esp_now_send(macAddress[flowOrder[flowDoneCnt]][], (uint8_t *) &send_message, sizeof(send_message));
-      LOGI(TAG, "CHILD - %d VALVE OFF !!", flowOrder[flowDoneCnt]);
-      set_control_status(WAIT_STATE);
- 
-      break;
- 
-    case COMPLETE:
-      // 관수 스케줄대로 모든 관수가 종료된 상태.
-      // 추가 관수 여부 확인..--> wait config 모드로
-      memset(&send_message, 0x00, sizeof(send_message));
-      send_message.sender_type = ALL_COMPLETE;
-      send_message.current_time = get_current_time();
-      //esp_now_send(macAddress[0][], (uint8_t *) &send_message, sizeof(send_message));
+        LOGI(TAG, "ALL CHILD FLOW COMPLETE!!");
+  
+        init_variable();
+        set_control_status(CHECK_SCEHDULE);
 
-      LOGI(TAG, "ALL CHILD FLOW COMPLETE!!");
- 
-      init_variable();
-      set_control_status(CHECK_SCEHDULE);
-
-      vTaskDelay(1000 / portTICK_PERIOD_MS); 
-      break;
- 
-    default:
-      break;
+        vTaskDelay(1000 / portTICK_PERIOD_MS); 
+        break;
+  
+      default:
+        break;
+    }
   }
-  vTaskDelete(NULL);
 }
  
 void create_control_task(void) {
@@ -384,5 +386,5 @@ void create_control_task(void) {
   }
  
   init_variable();
-  xTaskCreate((TaskFunction_t)control_task, "CONTROL", stack_size, NULL, task_priority, &control_handle);
+  xTaskCreate(control_task, "CONTROL", stack_size, NULL, task_priority, &control_handle);
 }
