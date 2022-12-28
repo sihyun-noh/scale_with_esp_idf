@@ -190,10 +190,6 @@ int system_init(void) {
   if (ret)
     return ERR_NVS_FLASH;
 
-  ret = wifi_user_init();
-  if (ret)
-    return ERR_WIFI_INIT;
-
   ret = wifi_espnow_mode();
   if (ret)
     return ERR_WIFI_INIT;
@@ -247,7 +243,7 @@ void loop_task(void) {
     switch (get_operation_mode()) {
       case ESP_NOW_INIT_MODE: {
         LOGI(TAG, "ESP-NOW INIT MODE");
-        if (esp_now_init()){
+        if (esp_now_init()) {
           LOGE(TAG, "ESP_ERR_ESPNOW_INTERNAL");
           set_operation_mode(DEEP_SLEEP_MODE);
         }
@@ -266,9 +262,9 @@ void loop_task(void) {
       case MONITOR_MODE: {
         if (is_device_onboard()) {
           LOGI(TAG, "MONITOR_MODE");
-          //esp_now_publish_actuator_data();
-          //stop_esp_now();
-          // set_operation_mode(DEEP_SLEEP_MODE);
+          // esp_now_publish_actuator_data();
+          // stop_esp_now();
+          //  set_operation_mode(DEEP_SLEEP_MODE);
           delay_ms = DELAY_1SEC;
         } else {
           set_operation_mode(DEEP_SLEEP_MODE);
