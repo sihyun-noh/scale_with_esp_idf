@@ -370,7 +370,8 @@ static void control_task(void* pvParameters) {
  
     default:
       break;
-  } 
+  }
+  vTaskDelete(NULL);
 }
  
 void create_control_task(void) {

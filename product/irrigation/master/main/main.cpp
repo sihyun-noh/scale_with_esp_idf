@@ -230,8 +230,6 @@ int system_init(void) {
 
   create_key_task();
 
-  create_control_task();
-
   LOGI(TAG, "CPU0 reset reason: ");
   get_reset_reason(0);
   LOGI(TAG, "CPU1 reset reason: ");
@@ -304,6 +302,8 @@ void app_main(void) {
     sc_start(sc_ctx);
 
   set_device_onboard(0);
+
+  create_control_task();
 
 #if defined(CONFIG_LED_FEATURE)
   create_led_task();
