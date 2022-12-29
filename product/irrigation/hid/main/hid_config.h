@@ -11,7 +11,7 @@ extern "C" {
 
 typedef enum { SET_CONFIG, TIME_SYNC, VALVE_ON, VALVE_OFF, FLOW_STATUS, SET_SLEEP, RESPONSE, NONE } message_type_t;
 
-typedef enum { SUCCESS, FAIL } response_type_t;
+typedef enum { FAIL, SUCCESS } response_type_t;
 
 typedef struct config {
   int flow_rate;
@@ -29,8 +29,8 @@ typedef struct irrigation_message {
   response_type_t resp;
   config_t config;
   flow_status_t flow;
-  set_valve_t setting_value;
   int device_id;
+  int remain_time_sleep;
   time_t current_time;
 } irrigation_message_t;
 

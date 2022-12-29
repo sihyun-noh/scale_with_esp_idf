@@ -28,10 +28,6 @@ extern "C" {
 // #define CONFIG_ESPNOW_WIFI_MODE_STATION 1
 // # CONFIG_ESPNOW_WIFI_MODE_STATION_SOFTAP is not set
 #define CONFIG_ESPNOW_CHANNEL 1
-#define CONFIG_ESPNOW_SEND_COUNT 100
-#define CONFIG_ESPNOW_SEND_DELAY 1000
-#define CONFIG_ESPNOW_SEND_LEN 10
-#define CONFIG_ESPNOW_ENABLE_LONG_RANGE 1
 
 /* ESPNOW can work in both station and softap mode. It is configured in menuconfig. */
 #if CONFIG_ESPNOW_WIFI_MODE_STATION
@@ -48,7 +44,6 @@ extern "C" {
 // static uint8_t s_broadcast_mac[MAC_ADDR_LEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 #define IS_BROADCAST_ADDR(addr) (memcmp(addr, s_broadcast_mac, MAC_ADDR_LEN) == 0)
 
-typedef enum { UNICAST = 0, BROADCAST } transport_t;
 typedef enum { HID_DEVICE = 0, MAIN_DEVICE, CHILD_DEVICE } device_t;
 
 typedef struct {
@@ -59,7 +54,7 @@ typedef struct {
 bool espnow_start(esp_now_recv_cb_t recv_cb, esp_now_send_cb_t send_cb);
 void espnow_stop(void);
 int espnow_add_peers(device_t device_mode);
-int espnow_add_peer(transport_t transport, const uint8_t *mac_addr);
+bool espnow_add_peer(const uint8_t *mac_addr, uint8_t channel, int netif);
 bool espnow_remove_peer(const uint8_t *mac_addr);
 int espnow_list_peers(peer_info_t *peers, int max_peers);
 bool espnow_has_peer(const uint8_t *mac_addr);

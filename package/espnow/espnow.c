@@ -29,29 +29,7 @@
 static const char *TAG = "ESP-NOW";
 static bool b_ready = false;
 
-int espnow_add_peer(transport_t transport, const uint8_t *mac_addr) {
-  if (transport == UNICAST) {
-    /* If MAC address is already existed in peer list, do not need to add it */
-    if (esp_now_is_peer_exist(mac_addr)) {
-      return 0;
-    }
-  }
-  esp_now_peer_info_t *peer = malloc(sizeof(esp_now_peer_info_t));
-  if (peer == NULL) {
-    LOGE(TAG, "Malloc peer information fail");
-    return -1;
-  }
-  memset(peer, 0, sizeof(esp_now_peer_info_t));
-  peer->channel = CONFIG_ESPNOW_CHANNEL;
-  peer->ifidx = ESPNOW_WIFI_IF;
-  peer->encrypt = false;
-  memcpy(peer->peer_addr, mac_addr, MAC_ADDR_LEN);
-  esp_now_add_peer(peer);
-  free(peer);
-  return 0;
-}
-
-bool espnow_start(esp_now_recv_cb_t recv_cb, esp_now_send_cb_t send_cb)) {
+bool espnow_start(esp_now_recv_cb_t recv_cb, esp_now_send_cb_t send_cb) {
   espnow_stop();
 
   /* Initialize ESPNOW and register sending and receiving callback function. */
@@ -85,6 +63,24 @@ int espnow_add_peers(device_t device_mode) {
   }
 
   return 0;
+}
+
+bool espnow_add_peer(const uint8_t *mac_addr, uint8_t channel, int netif) {
+  if (!b_ready) {
+    return false;
+  }
+
+  esp_now_peer_info_t peer;
+  memset(&peer, 0, sizeof(esp_now_peer_info_t));
+  peer.channel = channel;
+  peer.ifidx = netif;
+  peer.encrypt = false;
+  memcpy(peer.peer_addr, mac_addr, MAC_ADDR_LEN);
+
+  if (espnow_has_peer(mac_addr)) {
+    return esp_now_mod_peer(&peer) == ESP_OK;
+  }
+  return esp_now_add_peer(&peer) == ESP_OK;
 }
 
 int espnow_list_peers(peer_info_t *peers, int max_peers) {

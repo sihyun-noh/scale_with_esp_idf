@@ -19,8 +19,8 @@ typedef enum {
 } err_system_t;
 
 typedef enum {
-  ESP_NOW_INIT_MODE = 0,
-  ESP_NOW_START_MODE,
+  START_MODE = 0,
+  CONTROL_MODE,
   MONITOR_MODE,
   DEEP_SLEEP_MODE,
 } operation_mode_t;

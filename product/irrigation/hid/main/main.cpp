@@ -1,7 +1,8 @@
 // #include "freertos/projdefs.h"
 #include "nvs_flash.h"
 #include "esp_timer.h"
-#include "esp_now.h"
+#include "esp_sleep.h"
+#include "esp_mac.h"
 
 #include "shell_console.h"
 #include "syscfg.h"
@@ -10,11 +11,11 @@
 #include "sys_status.h"
 #include "syslog.h"
 #include "wifi_manager.h"
-#include "esp_sleep.h"
 #include "event_ids.h"
 #include "sysfile.h"
 #include "config.h"
 #include "main.h"
+#include "espnow.h"
 
 #include <string.h>
 
@@ -45,6 +46,8 @@ static void lvgl_timer_task(void *pvParameter);
 static const char *TAG = "main_app";
 
 sc_ctx_t *sc_ctx = NULL;
+
+uint8_t main_mac_addr[6] = { 0xF4, 0x12, 0xFA, 0x52, 0x07, 0xD1 };
 
 extern "C" {
 extern int read_battery_percentage(void);
@@ -100,6 +103,15 @@ static void check_model(void) {
 
   set_battery_model(1);
 }
+
+static void recv_data_cb(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
+  if (memcmp(mac_addr, main_mac_addr, MAC_ADDR_LEN) == 0) {
+    LOGI(TAG, "Receive Data from Main device");
+    LOG_BUFFER_HEXDUMP(TAG, data, data_len, LOG_INFO);
+  }
+}
+
+static void send_data_cb(const uint8_t *mac_addr, esp_now_send_status_t status) {}
 
 int set_interval_cmd(int argc, char **argv) {
   int interval = 0;
@@ -169,6 +181,12 @@ int system_init(void) {
 
   sdcard_init();
 
+  // TODO : Temporary code for testing, the code below will be removed after implementing of espnow_add_peers()
+  // Get a main mac address that will be used in espnow
+  uint8_t mac[6] = { 0 };
+  esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
+  LOG_BUFFER_HEX(TAG, mac, sizeof(mac));
+
   return SYSINIT_OK;
 }
 
@@ -179,8 +197,8 @@ void loop_task(void) {
     switch (get_operation_mode()) {
       case INIT_MODE: {
         LOGI(TAG, "INIT_MODE");
-        if (esp_now_init()) {
-          LOGE(TAG, "ESP_ERR_ESPNOW_INTERNAL");
+        if (espnow_start(recv_data_cb, send_data_cb) == false) {
+          LOGE(TAG, "Failed to start espnow!!!");
           set_operation_mode(SLEEP_MODE);
         } else {
           set_operation_mode(CONNECT_MODE);
@@ -188,6 +206,12 @@ void loop_task(void) {
       } break;
       case CONNECT_MODE: {
         LOGI(TAG, "CONNECT_MODE");
+        if (espnow_add_peer(main_mac_addr, CONFIG_ESPNOW_CHANNEL, ESPNOW_WIFI_IF)) {
+          set_device_onboard(1);
+          LOGI(TAG, "Success to add main addr to peer list");
+        } else {
+          LOGI(TAG, "Failed to add main addr to peer list");
+        }
         set_operation_mode(RUNNING_MODE);
       } break;
       case RUNNING_MODE: {

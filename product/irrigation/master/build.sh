@@ -26,6 +26,16 @@ checkArgVariable() {
   fi
 }
 
+if [ -z ${1} ] || [[ ${1} = "build" ]] || [[ ${1} = "flash" ]]; then
+  echo "Please select target chipset. 1: ESP32, 2: ESP32S3"
+  read CHIPSET_ID
+  if [ ${CHIPSET_ID} = "1" ]; then
+    export IDF_TARGET=esp32
+  elif [ ${CHIPSET_ID} = "2" ]; then
+    export IDF_TARGET=esp32s3
+  fi
+fi
+
 PRODUCT_NAME="MASTER"
 export CURRENT_PROJECT=${PRODUCT_NAME}
 
