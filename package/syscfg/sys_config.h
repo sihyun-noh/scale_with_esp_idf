@@ -85,6 +85,38 @@ extern "C" {
 #define SYSCFG_S_REGIONCODE 10
 #define SYSCFG_I_REGIONCODE MFG_DATA
 
+#define SYSCFG_N_MASTER_MAC "master_mac"
+#define SYSCFG_S_MASTER_MAC 16
+#define SYSCFG_I_MASTER_MAC MFG_DATA
+
+#define SYSCFG_N_HID_MAC "hid_mac"
+#define SYSCFG_S_HID_MAC 16
+#define SYSCFG_I_HID_MAC MFG_DATA
+
+#define SYSCFG_N_CHILD1_MAC "child1_mac"
+#define SYSCFG_S_CHILD1_MAC 16
+#define SYSCFG_I_CHILD1_MAC MFG_DATA
+
+#define SYSCFG_N_CHILD2_MAC "child2_mac"
+#define SYSCFG_S_CHILD2_MAC 16
+#define SYSCFG_I_CHILD2_MAC MFG_DATA
+
+#define SYSCFG_N_CHILD3_MAC "child3_mac"
+#define SYSCFG_S_CHILD3_MAC 16
+#define SYSCFG_I_CHILD3_MAC MFG_DATA
+
+#define SYSCFG_N_CHILD4_MAC "child4_mac"
+#define SYSCFG_S_CHILD4_MAC 16
+#define SYSCFG_I_CHILD4_MAC MFG_DATA
+
+#define SYSCFG_N_CHILD5_MAC "child5_mac"
+#define SYSCFG_S_CHILD5_MAC 16
+#define SYSCFG_I_CHILD5_MAC MFG_DATA
+
+#define SYSCFG_N_CHILD6_MAC "child6_mac"
+#define SYSCFG_S_CHILD6_MAC 16
+#define SYSCFG_I_CHILD6_MAC MFG_DATA
+
 int get_syscfg_idx(char *name);
 void dump_syscfg(void);
 void generate_syscfg(void);

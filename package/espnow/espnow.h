@@ -41,10 +41,7 @@ extern "C" {
 #define MAX_MSG_LEN ESP_NOW_MAX_DATA_LEN
 #define MAC_ADDR_LEN ESP_NOW_ETH_ALEN
 
-// static uint8_t s_broadcast_mac[MAC_ADDR_LEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-#define IS_BROADCAST_ADDR(addr) (memcmp(addr, s_broadcast_mac, MAC_ADDR_LEN) == 0)
-
-typedef enum { HID_DEVICE = 0, MAIN_DEVICE, CHILD_DEVICE } device_t;
+typedef enum { HID_DEVICE = 0, MASTER_DEVICE, CHILD_DEVICE } device_t;
 
 typedef struct {
   uint8_t mac_addr[MAC_ADDR_LEN];

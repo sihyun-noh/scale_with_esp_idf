@@ -78,9 +78,7 @@ int flowOrder[6];
 int flowSettingValue;
 
 int flowDoneCnt;
-uint8_t macAddress[7][6] = {
-  0,
-};  // 0 = HID, 1~6 = child 1~6
+extern uint8_t macAddress[7][6];  // 0 = HID, 1~6 = child 1~6
 
 void init_variable(void) {
   setConfig = false;
@@ -237,7 +235,13 @@ static void control_task(void* pvParameters) {
       case CHECK_ADDR:
         vTaskDelay(5000 / portTICK_PERIOD_MS);
         // 각 device mac addr 존재 여부 판단... 확인 완료 시 check mode 단계..
-        set_addr();
+        if (espnow_add_peers(MASTER_DEVICE)) {
+          LOGI(TAG, "Success to add hid, child addr to peer list");
+        } else {
+          LOGI(TAG, "Failed to add hid, child addr to peer list");
+        }
+        LOG_BUFFER_HEXDUMP(TAG, macAddress, sizeof(macAddress), LOG_INFO);
+
         set_control_status(SYNC_TIME);
 
         LOGI(TAG, "ADDR CHECK DONE !!");

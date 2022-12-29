@@ -21,6 +21,7 @@
 #include "actuator.h"
 #include "main.h"
 #include "espnow.h"
+#include "esp_mac.h"
 
 #include <string.h>
 #include <time.h>
@@ -37,8 +38,6 @@ const char* TAG = "child_app";
 sc_ctx_t* sc_ctx = NULL;
 
 static TickType_t g_last_ntp_check_time = 0;
-
-uint8_t master_mac_addr[6] = { 0xf4, 0x12, 0xfa, 0xc0, 0x94, 0x41 };
 
 #ifdef __cplusplus
 extern "C" {
@@ -142,6 +141,10 @@ int system_init(void) {
 
   create_key_task();
 
+  // Get a main mac address that will be used in espnow
+  uint8_t mac[6] = { 0 };
+  esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
+  LOG_BUFFER_HEX(TAG, mac, sizeof(mac));
   return SYSINIT_OK;
 }
 
@@ -159,12 +162,7 @@ void loop_task(void) {
           LOGE(TAG, "Failed to start espnow");
           set_operation_mode(DEEP_SLEEP_MODE);
         } else {
-          if (espnow_add_peer(master_mac_addr, CONFIG_ESPNOW_CHANNEL, ESPNOW_WIFI_IF)) {
-            set_device_onboard(1);
-            LOGI(TAG, "Success to add master addr to peer list");
-          } else {
-            LOGI(TAG, "Failed to add master addr to peer list");
-          }
+          set_device_onboard(1);
         }
         set_operation_mode(CONTROL_MODE);
       } break;

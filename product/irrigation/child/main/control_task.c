@@ -32,7 +32,7 @@ typedef struct config_value {
   int flow_rate;
   int zone_cnt;
   int zones[6];
-  time_t start_time;  
+  time_t start_time;
 } config_value_t;
 
 typedef enum {
@@ -46,20 +46,16 @@ typedef struct irrigation_message {
   response_type_t resp;
   config_value_t config;
   int flow_value;
-  int deviceId;  
+  int deviceId;
   int remain_time_sleep;
-  time_t current_time;  
+  time_t current_time;
 } irrigation_message_t;
 
-typedef enum {
-  CHECK_ADDR = 0,
-  WAIT_STATE,
-  ERROR
-} condtrol_status_t;
+typedef enum { CHECK_ADDR = 0, WAIT_STATE, ERROR } condtrol_status_t;
 
 condtrol_status_t controlStatus = CHECK_ADDR;
 
-uint8_t masterAddress[6];
+extern uint8_t masterAddress[6];
 
 int myId = 1;
 
@@ -103,7 +99,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         break;
 
       case SET_VALVE_ON:
-        // valve on -> send response message 
+        // valve on -> send response message
         valve_open();
         vTaskDelay(2000 / portTICK_PERIOD_MS);
 
@@ -112,13 +108,13 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         send_message.receive_type = SET_VALVE_ON;
         send_message.deviceId = myId;  // To do.  현 child device id 값 설정.
         send_message.current_time = get_current_time();
-        espnow_send_data(masterAddress, (uint8_t *) &send_message, sizeof(send_message));
+        espnow_send_data(masterAddress, (uint8_t*)&send_message, sizeof(send_message));
 
         LOGI(TAG, "Zone-%d Valve On", myId);
         break;
 
       case SET_VALVE_OFF:
-        // valve off -> send response message 
+        // valve off -> send response message
         valve_close();
         vTaskDelay(2000 / portTICK_PERIOD_MS);
 
@@ -127,7 +123,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         send_message.receive_type = SET_VALVE_OFF;
         send_message.deviceId = myId;  // To do.  현 child device id 값 설정.
         send_message.current_time = get_current_time();
-        espnow_send_data(masterAddress, (uint8_t *) &send_message, sizeof(send_message));
+        espnow_send_data(masterAddress, (uint8_t*)&send_message, sizeof(send_message));
 
         LOGI(TAG, "Zone-%d Valve Off", myId);
         break;
@@ -136,7 +132,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         LOGI(TAG, "Start sleep");
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         // 아래와 같은 형태로...
-        // sleep_timer_wakeup(recv_message.remain_time_sleep);        
+        // sleep_timer_wakeup(recv_message.remain_time_sleep);
         break;
 
       default: break;
@@ -154,21 +150,25 @@ static void control_task(void* pvParameters) {
       case CHECK_ADDR:
         vTaskDelay(3000 / portTICK_PERIOD_MS);
         // 각 master Mac Addr 얻어와서 변수에 저장하는 단계..
-
-        // masterAddress = {};
+        if (espnow_add_peers(CHILD_DEVICE)) {
+          LOGI(TAG, "Success to add master addr to peer list");
+        } else {
+          LOGI(TAG, "Failed to add master addr to peer list");
+        }
+        LOG_BUFFER_HEXDUMP(TAG, masterAddress, sizeof(masterAddress), LOG_INFO);
         set_control_status(WAIT_STATE);
 
         LOGI(TAG, "ADDR CHECK DONE !!");
         vTaskDelay(2000 / portTICK_PERIOD_MS);
         break;
-      
+
       case WAIT_STATE:
         // ESP Now 를 통해 message 받을 때 까지 대기 상태
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         break;
 
       default: break;
-    } 
+    }
   }
 }
 

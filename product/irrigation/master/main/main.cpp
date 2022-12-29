@@ -177,12 +177,7 @@ void loop_task(void) {
           LOGE(TAG, "Failed to start espnow");
           set_operation_mode(DEEP_SLEEP_MODE);
         } else {
-          if (espnow_add_peer(hid_mac_addr, CONFIG_ESPNOW_CHANNEL, ESPNOW_WIFI_IF)) {
-            set_device_onboard(1);
-            LOGI(TAG, "Success to add hid addr to peer list");
-          } else {
-            LOGI(TAG, "Failed to add hid addr to peer list");
-          }
+          set_device_onboard(1);
         }
         set_operation_mode(CONTROL_MODE);
       } break;
