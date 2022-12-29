@@ -20,18 +20,17 @@ const char mount_point[] = MOUNT_POINT;
 void sdcard_init(void) {
   esp_err_t ret;
 
-  esp_vfs_fat_sdmmc_mount_config_t mount_config = {
-    .format_if_mount_failed = false,
-    .max_files = 5,
-    .allocation_unit_size = 16 * 1024
-  };
+  esp_vfs_fat_sdmmc_mount_config_t mount_config = { .format_if_mount_failed = false,
+                                                    .max_files = 5,
+                                                    .allocation_unit_size = 16 * 1024 };
   LOGI(TAG, "Initializing SD card");
 
   host = (sdmmc_host_t)SDSPI_HOST_DEFAULT();
+  host.slot = SDSPI_HOST_ID;
   spi_bus_config_t bus_cfg = {
-    .mosi_io_num = SDCARD_SPI_MOSI,
-    .miso_io_num = SDCARD_SPI_MISO,
-    .sclk_io_num = SDCARD_SPI_CLK,
+    .mosi_io_num = SD_MOSI,
+    .miso_io_num = SD_MISO,
+    .sclk_io_num = SD_SCLK,
     .quadwp_io_num = -1,
     .quadhd_io_num = -1,
     .max_transfer_sz = 4000,
@@ -62,7 +61,7 @@ void sdcard_init(void) {
            "Make sure SD card lines have pull-up resistors in place.",
            esp_err_to_name(ret));
 
-           set_sdcard_fail(1);
+      set_sdcard_fail(1);
     }
     return;
   }
@@ -75,15 +74,15 @@ void sdcard_init(void) {
 void write_rtc_time(FILE *f) {
   struct tm time = { 0 };
 
-  //rtc_get_time(&time);
-  fprintf(f, "%04d-%02d-%02d,%02d:%02d:%02d, ", time.tm_year + 1900, time.tm_mon + 1, time.tm_mday,
-         time.tm_hour, time.tm_min, time.tm_sec);
-  LOGI(TAG, "%04d-%02d-%02d,%02d:%02d:%02d, ", time.tm_year + 1900, time.tm_mon + 1, time.tm_mday,
-         time.tm_hour, time.tm_min, time.tm_sec);
+  // rtc_get_time(&time);
+  fprintf(f, "%04d-%02d-%02d,%02d:%02d:%02d, ", time.tm_year + 1900, time.tm_mon + 1, time.tm_mday, time.tm_hour,
+          time.tm_min, time.tm_sec);
+  LOGI(TAG, "%04d-%02d-%02d,%02d:%02d:%02d, ", time.tm_year + 1900, time.tm_mon + 1, time.tm_mday, time.tm_hour,
+       time.tm_min, time.tm_sec);
 }
 
 void sdcard_write_data(void) {
-  //write_water_supply_data();
+  // write_water_supply_data();
 
   LOGI(TAG, "File written");
 
