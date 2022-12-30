@@ -53,14 +53,10 @@ typedef struct irrigation_message {
   time_t current_time;  // 논의 필요.
 } irrigation_message_t;
 
-// TODO - 윤형주 코멘트 -
-// REGISTER_CB 상태는 필요 없어 보입니다.
-// 각 자식 디바이스와 HID 디바이스의 맥 주소와 이를 peer list 에 추가 하는 작업과
-// recv/send 콜백을 등록 하는 작업은 espnow_start() 와 espnow_add_peers() 에서 수행합니다
 typedef enum {
   CHECK_ADDR = 0,
-  // REGISTER_CB,
   SYNC_TIME,
+  CHECK_TIME,
   WAIT_STATE,
   CHECK_SCEHDULE,
   CHECK_FLOW,
@@ -159,7 +155,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
             send_message.deviceId = flowOrder[flowDoneCnt];  //  valve 를 on 할 child number
             send_message.current_time = get_current_time();
             // espnow_send_data(macAddress[0][], (uint8_t *) &send_message, sizeof(send_message));
-            LOGI(TAG, "RECEIVE VALVE ON RESPONSE CHIDL-%d", flowOrder[flowDoneCnt]);
+            LOGI(TAG, "RECEIVE VALVE ON RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
             set_control_status(CHECK_FLOW);
           }
         } else if (recv_message.receive_type == SET_VALVE_OFF) {
@@ -172,7 +168,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
             send_message.current_time = get_current_time();
             // espnow_send_data(macAddress[0][], (uint8_t *) &send_message, sizeof(send_message));
 
-            LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHIDL-%d", flowOrder[flowDoneCnt]);
+            LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
             flowDoneCnt++;
             set_control_status(CHECK_SCEHDULE);
           }
@@ -210,6 +206,11 @@ int check_sleep_time(void) {
   struct tm timeinfo = { 0 };
   localtime_r(&currTime, &timeinfo);
 
+  if (timeinfo.tm_year < 120) {
+    LOGI(TAG, "Time set not yet ");
+    return 0;
+  }
+
   // 시간 sleep time / wake time 비교...
   // 오전 5시 ~ 9시 wake up...
   // 17시 ~ 21시 wake up...
@@ -236,7 +237,7 @@ static void control_task(void* pvParameters) {
   irrigation_message_t send_message;
   for (;;) {
     switch (controlStatus) {
-      case CHECK_ADDR:
+      case CHECK_ADDR: {
         vTaskDelay(5000 / portTICK_PERIOD_MS);
         // 각 device mac addr 존재 여부 판단... 확인 완료 시 check mode 단계..
         if (espnow_add_peers(MASTER_DEVICE)) {
@@ -246,25 +247,27 @@ static void control_task(void* pvParameters) {
         }
         LOG_BUFFER_HEXDUMP(TAG, macAddress, sizeof(macAddress), LOG_INFO);
 
-        set_control_status(SYNC_TIME);
+        set_control_status(CHECK_TIME);
 
         LOGI(TAG, "ADDR CHECK DONE !!");
         vTaskDelay(2000 / portTICK_PERIOD_MS);
-        break;
+      }  break;
 
-#if 0
-      case REGISTER_CB:
-        // send / receive message callback 등록
-        esp_now_register_recv_cb(on_data_recv);
-        esp_now_register_send_cb(on_data_sent_cb);
+      case CHECK_TIME: {
+        time_t currTime = get_current_time();
+        struct tm timeinfo = { 0 };
+        localtime_r(&currTime, &timeinfo);
 
-        LOGI(TAG, "REGISTER CALLBACK DONE !!");
-        set_control_status(SYNC_TIME);
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
-        break;
-#endif
+        if (timeinfo.tm_year < 120) {
+          LOGI(TAG, "Time set not yet ");
+        } else {
+          set_control_status(SYNC_TIME);
+        }
 
-      case SYNC_TIME:
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+      }  break;
+
+      case SYNC_TIME: {
         // master 시간을 기준으로 message 생성하여 broadcasting
         // 각 device 에서는 전달받은 시간 값으로 time sync
         uint8_t broadcastAddress[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
@@ -277,15 +280,14 @@ static void control_task(void* pvParameters) {
         set_control_status(CHECK_SCEHDULE);
 
         vTaskDelay(2000 / portTICK_PERIOD_MS);
-        break;
+      }  break;
 
-      case WAIT_STATE:
-        // 시간 체크 sleep mode 진입 여부 확인...
-        // ESP Now 를 통해 message 받을 때 까지 대기 상태
+      case WAIT_STATE: {
+        // 대기 상태
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-        break;
+      } break;
 
-      case CHECK_SCEHDULE:
+      case CHECK_SCEHDULE: {
         // 현재 시간과 관수 스케쥴 시간을 비교 하는 단계.
         // 스케쥴 시간에 도달하면 valve on 과 함께 관수 시작
 
@@ -321,9 +323,9 @@ static void control_task(void* pvParameters) {
         }
 
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-        break;
+      } break;
 
-      case CHECK_FLOW:
+      case CHECK_FLOW: {
         // 유량 체크 후 HID 에 유량 값 전달...
         // 일정 값마다...또는 일정 시간마다 아래 메세지 전달... --> 추가 논의 필요.
         /*
@@ -341,9 +343,9 @@ static void control_task(void* pvParameters) {
         }
 
         vTaskDelay(2000 / portTICK_PERIOD_MS);
-        break;
+      } break;
 
-      case CHILD_VALVE_ON:
+      case CHILD_VALVE_ON: {
         // 관수 스케줄에 따라 pump / zone pump on, off 컨트롤
         // 관수 시작 시 : zone valve on -> pump on
         memset(&send_message, 0x00, sizeof(send_message));
@@ -354,9 +356,9 @@ static void control_task(void* pvParameters) {
         LOGI(TAG, "CHILD -%d VALVE ON !!", flowOrder[flowDoneCnt]);
         set_control_status(WAIT_STATE);
 
-        break;
+      } break;
 
-      case CHILD_VALVE_OFF:
+      case CHILD_VALVE_OFF: {
         // 관수 스케줄에 따라 pump / zone pump on, off 컨트롤
         // 관수 중지 시 : pump off -> zone valve on
         stop_flow();
@@ -369,9 +371,9 @@ static void control_task(void* pvParameters) {
         LOGI(TAG, "CHILD - %d VALVE OFF !!", flowOrder[flowDoneCnt]);
         set_control_status(WAIT_STATE);
 
-        break;
+      } break;
 
-      case COMPLETE:
+      case COMPLETE: {
         // 관수 스케줄대로 모든 관수가 종료된 상태.
         // 추가 관수 여부 확인..--> wait config 모드로
         memset(&send_message, 0x00, sizeof(send_message));
@@ -385,7 +387,7 @@ static void control_task(void* pvParameters) {
         set_control_status(CHECK_SCEHDULE);
 
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-        break;
+      } break;
 
       default: break;
     }
