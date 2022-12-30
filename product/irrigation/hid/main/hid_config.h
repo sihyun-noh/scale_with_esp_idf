@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-typedef enum { SET_CONFIG, TIME_SYNC, VALVE_ON, VALVE_OFF, FLOW_STATUS, SET_SLEEP, RESPONSE, NONE } message_type_t;
+typedef enum { SET_CONFIG, TIME_SYNC, START_FLOW, BATTERY_LEVEL, SET_VALVE_ON, SET_VALVE_OFF, FLOW_STATUS, SET_SLEEP, RESPONSE, ZONE_COMPLETE, ALL_COMPLETE, NONE } message_type_t;
 
 typedef enum { FAIL, SUCCESS } response_type_t;
 
@@ -25,13 +25,14 @@ typedef bool set_valve_t;
 
 typedef struct irrigation_message {
   message_type_t sender_type;
-  message_type_t receiver_type;
+  message_type_t receive_type;
   response_type_t resp;
   config_t config;
-  flow_status_t flow;
-  int device_id;
+  int flow_value;
+  int deviceId;  // zone number or HID or master
   int remain_time_sleep;
-  time_t current_time;
+  int battery_level[7]; // 0: HID, 1~6: child 1~6
+  time_t current_time; 
 } irrigation_message_t;
 
 void show_timestamp(time_t now);

@@ -11,6 +11,7 @@
 #include "espnow.h"
 #include "time.h"
 #include "main.h"
+#include "adc.h"
 
 static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;
@@ -19,6 +20,7 @@ typedef enum {
   SET_CONFIG = 0,
   TIME_SYNC,
   START_FLOW,
+  BATTERY_LEVEL,
   SET_VALVE_ON,
   SET_VALVE_OFF,
   FLOW_STATUS,
@@ -49,6 +51,7 @@ typedef struct irrigation_message {
   int flow_value;
   int deviceId;
   int remain_time_sleep;
+  int battery_level[7]; // 0: HID, 1~6: child 1~6
   time_t current_time;
 } irrigation_message_t;
 
@@ -93,13 +96,23 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
     // SYNC_TIME, Valve on/off, sleep mode
     // Child 의 배터리 잔량 값. --> 좀더 확인 필요
     switch (recv_message.sender_type) {
-      case TIME_SYNC:
+      case TIME_SYNC: {
         time_t syncTimeValue = recv_message.current_time;
         // time sync 동작...
         LOGI(TAG, "Time synced zone : %d !!", myId);
-        break;
 
-      case SET_VALVE_ON:
+        // 완료 후 내 device ID 와 battery 값을 master 에 전송..
+        memset(&send_message, 0x00, sizeof(send_message));
+        send_message.sender_type = RESPONSE;
+        send_message.receive_type = TIME_SYNC;
+        send_message.deviceId = myId;
+        send_message.current_time = get_current_time();
+        send_message.battery_level[myId] = read_battery_percentage();
+        espnow_send_data(masterAddress, (uint8_t*)&send_message, sizeof(send_message));
+        LOGI(TAG, "Zone-%d Battery level send", myId);
+      } break;
+
+      case SET_VALVE_ON: {
         // valve on -> send response message
         valve_open();
         vTaskDelay(2000 / portTICK_PERIOD_MS);
@@ -112,9 +125,9 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         espnow_send_data(masterAddress, (uint8_t*)&send_message, sizeof(send_message));
 
         LOGI(TAG, "Zone-%d Valve On", myId);
-        break;
+      } break;
 
-      case SET_VALVE_OFF:
+      case SET_VALVE_OFF: {
         // valve off -> send response message
         valve_close();
         vTaskDelay(2000 / portTICK_PERIOD_MS);
@@ -127,13 +140,13 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         espnow_send_data(masterAddress, (uint8_t*)&send_message, sizeof(send_message));
 
         LOGI(TAG, "Zone-%d Valve Off", myId);
-        break;
+      } break;
 
-      case SET_SLEEP:
+      case SET_SLEEP: {
         LOGI(TAG, "Start sleep");
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         sleep_timer_wakeup(recv_message.remain_time_sleep);
-        break;
+      } break;
 
       default: break;
     }
