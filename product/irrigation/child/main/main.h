@@ -25,4 +25,14 @@ typedef enum {
   DEEP_SLEEP_MODE,
 } operation_mode_t;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int sleep_timer_wakeup(int wakeup_time_sec);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* _MAIN_H_ */

@@ -10,6 +10,7 @@
 #include "actuator.h"
 #include "espnow.h"
 #include "time.h"
+#include "main.h"
 
 static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;
@@ -131,8 +132,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
       case SET_SLEEP:
         LOGI(TAG, "Start sleep");
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-        // 아래와 같은 형태로...
-        // sleep_timer_wakeup(recv_message.remain_time_sleep);
+        sleep_timer_wakeup(recv_message.remain_time_sleep);
         break;
 
       default: break;
