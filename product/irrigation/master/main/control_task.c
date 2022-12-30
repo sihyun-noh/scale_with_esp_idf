@@ -14,6 +14,8 @@
 static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;
 
+extern int get_water_flow_liters(void);
+
 typedef enum {
   SET_CONFIG = 0,
   TIME_SYNC,
@@ -107,6 +109,8 @@ void stop_flow(void) {
 int get_flow_value() {
   int value = 0;
   // 유량계를 통해 값을 읽어온다...
+  value = get_water_flow_liters();
+
   return value;
 }
 

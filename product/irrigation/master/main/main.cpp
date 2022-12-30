@@ -44,8 +44,9 @@ uint8_t hid_mac_addr[6] = { 0xf4, 0x12, 0xfa, 0xc0, 0x94, 0x41 };
 extern "C" {
 #endif
 
-void create_key_task(void);
+void create_input_task(void);
 void create_control_task(void);
+void create_water_flow_task(void);
 #if defined(CONFIG_LED_FEATURE)
 void create_led_task(void);
 #endif
@@ -153,7 +154,9 @@ int system_init(void) {
 
   pump_init();
 
-  create_key_task();
+  create_input_task();
+
+  create_water_flow_task();
 
   // Get a main mac address that will be used in espnow
   uint8_t mac[6] = { 0 };
