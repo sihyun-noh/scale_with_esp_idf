@@ -13,3 +13,8 @@ compile_commands.json
 cscope.*
 .gitmessage.txt
 thirdparty/
+product/irrigation/manufacturing/csv
+product/irrigation/manufacturing/bin
+product/irrigation/manufacturing/irrigation_config_tmp.csv
+product/irrigation/manufacturing/irrigation_master_tmp.csv
+product/irrigation/manufacturing/irrigation_master_tmp_created.csv

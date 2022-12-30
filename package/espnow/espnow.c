@@ -55,12 +55,13 @@ void espnow_stop(void) {
 unsigned int ascii_to_hex(const char *str, size_t size, uint8_t *hex) {
   unsigned int i, h, high, low;
   for (h = 0, i = 0; i < size; i += 2, ++h) {
-    high = (str[i] > '9') ? str[i] - 'A' + 10 : str[i] - '0';
-    low = (str[i + 1] > '9') ? str[i + 1] - 'A' + 10 : str[i + 1] - '0';
+    high = (str[i] > '9') ? str[i] - 'a' + 10 : str[i] - '0';
+    low = (str[i + 1] > '9') ? str[i + 1] - 'a' + 10 : str[i + 1] - '0';
     hex[h] = (high << 4) | low;
   }
   return h;
 }
+
 static uint8_t _mac[ESP_NOW_ETH_ALEN] = { 0 };
 int syscfg_get_to_add_peer(const char *key) {
   char s_mac[SYSCFG_S_MASTER_MAC] = { 0 };
@@ -77,11 +78,15 @@ int syscfg_get_to_add_peer(const char *key) {
 // and then add mac address to the peer list in accordance with device type
 // Add mac address read from the MFG data of each devices to the esp now peer list
 int espnow_add_peers(device_t device_mode) {
+  if (!b_ready) {
+    return false;
+  }
   const int col_len = 6;
   const int row_len = 7;
 
   switch (device_mode) {
     case HID_DEVICE:
+    case CHILD_DEVICE:
       // add main mac address to the peer list
       if (syscfg_get_to_add_peer(SYSCFG_N_MASTER_MAC))
         for (int j = 0; j < col_len; j++) {
@@ -89,7 +94,7 @@ int espnow_add_peers(device_t device_mode) {
         }
       else {
         LOGI(TAG, "Add peer Error");
-        return 0;
+        return false;
       }
       break;
     case MASTER_DEVICE:
@@ -101,23 +106,12 @@ int espnow_add_peers(device_t device_mode) {
           }
         } else {
           LOGI(TAG, "Add peer Error");
-          return 0;
+          return false;
         }
-      }
-      break;
-    case CHILD_DEVICE:
-      // add main mac address to the peer list
-      if (syscfg_get_to_add_peer(SYSCFG_N_MASTER_MAC)) {
-        for (int j = 0; j < col_len; j++) {
-          masterAddress[j] = _mac[j];
-        }
-      } else {
-        LOGI(TAG, "Add peer Error");
-        return 0;
       }
       break;
   }
-  return 1;
+  return true;
 }
 
 bool espnow_add_peer(const uint8_t *mac_addr, uint8_t channel, int netif) {
