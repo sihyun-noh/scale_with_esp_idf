@@ -10,6 +10,7 @@
 #include "actuator.h"
 #include "espnow.h"
 #include "time.h"
+#include "main.h"
 
 static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;
@@ -318,7 +319,9 @@ static void control_task(void* pvParameters) {
             send_message.remain_time_sleep = remainSleepTime;
             // espnow_send_data(broadcastAddress, (uint8_t *) &send_message, sizeof(send_message));
             LOGI(TAG, "SEND DEEP SLEEP MSG ");
-            set_control_status(WAIT_STATE);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+            sleep_timer_wakeup(remainSleepTime);
           }
         }
 
