@@ -121,7 +121,11 @@ int get_flow_value() {
 
 void get_addr(uint8_t arr[], int zone) {
   for (int i=0; i<6 ; i++) {
-    arr[i] = macAddress[zone][i];
+    if (zone > 6) {
+      arr[i] = 0xFF;
+    } else {
+      arr[i] = macAddress[zone][i];
+    }
   }
 }
 
@@ -133,91 +137,6 @@ static time_t get_current_time(void) {
   localtime_r(&now, &timeinfo);
 
   return mktime(&timeinfo);
-}
-
-void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
-  irrigation_message_t recv_message;
-  memcpy(&recv_message, incomingData, sizeof(recv_message));
-
-  LOGI(TAG, "Receive Data from Other devices(HID and Any Child)");
-  LOG_BUFFER_HEXDUMP(TAG, incomingData, len, LOG_INFO);
-
-  if (len > 0) {
-    // master 에서는 아래 세가지 경우만 필요.
-    // HID 로 부터 수신하는 config 설정 값
-    // Child 로 전달한 valve on / off 에 대한 response
-    // Child 의 배터리 잔량 값.
-    switch (recv_message.sender_type) {
-      case SET_CONFIG: {
-        flowStartTime = recv_message.config.start_time;
-        zoneFlowCnt = recv_message.config.zone_cnt;
-        memcpy(flowOrder, recv_message.config.zones, sizeof(flowOrder));
-        flowSettingValue = recv_message.config.flow_rate;
-        flowDoneCnt = 0;
-        setConfig = true;
-        set_control_status(CHECK_SCEHDULE);
-        LOGI(TAG, "RECEIVE & SET CONFIG from HID");
-      } break;
-
-      case RESPONSE: {
-        if (recv_message.receive_type == SET_VALVE_ON) {
-          if (recv_message.resp == SUCCESS) {
-            start_flow();
-            // 관수 시작을 HID 에 전달
-            irrigation_message_t send_message;
-            memset(&send_message, 0x00, sizeof(send_message));
-            send_message.sender_type = START_FLOW;
-            send_message.deviceId = flowOrder[flowDoneCnt];  //  valve 를 on 할 child number
-            send_message.current_time = get_current_time();
-            uint8_t zoneAddr[6] = {0,};
-            get_addr(zoneAddr, 0);
-            espnow_send_data(zoneAddr, (uint8_t *) &send_message, sizeof(send_message));
-
-            LOGI(TAG, "RECEIVE VALVE ON RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
-            set_control_status(CHECK_FLOW);
-          }
-        } else if (recv_message.receive_type == SET_VALVE_OFF) {
-          if (recv_message.resp == SUCCESS) {
-            // 관수 완료를 HID 에 전달
-            irrigation_message_t send_message;
-            memset(&send_message, 0x00, sizeof(send_message));
-            send_message.sender_type = ZONE_COMPLETE;
-            send_message.deviceId = flowOrder[flowDoneCnt];  //  valve 를 off 할 child number
-            send_message.current_time = get_current_time();
-            uint8_t zoneAddr[6] = {0,};
-            get_addr(zoneAddr, 0);
-            espnow_send_data(zoneAddr, (uint8_t *) &send_message, sizeof(send_message));
-
-            LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
-            flowDoneCnt++;
-            set_control_status(CHECK_SCEHDULE);
-          }
-        } else if (recv_message.receive_type == TIME_SYNC) {
-          zoneBattery[recv_message.deviceId] = recv_message.battery_level[recv_message.deviceId];
-          batteryCnt++;
-
-          if (batteryCnt >= 6) {
-            zoneBattery[0] = read_battery_percentage();
-            irrigation_message_t send_message;
-            memset(&send_message, 0x00, sizeof(send_message));
-            send_message.sender_type = BATTERY_LEVEL;
-            memcpy(&(send_message.battery_level), zoneBattery, sizeof(send_message.battery_level));
-            send_message.current_time = get_current_time();
-            uint8_t zoneAddr[6] = {0,};
-            get_addr(zoneAddr, 0);
-            espnow_send_data(zoneAddr, (uint8_t *) &send_message, sizeof(send_message));
-            batteryCnt = 0;
-          }
-        }
-      } break;
-
-      default: break;
-    }
-  }
-}
-
-void on_data_sent_cb(const uint8_t* macAddr, esp_now_send_status_t status) {
-  LOGI(TAG, "Delivery status : %d ", status);
 }
 
 // if return 0 -> wake up 시간대
@@ -252,6 +171,104 @@ int check_sleep_time(void) {
   } else {
     return 0;
   }
+}
+
+bool send_esp_data(message_type_t sender, int receiver) {
+  irrigation_message_t send_message;
+  memset(&send_message, 0x00, sizeof(send_message));
+  send_message.sender_type = sender;
+  send_message.current_time = get_current_time();
+  uint8_t zoneAddr[6] = {0,};
+  get_addr(zoneAddr, receiver);
+
+  switch (sender) {
+    case START_FLOW:
+    case ZONE_COMPLETE: {
+      send_message.deviceId = flowOrder[flowDoneCnt]; 
+    } break;
+
+    case BATTERY_LEVEL: {
+      memcpy(&(send_message.battery_level), zoneBattery, sizeof(send_message.battery_level));
+    } break;
+
+    case SET_SLEEP: {
+      int remainSleepTime = check_sleep_time();
+      send_message.remain_time_sleep = remainSleepTime;
+    } break;
+
+    default: break;
+  }
+
+  return espnow_send_data(zoneAddr, (uint8_t *) &send_message, sizeof(send_message)) == ESP_OK;
+}
+
+void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
+  irrigation_message_t recv_message;
+  memcpy(&recv_message, incomingData, sizeof(recv_message));
+
+  LOGI(TAG, "Receive Data from Other devices(HID and Any Child)");
+  LOG_BUFFER_HEXDUMP(TAG, incomingData, len, LOG_INFO);
+
+  if (len > 0) {
+    // master 에서는 아래 세가지 경우만 필요.
+    // HID 로 부터 수신하는 config 설정 값
+    // Child 로 전달한 valve on / off 에 대한 response
+    // Child 의 배터리 잔량 값.
+    switch (recv_message.sender_type) {
+      case SET_CONFIG: {
+        flowStartTime = recv_message.config.start_time;
+        zoneFlowCnt = recv_message.config.zone_cnt;
+        memcpy(flowOrder, recv_message.config.zones, sizeof(flowOrder));
+        flowSettingValue = recv_message.config.flow_rate;
+        flowDoneCnt = 0;
+        setConfig = true;
+        set_control_status(CHECK_SCEHDULE);
+        LOGI(TAG, "RECEIVE & SET CONFIG from HID");
+      } break;
+
+      case RESPONSE: {
+        if (recv_message.receive_type == SET_VALVE_ON) {
+          if (recv_message.resp == SUCCESS) {
+            start_flow();            
+            // 관수 시작을 HID 에 전달
+            if (!send_esp_data(START_FLOW, 0))
+              send_esp_data(START_FLOW, 0);
+
+            LOGI(TAG, "RECEIVE VALVE ON RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
+            set_control_status(CHECK_FLOW);
+          }
+        } else if (recv_message.receive_type == SET_VALVE_OFF) {
+          if (recv_message.resp == SUCCESS) {
+            // 관수 완료를 HID 에 전달
+            if (!send_esp_data(ZONE_COMPLETE, 0))
+              send_esp_data(ZONE_COMPLETE, 0);
+
+            LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
+            flowDoneCnt++;
+            set_control_status(CHECK_SCEHDULE);
+          }
+        } else if (recv_message.receive_type == TIME_SYNC) {
+          zoneBattery[recv_message.deviceId] = recv_message.battery_level[recv_message.deviceId];
+          batteryCnt++;
+
+          if (batteryCnt >= 6) {
+            zoneBattery[0] = read_battery_percentage();
+
+            if (!send_esp_data(BATTERY_LEVEL, 0))
+              send_esp_data(BATTERY_LEVEL, 0);
+
+            batteryCnt = 0;
+          }
+        }
+      } break;
+
+      default: break;
+    }
+  }
+}
+
+void on_data_sent_cb(const uint8_t* macAddr, esp_now_send_status_t status) {
+  LOGI(TAG, "Delivery status : %d ", status);
 }
 
 static void control_task(void* pvParameters) {
@@ -291,11 +308,8 @@ static void control_task(void* pvParameters) {
       case SYNC_TIME: {
         // master 시간을 기준으로 message 생성하여 broadcasting
         // 각 device 에서는 전달받은 시간 값으로 time sync
-        uint8_t broadcastAddress[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-        memset(&send_message, 0x00, sizeof(send_message));
-        send_message.sender_type = TIME_SYNC;
-        send_message.current_time = get_current_time();
-        espnow_send_data(broadcastAddress, (uint8_t *) &send_message, sizeof(send_message));
+        if (!send_esp_data(TIME_SYNC, 7))
+          send_esp_data(TIME_SYNC, 7);
 
         LOGI(TAG, "HID/CHILD TIME SYNC !!");
         set_control_status(CHECK_SCEHDULE);
@@ -332,12 +346,9 @@ static void control_task(void* pvParameters) {
         } else {
           int remainSleepTime = check_sleep_time();
           if (remainSleepTime > 0) {
-            uint8_t broadcastAddress[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-            memset(&send_message, 0x00, sizeof(send_message));
-            send_message.sender_type = SET_SLEEP;
-            send_message.current_time = get_current_time();
-            send_message.remain_time_sleep = remainSleepTime;
-            espnow_send_data(broadcastAddress, (uint8_t *) &send_message, sizeof(send_message));
+            if (!send_esp_data(SET_SLEEP, 7))
+              send_esp_data(SET_SLEEP, 7);
+
             LOGI(TAG, "SEND DEEP SLEEP MSG ");
             vTaskDelay(1000 / portTICK_PERIOD_MS);
 
@@ -371,13 +382,9 @@ static void control_task(void* pvParameters) {
       case CHILD_VALVE_ON: {
         // 관수 스케줄에 따라 pump / zone pump on, off 컨트롤
         // 관수 시작 시 : zone valve on -> pump on
-        memset(&send_message, 0x00, sizeof(send_message));
-        send_message.sender_type = SET_VALVE_ON;
-        send_message.deviceId = flowOrder[flowDoneCnt];  //  valve 를 on 할 child number
-        send_message.current_time = get_current_time();
-        uint8_t zoneAddr[6] = {0,};
-        get_addr(zoneAddr, flowOrder[flowDoneCnt]);
-        espnow_send_data(zoneAddr, (uint8_t *) &send_message, sizeof(send_message));
+        if (!send_esp_data(SET_VALVE_ON, flowOrder[flowDoneCnt]))
+          send_esp_data(SET_VALVE_ON, flowOrder[flowDoneCnt]);
+
         LOGI(TAG, "CHILD -%d VALVE ON !!", flowOrder[flowDoneCnt]);
         set_control_status(WAIT_STATE);
 
@@ -388,13 +395,9 @@ static void control_task(void* pvParameters) {
         // 관수 중지 시 : pump off -> zone valve on
         stop_flow();
 
-        memset(&send_message, 0x00, sizeof(send_message));
-        send_message.sender_type = SET_VALVE_OFF;
-        send_message.deviceId = flowOrder[flowDoneCnt];  //  valve 를 off 할 child number
-        send_message.current_time = get_current_time();
-        uint8_t zoneAddr[6] = {0,};
-        get_addr(zoneAddr, flowOrder[flowDoneCnt]);
-        espnow_send_data(zoneAddr, (uint8_t *) &send_message, sizeof(send_message));
+        if (!send_esp_data(SET_VALVE_OFF, flowOrder[flowDoneCnt]))
+          send_esp_data(SET_VALVE_OFF, flowOrder[flowDoneCnt]);
+
         LOGI(TAG, "CHILD - %d VALVE OFF !!", flowOrder[flowDoneCnt]);
         set_control_status(WAIT_STATE);
 
@@ -403,12 +406,8 @@ static void control_task(void* pvParameters) {
       case COMPLETE: {
         // 관수 스케줄대로 모든 관수가 종료된 상태.
         // 추가 관수 여부 확인..--> wait config 모드로
-        memset(&send_message, 0x00, sizeof(send_message));
-        send_message.sender_type = ALL_COMPLETE;
-        send_message.current_time = get_current_time();
-        uint8_t zoneAddr[6] = {0,};
-        get_addr(zoneAddr, 0);
-        espnow_send_data(zoneAddr, (uint8_t *) &send_message, sizeof(send_message));
+        if (!send_esp_data(ALL_COMPLETE, 0))
+          send_esp_data(ALL_COMPLETE, 0);
 
         LOGI(TAG, "ALL CHILD FLOW COMPLETE!!");
 
