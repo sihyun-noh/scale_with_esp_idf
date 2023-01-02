@@ -119,6 +119,12 @@ int get_flow_value() {
   return value;
 }
 
+void get_addr(uint8_t arr[], int zone) {
+  for (int i=0; i<6 ; i++) {
+    arr[i] = macAddress[zone][i];
+  }
+}
+
 static time_t get_current_time(void) {
   time_t now;
   struct tm timeinfo = { 0 };
@@ -163,7 +169,10 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
             send_message.sender_type = START_FLOW;
             send_message.deviceId = flowOrder[flowDoneCnt];  //  valve 를 on 할 child number
             send_message.current_time = get_current_time();
-            // espnow_send_data(macAddress[0][], (uint8_t *) &send_message, sizeof(send_message));
+            uint8_t zoneAddr[6] = {0,};
+            get_addr(zoneAddr, 0);
+            espnow_send_data(zoneAddr, (uint8_t *) &send_message, sizeof(send_message));
+
             LOGI(TAG, "RECEIVE VALVE ON RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
             set_control_status(CHECK_FLOW);
           }
@@ -175,14 +184,16 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
             send_message.sender_type = ZONE_COMPLETE;
             send_message.deviceId = flowOrder[flowDoneCnt];  //  valve 를 off 할 child number
             send_message.current_time = get_current_time();
-            // espnow_send_data(macAddress[0][], (uint8_t *) &send_message, sizeof(send_message));
+            uint8_t zoneAddr[6] = {0,};
+            get_addr(zoneAddr, 0);
+            espnow_send_data(zoneAddr, (uint8_t *) &send_message, sizeof(send_message));
 
             LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
             flowDoneCnt++;
             set_control_status(CHECK_SCEHDULE);
           }
         } else if (recv_message.receive_type == TIME_SYNC) {
-          zoneBattery[recv_message.deviceId] = recv_message.battery_level;
+          zoneBattery[recv_message.deviceId] = recv_message.battery_level[recv_message.deviceId];
           batteryCnt++;
 
           if (batteryCnt >= 6) {
@@ -192,7 +203,9 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
             send_message.sender_type = BATTERY_LEVEL;
             memcpy(&(send_message.battery_level), zoneBattery, sizeof(send_message.battery_level));
             send_message.current_time = get_current_time();
-            // espnow_send_data(macAddress[0][], (uint8_t *) &send_message, sizeof(send_message));
+            uint8_t zoneAddr[6] = {0,};
+            get_addr(zoneAddr, 0);
+            espnow_send_data(zoneAddr, (uint8_t *) &send_message, sizeof(send_message));
             batteryCnt = 0;
           }
         }
@@ -205,21 +218,6 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
 
 void on_data_sent_cb(const uint8_t* macAddr, esp_now_send_status_t status) {
   LOGI(TAG, "Delivery status : %d ", status);
-}
-
-void set_addr(void) {
-  // syscfg 에서 읽어온 각 mac addr 을 저장...요거 구현 필요~~~~
-  // 각 addr 을 어떤 형태로 저장해야 할지 논의 필요~~~₩
-  int i, j, col_len, row_len;
-
-  col_len = 6;
-  row_len = 7;
-
-  for (i = 0; i < row_len; i++) {
-    for (j = 0; j < col_len; j++) {
-      //  macAddress[i][j];  // mac addr 가져와서 넣어주는 부분 필요...
-    }
-  }
 }
 
 // if return 0 -> wake up 시간대
@@ -297,7 +295,7 @@ static void control_task(void* pvParameters) {
         memset(&send_message, 0x00, sizeof(send_message));
         send_message.sender_type = TIME_SYNC;
         send_message.current_time = get_current_time();
-        // espnow_send_data(broadcastAddress, (uint8_t *) &send_message, sizeof(send_message));
+        espnow_send_data(broadcastAddress, (uint8_t *) &send_message, sizeof(send_message));
 
         LOGI(TAG, "HID/CHILD TIME SYNC !!");
         set_control_status(CHECK_SCEHDULE);
@@ -339,7 +337,7 @@ static void control_task(void* pvParameters) {
             send_message.sender_type = SET_SLEEP;
             send_message.current_time = get_current_time();
             send_message.remain_time_sleep = remainSleepTime;
-            // espnow_send_data(broadcastAddress, (uint8_t *) &send_message, sizeof(send_message));
+            espnow_send_data(broadcastAddress, (uint8_t *) &send_message, sizeof(send_message));
             LOGI(TAG, "SEND DEEP SLEEP MSG ");
             vTaskDelay(1000 / portTICK_PERIOD_MS);
 
@@ -377,7 +375,9 @@ static void control_task(void* pvParameters) {
         send_message.sender_type = SET_VALVE_ON;
         send_message.deviceId = flowOrder[flowDoneCnt];  //  valve 를 on 할 child number
         send_message.current_time = get_current_time();
-        // espnow_send_data(macAddress[flowOrder[flowDoneCnt]][], (uint8_t *) &send_message, sizeof(send_message));
+        uint8_t zoneAddr[6] = {0,};
+        get_addr(zoneAddr, flowOrder[flowDoneCnt]);
+        espnow_send_data(zoneAddr, (uint8_t *) &send_message, sizeof(send_message));
         LOGI(TAG, "CHILD -%d VALVE ON !!", flowOrder[flowDoneCnt]);
         set_control_status(WAIT_STATE);
 
@@ -392,7 +392,9 @@ static void control_task(void* pvParameters) {
         send_message.sender_type = SET_VALVE_OFF;
         send_message.deviceId = flowOrder[flowDoneCnt];  //  valve 를 off 할 child number
         send_message.current_time = get_current_time();
-        // espnow_send_data(macAddress[flowOrder[flowDoneCnt]][], (uint8_t *) &send_message, sizeof(send_message));
+        uint8_t zoneAddr[6] = {0,};
+        get_addr(zoneAddr, flowOrder[flowDoneCnt]);
+        espnow_send_data(zoneAddr, (uint8_t *) &send_message, sizeof(send_message));
         LOGI(TAG, "CHILD - %d VALVE OFF !!", flowOrder[flowDoneCnt]);
         set_control_status(WAIT_STATE);
 
@@ -404,7 +406,9 @@ static void control_task(void* pvParameters) {
         memset(&send_message, 0x00, sizeof(send_message));
         send_message.sender_type = ALL_COMPLETE;
         send_message.current_time = get_current_time();
-        // espnow_send_data(macAddress[0][], (uint8_t *) &send_message, sizeof(send_message));
+        uint8_t zoneAddr[6] = {0,};
+        get_addr(zoneAddr, 0);
+        espnow_send_data(zoneAddr, (uint8_t *) &send_message, sizeof(send_message));
 
         LOGI(TAG, "ALL CHILD FLOW COMPLETE!!");
 
