@@ -215,3 +215,41 @@ bool get_ntp_time(int tz_offset, int dst_offset) {
   }
   return s_ntp_failed;
 }
+
+int rtc_set_time_cmd(int argc, char** argv) {
+  struct tm time = { 0 };
+
+  if (argc != 2) {
+    printf("Usage: yyyy-mm-dd-hh-mm-ss <ex:2022-11-11-17-30-59>\n");
+    return -1;
+  }
+  sscanf(argv[1], "%d-%d-%d-%d-%d-%d", &time.tm_year, &time.tm_mon, &time.tm_mday, &time.tm_hour, &time.tm_min, &time.tm_sec);
+
+  if (time.tm_year < 2022)
+    return -1;
+  if (time.tm_mon == 0 || time.tm_mon > 12)
+    return -1;
+  if (time.tm_mday == 0 || time.tm_mday > 31)
+    return -1;
+  if (time.tm_hour > 23)
+    return -1;
+  if (time.tm_min > 59)
+    return -1;
+  if (time.tm_sec > 59)
+    return -1;
+
+  set_local_time(time.tm_year, time.tm_mon, time.tm_mday, time.tm_hour, time.tm_min, time.tm_sec);
+
+  return 0;
+}
+
+int rtc_get_time_cmd(int argc, char** argv) {
+  struct tm time = { 0 };
+
+  tm_get_local_time(&time, 5000);
+
+  printf("TIME: %04d-%02d-%02d-%02d-%02d-%02d\n", time.tm_year + 1900, time.tm_mon + 1, time.tm_mday,
+         time.tm_hour, time.tm_min, time.tm_sec);
+
+  return 0;
+}

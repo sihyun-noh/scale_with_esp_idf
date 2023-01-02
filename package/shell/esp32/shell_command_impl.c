@@ -35,6 +35,8 @@
 extern int set_interval_cmd(int argc, char **argv);
 extern int get_interval_cmd(int argc, char **argv);
 #endif
+extern int rtc_set_time_cmd(int argc, char **argv);
+extern int rtc_get_time_cmd(int argc, char **argv);
 
 extern void stop_shell(void);
 
@@ -287,7 +289,6 @@ static sc_cmd_t commands[] = {
       .func = atlas_ec_probe_cmd,
   },
 #endif
-#ifdef DS3231_I2C_SDA_PIN
   {
       .name = "rtc_set_time",
       .help = "Set RTC Time",
@@ -298,6 +299,7 @@ static sc_cmd_t commands[] = {
       .help = "Get RTC Time",
       .func = rtc_get_time_cmd,
   },
+#ifdef DS3231_I2C_SDA_PIN
   {
       .name = "set_interval",
       .help = "Set interval",
