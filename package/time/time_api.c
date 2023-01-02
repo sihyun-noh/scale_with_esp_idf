@@ -244,12 +244,14 @@ int rtc_set_time_cmd(int argc, char** argv) {
 }
 
 int rtc_get_time_cmd(int argc, char** argv) {
-  struct tm time = { 0 };
+  struct tm timeinfo = { 0 };
+  time_t now;
 
-  tm_get_local_time(&time, 5000);
+  time(&now);
+  localtime_r(&now, &timeinfo);
 
-  printf("TIME: %04d-%02d-%02d-%02d-%02d-%02d\n", time.tm_year + 1900, time.tm_mon + 1, time.tm_mday,
-         time.tm_hour, time.tm_min, time.tm_sec);
+  printf("TIME: %04d-%02d-%02d-%02d-%02d-%02d\n", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday,
+         timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
 
   return 0;
 }
