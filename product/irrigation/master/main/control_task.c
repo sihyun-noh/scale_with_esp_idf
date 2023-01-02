@@ -277,7 +277,6 @@ void on_data_sent_cb(const uint8_t* macAddr, esp_now_send_status_t status) {
 }
 
 static void control_task(void* pvParameters) {
-  irrigation_message_t send_message;
   for (;;) {
     switch (controlStatus) {
       case CHECK_ADDR: {
