@@ -83,6 +83,22 @@ static time_t get_current_time(void) {
   return mktime(&timeinfo);
 }
 
+bool send_esp_data(message_type_t sender, message_type_t receiver) {
+  irrigation_message_t send_message;
+  memset(&send_message, 0x00, sizeof(send_message));
+  send_message.sender_type = sender;
+  send_message.receive_type = receiver;
+  send_message.resp = SUCCESS;
+  send_message.deviceId = myId; 
+  send_message.current_time = get_current_time();
+
+  if (receiver == TIME_SYNC) {
+    send_message.battery_level[myId] = read_battery_percentage();
+  }
+
+  return espnow_send_data(masterAddress, (uint8_t *) &send_message, sizeof(send_message)) == ESP_OK;
+}
+
 void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
   irrigation_message_t recv_message;
   memcpy(&recv_message, incomingData, sizeof(recv_message));
@@ -108,13 +124,9 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         LOGI(TAG, "Time synced zone : %d !!", myId);
 
         // 완료 후 내 device ID 와 battery 값을 master 에 전송..
-        memset(&send_message, 0x00, sizeof(send_message));
-        send_message.sender_type = RESPONSE;
-        send_message.receive_type = TIME_SYNC;
-        send_message.deviceId = myId;
-        send_message.current_time = get_current_time();
-        send_message.battery_level[myId] = read_battery_percentage();
-        espnow_send_data(masterAddress, (uint8_t*)&send_message, sizeof(send_message));
+        if (!send_esp_data(RESPONSE, TIME_SYNC))
+          send_esp_data(RESPONSE, TIME_SYNC);
+
         LOGI(TAG, "Zone-%d Battery level send", myId);
       } break;
 
@@ -123,12 +135,8 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         valve_open();
         vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-        memset(&send_message, 0x00, sizeof(send_message));
-        send_message.sender_type = RESPONSE;
-        send_message.receive_type = SET_VALVE_ON;
-        send_message.deviceId = myId;  // To do.  현 child device id 값 설정.
-        send_message.current_time = get_current_time();
-        espnow_send_data(masterAddress, (uint8_t*)&send_message, sizeof(send_message));
+        if (!send_esp_data(RESPONSE, SET_VALVE_ON))
+          send_esp_data(RESPONSE, SET_VALVE_ON);
 
         LOGI(TAG, "Zone-%d Valve On", myId);
       } break;
@@ -138,12 +146,8 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         valve_close();
         vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-        memset(&send_message, 0x00, sizeof(send_message));
-        send_message.sender_type = RESPONSE;
-        send_message.receive_type = SET_VALVE_OFF;
-        send_message.deviceId = myId;  // To do.  현 child device id 값 설정.
-        send_message.current_time = get_current_time();
-        espnow_send_data(masterAddress, (uint8_t*)&send_message, sizeof(send_message));
+        if (!send_esp_data(RESPONSE, SET_VALVE_OFF))
+          send_esp_data(RESPONSE, SET_VALVE_OFF);
 
         LOGI(TAG, "Zone-%d Valve Off", myId);
       } break;
