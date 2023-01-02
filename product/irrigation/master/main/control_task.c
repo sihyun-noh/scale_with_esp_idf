@@ -262,6 +262,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
               send_esp_data(BATTERY_LEVEL, 0);
 
             batteryCnt = 0;
+            set_control_status(CHECK_SCEHDULE);
           }
         }
       } break;
@@ -315,10 +316,8 @@ static void control_task(void* pvParameters) {
         if (!send_esp_data(TIME_SYNC, 7))
           send_esp_data(TIME_SYNC, 7);
 
-        LOGI(TAG, "HID/CHILD TIME SYNC !!");
-        set_control_status(CHECK_SCEHDULE);
-
-        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        LOGI(TAG, "SEND HID/CHILD TIME SYNC !!");
+        set_control_status(WAIT_STATE);
       }  break;
 
       case WAIT_STATE: {
@@ -396,7 +395,7 @@ static void control_task(void* pvParameters) {
 
       case CHILD_VALVE_OFF: {
         // 관수 스케줄에 따라 pump / zone pump on, off 컨트롤
-        // 관수 중지 시 : pump off -> zone valve on
+        // 관수 중지 시 : pump off -> zone valve off
         stop_flow();
 
         if (!send_esp_data(SET_VALVE_OFF, flowOrder[flowDoneCnt]))
