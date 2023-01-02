@@ -12,6 +12,7 @@
 #include "time.h"
 #include "main.h"
 #include "adc.h"
+#include "time_api.h"
 
 static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;
@@ -99,6 +100,11 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
       case TIME_SYNC: {
         time_t syncTimeValue = recv_message.current_time;
         // time sync 동작...
+        struct tm timeinfo = { 0 };
+        localtime_r(&syncTimeValue, &timeinfo);
+
+        set_local_time(timeinfo.tm_year+1900, timeinfo.tm_mon, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+
         LOGI(TAG, "Time synced zone : %d !!", myId);
 
         // 완료 후 내 device ID 와 battery 값을 master 에 전송..

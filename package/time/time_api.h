@@ -34,6 +34,19 @@ typedef struct _timezone {
 } timezone_t;
 
 /**
+ * @brief Set local time.
+ *
+ * @param year
+ * @param month
+ * @param day
+ * @param hour
+ * @param min
+ * @param sec
+ *
+ */
+void set_local_time(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec);
+
+/**
  * @brief Set NTP server with gmt and dst offset to get NTP time from the NTP servers.
  *
  * @param gmt_offset_sec

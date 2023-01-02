@@ -96,7 +96,7 @@ static void set_time_zone(long offset, int daylight) {
   tzset();
 }
 
-static void set_local_time(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec) {
+void set_local_time(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec) {
   struct tm time;
 
   time.tm_year = year - 1900;
