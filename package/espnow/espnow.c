@@ -99,6 +99,9 @@ int espnow_add_peers(device_t device_mode) {
       break;
     case MASTER_DEVICE:
       // add hid and all child mac address to the peer list
+      uint8_t broadcastAddress[ESP_NOW_ETH_ALEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+      espnow_add_peer(broadcastAddress, CONFIG_ESPNOW_CHANNEL, ESPNOW_WIFI_IF);
+
       for (int i = 0; i < row_len; i++) {
         if (syscfg_get_to_add_peer(master_peer_list[i])) {
           for (int j = 0; j < col_len; j++) {
