@@ -182,9 +182,13 @@ bool send_esp_data(message_type_t sender, int receiver) {
   get_addr(zoneAddr, receiver);
 
   switch (sender) {
-    case START_FLOW:
+    case START_FLOW: {
+      send_message.deviceId = flowOrder[flowDoneCnt]; 
+    } break;
+
     case ZONE_COMPLETE: {
       send_message.deviceId = flowOrder[flowDoneCnt]; 
+      send_message.flow_value = get_flow_value();
     } break;
 
     case BATTERY_LEVEL: {
