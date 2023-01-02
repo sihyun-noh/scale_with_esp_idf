@@ -106,8 +106,6 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
   LOGI(TAG, "Receive Data from Master");
   LOG_BUFFER_HEXDUMP(TAG, incomingData, len, LOG_INFO);
 
-  irrigation_message_t send_message;
-
   if (len > 0) {
     // CHILD 에서는 master cmd 처리만
     // SYNC_TIME, Valve on/off, sleep mode
