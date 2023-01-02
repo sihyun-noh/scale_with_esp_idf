@@ -376,7 +376,7 @@ static void control_task(void* pvParameters) {
         */
 
         // 유량 체크, 설정값과 차이가 20리터 이내로 들어올 경우 valve off 하도록... -> 테스트 후 값 변경 필요.
-        if (get_flow_value() >= (flowSettingValue - 20)) {
+        if (get_flow_value() >= (flowSettingValue * (flowDoneCnt + 1) - 20)) {
           set_control_status(CHILD_VALVE_OFF);
         }
 
