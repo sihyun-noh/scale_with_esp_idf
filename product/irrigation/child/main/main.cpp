@@ -74,9 +74,9 @@ void stop_shell(void) {
   }
 }
 
-int sleep_timer_wakeup(int wakeup_time_sec) {
+int sleep_timer_wakeup(uint64_t wakeup_time_sec) {
   int ret = 0;
-  LOGI(TAG, "Enabling timer wakeup, %ds\n", wakeup_time_sec);
+  LOGI(TAG, "Enabling timer wakeup, %llus\n", wakeup_time_sec);
   ret = esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000);
   esp_deep_sleep_start();
   return ret;

@@ -28,7 +28,7 @@ typedef enum {
 extern "C" {
 #endif
 
-int sleep_timer_wakeup(int wakeup_time_sec);
+int sleep_timer_wakeup(uint64_t wakeup_time_sec);
 
 #ifdef __cplusplus
 }

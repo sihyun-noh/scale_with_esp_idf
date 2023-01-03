@@ -30,7 +30,7 @@ typedef struct irrigation_message {
   config_t config;
   int flow_value;
   int deviceId;  // zone number or HID or master
-  int remain_time_sleep;
+  uint64_t remain_time_sleep;
   int battery_level[7]; // 0: HID, 1~6: child 1~6
   time_t current_time; 
 } irrigation_message_t;

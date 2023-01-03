@@ -51,7 +51,7 @@ typedef struct irrigation_message {
   config_value_t config;
   int flow_value;
   int deviceId;
-  int remain_time_sleep;
+  uint64_t remain_time_sleep;
   int battery_level[7];  // 0: HID, 1~6: child 1~6
   time_t current_time;
 } irrigation_message_t;
@@ -62,7 +62,7 @@ condtrol_status_t controlStatus = CHECK_ADDR;
 
 extern uint8_t masterAddress[6];
 
-int myId = 1;
+int myId;
 
 void init_variable(void) {
   myId = -1;

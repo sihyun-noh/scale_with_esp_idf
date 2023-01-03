@@ -52,7 +52,7 @@ typedef struct irrigation_message {
   config_value_t config;
   int flow_value;
   int deviceId;  // zone number or HID or master
-  int remain_time_sleep;
+  uint64_t remain_time_sleep;
   int battery_level[7]; // 0: HID, 1~6: child 1~6
   time_t current_time;  
 } irrigation_message_t;
@@ -83,7 +83,7 @@ int zoneBattery[7];     // 0: master, 1~6: child 배터리 잔량
 int flowDoneCnt;        // zone 변 관수 완료 카운트
 int batteryCnt;         // child 배터리 수신 횟수
 
-int remainSleepTime;    // sleep 시간
+uint64_t remainSleepTime;    // sleep 시간
 
 extern uint8_t macAddress[7][6];  // 0 = HID, 1~6 = child 1~6
 
@@ -358,7 +358,6 @@ static void control_task(void* pvParameters) {
 
             LOGI(TAG, "SEND DEEP SLEEP MSG, SleepTime : %d ", remainSleepTime);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
-
             sleep_timer_wakeup(remainSleepTime);
           } else {
             LOGI(TAG, "WAIT SET CONFIG ");
