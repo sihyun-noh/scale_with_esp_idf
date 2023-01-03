@@ -1,3 +1,5 @@
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "freertos/projdefs.h"
 #include "log.h"
 #include "nvs_flash.h"
@@ -7,34 +9,22 @@
 #include "shell_console.h"
 #include "syscfg.h"
 #include "sys_config.h"
-#include "sysevent.h"
 #include "sys_status.h"
-#include "syslog.h"
 #include "wifi_manager.h"
-#include "event_ids.h"
-#include "time_api.h"
-#include "config.h"
-#include "filelog.h"
-#include "adc.h"
 #include "actuator.h"
 #include "main.h"
 #include "espnow.h"
 
 #include <string.h>
-#include <time.h>
 
 #define DELAY_1SEC 1000
 #define DELAY_5SEC 5000
 #define DELAY_10SEC 10000
 #define DELAY_500MS 500
 
-#define NTP_CHECK_TIME 28800  // 8 hour
-
 const char* TAG = "main_app";
 
 sc_ctx_t* sc_ctx = NULL;
-
-static TickType_t g_last_ntp_check_time = 0;
 
 uint8_t hid_mac_addr[6] = { 0xf4, 0x12, 0xfa, 0xc0, 0x94, 0x41 };
 
@@ -136,12 +126,6 @@ int system_init(void) {
   ret = sys_stat_init();
   if (ret)
     return ERR_SYS_STATUS_INIT;
-
-  ret = sysevent_create();
-  if (ret)
-    return ERR_SYSEVENT_CREATE;
-
-  syslog_init();
 
   // Generate the default manufacturing data if there is no data in mfg partition.
   generate_syscfg();
