@@ -120,13 +120,13 @@ int get_flow_value() {
 }
 
 void get_addr(uint8_t arr[], int zone) {
-  for (int i=0; i<6 ; i++) {
-    if (zone > 6) {
-      arr[i] = 0xFF;
-    } else {
+  if (zone > 6) {
+    memset(arr, 0xFF, sizeof(uint8_t)*6);
+  } else {
+    for (int i=0; i<6 ; i++) {
       arr[i] = macAddress[zone][i];
     }
-  }
+  } 
 }
 
 static time_t get_current_time(void) {
@@ -180,6 +180,8 @@ bool send_esp_data(message_type_t sender, int receiver) {
   send_message.current_time = get_current_time();
   uint8_t zoneAddr[6] = {0,};
   get_addr(zoneAddr, receiver);
+
+  LOG_BUFFER_HEXDUMP(TAG, zoneAddr, sizeof(zoneAddr), LOG_INFO);
 
   switch (sender) {
     case START_FLOW: {
@@ -257,6 +259,8 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
 
           if (batteryCnt >= 6) {
             zoneBattery[0] = read_battery_percentage();
+            LOGI(TAG, "Battery Level, Master: %d, Child : %d, %d, %d, %d, %d, %d ", zoneBattery[0], zoneBattery[1],
+                  zoneBattery[2], zoneBattery[3], zoneBattery[4], zoneBattery[5], zoneBattery[6]);
 
             if (!send_esp_data(BATTERY_LEVEL, 0))
               send_esp_data(BATTERY_LEVEL, 0);
@@ -355,6 +359,8 @@ static void control_task(void* pvParameters) {
             vTaskDelay(1000 / portTICK_PERIOD_MS);
 
             sleep_timer_wakeup(remainSleepTime);
+          } else {
+            LOGI(TAG, "WAIT SET CONFIG ");
           }
         }
 
