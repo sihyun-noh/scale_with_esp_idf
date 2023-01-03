@@ -144,7 +144,7 @@ static time_t get_current_time(void) {
 
 // if return 0 -> wake up 시간대
 // return value -> sleep 시간까지 남은 시간, 단위 seconds
-int check_sleep_time(void) {
+uint64_t check_sleep_time(void) {
   time_t currTime = get_current_time();
   struct tm timeinfo = { 0 };
   localtime_r(&currTime, &timeinfo);
@@ -162,14 +162,14 @@ int check_sleep_time(void) {
     if (timeinfo.tm_hour == 4 && timeinfo.tm_min >= 30) {
       return 0;
     }
-    return ((4 - timeinfo.tm_hour) * 3600) + ((30 - timeinfo.tm_min) * 60);
+    return (uint64_t)(((4 - timeinfo.tm_hour) * 3600) + ((30 - timeinfo.tm_min) * 60));
   } else if (timeinfo.tm_hour >= 9 && timeinfo.tm_hour < 17) {
     if (timeinfo.tm_hour == 16 && timeinfo.tm_min >= 30) {
       return 0;
     }
-    return ((16 - timeinfo.tm_hour) * 3600) + ((30 - timeinfo.tm_min) * 60);
+    return (uint64_t)(((16 - timeinfo.tm_hour) * 3600) + ((30 - timeinfo.tm_min) * 60));
   } else if (timeinfo.tm_hour >= 21) {
-    return ((28 - timeinfo.tm_hour) * 3600) + ((30 - timeinfo.tm_min) * 60);
+    return (uint64_t)(((28 - timeinfo.tm_hour) * 3600) + ((30 - timeinfo.tm_min) * 60));
   } else {
     return 0;
   }
@@ -356,7 +356,7 @@ static void control_task(void* pvParameters) {
             if (!send_esp_data(SET_SLEEP, 7))
               send_esp_data(SET_SLEEP, 7);
 
-            LOGI(TAG, "SEND DEEP SLEEP MSG, SleepTime : %d ", remainSleepTime);
+            LOGI(TAG, "SEND DEEP SLEEP MSG, SleepTime : %llus ", remainSleepTime);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
             sleep_timer_wakeup(remainSleepTime);
           } else {
