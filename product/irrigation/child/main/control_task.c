@@ -62,10 +62,10 @@ condtrol_status_t controlStatus = CHECK_ADDR;
 
 extern uint8_t masterAddress[6];
 
-int myId = 1;
+int myId;
 
 void init_variable(void) {
-  myId = 1;
+  myId = -1;
   memset(&masterAddress, 0x00, sizeof(masterAddress));
 }
 
@@ -177,9 +177,17 @@ static void control_task(void* pvParameters) {
           LOGI(TAG, "Failed to add master addr to peer list");
         }
         LOG_BUFFER_HEXDUMP(TAG, masterAddress, sizeof(masterAddress), LOG_INFO);
-        set_control_status(WAIT_STATE);
 
-        LOGI(TAG, "matching get id : %d", get_address_matching_id());
+        myId = get_address_matching_id();
+
+        if (myId == (-1)) {
+          LOGI(TAG, "Fail get child ID !!");
+        } else {
+          LOGI(TAG, "matching get id : %d", myId);
+        }
+
+        set_control_status(WAIT_STATE);       
+
         LOGI(TAG, "ADDR CHECK DONE !!");
         vTaskDelay(2000 / portTICK_PERIOD_MS);
         break;
