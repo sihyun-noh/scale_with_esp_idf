@@ -16,7 +16,7 @@
 extern void valve_open(void);
 extern void valve_close(void);
 
-static const char* TAG = "key_task";
+// static const char* TAG = "key_task";
 
 static QueueHandle_t gpio_evt_queue = NULL;
 
@@ -29,7 +29,7 @@ static void func_key_task(void* arg) {
   uint32_t io_num;
   for (;;) {
     if (xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
-      LOGI(TAG, "GPIO[%" PRIu32 "] intr, val: %d\n", io_num, gpio_get_level(io_num));
+      // LOGI(TAG, "GPIO[%" PRIu32 "] intr, val: %d\n", io_num, gpio_get_level(io_num));
       if (io_num == FUNC_KEY1)
         valve_open();
       else if (io_num == FUNC_KEY2)

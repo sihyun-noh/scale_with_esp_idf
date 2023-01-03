@@ -18,7 +18,7 @@ extern void pump_off(void);
 
 int water_flow_pulse_count;
 
-static const char* TAG = "key_task";
+// static const char* TAG = "key_task";
 
 static QueueHandle_t gpio_evt_queue = NULL;
 

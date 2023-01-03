@@ -59,6 +59,7 @@ static void delay_ms(uint32_t ms) {
   vTaskDelay(ms / portTICK_PERIOD_MS);
 }
 
+#if 0
 static timezone_t* find_tzinfo(const char* tz) {
   timezone_t* tz_info = NULL;
 
@@ -71,6 +72,7 @@ static timezone_t* find_tzinfo(const char* tz) {
   }
   return tz_info;
 }
+#endif
 
 static void set_time_zone(long offset, int daylight) {
   char cst[17] = { 0 };

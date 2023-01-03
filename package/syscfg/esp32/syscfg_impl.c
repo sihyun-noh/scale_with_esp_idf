@@ -80,6 +80,7 @@ static const type_str_pair_t type_str_pair[] = {
 
 static const size_t TYPE_STR_PAIR_SIZE = sizeof(type_str_pair) / sizeof(type_str_pair[0]);
 
+#if 0
 static nvs_type_t str_to_type(const char *type) {
   for (int i = 0; i < TYPE_STR_PAIR_SIZE; i++) {
     const type_str_pair_t *p = &type_str_pair[i];
@@ -90,6 +91,7 @@ static nvs_type_t str_to_type(const char *type) {
 
   return NVS_TYPE_ANY;
 }
+#endif
 
 static const char *type_to_str(nvs_type_t type) {
   for (int i = 0; i < TYPE_STR_PAIR_SIZE; i++) {
@@ -400,7 +402,9 @@ _exit:
 int syscfg_show_impl(syscfg_type_t type) {
   char *partition_name = NULL;
   char *nvs_name = NULL;
+#if 0
   char value[256] = { 0 };
+#endif
 
   _get_nvs_partition_name(type, &partition_name, &nvs_name);
   if (NULL == partition_name || NULL == nvs_name) {
@@ -408,7 +412,9 @@ int syscfg_show_impl(syscfg_type_t type) {
     return -1;
   }
 
+#if 0
   int handle = _get_nvs_handle(type);
+#endif
 
   nvs_iterator_t it = NULL;
 

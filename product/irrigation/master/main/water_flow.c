@@ -20,7 +20,7 @@ static void water_flow_task(void* pvParameters) {
     pulse_count = get_water_flow_pulse_count();
     flow_liters = pulse_count / calibration_factor / 60;
     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    // LOGI(TAG, "flow_liters = %d L (%d)", flow_liters, pulse_count);
+    LOGI(TAG, "flow_liters = %d L (%d)", flow_liters, pulse_count);
   }
 }
 
