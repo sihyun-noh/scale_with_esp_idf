@@ -1,7 +1,9 @@
+if(CONFIG_SMARTFARM_MODBUS_FEATURE)
 if (IDF_VERSION_MAJOR GREATER_EQUAL 5)
   set(req esp-modbus syslog)
 elseif (IDF_VERSION_MAJOR GREATER_EQUAL 4)
   set(req freemodbus syslog)
+endif()
 endif()
 
 set(srcs)
