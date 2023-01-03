@@ -1,5 +1,15 @@
-if(${IDF_TARGET} MATCHES "esp32s3")
-idf_component_register(SRCS "msc.c"
-                    INCLUDE_DIRS "."
-                    REQUIRES usb usb_host_msc vfs)
+if(CONFIG_SMARTFARM_USB_HOST_MSC_FEATURE)
+  set(req usb_host_msc usb vfs)
 endif()
+
+set(srcs)
+set(includes)
+
+if(CONFIG_SMARTFARM_USB_HOST_MSC_FEATURE)
+  list(APPEND srcs "msc.c")
+  list(APPEND includes ".")
+endif()
+
+idf_component_register(SRCS ${srcs}
+                    INCLUDE_DIRS ${includes}
+                    REQUIRES ${req})
