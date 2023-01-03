@@ -4,7 +4,6 @@
 #include "esp_sleep.h"
 #include "esp_mac.h"
 
-#include "easy_setup.h"
 #include "shell_console.h"
 #include "syscfg.h"
 #include "sys_config.h"

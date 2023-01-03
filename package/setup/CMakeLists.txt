@@ -1,12 +1,14 @@
+if(CONFIG_SMARTFARM_EASYSETUP_FEATURE)
 set(req freertos log mdns time syscfg syslog sysevent wifi esp_hw_support esp_https_server json ping monitor ethernet)
 set(certs "certs/cacert.pem" "certs/prvtkey.pem")
+endif()
 
 if(CONFIG_SMARTFARM_EASYSETUP_FEATURE)
 if(CONFIG_SMARTFARM_ETHERNET_FEATURE)
-  list(APPEND srcs 
+  list(APPEND srcs
     "ethernet_easy_setup.c" "mdns.c")
 else()
-  list(APPEND srcs 
+  list(APPEND srcs
     "easy_setup.c" "mdns.c")
 endif()
 endif()
