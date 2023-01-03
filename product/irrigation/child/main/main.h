@@ -9,7 +9,6 @@ typedef enum {
   ERR_SYSCFG_OPEN,
   ERR_SYSEVENT_CREATE,
   ERR_SYS_STATUS_INIT,
-  ERR_MONITORING_INIT,
   ERR_SPIFFS_INIT,
 } err_sysinit_t;
 

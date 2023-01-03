@@ -14,7 +14,6 @@
 #include "wifi_manager.h"
 #include "event_ids.h"
 #include "time_api.h"
-#include "monitoring.h"
 #include "config.h"
 #include "filelog.h"
 #include "adc.h"
@@ -132,10 +131,6 @@ int system_init(void) {
 
   // Generate the default manufacturing data if there is no data in mfg partition.
   generate_syscfg();
-
-  ret = monitoring_init();
-  if (ret)
-    return ERR_MONITORING_INIT;
 
   valve_init();
 
