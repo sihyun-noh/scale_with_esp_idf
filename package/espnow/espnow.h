@@ -57,6 +57,12 @@ int espnow_list_peers(peer_info_t *peers, int max_peers);
 bool espnow_has_peer(const uint8_t *mac_addr);
 int espnow_send_data(const uint8_t *mac_addr, const uint8_t *data, size_t len);
 
+/**
+ * @brief Find the ID matched with the Mac Address
+ *
+ * @return 0 = master ID, 1~6 = child ID, 10 = HID ID
+ */
+int get_address_matching_id(void);
 #ifdef __cplusplus
 }
 #endif

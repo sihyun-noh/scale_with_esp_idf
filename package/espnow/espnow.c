@@ -29,8 +29,10 @@
 
 static const char *TAG = "ESP-NOW";
 static bool b_ready = false;
-static char *master_peer_list[7] = { SYSCFG_N_HID_MAC,    SYSCFG_N_CHILD1_MAC, SYSCFG_N_CHILD2_MAC, SYSCFG_N_CHILD3_MAC,
-                                     SYSCFG_N_CHILD4_MAC, SYSCFG_N_CHILD5_MAC, SYSCFG_N_CHILD6_MAC };
+static char *master_peer_list[8] = {
+  SYSCFG_N_HID_MAC,    SYSCFG_N_CHILD1_MAC, SYSCFG_N_CHILD2_MAC, SYSCFG_N_CHILD3_MAC,
+  SYSCFG_N_CHILD4_MAC, SYSCFG_N_CHILD5_MAC, SYSCFG_N_CHILD6_MAC, SYSCFG_N_MASTER_MAC
+};
 
 uint8_t macAddress[7][MAC_ADDR_LEN] = { 0 };  // 0 = HID, 1~6 = child 1~6
 uint8_t masterAddress[MAC_ADDR_LEN] = { 0 };
@@ -60,6 +62,30 @@ unsigned int ascii_to_hex(const char *str, size_t size, uint8_t *hex) {
     hex[h] = (high << 4) | low;
   }
   return h;
+}
+
+int get_address_matching_id(void) {
+  char s_compare_mac[SYSCFG_S_MASTER_MAC] = { 0 };
+  uint8_t my_mac[ESP_NOW_ETH_ALEN] = { 0 };
+  uint8_t compare_mac[ESP_NOW_ETH_ALEN] = { 0 };
+  esp_read_mac(my_mac, ESP_MAC_WIFI_SOFTAP);
+
+  for (int i = 0; i < 8; i++) {
+    if (syscfg_get(MFG_DATA, master_peer_list[i], s_compare_mac, sizeof(s_compare_mac))) {
+      LOGE(TAG, "syscfg MAC Address read error");
+      return -1;
+    }
+    ascii_to_hex(s_compare_mac, sizeof(compare_mac) * 2, compare_mac);
+    if (memcmp(my_mac, compare_mac, sizeof(my_mac)) == 0) {
+      if (i == 0) {  // hid = 10
+        i = 10;
+      } else if (i >= 7) {  // master = 0
+        i = 0;
+      }
+      return i;
+    }
+  }
+  return -1;
 }
 
 static uint8_t _mac[ESP_NOW_ETH_ALEN] = { 0 };

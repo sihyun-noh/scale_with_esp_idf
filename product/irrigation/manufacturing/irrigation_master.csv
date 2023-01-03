@@ -1,9 +1,2 @@
-id,serialno,master_mac,hid_mac,child1_mac,child2_mac,child3_mac,child4_mac,child5_mac,child6_mac,hw_version,power_mode
-1,102123SMS00001,244cab242431,244cab21f7cd,349454f52b25,7c87cef36439,333333333333,444444444444,555555555555,666666666666,A0,B
-2,102123SHD00001,,,,,,,,,,
-3,102123SCH00001,,,,,,,,,,
-4,102123SCH00002,,,,,,,,,,
-5,102123SCH00003,,,,,,,,,,
-6,102123SCH00004,,,,,,,,,,
-7,102123SCH00005,,,,,,,,,,
-8,102123SCH00006,,,,,,,,,,
+id,master_mac,hid_mac,child1_mac,child2_mac,child3_mac,child4_mac,child5_mac,child6_mac,power_mode
+1,3c61053e7161,30aea49a9a89,30aea499ded9,30aea499dd91,30aea498b221,30aea496c319,240ac4ed4255,30aea4983791,B

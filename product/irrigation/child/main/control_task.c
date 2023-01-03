@@ -52,7 +52,7 @@ typedef struct irrigation_message {
   int flow_value;
   int deviceId;
   int remain_time_sleep;
-  int battery_level[7]; // 0: HID, 1~6: child 1~6
+  int battery_level[7];  // 0: HID, 1~6: child 1~6
   time_t current_time;
 } irrigation_message_t;
 
@@ -179,6 +179,7 @@ static void control_task(void* pvParameters) {
         LOG_BUFFER_HEXDUMP(TAG, masterAddress, sizeof(masterAddress), LOG_INFO);
         set_control_status(WAIT_STATE);
 
+        LOGI(TAG, "matching get id : %d", get_address_matching_id());
         LOGI(TAG, "ADDR CHECK DONE !!");
         vTaskDelay(2000 / portTICK_PERIOD_MS);
         break;
