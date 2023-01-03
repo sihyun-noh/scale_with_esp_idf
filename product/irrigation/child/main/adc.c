@@ -52,7 +52,6 @@ int read_battery_percentage(void) {
   voltage = uint16_average(&battery_voltage[1], MAX_BUFFER_CNT - 2);
   bat_percent = battery_calculate_percentage(voltage);
   LOGI(TAG, "battery percent: %.2f", bat_percent);
-  // FLOGI(TAG, "battery percent: %.2f", bat_percent);
 
   memset(s_bat_percent, 0, sizeof(s_bat_percent));
   snprintf(s_bat_percent, sizeof(s_bat_percent), "%.2f", bat_percent);
@@ -60,7 +59,6 @@ int read_battery_percentage(void) {
   if (bat_percent < 20) {
     set_low_battery(1);
   }
-  sysevent_set(ADC_BATTERY_EVENT, (char*)s_bat_percent);
 
   return 0;
 }
