@@ -62,7 +62,7 @@ condtrol_status_t controlStatus = CHECK_ADDR;
 
 extern uint8_t masterAddress[6];
 
-int myId;
+int myId = 1;
 
 void init_variable(void) {
   myId = -1;
@@ -117,7 +117,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         struct tm timeinfo = { 0 };
         localtime_r(&syncTimeValue, &timeinfo);
 
-        set_local_time(timeinfo.tm_year+1900, timeinfo.tm_mon, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+        set_local_time(timeinfo.tm_year+1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
 
         LOGI(TAG, "Time synced zone : %d !!", myId);
 
