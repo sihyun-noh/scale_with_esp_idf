@@ -83,6 +83,8 @@ int zoneBattery[7];     // 0: master, 1~6: child 배터리 잔량
 int flowDoneCnt;        // zone 변 관수 완료 카운트
 int batteryCnt;         // child 배터리 수신 횟수
 
+int remainSleepTime;    // sleep 시간
+
 extern uint8_t macAddress[7][6];  // 0 = HID, 1~6 = child 1~6
 
 void init_variable(void) {
@@ -95,6 +97,7 @@ void init_variable(void) {
   flowSettingValue = 0;  
   flowDoneCnt = 0;
   batteryCnt = 0;
+  remainSleepTime = 0;
 }
 
 void set_control_status(condtrol_status_t value) {
@@ -167,7 +170,6 @@ int check_sleep_time(void) {
     return ((16 - timeinfo.tm_hour) * 3600) + ((30 - timeinfo.tm_min) * 60);
   } else if (timeinfo.tm_hour >= 21) {
     return ((28 - timeinfo.tm_hour) * 3600) + ((30 - timeinfo.tm_min) * 60);
-    ;
   } else {
     return 0;
   }
@@ -198,7 +200,6 @@ bool send_esp_data(message_type_t sender, int receiver) {
     } break;
 
     case SET_SLEEP: {
-      int remainSleepTime = check_sleep_time();
       send_message.remain_time_sleep = remainSleepTime;
     } break;
 
@@ -350,12 +351,12 @@ static void control_task(void* pvParameters) {
             }
           }
         } else {
-          int remainSleepTime = check_sleep_time();
+          remainSleepTime = check_sleep_time();
           if (remainSleepTime > 0) {
             if (!send_esp_data(SET_SLEEP, 7))
               send_esp_data(SET_SLEEP, 7);
 
-            LOGI(TAG, "SEND DEEP SLEEP MSG ");
+            LOGI(TAG, "SEND DEEP SLEEP MSG, SleepTime : %d ", remainSleepTime);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
 
             sleep_timer_wakeup(remainSleepTime);
