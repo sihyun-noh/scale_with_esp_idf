@@ -58,8 +58,8 @@ if [ ! -d "${TOOL_PATH}" ]; then
   downloadSdk
 fi
 
-git submodule init
-git submodule update
+# git submodule init
+# git submodule update
 
 # tool setup & env setting
 cd ${TOOL_PATH}/esp-idf

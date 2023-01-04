@@ -17,14 +17,32 @@
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
 #include "sysfile.h"
+#if defined(SPIFFS_IMPL)
 #include "esp32/spiffs_impl.h"
+#elif defined(LITTLEFS_IMPL)
+#include "esp32/littlefs_impl.h"
+#endif
 
 int init_sysfile(void) {
-  return init_spiffs_impl();
+  int ret = 0;
+
+#if defined(SPIFFS_IMPL)
+  ret = init_spiffs_impl();
+#elif defined(LITTLEFS_IMPL)
+  ret = init_littlefs_impl();
+#endif
+  return ret;
 }
 
 int sysfile_format(void) {
-  return format_spiffs_impl();
+  int ret = 0;
+
+#if defined(SPIFFS_IMPL)
+  ret = format_spiffs_impl();
+#elif defined(LITTLEFS_IMPL)
+  ret = format_littlefs_impl();
+#endif
+  return ret;
 }
 
 int sysfile_show_file(void) {

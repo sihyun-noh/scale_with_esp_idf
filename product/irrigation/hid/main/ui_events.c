@@ -3,7 +3,7 @@
 // LVGL VERSION: 8.3.3
 // PROJECT: SquareLine_Project
 
-#include "espnow/espnow.h"
+#include "espnow.h"
 #include "ui.h"
 #include "syslog.h"
 #include "syscfg.h"

@@ -1,12 +1,20 @@
-set(req freertos log esp_event spiffs sysevent syslog esp_wifi heap ping sysfile)
+set(req freertos log esp_event spiffs esp_littlefs sysevent syslog esp_wifi heap ping sysfile)
 
 set(srcs)
 set(includes)
 
 if(CONFIG_SMARTFARM_FILELOG_FEATURE)
-  list(APPEND srcs
-    "sysfile.c"
-    "esp32/spiffs_impl.c")
+  if(CONFIG_LITTLEFS_ENABLE)
+    idf_build_set_property(COMPILE_DEFINITIONS "-DLITTLEFS_IMPL" APPEND)
+    list(APPEND srcs
+      "sysfile.c"
+      "esp32/littlefs_impl.c")
+  else()
+    idf_build_set_property(COMPILE_DEFINITIONS "-DSPIFFS_IMPL" APPEND)
+    list(APPEND srcs
+      "sysfile.c"
+      "esp32/spiffs_impl.c")
+  endif()
   list(APPEND includes ".")
 endif()
 

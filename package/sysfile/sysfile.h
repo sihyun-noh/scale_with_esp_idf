@@ -1,7 +1,11 @@
 #ifndef _SYS_FILE_IMPL_H_
 #define _SYS_FILE_IMPL_H_
 
+#if defined(SPIFFS_IMPL)
 #include "esp32/spiffs_impl.h"
+#elif defined(LITTLEFS_IMPL)
+#include "esp32/littlefs_impl.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {

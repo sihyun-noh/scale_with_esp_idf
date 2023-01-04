@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 
 # Set SmartFarm IoT framework component package
-set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../../../package)
+set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../../../package ${CMAKE_CURRENT_SOURCE_DIR}/../../../opensource)
 
 # Set project version
 set(PROJECT_VERSION_MAJOR 1)
@@ -34,3 +34,6 @@ include_directories(${CMAKE_BINARY_DIR})
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(${PROJECT_NAME}_${PROJECT_VERSION_FILE}-${GIT_COMMIT_HASH}-${PROJECT_STAGE})
+
+# Note: you must have a partition named the first argument (here it's "storage")
+# in your partition table csv file.

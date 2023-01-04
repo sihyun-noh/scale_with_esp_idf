@@ -24,6 +24,7 @@
 #include "esp_timer.h"
 #include "esp_sntp.h"
 #include "log.h"
+#include "syscfg.h"
 #include "time_api.h"
 
 static bool s_ntp_failed = false;
@@ -220,12 +221,19 @@ bool get_ntp_time(int tz_offset, int dst_offset) {
 
 int rtc_set_time_cmd(int argc, char** argv) {
   struct tm time = { 0 };
+  char timestamp[80] = { 0 };
 
   if (argc != 2) {
     printf("Usage: yyyy-mm-dd-hh-mm-ss <ex:2022-11-11-17-30-59>\n");
     return -1;
   }
-  sscanf(argv[1], "%d-%d-%d-%d-%d-%d", &time.tm_year, &time.tm_mon, &time.tm_mday, &time.tm_hour, &time.tm_min, &time.tm_sec);
+
+  sscanf(argv[1], "%d-%d-%d-%d-%d-%d", &time.tm_year, &time.tm_mon, &time.tm_mday, &time.tm_hour, &time.tm_min,
+         &time.tm_sec);
+  snprintf(timestamp, sizeof(timestamp), "%d-%d-%d-%d-%d-%d", time.tm_year, time.tm_mon, time.tm_mday, time.tm_hour,
+           time.tm_min, time.tm_sec);
+
+  syscfg_set(CFG_DATA, "rtc_set", timestamp);
 
   if (time.tm_year < 2022)
     return -1;
