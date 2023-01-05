@@ -10,6 +10,7 @@
 #include "sysevent.h"
 #include "sys_status.h"
 #include "syslog.h"
+#include "filelog.h"
 #include "wifi_manager.h"
 #include "event_ids.h"
 #include "sysfile.h"
@@ -52,7 +53,6 @@ sc_ctx_t *sc_ctx = NULL;
 
 uint8_t main_mac_addr[6] = { 0xF4, 0x12, 0xFA, 0x52, 0x07, 0xD1 };
 
-#if 0
 const char *test_string =
     "This is a test I am here, testing, testing, This is a test I am here, testing, testing, This is a test I am here, "
     "testing, testing, "
@@ -60,21 +60,7 @@ const char *test_string =
     "testing, testing, This is a test I am here, testing, testing, This is a test I am here, testing, testing, "
     "This is a test I am here, testing, testing, This is a test I am here, testing, testing, This is a test I am here, "
     "testing, testing, This is a test I am here, testing, testing, This is a test I am here, testing, testing, "
-    "This is a test I am here, testing, testing, This is a test I am here, testing, testing, This is a test I am here, "
-    "testing, testing, This is a test I am here, testing, testing, This is a test I am here, testing, testing, "
-    "This is a test I am here, testing, testing, This is a test I am here, testing, testing, This is a test I am here, "
-    "testing, testing, This is a test I am here, testing, testing, This is a test I am here, testing, testing, "
-    "This is a test I am here, testing, testing, This is a test I am here, testing, testing, This is a test I am here, "
-    "testing, testing, This is a test I am here, testing, testing, This is a test I am here, testing, testing, "
-    "This is a test I am here, testing, testing, This is a test I am here, testing, testing, This is a test I am here, "
-    "testing, testing, This is a test I am here, testing, testing, This is a test I am here, testing, testing, "
-    "This is a test I am here, testing, testing, This is a test I am here, testing, testing, This is a test I am here, "
-    "testing, testing, This is a test I am here, testing, testing, This is a test I am here, testing, testing, "
-    "This is a test I am here, testing, testing, This is a test I am here, testing, testing, This is a test I am here, "
-    "testing, testing, This is a test I am here, testing, testing, This is a test I am here, testing, testing, "
-    "This is a test I am here, testing, testing, This is a test I am here, testing, testing, This is a test I am here, "
-    "testing, testing, This is a test I am here, testing, testing, This is a test I am here, testing, testing, ";
-#endif
+    "testing, testing, This is a test I am here, testing, testing, This is a test I am here, testing, testing";
 
 extern "C" {
 extern int read_battery_percentage(void);
@@ -145,25 +131,6 @@ static void send_data_cb(const uint8_t *mac_addr, esp_now_send_status_t status) 
 
 #define littlefs_base_path "/storage"
 
-static void test_littlefs_create_file_with_text(const char *name, const char *text) {
-  LOGI(TAG, "Writing to \"%s\"\n", name);
-  FILE *f = fopen(name, "wb");
-  if (f) {
-    fputs(text, f);
-    fclose(f);
-  }
-}
-
-static void test_littlefs_read_file(const char *filename) {
-  FILE *f = fopen(filename, "r");
-  if (f) {
-    char buf[32] = { 0 };
-    int cb = fread(buf, 1, sizeof(buf), f);
-    LOGI(TAG, "buf = %s, cb = %d", buf, cb);
-    fclose(f);
-  }
-}
-
 int set_interval_cmd(int argc, char **argv) {
   int interval = 0;
 
@@ -233,10 +200,6 @@ int system_init(void) {
   sdcard_init();
 
   init_sysfile();
-
-  test_littlefs_create_file_with_text(littlefs_base_path "/hello.txt", "This is a test string");
-  test_littlefs_read_file(littlefs_base_path "/hello.txt");
-
   sysfile_show_file();
 
   // TODO : Temporary code for testing, the code below will be removed after implementing of espnow_add_peers()
@@ -274,13 +237,7 @@ void loop_task(void) {
       } break;
       case RUNNING_MODE: {
         set_operation_mode(SLEEP_MODE);
-#if 0
-        write_log(littlefs_base_path "/hello.txt", test_string);
-        struct stat st;
-        if (!stat(littlefs_base_path "/hello.txt", &st)) {
-          LOGI(TAG, "file size = %lu", st.st_size);
-        }
-#endif
+        FDATA(littlefs_base_path, "%s", test_string);
       } break;
       case SLEEP_MODE: {
         vTaskDelay(send_interval * 1000 / portTICK_PERIOD_MS);

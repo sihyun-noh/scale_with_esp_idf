@@ -1,0 +1,5 @@
+config LITTLEFS_ENABLE
+  bool "SmartFarm LittleFS feature"
+  default "n"
+  help
+    LittleFS filesystem feature

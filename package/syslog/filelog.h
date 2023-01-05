@@ -32,7 +32,10 @@ extern "C" {
  */
 int file_log_write(char *format, ...);
 
+int file_log_write_datalogger(char *path, char *format, ...);
+
 #define FILE_LOG_FORMAT(letter, format) #letter " (%s) %s: " format "\r\n"
+#define FILE_LOG_FORMAT_FOR_DATALOGGER(letter, format) #letter " (%s) " format "\n"
 
 #define FILELOGI(tag, format, ...) FILE_LOG_LEVEL(LOG_INFO, tag, format, ##__VA_ARGS__)
 #define FILELOGW(tag, format, ...) FILE_LOG_LEVEL(LOG_WARN, tag, format, ##__VA_ARGS__)
@@ -62,6 +65,11 @@ int file_log_write(char *format, ...);
 #define FLOGE(tag, format, ...)           \
   do {                                    \
     FILELOGE(tag, format, ##__VA_ARGS__); \
+  } while (0)
+
+#define FDATA(path, format, ...)                                                                                \
+  do {                                                                                                          \
+    file_log_write_datalogger(path, FILE_LOG_FORMAT_FOR_DATALOGGER(I, format), log_timestamp(), ##__VA_ARGS__); \
   } while (0)
 
 #ifdef __cplusplus

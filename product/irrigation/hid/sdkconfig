@@ -417,6 +417,7 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of SmartFarm Controller Configuration
 
 # CONFIG_SMARTFARM_ETHERNET_FEATURE is not set
+# CONFIG_LITTLEFS_ENABLE is not set
 
 #
 # SmartFarm LWMQTT feature
@@ -1994,12 +1995,6 @@ CONFIG_LV_USE_SNAPSHOT=y
 # end of LVGL configuration
 
 #
-# ESP-ASIO
-#
-# CONFIG_ASIO_SSL_SUPPORT is not set
-# end of ESP-ASIO
-
-#
 # Modbus configuration
 #
 CONFIG_FMB_COMM_MODE_TCP_EN=y
@@ -2029,6 +2024,12 @@ CONFIG_FMB_EVENT_QUEUE_TIMEOUT=20
 # CONFIG_FMB_TIMER_PORT_ENABLED is not set
 # CONFIG_FMB_TIMER_USE_ISR_DISPATCH_METHOD is not set
 # end of Modbus configuration
+
+#
+# ESP-ASIO
+#
+# CONFIG_ASIO_SSL_SUPPORT is not set
+# end of ESP-ASIO
 
 #
 # mDNS

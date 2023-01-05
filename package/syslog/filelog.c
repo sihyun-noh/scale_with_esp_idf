@@ -97,7 +97,7 @@ static int file_status_check(const char *dirpath) {
       strlcpy(filepath, dirpath, strlen(dirpath) + 1);
       strncat(filepath, "/", 2);
       strncat(filepath, entry->d_name, strlen(entry->d_name));
-      //      LOGE(TAG, "filepath : %s", filepath);
+      // LOGE(TAG, "filepath : %s", filepath);
 
       if (stat(filepath, &file_stat) == -1) {
         LOGE(TAG, "stat error. file path : %s", filepath);
@@ -108,11 +108,14 @@ static int file_status_check(const char *dirpath) {
     }
     file_count++;
   }
+
   file_ctx.file_num = file_count;
-  // LOGI(TAG, "latest file : %s", file_ctx.latest_file);
-  // LOGI(TAG, "oldest file : %s", file_ctx.oldest_file);
-  // LOGI(TAG, "file_num : %d", file_ctx.file_num);
-  // LOGI(TAG, "file_path : %s", file_ctx.filepath);
+
+  LOGI(TAG, "latest file : %s", file_ctx.latest_file);
+  LOGI(TAG, "latest file szie : %d", file_ctx.latest_file_size);
+  LOGI(TAG, "oldest file : %s", file_ctx.oldest_file);
+  LOGI(TAG, "file_num : %d", file_ctx.file_num);
+  LOGI(TAG, "file_path : %s", file_ctx.filepath);
 
   closedir(dir);
   return 0;
@@ -120,7 +123,7 @@ static int file_status_check(const char *dirpath) {
 
 /* Extracts the elements necessary to create a file name and
  * combines them to create a file name. */
-static char *file_path_name() {
+static char *file_path_name(const char *path) {
   char temp_buf[50] = { 0 };
   char time_date_buf[30] = { 0 };
   char *time_date;
@@ -136,7 +139,7 @@ static char *file_path_name() {
   char *tok_3 = strtok(NULL, " ");         // 10
 
   memset(temp_buf, 0, sizeof(temp_buf));
-  strlcpy(temp_buf, BASE_PATH, strlen(BASE_PATH) + 1);
+  strlcpy(temp_buf, path, strlen(path) + 1);
   strncat(temp_buf, "/", 2);
   strncat(temp_buf, tok_2, strlen(tok_2));
   strncat(temp_buf, "-", 2);
@@ -149,8 +152,8 @@ static char *file_path_name() {
 }
 
 /* When the number of files exceeds 10, Delete oldest files. */
-static int file_delete(char *file_delete_path) {
-  char *dirpath = BASE_PATH;
+static int file_delete(char *file_delete_path, const char *path) {
+  const char *dirpath = path;
   char temp_buf[50] = { 0 };
   uint8_t pathlen;
 
@@ -182,14 +185,15 @@ int file_log_write(char *format, ...) {
   }
 
   if (file_ctx.file_num == 0) {
-    newfilepath = file_path_name();
+    newfilepath = file_path_name(BASE_PATH);
     write_log(newfilepath, buff);
     free(newfilepath);
     goto END;
   }
 
   if (file_ctx.latest_file_size >= FILE_LOG_MAX_FILE_SIZE) {
-    newfilepath = file_path_name();
+    file_ctx.latest_file_size = 0;
+    newfilepath = file_path_name(BASE_PATH);
     write_log(newfilepath, buff);
     free(newfilepath);
   } else {
@@ -197,7 +201,51 @@ int file_log_write(char *format, ...) {
   }
 
   if (file_ctx.file_num > FILE_COUNT) {
-    if (file_delete(file_ctx.oldest_file) != 0) {
+    if (file_delete(file_ctx.oldest_file, BASE_PATH) != 0) {
+      LOGE(TAG, "file delete erorr!");
+    }
+  }
+END:
+  return 0;
+}
+/*The system file log is saved in the file storage device using the "FLOG" macro.*/
+int file_log_write_datalogger(char *path, char *format, ...) {
+  char *newfilepath;
+  int ret = 0;
+  char buff[FILE_LOG_MAX_MSG_SIZE] = { 0 };
+
+  va_list list;
+  va_start(list, format);
+  vsnprintf(buff, sizeof(buff), format, list);
+  va_end(list);
+
+  LOGI(TAG, " buff : %s", buff);
+  LOGI(TAG, " path : %s", path);
+  //  ret = file_status_check(BASE_PATH);
+  ret = file_status_check(path);
+  if (ret != 0) {
+    LOGE(TAG, "file status check fail.");
+    return -1;
+  }
+
+  if (file_ctx.file_num == 0) {
+    newfilepath = file_path_name(path);
+    write_log(newfilepath, buff);
+    free(newfilepath);
+    goto END;
+  }
+
+  if (file_ctx.latest_file_size >= FILE_LOG_MAX_FILE_SIZE) {
+    file_ctx.latest_file_size = 0;
+    newfilepath = file_path_name(path);
+    write_log(newfilepath, buff);
+    free(newfilepath);
+  } else {
+    write_log(file_ctx.filepath, buff);
+  }
+
+  if (file_ctx.file_num > FILE_COUNT) {
+    if (file_delete(file_ctx.oldest_file, path) != 0) {
       LOGE(TAG, "file delete erorr!");
     }
   }
