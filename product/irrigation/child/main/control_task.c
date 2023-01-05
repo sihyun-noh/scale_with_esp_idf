@@ -121,6 +121,11 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
 
         LOGI(TAG, "Time synced zone : %d !!", myId);
 
+        // device 별 response 에 시간차 전달
+        // HW device 에서 실 테스트 필요.
+        // child 1 -> 1sec, child 2 -> 2sec,....
+        vTaskDelay((1000 * myId) / portTICK_PERIOD_MS);
+
         // 완료 후 내 device ID 와 battery 값을 master 에 전송..
         if (!send_esp_data(RESPONSE, TIME_SYNC))
           send_esp_data(RESPONSE, TIME_SYNC);
