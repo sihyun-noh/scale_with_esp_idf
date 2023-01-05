@@ -28,9 +28,13 @@ int get_water_flow_liters(void) {
   return flow_liters;
 }
 
-void create_water_flow_task(void) {
+void reset_water_flow_liters(void) {
   pulse_count = 0;
   flow_liters = 0;
+}
+
+void create_water_flow_task(void) {
+  reset_water_flow_liters();
 
   xTaskCreate(water_flow_task, "water_flow_task", 2048, NULL, 10, NULL);
 }

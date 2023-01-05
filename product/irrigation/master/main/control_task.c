@@ -17,6 +17,7 @@ static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;
 
 extern int get_water_flow_liters(void);
+extern void reset_water_flow_liters(void);
 
 typedef enum {
   SET_CONFIG = 0,
@@ -252,6 +253,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
 
             LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
             flowDoneCnt++;
+            reset_water_flow_liters();
             set_control_status(CHECK_SCEHDULE);
           }
         } else if (recv_message.receive_type == TIME_SYNC) {
@@ -380,7 +382,7 @@ static void control_task(void* pvParameters) {
         */
 
         // 유량 체크, 설정값과 차이가 20리터 이내로 들어올 경우 valve off 하도록... -> 테스트 후 값 변경 필요.
-        if (get_flow_value() >= (flowSettingValue * (flowDoneCnt + 1) - 20)) {
+        if (get_flow_value() >= (flowSettingValue - 20)) {
           set_control_status(CHILD_VALVE_OFF);
         }
 
