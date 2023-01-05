@@ -10,6 +10,7 @@
 static const char* TAG = "water_flow_task";
 
 extern int get_water_flow_pulse_count(void);
+extern void reset_water_flow_pulse_count(void);
 
 int pulse_count;
 int flow_liters;
@@ -31,6 +32,7 @@ int get_water_flow_liters(void) {
 void reset_water_flow_liters(void) {
   pulse_count = 0;
   flow_liters = 0;
+  reset_water_flow_pulse_count();
 }
 
 void create_water_flow_task(void) {

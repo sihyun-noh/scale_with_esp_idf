@@ -46,6 +46,10 @@ int get_water_flow_pulse_count(void) {
   return water_flow_pulse_count;
 }
 
+void reset_water_flow_pulse_count(void) {
+  water_flow_pulse_count = 0;
+}
+
 void create_input_task(void) {
   water_flow_pulse_count = 0;
 
