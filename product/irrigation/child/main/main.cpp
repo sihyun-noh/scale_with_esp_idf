@@ -45,7 +45,7 @@ extern void on_data_sent_cb(const uint8_t* macAddr, esp_now_send_status_t status
 #endif
 
 static operation_mode_t s_curr_mode;
-static int send_interval;
+static int main_sleep_time = 60;
 
 void set_operation_mode(operation_mode_t mode) {
   s_curr_mode = mode;
@@ -164,7 +164,7 @@ void loop_task(void) {
       } break;
       case DEEP_SLEEP_MODE: {
         LOGI(TAG, "DEEP_SLEEP_MODE");
-        sleep_timer_wakeup(send_interval);
+        sleep_timer_wakeup(main_sleep_time);
       } break;
     }
     delay(delay_ms);
