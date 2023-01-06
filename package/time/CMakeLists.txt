@@ -1,4 +1,4 @@
-set(req freertos lwip esp_timer syslog)
+set(req freertos lwip esp_timer syslog syscfg)
 
 set(srcs)
 set(includes)

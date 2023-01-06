@@ -1,5 +1,5 @@
-#ifndef _SYS_FILE_IMPL_H_
-#define _SYS_FILE_IMPL_H_
+#ifndef _SYSFILE_H_
+#define _SYSFILE_H_
 
 #if defined(SPIFFS_IMPL)
 #include "esp32/spiffs_impl.h"

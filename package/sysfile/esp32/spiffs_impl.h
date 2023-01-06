@@ -1,5 +1,5 @@
 /**
- * @file sysevent_impl.h
+ * @file spiffs_impl.h
  *
  * @brief using SPIFFS is provided in the "storage/spiffs" directory.
  * This is initializes and mounts a SPIFFS partition, then writes and reads data from it using POSIX and C library APIs.
@@ -16,8 +16,8 @@
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
 
-#ifndef _SYS_FILE_H_
-#define _SYS_FILE_H_
+#ifndef _SPIFFS_IMPL_H_
+#define _SPIFFS_IMPL_H_
 
 #define BASE_PATH "/spiffs"
 

@@ -1,4 +1,4 @@
-set(req freertos log esp_event spiffs esp_littlefs sysevent syslog esp_wifi heap ping sysfile)
+set(req spiffs esp_littlefs syslog esp_wifi)
 
 set(srcs)
 set(includes)

@@ -1,5 +1,5 @@
 /**
- * @file sysevent_impl.c
+ * @file spiffs_impl.c
  *
  * @brief using SPIFFS is provided in the "storage/spiffs" directory.
  * This is initializes and mounts a SPIFFS partition, then writes and reads data from it using POSIX and C library APIs.
