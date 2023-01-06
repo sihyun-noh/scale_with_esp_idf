@@ -11,7 +11,7 @@ extern "C" {
 
 void show_timestamp(time_t now);
 bool read_hid_config(config_value_t *cfg);
-bool save_hid_config(const char *flow, const char *start_time, const char *zones);
+bool save_hid_config(const char *flow, const char *start_time_hour, const char *start_time_minute, const char *zones);
 
 #ifdef __cplusplus
 }

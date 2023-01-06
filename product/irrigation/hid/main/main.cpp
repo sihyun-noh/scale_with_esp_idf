@@ -53,15 +53,6 @@ sc_ctx_t *sc_ctx = NULL;
 
 uint8_t main_mac_addr[6] = { 0xF4, 0x12, 0xFA, 0x52, 0x07, 0xD1 };
 
-const char *test_string =
-    "This is a test I am here, testing, testing, This is a test I am here, testing, testing, This is a test I am here, "
-    "testing, testing, "
-    "This is a test I am here, testing, testing, This is a test I am here, testing, testing, This is a test I am here, "
-    "testing, testing, This is a test I am here, testing, testing, This is a test I am here, testing, testing, "
-    "This is a test I am here, testing, testing, This is a test I am here, testing, testing, This is a test I am here, "
-    "testing, testing, This is a test I am here, testing, testing, This is a test I am here, testing, testing, "
-    "testing, testing, This is a test I am here, testing, testing, This is a test I am here, testing, testing";
-
 extern "C" {
 extern int read_battery_percentage(void);
 extern void sdcard_init(void);
@@ -237,7 +228,6 @@ void loop_task(void) {
       } break;
       case RUNNING_MODE: {
         set_operation_mode(SLEEP_MODE);
-        FDATA(littlefs_base_path, "%s", test_string);
       } break;
       case SLEEP_MODE: {
         vTaskDelay(send_interval * 1000 / portTICK_PERIOD_MS);

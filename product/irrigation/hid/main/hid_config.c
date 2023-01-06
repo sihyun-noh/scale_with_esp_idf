@@ -38,7 +38,7 @@ bool read_hid_config(config_value_t *cfg) {
   return true;
 }
 
-bool save_hid_config(const char *flow, const char *start_time, const char *zones) {
+bool save_hid_config(const char *flow, const char *start_time_hour, const char *start_time_minute, const char *zones) {
   config_value_t cfg;
   memset(&cfg, 0x00, sizeof(config_value_t));
 
@@ -47,38 +47,34 @@ bool save_hid_config(const char *flow, const char *start_time, const char *zones
   int hour = 0, min = 0;
   char *beg = NULL, *pch = NULL;
 
-  if (!flow || !start_time || strlen(flow) == 0 || strlen(start_time) == 0) {
+  if (!flow || !start_time_hour || strlen(flow) == 0 || strlen(start_time_hour) == 0) {
     LOGW(TAG, "flow and start_time should be filled!!!");
     return false;
   }
+
+  LOGI(TAG, "flow data = %s, zones = %s, start_time_hour = %s", flow, zones, start_time_hour);
+
+  // Flow rate
   flow_rate = atoi(flow);
   if (flow_rate <= 0) {
     LOGW(TAG, "flow rate cannot be 0 or negative");
   } else {
     cfg.flow_rate = flow_rate;
   }
-  LOGI(TAG, "flow data = %s, zones = %s, start_time = %s", flow, zones, start_time);
-  if (start_time) {
-    beg = start_time;
-    pch = (char *)strpbrk(beg, ":");
-    while (pch != NULL) {
-      *pch = '\0';
-      hour = atoi(beg);
-      beg = pch + 1;
-      pch = (char *)strpbrk(beg, ":");
-    }
-    if (beg) {
-      min = atoi(beg);
-    }
-    LOGI(TAG, "%d:%d", hour, min);
-    time_t now = time(NULL);
-    show_timestamp(now);
-    time_t tm = generate_start_time(hour, min);
-    show_timestamp(tm);
-    cfg.start_time = tm;
-  }
+
+  // Start Hour, Minute time
+  hour = atoi(start_time_hour);
+  min = atoi(start_time_minute);
+  LOGI(TAG, "%d:%d", hour, min);
+  time_t now = time(NULL);
+  show_timestamp(now);
+  time_t tm = generate_start_time(hour, min);
+  show_timestamp(tm);
+  cfg.start_time = tm;
+
+  // Zone Areas
   if (zones) {
-    beg = zones;
+    beg = (char *)zones;
     pch = (char *)strpbrk(beg, ",");
     while (pch != NULL) {
       *pch = '\0';
