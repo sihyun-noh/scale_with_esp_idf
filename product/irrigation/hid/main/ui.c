@@ -553,11 +553,10 @@ void ui_Main_screen_init(void) {
   ui_StartButtonLabel = lv_label_create(ui_StartButton);
   lv_obj_set_width(ui_StartButtonLabel, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_StartButtonLabel, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_StartButtonLabel, -172);
-  lv_obj_set_y(ui_StartButtonLabel, 12);
   lv_obj_set_align(ui_StartButtonLabel, LV_ALIGN_CENTER);
+  lv_label_set_long_mode(ui_StartButtonLabel, LV_LABEL_LONG_DOT);
   lv_label_set_text(ui_StartButtonLabel, "Start");
-  lv_obj_set_style_text_color(ui_StartButtonLabel, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_color(ui_StartButtonLabel, lv_color_hex(0x808080), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_text_opa(ui_StartButtonLabel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_text_font(ui_StartButtonLabel, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
