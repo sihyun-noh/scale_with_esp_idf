@@ -19,26 +19,26 @@ extern uint8_t main_mac_addr[];
 void Screen2SaveButtonEvent(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_CLICKED) {
-    config_t cfg = { 0 };
+    config_value_t cfg = { 0 };
     irrigation_message_t msg = { 0 };
 
     const char *flow = lv_textarea_get_text(ui_Screen2TextArea);
     const char *zones = lv_textarea_get_text(ui_Screen2TextArea1);
     const char *start_time = lv_textarea_get_text(ui_Screen2TextArea2);
-    save_hid_config(flow, start_time, zones);
+    if (save_hid_config(flow, start_time, zones)) {
+      // Read config value
+      read_hid_config(&cfg);
+      LOGI(TAG, "flow = %d", cfg.flow_rate);
+      for (int i = 0; i < cfg.zone_cnt; i++) {
+        LOGI(TAG, "zones = %d", cfg.zones[i]);
+      }
+      show_timestamp(cfg.start_time);
 
-    // Read config value
-    read_hid_config(&cfg);
-    LOGI(TAG, "flow = %d", cfg.flow_rate);
-    for (int i = 0; i < cfg.zone_cnt; i++) {
-      LOGI(TAG, "zones = %d", cfg.zones[i]);
+      // Send configuration data to the main controller via ESP-NOW
+      msg.sender_type = SET_CONFIG;
+      memcpy(&msg.config, &cfg, sizeof(config_value_t));
+      espnow_send_data(main_mac_addr, &msg, sizeof(irrigation_message_t));
     }
-    show_timestamp(cfg.start_time);
-
-    // Send configuration data to the main controller via ESP-NOW
-    msg.sender_type = SET_CONFIG;
-    memcpy(&msg.config, &cfg, sizeof(config_t));
-    espnow_send_data(main_mac_addr, &msg, sizeof(irrigation_message_t));
   }
 }
 

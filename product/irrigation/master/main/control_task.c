@@ -12,51 +12,13 @@
 #include "time.h"
 #include "main.h"
 #include "adc.h"
+#include "comm_packet.h"
 
 static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;
 
 extern int get_water_flow_liters(void);
 extern void reset_water_flow_liters(void);
-
-typedef enum {
-  SET_CONFIG = 0,
-  TIME_SYNC,
-  START_FLOW,
-  BATTERY_LEVEL,
-  SET_VALVE_ON,
-  SET_VALVE_OFF,
-  FLOW_STATUS,
-  SET_SLEEP,
-  RESPONSE,
-  ZONE_COMPLETE,
-  ALL_COMPLETE,
-  NONE
-} message_type_t;
-
-typedef struct config_value {
-  int flow_rate;
-  int zone_cnt;
-  int zones[6];
-  time_t start_time; 
-} config_value_t;
-
-typedef enum {
-  FAIL = 0,
-  SUCCESS,
-} response_type_t;
-
-typedef struct irrigation_message {
-  message_type_t sender_type;
-  message_type_t receive_type;
-  response_type_t resp;
-  config_value_t config;
-  int flow_value;
-  int deviceId;  // zone number or HID or master
-  uint64_t remain_time_sleep;
-  int battery_level[7]; // 0: HID, 1~6: child 1~6
-  time_t current_time;  
-} irrigation_message_t;
 
 typedef enum {
   CHECK_ADDR = 0,
@@ -73,18 +35,18 @@ typedef enum {
 
 condtrol_status_t controlStatus = CHECK_ADDR;
 
-bool setConfig;         // config setting 여부
-bool flowStart;         // 관수 시작 flag
-time_t flowStartTime;   // 관수 시작 설정 시간
-int zoneFlowCnt;        // 관수 설정된 zone 갯수
-int flowOrder[6];       // 관수 순서
-int flowSettingValue;   // 관수 설정 값
-int zoneBattery[7];     // 0: master, 1~6: child 배터리 잔량
+bool setConfig;        // config setting 여부
+bool flowStart;        // 관수 시작 flag
+time_t flowStartTime;  // 관수 시작 설정 시간
+int zoneFlowCnt;       // 관수 설정된 zone 갯수
+int flowOrder[6];      // 관수 순서
+int flowSettingValue;  // 관수 설정 값
+int zoneBattery[7];    // 0: master, 1~6: child 배터리 잔량
 
-int flowDoneCnt;        // zone 변 관수 완료 카운트
-int batteryCnt;         // child 배터리 수신 횟수
+int flowDoneCnt;  // zone 변 관수 완료 카운트
+int batteryCnt;   // child 배터리 수신 횟수
 
-uint64_t remainSleepTime;    // sleep 시간
+uint64_t remainSleepTime;  // sleep 시간
 
 extern uint8_t macAddress[7][6];  // 0 = HID, 1~6 = child 1~6
 
@@ -95,7 +57,7 @@ void init_variable(void) {
   zoneFlowCnt = 0;
   memset(&flowOrder, 0x00, sizeof(flowOrder));
   memset(&zoneBattery, 0x00, sizeof(zoneBattery));
-  flowSettingValue = 0;  
+  flowSettingValue = 0;
   flowDoneCnt = 0;
   batteryCnt = 0;
   remainSleepTime = 0;
@@ -125,12 +87,12 @@ int get_flow_value() {
 
 void get_addr(uint8_t arr[], int zone) {
   if (zone > 6) {
-    memset(arr, 0xFF, sizeof(uint8_t)*6);
+    memset(arr, 0xFF, sizeof(uint8_t) * 6);
   } else {
-    for (int i=0; i<6 ; i++) {
+    for (int i = 0; i < 6; i++) {
       arr[i] = macAddress[zone][i];
     }
-  } 
+  }
 }
 
 static time_t get_current_time(void) {
@@ -181,18 +143,20 @@ bool send_esp_data(message_type_t sender, int receiver) {
   memset(&send_message, 0x00, sizeof(send_message));
   send_message.sender_type = sender;
   send_message.current_time = get_current_time();
-  uint8_t zoneAddr[6] = {0,};
+  uint8_t zoneAddr[6] = {
+    0,
+  };
   get_addr(zoneAddr, receiver);
 
   LOG_BUFFER_HEXDUMP(TAG, zoneAddr, sizeof(zoneAddr), LOG_INFO);
 
   switch (sender) {
     case START_FLOW: {
-      send_message.deviceId = flowOrder[flowDoneCnt]; 
+      send_message.deviceId = flowOrder[flowDoneCnt];
     } break;
 
     case ZONE_COMPLETE: {
-      send_message.deviceId = flowOrder[flowDoneCnt]; 
+      send_message.deviceId = flowOrder[flowDoneCnt];
       send_message.flow_value = get_flow_value();
     } break;
 
@@ -207,7 +171,7 @@ bool send_esp_data(message_type_t sender, int receiver) {
     default: break;
   }
 
-  return espnow_send_data(zoneAddr, (uint8_t *) &send_message, sizeof(send_message)) == ESP_OK;
+  return espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(send_message)) == ESP_OK;
 }
 
 void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
@@ -237,7 +201,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
       case RESPONSE: {
         if (recv_message.receive_type == SET_VALVE_ON) {
           if (recv_message.resp == SUCCESS) {
-            start_flow();            
+            start_flow();
             // 관수 시작을 HID 에 전달
             if (!send_esp_data(START_FLOW, 0))
               send_esp_data(START_FLOW, 0);
@@ -263,7 +227,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
           if (batteryCnt >= 6) {
             zoneBattery[0] = read_battery_percentage();
             LOGI(TAG, "Battery Level, Master: %d, Child : %d, %d, %d, %d, %d, %d ", zoneBattery[0], zoneBattery[1],
-                  zoneBattery[2], zoneBattery[3], zoneBattery[4], zoneBattery[5], zoneBattery[6]);
+                 zoneBattery[2], zoneBattery[3], zoneBattery[4], zoneBattery[5], zoneBattery[6]);
 
             if (!send_esp_data(BATTERY_LEVEL, 0))
               send_esp_data(BATTERY_LEVEL, 0);
@@ -300,7 +264,7 @@ static void control_task(void* pvParameters) {
 
         LOGI(TAG, "ADDR CHECK DONE !!");
         vTaskDelay(2000 / portTICK_PERIOD_MS);
-      }  break;
+      } break;
 
       case CHECK_TIME: {
         time_t currTime = get_current_time();
@@ -314,7 +278,7 @@ static void control_task(void* pvParameters) {
         }
 
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-      }  break;
+      } break;
 
       case SYNC_TIME: {
         // master 시간을 기준으로 message 생성하여 broadcasting
@@ -322,13 +286,13 @@ static void control_task(void* pvParameters) {
         // 다른 device 별 rtc 차이로 깨어 나는 시간 차이를 위해 시간 버퍼 추가.
         // 10분으로 시간 버퍼 적용 --> 테스트 진행 후 값 튜닝 필요
         vTaskDelay((1000 * 60 * 10) / portTICK_PERIOD_MS);
-        
+
         if (!send_esp_data(TIME_SYNC, 7))
           send_esp_data(TIME_SYNC, 7);
 
         LOGI(TAG, "SEND HID/CHILD TIME SYNC !!");
         set_control_status(WAIT_STATE);
-      }  break;
+      } break;
 
       case WAIT_STATE: {
         // 대기 상태

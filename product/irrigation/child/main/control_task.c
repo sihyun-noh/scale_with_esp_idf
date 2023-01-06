@@ -13,48 +13,10 @@
 #include "main.h"
 #include "adc.h"
 #include "time_api.h"
+#include "comm_packet.h"
 
 static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;
-
-typedef enum {
-  SET_CONFIG = 0,
-  TIME_SYNC,
-  START_FLOW,
-  BATTERY_LEVEL,
-  SET_VALVE_ON,
-  SET_VALVE_OFF,
-  FLOW_STATUS,
-  SET_SLEEP,
-  RESPONSE,
-  ZONE_COMPLETE,
-  ALL_COMPLETE,
-  NONE
-} message_type_t;
-
-typedef struct config_value {
-  int flow_rate;
-  int zone_cnt;
-  int zones[6];
-  time_t start_time;
-} config_value_t;
-
-typedef enum {
-  FAIL = 0,
-  SUCCESS,
-} response_type_t;
-
-typedef struct irrigation_message {
-  message_type_t sender_type;
-  message_type_t receive_type;
-  response_type_t resp;
-  config_value_t config;
-  int flow_value;
-  int deviceId;
-  uint64_t remain_time_sleep;
-  int battery_level[7];  // 0: HID, 1~6: child 1~6
-  time_t current_time;
-} irrigation_message_t;
 
 typedef enum { CHECK_ADDR = 0, WAIT_STATE, ERROR } condtrol_status_t;
 
@@ -89,14 +51,14 @@ bool send_esp_data(message_type_t sender, message_type_t receiver) {
   send_message.sender_type = sender;
   send_message.receive_type = receiver;
   send_message.resp = SUCCESS;
-  send_message.deviceId = myId; 
+  send_message.deviceId = myId;
   send_message.current_time = get_current_time();
 
   if (receiver == TIME_SYNC) {
     send_message.battery_level[myId] = read_battery_percentage();
   }
 
-  return espnow_send_data(masterAddress, (uint8_t *) &send_message, sizeof(send_message)) == ESP_OK;
+  return espnow_send_data(masterAddress, (uint8_t*)&send_message, sizeof(send_message)) == ESP_OK;
 }
 
 void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
@@ -117,7 +79,8 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         struct tm timeinfo = { 0 };
         localtime_r(&syncTimeValue, &timeinfo);
 
-        set_local_time(timeinfo.tm_year+1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+        set_local_time(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour,
+                       timeinfo.tm_min, timeinfo.tm_sec);
 
         LOGI(TAG, "Time synced zone : %d !!", myId);
 
@@ -191,7 +154,7 @@ static void control_task(void* pvParameters) {
           LOGI(TAG, "matching get id : %d", myId);
         }
 
-        set_control_status(WAIT_STATE);       
+        set_control_status(WAIT_STATE);
 
         LOGI(TAG, "ADDR CHECK DONE !!");
         vTaskDelay(2000 / portTICK_PERIOD_MS);

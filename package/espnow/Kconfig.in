@@ -1,0 +1,5 @@
+config SMARTFARM_ESPNOW_FEATURE
+  bool "SmartFarm espnow feature"
+  default "n"
+  help
+    ESPNOW feature used in irrigation system

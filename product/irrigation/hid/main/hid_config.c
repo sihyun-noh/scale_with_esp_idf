@@ -31,23 +31,23 @@ void show_timestamp(time_t now) {
   LOGI(TAG, "timestamp = %s", timestamp);
 }
 
-bool read_hid_config(config_t *cfg) {
-  if (syscfg_get_blob(CFG_DATA, "hid_config", cfg, sizeof(config_t))) {
+bool read_hid_config(config_value_t *cfg) {
+  if (syscfg_get_blob(CFG_DATA, "hid_config", cfg, sizeof(config_value_t))) {
     return false;
   }
   return true;
 }
 
 bool save_hid_config(const char *flow, const char *start_time, const char *zones) {
-  config_t cfg;
-  memset(&cfg, 0x00, sizeof(config_t));
+  config_value_t cfg;
+  memset(&cfg, 0x00, sizeof(config_value_t));
 
   int flow_rate = 0;
   int i = 0, zone = 0;
   int hour = 0, min = 0;
   char *beg = NULL, *pch = NULL;
 
-  if (!flow || !start_time) {
+  if (!flow || !start_time || strlen(flow) == 0 || strlen(start_time) == 0) {
     LOGW(TAG, "flow and start_time should be filled!!!");
     return false;
   }
@@ -97,6 +97,6 @@ bool save_hid_config(const char *flow, const char *start_time, const char *zones
       LOGI(TAG, "zones[%d] = %d", i, cfg.zones[i]);
     }
   }
-  syscfg_set_blob(CFG_DATA, "hid_config", &cfg, sizeof(config_t));
+  syscfg_set_blob(CFG_DATA, "hid_config", &cfg, sizeof(config_value_t));
   return true;
 }
