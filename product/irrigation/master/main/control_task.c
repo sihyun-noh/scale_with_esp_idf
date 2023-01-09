@@ -171,7 +171,7 @@ bool send_esp_data(message_type_t sender, int receiver) {
     default: break;
   }
 
-  return espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(send_message)) == ESP_OK;
+  return espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(send_message));
 }
 
 void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
@@ -224,7 +224,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
           zoneBattery[recv_message.deviceId] = recv_message.battery_level[recv_message.deviceId];
           batteryCnt++;
 
-          if (batteryCnt >= 6) {
+          if (batteryCnt >= 1) {
             zoneBattery[0] = read_battery_percentage();
             LOGI(TAG, "Battery Level, Master: %d, Child : %d, %d, %d, %d, %d, %d ", zoneBattery[0], zoneBattery[1],
                  zoneBattery[2], zoneBattery[3], zoneBattery[4], zoneBattery[5], zoneBattery[6]);

@@ -58,7 +58,7 @@ bool send_esp_data(message_type_t sender, message_type_t receiver) {
     send_message.battery_level[myId] = read_battery_percentage();
   }
 
-  return espnow_send_data(masterAddress, (uint8_t*)&send_message, sizeof(send_message)) == ESP_OK;
+  return espnow_send_data(masterAddress, (uint8_t*)&send_message, sizeof(send_message));
 }
 
 void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
