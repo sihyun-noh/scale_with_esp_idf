@@ -60,7 +60,7 @@ int read_battery_percentage(void) {
     set_low_battery(1);
   }
 
-  return 0;
+  return (int)(bat_percent);
 }
 
 /**
