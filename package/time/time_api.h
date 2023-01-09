@@ -85,6 +85,12 @@ void set_ntp_time(void);
 
 bool get_ntp_time(int tz_offset, int dst_offset);
 
+#if defined(CONFIG_SMARTFARM_RTC_DS3231_FEATURE)
+void rtc_time_init(void);
+void rtc_set_time(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec);
+void rtc_get_time(struct tm* time);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

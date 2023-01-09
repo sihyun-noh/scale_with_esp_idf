@@ -27,6 +27,12 @@
 #include "syscfg.h"
 #include "time_api.h"
 
+#if defined(CONFIG_SMARTFARM_RTC_DS3231_FEATURE)
+#include "ds3231.h"
+#include "ds3231_params.h"
+ds3231_dev_t rtc_dev;
+#endif
+
 static bool s_ntp_failed = false;
 
 static const char* TAG = "time";
@@ -219,6 +225,43 @@ bool get_ntp_time(int tz_offset, int dst_offset) {
   return s_ntp_failed;
 }
 
+#if defined(CONFIG_SMARTFARM_RTC_DS3231_FEATURE)
+void rtc_time_init(void) {
+  struct tm timeinfo;
+  memset(&rtc_dev, 0, sizeof(ds3231_dev_t));
+  ESP_ERROR_CHECK(ds3231_init_desc(&rtc_dev, &ds3231_params[0]));
+
+  vTaskDelay(pdMS_TO_TICKS(250));
+  rtc_get_time(&timeinfo);
+  set_local_time(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+}
+
+void rtc_set_time(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec) {
+  struct tm time = {
+      .tm_year = year - 1900,  // since 1900
+      .tm_mon = month - 1,     // 0-based
+      .tm_mday = day,
+      .tm_hour = hour,
+      .tm_min = min,
+      .tm_sec = sec
+  };
+  ESP_ERROR_CHECK(ds3231_set_time(&rtc_dev, &time));
+}
+
+void rtc_get_time(struct tm* time) {
+  while (1) {
+    vTaskDelay(pdMS_TO_TICKS(250));
+
+    if (ds3231_get_time(&rtc_dev, time) != ESP_OK) {
+      LOGI(TAG, "Could not get time");
+      continue;
+    }
+
+    break;
+  }
+}
+#endif
+
 int rtc_set_time_cmd(int argc, char** argv) {
   struct tm time = { 0 };
   char timestamp[80] = { 0 };
@@ -248,7 +291,12 @@ int rtc_set_time_cmd(int argc, char** argv) {
   if (time.tm_sec > 59)
     return -1;
 
+#if defined(CONFIG_SMARTFARM_RTC_DS3231_FEATURE)
+  rtc_set_time(time.tm_year, time.tm_mon, time.tm_mday, time.tm_hour, time.tm_min, time.tm_sec);
   set_local_time(time.tm_year, time.tm_mon, time.tm_mday, time.tm_hour, time.tm_min, time.tm_sec);
+#else
+  set_local_time(time.tm_year, time.tm_mon, time.tm_mday, time.tm_hour, time.tm_min, time.tm_sec);
+#endif
 
   return 0;
 }

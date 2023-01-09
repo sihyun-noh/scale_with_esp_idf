@@ -14,6 +14,7 @@
 #include "actuator.h"
 #include "main.h"
 #include "espnow.h"
+#include "time_api.h"
 
 #include <string.h>
 
@@ -129,6 +130,8 @@ int system_init(void) {
 
   // Generate the default manufacturing data if there is no data in mfg partition.
   generate_syscfg();
+
+  rtc_time_init();
 
   pump_init();
 

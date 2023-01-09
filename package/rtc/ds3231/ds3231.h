@@ -51,6 +51,9 @@ extern "C" {
 
 #define DS3231_I2C_ADDR 0x68 //!< I2C address
 
+#define DS3231_I2C_SDA_PIN 33
+#define DS3231_I2C_SCL_PIN 32
+
 /**
  * Alarms
  */
