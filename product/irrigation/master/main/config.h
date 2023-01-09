@@ -19,7 +19,7 @@
 
 #define WATER_FLOW  4
 
-#define FUNC_KEY1  12
+#define FUNC_KEY1  14
 #define FUNC_KEY2  13
 
 #define LED_RED   27
