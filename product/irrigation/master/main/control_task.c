@@ -224,7 +224,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
           zoneBattery[recv_message.deviceId] = recv_message.battery_level[recv_message.deviceId];
           batteryCnt++;
 
-          if (batteryCnt >= 1) {
+          if (batteryCnt >= 6) {
             zoneBattery[0] = read_battery_percentage();
             LOGI(TAG, "Battery Level, Master: %d, Child : %d, %d, %d, %d, %d, %d ", zoneBattery[0], zoneBattery[1],
                  zoneBattery[2], zoneBattery[3], zoneBattery[4], zoneBattery[5], zoneBattery[6]);
