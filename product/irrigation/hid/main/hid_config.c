@@ -33,6 +33,7 @@ void show_timestamp(time_t now) {
 
 bool read_hid_config(config_value_t *cfg) {
   if (syscfg_get_blob(CFG_DATA, "hid_config", cfg, sizeof(config_value_t))) {
+    LOGE(TAG, "Failed to read hid config, it seems there is no data!!!");
     return false;
   }
   return true;

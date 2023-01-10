@@ -17,7 +17,31 @@ static const char* TAG = "UI_EVENT";
 extern uint8_t main_mac_addr[];
 
 void OnStartEvent(lv_event_t* e) {
-  // Your code here
+  config_value_t cfg = { 0 };
+  irrigation_message_t msg = { 0 };
+
+  // Read config value
+  if (read_hid_config(&cfg)) {
+    // Check if the configuration files are valid or not.
+    // Start time should be included in irrigation available time.
+
+    LOGI(TAG, "flow = %d", cfg.flow_rate);
+    for (int i = 0; i < cfg.zone_cnt; i++) {
+      LOGI(TAG, "zones = %d", cfg.zones[i]);
+    }
+    show_timestamp(cfg.start_time);
+
+    // Send configuration data to the main controller via ESP-NOW
+    msg.sender_type = SET_CONFIG;
+    memcpy(&msg.config, &cfg, sizeof(config_value_t));
+    espnow_send_data(main_mac_addr, (uint8_t*)&msg, sizeof(irrigation_message_t));
+    LOGI(TAG, "Success to send Start command!!!");
+    lv_label_set_text(ui_StartButtonLabel, "In-Progress");
+    // Reset configuration data
+    syscfg_unset(CFG_DATA, "hid_config");
+  } else {
+    LOGE(TAG, "Failed to send Start command!!!");
+  }
 }
 
 void OnStopEvent(lv_event_t* e) {
@@ -59,26 +83,12 @@ void OnTimeMinuteEvent(lv_event_t* e) {
 void OnSettingSaveEvent(lv_event_t* e) {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_CLICKED) {
-    config_value_t cfg = { 0 };
-    irrigation_message_t msg = { 0 };
-
     const char* flow = lv_textarea_get_text(ui_FlowRateText);
     const char* zones = lv_textarea_get_text(ui_ZoneAreaText);
     const char* start_time_hour = lv_textarea_get_text(ui_TimeHourText);
     const char* start_time_minute = lv_textarea_get_text(ui_TimeMinuteText);
     if (save_hid_config(flow, start_time_hour, start_time_minute, zones)) {
-      // Read config value
-      read_hid_config(&cfg);
-      LOGI(TAG, "flow = %d", cfg.flow_rate);
-      for (int i = 0; i < cfg.zone_cnt; i++) {
-        LOGI(TAG, "zones = %d", cfg.zones[i]);
-      }
-      show_timestamp(cfg.start_time);
-
-      // Send configuration data to the main controller via ESP-NOW
-      msg.sender_type = SET_CONFIG;
-      memcpy(&msg.config, &cfg, sizeof(config_value_t));
-      espnow_send_data(main_mac_addr, (uint8_t*)&msg, sizeof(irrigation_message_t));
+      LOGI(TAG, "Success to save the configuration!!!");
     }
   }
 }
