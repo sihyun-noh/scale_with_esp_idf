@@ -168,6 +168,11 @@ bool send_esp_data(message_type_t sender, int receiver) {
       send_message.remain_time_sleep = remainSleepTime;
     } break;
 
+    case RESPONSE: {
+      send_message.receive_type = SET_CONFIG;
+      send_message.resp = SUCCESS;
+    } break;
+
     default: break;
   }
 
@@ -194,6 +199,10 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         flowSettingValue = recv_message.config.flow_rate;
         flowDoneCnt = 0;
         setConfig = true;
+
+        if (!send_esp_data(RESPONSE, 0))
+          send_esp_data(RESPONSE, 0);
+              
         set_control_status(CHECK_SCEHDULE);
         LOGI(TAG, "RECEIVE & SET CONFIG from HID");
       } break;
@@ -222,6 +231,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
           }
         } else if (recv_message.receive_type == TIME_SYNC) {
           zoneBattery[recv_message.deviceId] = recv_message.battery_level[recv_message.deviceId];
+          LOGI(TAG, "ID: %D, Battery level: %d", recv_message.deviceId, recv_message.battery_level[recv_message.deviceId]);
           batteryCnt++;
 
           if (batteryCnt >= 6) {
