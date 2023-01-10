@@ -138,7 +138,7 @@ uint64_t check_sleep_time(void) {
   }
 }
 
-bool send_esp_data(message_type_t sender, int receiver) {
+bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
   irrigation_message_t send_message;
   memset(&send_message, 0x00, sizeof(send_message));
   send_message.sender_type = sender;
@@ -146,7 +146,7 @@ bool send_esp_data(message_type_t sender, int receiver) {
   uint8_t zoneAddr[6] = {
     0,
   };
-  get_addr(zoneAddr, receiver);
+  get_addr(zoneAddr, id);
 
   LOG_BUFFER_HEXDUMP(TAG, zoneAddr, sizeof(zoneAddr), LOG_INFO);
 
@@ -169,8 +169,12 @@ bool send_esp_data(message_type_t sender, int receiver) {
     } break;
 
     case RESPONSE: {
-      send_message.receive_type = SET_CONFIG;
+      send_message.receive_type = receiver;
       send_message.resp = SUCCESS;
+      if (receiver == FORCE_STOP) {
+        send_message.deviceId = flowOrder[flowDoneCnt];
+        send_message.flow_value = get_flow_value();
+      }
     } break;
 
     default: break;
@@ -200,8 +204,8 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         flowDoneCnt = 0;
         setConfig = true;
 
-        if (!send_esp_data(RESPONSE, 0))
-          send_esp_data(RESPONSE, 0);
+        if (!send_esp_data(RESPONSE, SET_CONFIG, 0))
+          send_esp_data(RESPONSE, SET_CONFIG, 0);
               
         set_control_status(CHECK_SCEHDULE);
         LOGI(TAG, "RECEIVE & SET CONFIG from HID");
@@ -212,8 +216,8 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
           if (recv_message.resp == SUCCESS) {
             start_flow();
             // 관수 시작을 HID 에 전달
-            if (!send_esp_data(START_FLOW, 0))
-              send_esp_data(START_FLOW, 0);
+            if (!send_esp_data(START_FLOW, START_FLOW, 0))
+              send_esp_data(START_FLOW, START_FLOW, 0);
 
             LOGI(TAG, "RECEIVE VALVE ON RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
             set_control_status(CHECK_FLOW);
@@ -221,8 +225,8 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         } else if (recv_message.receive_type == SET_VALVE_OFF) {
           if (recv_message.resp == SUCCESS) {
             // 관수 완료를 HID 에 전달
-            if (!send_esp_data(ZONE_COMPLETE, 0))
-              send_esp_data(ZONE_COMPLETE, 0);
+            if (!send_esp_data(ZONE_COMPLETE, ZONE_COMPLETE, 0))
+              send_esp_data(ZONE_COMPLETE, ZONE_COMPLETE, 0);
 
             LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
             flowDoneCnt++;
@@ -239,12 +243,33 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
             LOGI(TAG, "Battery Level, Master: %d, Child : %d, %d, %d, %d, %d, %d ", zoneBattery[0], zoneBattery[1],
                  zoneBattery[2], zoneBattery[3], zoneBattery[4], zoneBattery[5], zoneBattery[6]);
 
-            if (!send_esp_data(BATTERY_LEVEL, 0))
-              send_esp_data(BATTERY_LEVEL, 0);
+            if (!send_esp_data(BATTERY_LEVEL, BATTERY_LEVEL, 0))
+              send_esp_data(BATTERY_LEVEL, BATTERY_LEVEL, 0);
 
             batteryCnt = 0;
             set_control_status(CHECK_SCEHDULE);
           }
+        } else if (recv_message.receive_type == FORCE_STOP) {
+          if (!send_esp_data(RESPONSE, FORCE_STOP, 0))
+            send_esp_data(RESPONSE, FORCE_STOP, 0);
+
+          init_variable();
+          set_control_status(CHECK_SCEHDULE);
+        }
+      } break;
+
+      case FORCE_STOP: {
+        LOGI(TAG, "FORCE STOP !!");
+
+        if (flowStart) {
+          stop_flow();
+          if (!send_esp_data(FORCE_STOP, FORCE_STOP, flowOrder[flowDoneCnt]))
+            send_esp_data(FORCE_STOP, FORCE_STOP, flowOrder[flowDoneCnt]);
+
+          set_control_status(WAIT_STATE);
+        } else {
+          init_variable();
+          set_control_status(CHECK_SCEHDULE);
         }
       } break;
 
@@ -297,8 +322,8 @@ static void control_task(void* pvParameters) {
         // 10분으로 시간 버퍼 적용 --> 테스트 진행 후 값 튜닝 필요
         vTaskDelay((1000 * 60 * 10) / portTICK_PERIOD_MS);
 
-        if (!send_esp_data(TIME_SYNC, 7))
-          send_esp_data(TIME_SYNC, 7);
+        if (!send_esp_data(TIME_SYNC, TIME_SYNC, 7))
+          send_esp_data(TIME_SYNC, TIME_SYNC, 7);
 
         LOGI(TAG, "SEND HID/CHILD TIME SYNC !!");
         set_control_status(WAIT_STATE);
@@ -333,8 +358,8 @@ static void control_task(void* pvParameters) {
         } else {
           remainSleepTime = check_sleep_time();
           if (remainSleepTime > 0) {
-            if (!send_esp_data(SET_SLEEP, 7))
-              send_esp_data(SET_SLEEP, 7);
+            if (!send_esp_data(SET_SLEEP, SET_SLEEP, 7))
+              send_esp_data(SET_SLEEP, SET_SLEEP, 7);
 
             LOGI(TAG, "SEND DEEP SLEEP MSG, SleepTime : %llus ", remainSleepTime);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -370,8 +395,8 @@ static void control_task(void* pvParameters) {
       case CHILD_VALVE_ON: {
         // 관수 스케줄에 따라 pump / zone pump on, off 컨트롤
         // 관수 시작 시 : zone valve on -> pump on
-        if (!send_esp_data(SET_VALVE_ON, flowOrder[flowDoneCnt]))
-          send_esp_data(SET_VALVE_ON, flowOrder[flowDoneCnt]);
+        if (!send_esp_data(SET_VALVE_ON, SET_VALVE_ON, flowOrder[flowDoneCnt]))
+          send_esp_data(SET_VALVE_ON, SET_VALVE_ON, flowOrder[flowDoneCnt]);
 
         LOGI(TAG, "CHILD -%d VALVE ON !!", flowOrder[flowDoneCnt]);
         set_control_status(WAIT_STATE);
@@ -383,8 +408,8 @@ static void control_task(void* pvParameters) {
         // 관수 중지 시 : pump off -> zone valve off
         stop_flow();
 
-        if (!send_esp_data(SET_VALVE_OFF, flowOrder[flowDoneCnt]))
-          send_esp_data(SET_VALVE_OFF, flowOrder[flowDoneCnt]);
+        if (!send_esp_data(SET_VALVE_OFF, SET_VALVE_OFF, flowOrder[flowDoneCnt]))
+          send_esp_data(SET_VALVE_OFF, SET_VALVE_OFF, flowOrder[flowDoneCnt]);
 
         LOGI(TAG, "CHILD - %d VALVE OFF !!", flowOrder[flowDoneCnt]);
         set_control_status(WAIT_STATE);
@@ -394,8 +419,8 @@ static void control_task(void* pvParameters) {
       case COMPLETE: {
         // 관수 스케줄대로 모든 관수가 종료된 상태.
         // 추가 관수 여부 확인..--> wait config 모드로
-        if (!send_esp_data(ALL_COMPLETE, 0))
-          send_esp_data(ALL_COMPLETE, 0);
+        if (!send_esp_data(ALL_COMPLETE, ALL_COMPLETE, 0))
+          send_esp_data(ALL_COMPLETE, ALL_COMPLETE, 0);
 
         LOGI(TAG, "ALL CHILD FLOW COMPLETE!!");
 

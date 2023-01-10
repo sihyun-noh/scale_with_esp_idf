@@ -107,13 +107,14 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         LOGI(TAG, "Zone-%d Valve On", myId);
       } break;
 
-      case SET_VALVE_OFF: {
+      case SET_VALVE_OFF:
+      case FORCE_STOP: {
         // valve off -> send response message
         valve_close();
         vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-        if (!send_esp_data(RESPONSE, SET_VALVE_OFF))
-          send_esp_data(RESPONSE, SET_VALVE_OFF);
+        if (!send_esp_data(RESPONSE, recv_message.sender_type))
+          send_esp_data(RESPONSE, recv_message.sender_type);
 
         LOGI(TAG, "Zone-%d Valve Off", myId);
       } break;

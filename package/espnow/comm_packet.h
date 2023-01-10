@@ -15,6 +15,7 @@ typedef enum {
   RESPONSE,
   ZONE_COMPLETE,
   ALL_COMPLETE,
+  FORCE_STOP,
   NONE
 } message_type_t;
 
