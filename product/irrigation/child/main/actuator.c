@@ -28,6 +28,8 @@ int valve_init(void) {
   gpio_write(SOL_ON, 1);
   set_actuator_err(0);
 
+  valve_close();
+
   return 0;
 }
 
