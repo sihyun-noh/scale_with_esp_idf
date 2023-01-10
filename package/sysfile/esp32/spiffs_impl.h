@@ -20,6 +20,7 @@
 #define _SPIFFS_IMPL_H_
 
 #define BASE_PATH "/spiffs"
+#define PARTITION_NAME ""
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,7 +32,7 @@ extern "C" {
  * @return int 0 on success, -1 on failure,
  */
 
-int init_spiffs_impl(void);
+int init_spiffs_impl(const char *partition_name, const char *root_path);
 
 /**
  * @brief Format the SPIFFS partition

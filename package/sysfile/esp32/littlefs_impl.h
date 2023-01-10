@@ -4,7 +4,7 @@
 #define BASE_PATH "/storage"
 #define PARTITION_NAME "storage"
 
-int init_littlefs_impl(void);
+int init_littlefs_impl(const char *partition_name, const char *root_path);
 
 int format_littlefs_impl(void);
 

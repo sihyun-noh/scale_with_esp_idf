@@ -12,12 +12,18 @@
 
 const static char *TAG = "LittleFS";
 
-int init_littlefs_impl(void) {
+static char s_partition_name[80];
+static char s_root_path[256];
+
+int init_littlefs_impl(const char *partition_name, const char *root_path) {
   LOGI(TAG, "Initializing LittleFS");
 
   esp_vfs_littlefs_conf_t conf = {
-    .base_path = BASE_PATH, .partition_label = PARTITION_NAME, .format_if_mount_failed = true, .dont_mount = false
+    .base_path = root_path, .partition_label = partition_name, .format_if_mount_failed = true, .dont_mount = false
   };
+
+  snprintf(s_partition_name, sizeof(s_partition_name), "%s", partition_name);
+  snprintf(s_root_path, sizeof(s_root_path), "%s", root_path);
 
   esp_err_t ret = esp_vfs_littlefs_register(&conf);
 
@@ -43,7 +49,7 @@ int init_littlefs_impl(void) {
 }
 
 int format_littlefs_impl(void) {
-  esp_err_t ret = esp_littlefs_format(PARTITION_NAME);
+  esp_err_t ret = esp_littlefs_format(s_partition_name);
   if (ret == ESP_FAIL) {
     LOGE(TAG, "Failed to format littlefs system");
     return -1;
@@ -56,9 +62,9 @@ int show_file_impl() {
   DIR *d;
   struct dirent *dir;
 
-  LOGI(TAG, "base dir = %s", BASE_PATH);
+  LOGI(TAG, "base dir = %s", s_root_path);
 
-  d = opendir(BASE_PATH);
+  d = opendir(s_root_path);
   if (d) {
     while ((dir = readdir(d)) != NULL) {
       LOGI(TAG, "%d : %s\n", ++num, dir->d_name);

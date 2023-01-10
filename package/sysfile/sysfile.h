@@ -16,7 +16,7 @@ extern "C" {
  *
  * @return int 0 on success, -1 on failure,
  */
-int init_sysfile(void);
+int init_sysfile(const char *partition_name, const char *root_path);
 
 /**
  * @brief Format the SPIFFS partition

@@ -23,13 +23,13 @@
 #include "esp32/littlefs_impl.h"
 #endif
 
-int init_sysfile(void) {
+int init_sysfile(const char *partition_name, const char *root_path) {
   int ret = 0;
 
 #if defined(SPIFFS_IMPL)
-  ret = init_spiffs_impl();
+  ret = init_spiffs_impl(partition_name, root_path);
 #elif defined(LITTLEFS_IMPL)
-  ret = init_littlefs_impl();
+  ret = init_littlefs_impl(partition_name, root_path);
 #endif
   return ret;
 }

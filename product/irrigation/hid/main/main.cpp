@@ -1,4 +1,4 @@
-// #include "freertos/projdefs.h"
+#include "esp32/littlefs_impl.h"
 #include "nvs_flash.h"
 #include "esp_timer.h"
 #include "esp_sleep.h"
@@ -17,11 +17,9 @@
 #include "config.h"
 #include "main.h"
 #include "espnow.h"
+#include "file_manager.h"
 
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
 
 #define LV_TICK_PERIOD_MS 1
 #define LGFX_USE_V1  // LovyanGFX version
@@ -190,8 +188,7 @@ int system_init(void) {
 
   sdcard_init();
 
-  init_sysfile();
-  sysfile_show_file();
+  fm_init(PARTITION_NAME, BASE_PATH);
 
   // TODO : Temporary code for testing, the code below will be removed after implementing of espnow_add_peers()
   // Get a main mac address that will be used in espnow
