@@ -20,7 +20,7 @@ typedef enum {
 } message_type_t;
 
 typedef struct config_value {
-  int flow_rate;
+  int flow_rate[6];
   int zone_cnt;
   int zones[6];
   time_t start_time;

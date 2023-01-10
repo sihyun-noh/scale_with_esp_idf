@@ -40,7 +40,7 @@ bool flowStart;        // 관수 시작 flag
 time_t flowStartTime;  // 관수 시작 설정 시간
 int zoneFlowCnt;       // 관수 설정된 zone 갯수
 int flowOrder[6];      // 관수 순서
-int flowSettingValue;  // 관수 설정 값
+int flowSettingValue[6];  // 관수 설정 값
 int zoneBattery[7];    // 0: master, 1~6: child 배터리 잔량
 
 int flowDoneCnt;  // zone 변 관수 완료 카운트
@@ -56,8 +56,8 @@ void init_variable(void) {
   memset(&flowStartTime, 0x00, sizeof(flowStartTime));
   zoneFlowCnt = 0;
   memset(&flowOrder, 0x00, sizeof(flowOrder));
+  memset(&flowSettingValue, 0x00, sizeof(flowSettingValue));
   memset(&zoneBattery, 0x00, sizeof(zoneBattery));
-  flowSettingValue = 0;
   flowDoneCnt = 0;
   batteryCnt = 0;
   remainSleepTime = 0;
@@ -200,7 +200,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         flowStartTime = recv_message.config.start_time;
         zoneFlowCnt = recv_message.config.zone_cnt;
         memcpy(flowOrder, recv_message.config.zones, sizeof(flowOrder));
-        flowSettingValue = recv_message.config.flow_rate;
+        memcpy(flowSettingValue, recv_message.config.flow_rate, sizeof(flowSettingValue));
         flowDoneCnt = 0;
         setConfig = true;
 
@@ -385,7 +385,7 @@ static void control_task(void* pvParameters) {
         */
 
         // 유량 체크, 설정값과 차이가 20리터 이내로 들어올 경우 valve off 하도록... -> 테스트 후 값 변경 필요.
-        if (get_flow_value() >= (flowSettingValue - 20)) {
+        if (get_flow_value() >= (flowSettingValue[flowDoneCnt] - 20)) {
           set_control_status(CHILD_VALVE_OFF);
         }
 
