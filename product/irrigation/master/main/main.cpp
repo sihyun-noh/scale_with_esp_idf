@@ -98,6 +98,17 @@ int sleep_timer_wakeup(uint64_t wakeup_time_sec) {
   return ret;
 }
 
+static void check_model(void) {
+  char model_name[10] = { 0 };
+  char power_mode[10] = { 0 };
+
+  syscfg_set(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, "B");
+  syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
+  syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
+
+  LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
+}
+
 int system_init(void) {
   // Initialize NVS
   esp_err_t ret = nvs_flash_init();
@@ -130,6 +141,8 @@ int system_init(void) {
 
   // Generate the default manufacturing data if there is no data in mfg partition.
   generate_syscfg();
+
+  check_model();
 
   rtc_time_init();
 

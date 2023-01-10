@@ -20,7 +20,7 @@ set(PROJECT_STAGE "DVT")
 # Set project name
 set(PROJECT_NAME "IRRIGATION_$ENV{CURRENT_PROJECT}")
 message("project name : ${PROJECT_NAME}")
-set(PROJECT_TYPE "IRRIGATION")
+set(PROJECT_TYPE "IRRIGATION_MASTER")
 
 # Get the current commit hash
 execute_process(
