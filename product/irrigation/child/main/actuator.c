@@ -35,18 +35,16 @@ int valve_init(void) {
 
 void valve_open(void) {
   gpio_write(SOL_ON, 0);
-  vTaskDelay(1000 / portTICK_PERIOD_MS);
   gpio_write(SOL_PW, 1);
-  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  vTaskDelay(500 / portTICK_PERIOD_MS);
   gpio_write(SOL_PW, 0);
   set_actuator_open(1);
 }
 
 void valve_close(void) {
   gpio_write(SOL_ON, 1);
-  vTaskDelay(1000 / portTICK_PERIOD_MS);
   gpio_write(SOL_PW, 1);
-  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  vTaskDelay(500 / portTICK_PERIOD_MS);
   gpio_write(SOL_PW, 0);
   set_actuator_open(0);
 }
