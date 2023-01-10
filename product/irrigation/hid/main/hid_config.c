@@ -55,14 +55,6 @@ bool save_hid_config(const char *flow, const char *start_time_hour, const char *
 
   LOGI(TAG, "flow data = %s, zones = %s, start_time_hour = %s", flow, zones, start_time_hour);
 
-  // Flow rate
-  flow_rate = atoi(flow);
-  if (flow_rate <= 0) {
-    LOGW(TAG, "flow rate cannot be 0 or negative");
-  } else {
-    cfg.flow_rate = flow_rate;
-  }
-
   // Start Hour, Minute time
   hour = atoi(start_time_hour);
   min = atoi(start_time_minute);
@@ -92,6 +84,16 @@ bool save_hid_config(const char *flow, const char *start_time_hour, const char *
     cfg.zone_cnt = i;
     for (i = 0; i < cfg.zone_cnt; i++) {
       LOGI(TAG, "zones[%d] = %d", i, cfg.zones[i]);
+    }
+  }
+
+  // Flow rate
+  flow_rate = atoi(flow);
+  if (flow_rate <= 0) {
+    LOGW(TAG, "flow rate cannot be 0 or negative");
+  } else {
+    for (i = 0; i < cfg.zone_cnt; i++) {
+      cfg.flow_rate[i] = flow_rate;
     }
   }
   syscfg_set_blob(CFG_DATA, "hid_config", &cfg, sizeof(config_value_t));

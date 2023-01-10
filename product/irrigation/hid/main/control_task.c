@@ -3,8 +3,11 @@
 #include "freertos/queue.h"
 
 #include <string.h>
+#include <time.h>
 
 #include "log.h"
+#include "time_api.h"
+#include "sys_status.h"
 #include "comm_packet.h"
 
 #define CTRL_MSG_QUEUE_LEN 16
@@ -25,11 +28,11 @@ static QueueHandle_t ctrl_msg_queue = NULL;
 /***************************************************/
 
 static bool _send_msg_event(irrigation_message_t **msg) {
-  return ctrl_msg_queue && xQueueSend(ctrl_msg_queue, msg, portMAX_DELAY) == pdPASS;
+  return ctrl_msg_queue && (xQueueSend(ctrl_msg_queue, msg, portMAX_DELAY) == pdPASS);
 }
 
 static bool _get_msg_event(irrigation_message_t **msg) {
-  return ctrl_msg_queue && xQueueReceive(ctrl_msg_queue, msg, portMAX_DELAY) == pdPASS;
+  return ctrl_msg_queue && (xQueueReceive(ctrl_msg_queue, msg, portMAX_DELAY) == pdPASS);
 }
 
 void send_msg_to_ctrl_task(void *msg, size_t msg_len) {
@@ -45,12 +48,26 @@ void send_msg_to_ctrl_task(void *msg, size_t msg_len) {
   }
 }
 
+void set_main_time(time_t *curr_time) {
+  struct tm timeinfo = { 0 };
+  localtime_r(curr_time, &timeinfo);
+  set_local_time(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min,
+                 timeinfo.tm_sec);
+  LOGI(TAG, "main time is synced");
+}
+
 void ctrl_msg_handler(irrigation_message_t *message) {
   switch (message->sender_type) {
     case SET_CONFIG: break;
-    case TIME_SYNC: break;
+    case TIME_SYNC:
+      set_main_time(&message->current_time);
+      set_time_sync(1);
+      break;
     case RESPONSE: break;
-    case BATTERY_LEVEL: break;
+    case BATTERY_LEVEL:
+      // add battery level to the logging data
+      set_battery_level(1);
+      break;
     case START_FLOW: break;
     case ZONE_COMPLETE: break;
     case ALL_COMPLETE: break;

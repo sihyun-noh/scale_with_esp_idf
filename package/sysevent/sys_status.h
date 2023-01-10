@@ -37,8 +37,13 @@ extern "C" {
 #define STATUS_RS485_CONN_FAIL (1 << 6) /* Identification is running */
 
 /* Actuator Status */
-#define STATUS_OPEN  (1 << 0) /* Open  */
+#define STATUS_OPEN (1 << 0)  /* Open  */
 #define STATUS_ERROR (1 << 1) /* Error */
+
+/* Irrigation Status */
+#define STATUS_TIME_SYNC (1 << 0)     /* Time sync */
+#define STATUS_BATTERY_LEVEL (1 << 1) /* Battery level */
+#define STATUS_SET_CONFIG (1 << 2)    /* Set Configuration */
 
 #define is_device_configured sys_stat_get_configured
 #define set_device_configured sys_stat_set_configured
@@ -105,6 +110,12 @@ extern "C" {
 
 #define is_actuator_err sys_stat_get_actuator_err
 #define set_actuator_err sys_stat_set_actuator_err
+
+#define is_time_sync sys_stat_get_time_sync
+#define set_time_sync sys_stat_set_time_sync
+
+#define is_battery_level sys_stat_get_battery_level
+#define set_battery_level sys_stat_set_battery_level
 
 int sys_stat_get_configured(void);
 void sys_stat_set_configured(uint8_t status);
@@ -173,6 +184,12 @@ void sys_stat_set_actuator_open(uint8_t status);
 
 int sys_stat_get_actuator_err(void);
 void sys_stat_set_actuator_err(uint8_t status);
+
+int sys_stat_get_time_sync(void);
+void sys_stat_set_time_sync(uint8_t status);
+
+int sys_stat_get_battery_level(void);
+void sys_stat_set_battery_level(uint8_t status);
 
 #ifdef __cplusplus
 }

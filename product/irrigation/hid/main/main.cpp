@@ -118,8 +118,6 @@ static void recv_data_cb(const uint8_t *mac_addr, const uint8_t *data, int data_
 
 static void send_data_cb(const uint8_t *mac_addr, esp_now_send_status_t status) {}
 
-#define littlefs_base_path "/storage"
-
 int set_interval_cmd(int argc, char **argv) {
   int interval = 0;
 

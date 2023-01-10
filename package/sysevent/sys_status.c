@@ -17,6 +17,7 @@ static EventGroupHandle_t hw_status_events;
 static EventGroupHandle_t sw_status_events;
 static EventGroupHandle_t led_status_events;
 static EventGroupHandle_t actuator_status_events;
+static EventGroupHandle_t irrigation_status_events;
 
 /*----------------------------------------------------------------*/
 /*                      Service Status                            */
@@ -315,6 +316,36 @@ void sys_stat_set_actuator_err(uint8_t status) {
   }
 }
 
+// ----------------------------------------------------------------
+// Irrigation status event group
+// ----------------------------------------------------------------
+
+int sys_stat_get_time_sync(void) {
+  EventBits_t bits = xEventGroupGetBits(irrigation_status_events);
+  return ((bits & STATUS_TIME_SYNC) == STATUS_TIME_SYNC);
+}
+
+void sys_stat_set_time_sync(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(irrigation_status_events, STATUS_TIME_SYNC);
+  } else {
+    xEventGroupClearBits(irrigation_status_events, STATUS_TIME_SYNC);
+  }
+}
+
+int sys_stat_get_battery_level(void) {
+  EventBits_t bits = xEventGroupGetBits(irrigation_status_events);
+  return ((bits & STATUS_BATTERY_LEVEL) == STATUS_BATTERY_LEVEL);
+}
+
+void sys_stat_set_battery_level(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(irrigation_status_events, STATUS_BATTERY_LEVEL);
+  } else {
+    xEventGroupClearBits(irrigation_status_events, STATUS_BATTERY_LEVEL);
+  }
+}
+
 int sys_stat_init(void) {
   sw_status_events = xEventGroupCreate();
   if (sw_status_events == NULL) {
@@ -337,6 +368,12 @@ int sys_stat_init(void) {
   actuator_status_events = xEventGroupCreate();
   if (actuator_status_events == NULL) {
     dbge("Failed to create event group for actuator status");
+    return -1;
+  }
+
+  irrigation_status_events = xEventGroupCreate();
+  if (irrigation_status_events == NULL) {
+    dbge("Failed to create event group for irrigation status");
     return -1;
   }
 
