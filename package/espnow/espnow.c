@@ -201,7 +201,7 @@ bool espnow_remove_peer(const uint8_t *mac_addr) {
   return b_ready && esp_now_del_peer(mac_addr);
 }
 
-int espnow_send_data(const uint8_t *mac_addr, const uint8_t *data, size_t len) {
+bool espnow_send_data(const uint8_t *mac_addr, const uint8_t *data, size_t len) {
   if (!b_ready || len > MAX_MSG_LEN || len == 0) {
     return false;
   }

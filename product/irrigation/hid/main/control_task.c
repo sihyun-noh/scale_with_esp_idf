@@ -7,6 +7,7 @@
 
 #include "ui.h"
 #include "log.h"
+#include "espnow.h"
 #include "time_api.h"
 #include "sys_status.h"
 #include "comm_packet.h"
@@ -34,6 +35,16 @@ static bool _send_msg_event(irrigation_message_t **msg) {
 
 static bool _get_msg_event(irrigation_message_t **msg) {
   return ctrl_msg_queue && (xQueueReceive(ctrl_msg_queue, msg, portMAX_DELAY) == pdPASS);
+}
+
+static time_t get_current_time(void) {
+  time_t now;
+  struct tm timeinfo = { 0 };
+
+  time(&now);
+  localtime_r(&now, &timeinfo);
+
+  return mktime(&timeinfo);
 }
 
 void send_msg_to_ctrl_task(void *msg, size_t msg_len) {
@@ -65,6 +76,18 @@ void enable_buttons(void) {
   lv_obj_clear_state(ui_ResetButton, LV_STATE_DISABLED);
 }
 
+bool send_response_data(message_type_t sender) {
+  irrigation_message_t resp_data;
+
+  memset(&resp_data, 0x00, sizeof(resp_data));
+  resp_data.sender_type = RESPONSE;
+  resp_data.receive_type = sender;
+  resp_data.resp = SUCCESS;
+  resp_data.current_time = get_current_time();
+
+  return espnow_send_data(espnow_get_master_addr(), (uint8_t *)&resp_data, sizeof(resp_data));
+}
+
 void ctrl_msg_handler(irrigation_message_t *message) {
   switch (message->sender_type) {
     case SET_CONFIG: break;
@@ -77,10 +100,11 @@ void ctrl_msg_handler(irrigation_message_t *message) {
     case BATTERY_LEVEL:
       // add battery level to the logging data
       set_battery_level(1);
+      send_response_data(message->sender_type);
       break;
-    case START_FLOW: break;
-    case ZONE_COMPLETE: break;
-    case ALL_COMPLETE: break;
+    case START_FLOW: send_response_data(message->sender_type); break;
+    case ZONE_COMPLETE: send_response_data(message->sender_type); break;
+    case ALL_COMPLETE: send_response_data(message->sender_type); break;
     case SET_SLEEP: break;
     default: break;
   }
