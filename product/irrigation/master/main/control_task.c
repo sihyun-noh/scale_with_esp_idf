@@ -212,49 +212,59 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
       } break;
 
       case RESPONSE: {
-        if (recv_message.receive_type == SET_VALVE_ON) {
-          if (recv_message.resp == SUCCESS) {
-            start_flow();
-            // 관수 시작을 HID 에 전달
-            if (!send_esp_data(START_FLOW, START_FLOW, 0))
-              send_esp_data(START_FLOW, START_FLOW, 0);
+        switch (recv_message.receive_type) {
+          case SET_VALVE_ON: {
+            if (recv_message.resp == SUCCESS) {
+              start_flow();
+              // 관수 시작을 HID 에 전달
+              if (!send_esp_data(START_FLOW, START_FLOW, 0))
+                send_esp_data(START_FLOW, START_FLOW, 0);
 
-            LOGI(TAG, "RECEIVE VALVE ON RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
-            set_control_status(CHECK_FLOW);
-          }
-        } else if (recv_message.receive_type == SET_VALVE_OFF) {
-          if (recv_message.resp == SUCCESS) {
-            // 관수 완료를 HID 에 전달
-            if (!send_esp_data(ZONE_COMPLETE, ZONE_COMPLETE, 0))
-              send_esp_data(ZONE_COMPLETE, ZONE_COMPLETE, 0);
+              LOGI(TAG, "RECEIVE VALVE ON RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
+              set_control_status(CHECK_FLOW);
+            }
+          } break;
 
-            LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
-            flowDoneCnt++;
-            reset_water_flow_liters();
+          case SET_VALVE_OFF: {
+            if (recv_message.resp == SUCCESS) {
+              // 관수 완료를 HID 에 전달
+              if (!send_esp_data(ZONE_COMPLETE, ZONE_COMPLETE, 0))
+                send_esp_data(ZONE_COMPLETE, ZONE_COMPLETE, 0);
+
+              LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
+              flowDoneCnt++;
+              reset_water_flow_liters();
+              set_control_status(CHECK_SCEHDULE);
+            }
+          } break;
+
+          case TIME_SYNC: {
+            zoneBattery[recv_message.deviceId] = recv_message.battery_level[recv_message.deviceId];
+            LOGI(TAG, "ID: %D, Battery level: %d", recv_message.deviceId, recv_message.battery_level[recv_message.deviceId]);
+            batteryCnt++;
+
+            if (batteryCnt >= 6) {
+              zoneBattery[0] = read_battery_percentage();
+              LOGI(TAG, "Battery Level, Master: %d, Child : %d, %d, %d, %d, %d, %d ", zoneBattery[0], zoneBattery[1],
+                  zoneBattery[2], zoneBattery[3], zoneBattery[4], zoneBattery[5], zoneBattery[6]);
+
+              if (!send_esp_data(BATTERY_LEVEL, BATTERY_LEVEL, 0))
+                send_esp_data(BATTERY_LEVEL, BATTERY_LEVEL, 0);
+
+              batteryCnt = 0;
+              set_control_status(CHECK_SCEHDULE);
+            }
+          } break;
+
+          case FORCE_STOP: {
+            if (!send_esp_data(RESPONSE, FORCE_STOP, 0))
+              send_esp_data(RESPONSE, FORCE_STOP, 0);
+
+            init_variable();
             set_control_status(CHECK_SCEHDULE);
-          }
-        } else if (recv_message.receive_type == TIME_SYNC) {
-          zoneBattery[recv_message.deviceId] = recv_message.battery_level[recv_message.deviceId];
-          LOGI(TAG, "ID: %D, Battery level: %d", recv_message.deviceId, recv_message.battery_level[recv_message.deviceId]);
-          batteryCnt++;
+          } break;
 
-          if (batteryCnt >= 6) {
-            zoneBattery[0] = read_battery_percentage();
-            LOGI(TAG, "Battery Level, Master: %d, Child : %d, %d, %d, %d, %d, %d ", zoneBattery[0], zoneBattery[1],
-                 zoneBattery[2], zoneBattery[3], zoneBattery[4], zoneBattery[5], zoneBattery[6]);
-
-            if (!send_esp_data(BATTERY_LEVEL, BATTERY_LEVEL, 0))
-              send_esp_data(BATTERY_LEVEL, BATTERY_LEVEL, 0);
-
-            batteryCnt = 0;
-            set_control_status(CHECK_SCEHDULE);
-          }
-        } else if (recv_message.receive_type == FORCE_STOP) {
-          if (!send_esp_data(RESPONSE, FORCE_STOP, 0))
-            send_esp_data(RESPONSE, FORCE_STOP, 0);
-
-          init_variable();
-          set_control_status(CHECK_SCEHDULE);
+          default: break;
         }
       } break;
 
