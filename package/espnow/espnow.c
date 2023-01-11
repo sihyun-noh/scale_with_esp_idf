@@ -29,13 +29,31 @@
 
 static const char *TAG = "ESP-NOW";
 static bool b_ready = false;
+static bool b_register_peers = false;
+
+#define HID_CHILD_CNT 7
+
 static char *master_peer_list[8] = {
   SYSCFG_N_HID_MAC,    SYSCFG_N_CHILD1_MAC, SYSCFG_N_CHILD2_MAC, SYSCFG_N_CHILD3_MAC,
   SYSCFG_N_CHILD4_MAC, SYSCFG_N_CHILD5_MAC, SYSCFG_N_CHILD6_MAC, SYSCFG_N_MASTER_MAC
 };
 
-uint8_t macAddress[7][MAC_ADDR_LEN] = { 0 };  // 0 = HID, 1~6 = child 1~6
+uint8_t macAddress[HID_CHILD_CNT][MAC_ADDR_LEN] = { 0 };  // 0 = HID, 1~6 = child 1~6
 uint8_t masterAddress[MAC_ADDR_LEN] = { 0 };
+
+bool syscfg_get_to_add_peer(const char *key, uint8_t *mac_addr);
+
+uint8_t *espnow_get_master_addr(void) {
+  if (!b_register_peers) {
+    if (syscfg_get_to_add_peer(SYSCFG_N_MASTER_MAC, masterAddress)) {
+      LOGI(TAG, "Success to get master addr");
+      LOG_BUFFER_HEXDUMP(TAG, masterAddress, sizeof(masterAddress), LOG_INFO);
+    } else {
+      LOGI(TAG, "Failed to get master addr");
+    }
+  }
+  return masterAddress;
+}
 
 bool espnow_start(esp_now_recv_cb_t recv_cb, esp_now_send_cb_t send_cb) {
   espnow_stop();
@@ -88,39 +106,35 @@ int get_address_matching_id(void) {
   return -1;
 }
 
-static uint8_t _mac[ESP_NOW_ETH_ALEN] = { 0 };
-int syscfg_get_to_add_peer(const char *key) {
+bool syscfg_get_to_add_peer(const char *key, uint8_t *mac_addr) {
   char s_mac[SYSCFG_S_MASTER_MAC] = { 0 };
 
   if (syscfg_get(MFG_DATA, key, s_mac, sizeof(s_mac))) {
     LOGE(TAG, "syscfg MAC Address read error");
-    return -1;
+    return false;
   }
-  ascii_to_hex(s_mac, sizeof(_mac) * 2, _mac);
-  LOG_BUFFER_HEXDUMP(TAG, _mac, sizeof(_mac), LOG_INFO);
-  return espnow_add_peer(_mac, CONFIG_ESPNOW_CHANNEL, ESPNOW_WIFI_IF);
+  ascii_to_hex(s_mac, MAC_ADDR_LEN * 2, mac_addr);
+  LOG_BUFFER_HEXDUMP(TAG, mac_addr, sizeof(mac_addr), LOG_INFO);
+  return espnow_add_peer(mac_addr, CONFIG_ESPNOW_CHANNEL, ESPNOW_WIFI_IF);
 }
 // TODO : Implement to read the device's mac address from MFG data
 // and then add mac address to the peer list in accordance with device type
 // Add mac address read from the MFG data of each devices to the esp now peer list
-int espnow_add_peers(device_t device_mode) {
+bool espnow_add_peers(device_t device_mode) {
+  b_register_peers = false;
+
   if (!b_ready) {
-    return false;
+    return b_register_peers;
   }
-  const int col_len = 6;
-  const int row_len = 7;
 
   switch (device_mode) {
     case HID_DEVICE:
     case CHILD_DEVICE:
       // add main mac address to the peer list
-      if (syscfg_get_to_add_peer(SYSCFG_N_MASTER_MAC))
-        for (int j = 0; j < col_len; j++) {
-          masterAddress[j] = _mac[j];
-        }
-      else {
+      if (syscfg_get_to_add_peer(SYSCFG_N_MASTER_MAC, masterAddress)) {
+        b_register_peers = true;
+      } else {
         LOGI(TAG, "Add peer Error");
-        return false;
       }
       break;
     case MASTER_DEVICE:
@@ -128,19 +142,18 @@ int espnow_add_peers(device_t device_mode) {
       uint8_t broadcastAddress[ESP_NOW_ETH_ALEN] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
       espnow_add_peer(broadcastAddress, CONFIG_ESPNOW_CHANNEL, ESPNOW_WIFI_IF);
 
-      for (int i = 0; i < row_len; i++) {
-        if (syscfg_get_to_add_peer(master_peer_list[i])) {
-          for (int j = 0; j < col_len; j++) {
-            macAddress[i][j] = _mac[j];
-          }
+      for (int i = 0; i < HID_CHILD_CNT; i++) {
+        if (syscfg_get_to_add_peer(master_peer_list[i], macAddress[i])) {
+          b_register_peers = true;
         } else {
           LOGI(TAG, "Add peer Error");
-          return false;
+          b_register_peers = false;
+          break;
         }
       }
       break;
   }
-  return true;
+  return b_register_peers;
 }
 
 bool espnow_add_peer(const uint8_t *mac_addr, uint8_t channel, int netif) {

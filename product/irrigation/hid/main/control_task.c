@@ -5,6 +5,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "ui.h"
 #include "log.h"
 #include "time_api.h"
 #include "sys_status.h"
@@ -42,7 +43,7 @@ void send_msg_to_ctrl_task(void *msg, size_t msg_len) {
     if (message) {
       memcpy(message, msg, sizeof(irrigation_message_t));
       if (!_send_msg_event(&message)) {
-        free((void *)(msg));
+        free((void *)(message));
       }
     }
   }
@@ -56,12 +57,21 @@ void set_main_time(time_t *curr_time) {
   LOGI(TAG, "main time is synced");
 }
 
+void enable_buttons(void) {
+  /* Enable button */
+  lv_obj_clear_state(ui_StartButton, LV_STATE_DISABLED);
+  lv_obj_clear_state(ui_StopButton, LV_STATE_DISABLED);
+  lv_obj_clear_state(ui_SettingButton, LV_STATE_DISABLED);
+  lv_obj_clear_state(ui_ResetButton, LV_STATE_DISABLED);
+}
+
 void ctrl_msg_handler(irrigation_message_t *message) {
   switch (message->sender_type) {
     case SET_CONFIG: break;
     case TIME_SYNC:
       set_main_time(&message->current_time);
       set_time_sync(1);
+      enable_buttons();
       break;
     case RESPONSE: break;
     case BATTERY_LEVEL:

@@ -1,4 +1,3 @@
-#include "esp32/littlefs_impl.h"
 #include "nvs_flash.h"
 #include "esp_timer.h"
 #include "esp_sleep.h"
@@ -7,8 +6,8 @@
 #include "shell_console.h"
 #include "syscfg.h"
 #include "sys_config.h"
-#include "sysevent.h"
 #include "sys_status.h"
+#include "sysevent.h"
 #include "syslog.h"
 #include "filelog.h"
 #include "wifi_manager.h"
@@ -17,6 +16,7 @@
 #include "config.h"
 #include "main.h"
 #include "espnow.h"
+#include "control_task.h"
 #include "file_manager.h"
 
 #include <string.h>
@@ -49,7 +49,8 @@ static const char *TAG = "main_app";
 
 sc_ctx_t *sc_ctx = NULL;
 
-uint8_t main_mac_addr[6] = { 0xF4, 0x12, 0xFA, 0x52, 0x07, 0xD1 };
+// uint8_t main_mac_addr[6] = { 0xF4, 0x12, 0xFA, 0x52, 0x07, 0xD1 };
+uint8_t *main_mac_addr;
 
 extern "C" {
 extern void sdcard_init(void);
@@ -112,6 +113,7 @@ static void recv_data_cb(const uint8_t *mac_addr, const uint8_t *data, int data_
   if (memcmp(mac_addr, main_mac_addr, MAC_ADDR_LEN) == 0) {
     LOGI(TAG, "Receive Data from Main device");
     LOG_BUFFER_HEXDUMP(TAG, data, data_len, LOG_INFO);
+    send_msg_to_ctrl_task((void *)data, data_len);
   }
 }
 
@@ -187,12 +189,6 @@ int system_init(void) {
 
   fm_init(PARTITION_NAME, BASE_PATH);
 
-  // TODO : Temporary code for testing, the code below will be removed after implementing of espnow_add_peers()
-  // Get a main mac address that will be used in espnow
-  uint8_t mac[6] = { 0 };
-  esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
-  LOG_BUFFER_HEX(TAG, mac, sizeof(mac));
-
   return SYSINIT_OK;
 }
 
@@ -212,12 +208,14 @@ void loop_task(void) {
       } break;
       case CONNECT_MODE: {
         LOGI(TAG, "CONNECT_MODE");
-        if (espnow_add_peer(main_mac_addr, CONFIG_ESPNOW_CHANNEL, ESPNOW_WIFI_IF)) {
+        if (espnow_add_peers(HID_DEVICE)) {
           set_device_onboard(1);
           LOGI(TAG, "Success to add main addr to peer list");
         } else {
           LOGI(TAG, "Failed to add main addr to peer list");
         }
+        main_mac_addr = espnow_get_master_addr();
+        LOG_BUFFER_HEX(TAG, main_mac_addr, MAC_ADDR_LEN);
         set_operation_mode(RUNNING_MODE);
       } break;
       case RUNNING_MODE: {
@@ -349,6 +347,8 @@ void app_main(void) {
   ui_init();
 
   xTaskCreatePinnedToCore(lvgl_timer_task, "lvgl_timer", 4096 * 2, NULL, tskIDLE_PRIORITY, NULL, 0);
+
+  create_control_task();
 
   loop_task();
 }

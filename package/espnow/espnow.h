@@ -50,12 +50,13 @@ typedef struct {
 
 bool espnow_start(esp_now_recv_cb_t recv_cb, esp_now_send_cb_t send_cb);
 void espnow_stop(void);
-int espnow_add_peers(device_t device_mode);
+bool espnow_add_peers(device_t device_mode);
 bool espnow_add_peer(const uint8_t *mac_addr, uint8_t channel, int netif);
 bool espnow_remove_peer(const uint8_t *mac_addr);
 int espnow_list_peers(peer_info_t *peers, int max_peers);
 bool espnow_has_peer(const uint8_t *mac_addr);
 int espnow_send_data(const uint8_t *mac_addr, const uint8_t *data, size_t len);
+uint8_t *espnow_get_master_addr(void);
 
 /**
  * @brief Find the ID matched with the Mac Address
