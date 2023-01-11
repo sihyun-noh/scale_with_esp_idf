@@ -105,6 +105,20 @@ static time_t get_current_time(void) {
   return mktime(&timeinfo);
 }
 
+// receive mac addr 이 현 set mac addr 인지 확인 함수
+bool check_address_matching_current_set(const uint8_t* mac){
+  for (int i = 0; i < 7; i++) {
+    uint8_t compareAddr[6] = { 0, };
+    get_addr(compareAddr, i);
+
+    if (memcmp(mac, compareAddr, sizeof(compareAddr)) == 0) {
+      LOGI(TAG, "addr matched zone ID : %d ", i);
+      return true;
+    }
+  }
+  return false;
+}
+
 // if return 0 -> wake up 시간대
 // return value -> sleep 시간까지 남은 시간, 단위 seconds
 uint64_t check_sleep_time(void) {
@@ -186,6 +200,11 @@ bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
 void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
   irrigation_message_t recv_message;
   memcpy(&recv_message, incomingData, sizeof(recv_message));
+
+  if (!check_address_matching_current_set(mac)) {
+    LOGI(TAG, "Receive data from other SET");
+    return;
+  }
 
   LOGI(TAG, "Receive Data from Other devices(HID and Any Child)");
   LOG_BUFFER_HEXDUMP(TAG, incomingData, len, LOG_INFO);
