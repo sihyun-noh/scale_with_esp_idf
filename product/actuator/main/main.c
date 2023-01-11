@@ -207,7 +207,7 @@ int system_init(void) {
 
   syslog_init();
 
-  ret = init_sysfile();
+  ret = init_sysfile(PARTITION_NAME, BASE_PATH);
   if (ret)
     return ERR_SPIFFS_INIT;
 

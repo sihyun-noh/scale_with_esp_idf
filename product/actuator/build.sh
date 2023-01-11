@@ -70,7 +70,7 @@ PARENT_PATH="${PROD_PATH%/*/*}"
 TOOL_PATH="${PARENT_PATH}/"thirdparty/esp
 
 #esp-idf version
-ESP_IDF_VER="v5.0-rc1"
+ESP_IDF_VER="v5.0"
 
 # get esp-idf
 downloadSdk() {
