@@ -15,6 +15,7 @@
 #include "main.h"
 #include "espnow.h"
 #include "time_api.h"
+#include "battery_task.h"
 
 #include <string.h>
 
@@ -147,6 +148,8 @@ int system_init(void) {
   rtc_time_init();
 
   pump_init();
+
+  battery_init();
 
   create_input_task();
 

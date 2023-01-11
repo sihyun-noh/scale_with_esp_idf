@@ -11,8 +11,8 @@
 #include "espnow.h"
 #include "time.h"
 #include "main.h"
-#include "adc.h"
 #include "comm_packet.h"
+#include "battery_task.h"
 
 static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;
@@ -225,7 +225,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
 
         if (!send_esp_data(RESPONSE, SET_CONFIG, 0))
           send_esp_data(RESPONSE, SET_CONFIG, 0);
-              
+
         set_control_status(CHECK_SCEHDULE);
         LOGI(TAG, "RECEIVE & SET CONFIG from HID");
       } break;

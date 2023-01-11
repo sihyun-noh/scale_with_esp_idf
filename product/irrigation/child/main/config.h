@@ -13,7 +13,8 @@
 #define SENSOR_TYPE     -1
 #define ACTUATOR_TYPE   -1
 
-#define BATTERY_PORT 6  // GPIO34
+#define BATTERY_ADC_CHANNEL  6  // GPIO_34
+#define BATTERY_READ_ON_GPIO 5  // GPIO_5
 
 #define SOL_PW  21
 #define SOL_ON  22

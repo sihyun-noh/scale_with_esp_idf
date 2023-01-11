@@ -11,9 +11,9 @@
 #include "espnow.h"
 #include "time.h"
 #include "main.h"
-#include "adc.h"
 #include "time_api.h"
 #include "comm_packet.h"
+#include "battery_task.h"
 
 static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;

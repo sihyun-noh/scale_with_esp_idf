@@ -15,6 +15,7 @@
 #include "main.h"
 #include "espnow.h"
 #include "esp_mac.h"
+#include "battery_task.h"
 
 #include <string.h>
 
@@ -129,6 +130,8 @@ int system_init(void) {
   check_model();
 
   valve_init();
+
+  battery_init();
 
   create_key_task();
 

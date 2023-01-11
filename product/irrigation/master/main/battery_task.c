@@ -1,49 +1,41 @@
-#include "config.h"
-#include "battery.h"
-#include "utils.h"
-
 #include <string.h>
-
 #include "syslog.h"
 #include "sysevent.h"
+#include "sys_status.h"
 #include "event_ids.h"
 #include "filelog.h"
-#include "sys_status.h"
+#include "adc_api.h"
+#include "gpio_api.h"
+#include "utils.h"
+#include "config.h"
 
 #define MAX_BUFFER_CNT 10
 
+static const char* TAG = "battery_task";
+
+enum { INPUT = 0, INPUT_PULLUP = 1, OUTPUT = 2 };
+
 static float battery_calculate_percentage(uint16_t voltage);
+static void battery_read_on();
+static void battery_read_off();
 
-static const char* TAG = "adc";
+void battery_init(void) {
+  adc_init(BATTERY_ADC_CHANNEL);
+  gpio_init(BATTERY_READ_ON_GPIO, OUTPUT);
+}
 
-/**
- * @brief Read the battery and pass it to sysevent
- *
- * @return int 0 on success, -1 on failure
- */
 int read_battery_percentage(void) {
-  int cal;
   uint16_t voltage;
   uint16_t battery_voltage[MAX_BUFFER_CNT];
   float bat_percent;
   char s_bat_percent[20];
 
-  cal = battery_init();
-  if (cal) {
-    LOGI(TAG, "calibration completed");
-  } else {
-    LOGE(TAG, "calibration not support");
-    return -1;
-  }
-  // Create a user task that uses the sensors.
   battery_read_on();
   vTaskDelay(500 / portTICK_PERIOD_MS);
   for (int i = 0; i < MAX_BUFFER_CNT; i++) {
-    // Get the values and do something with them.
-    battery_voltage[i] = read_battery_voltage(BATTERY_PORT, 2);
-    LOGI(TAG, "cali data: %d mV", battery_voltage[i]);
+    battery_voltage[i] = adc_read_voltage(BATTERY_ADC_CHANNEL) * 2;
+    // LOGI(TAG, "cali data: %d mV", battery_voltage[i]);
 
-    // Wait until 50 msec (cycle time) are over.
     vTaskDelay(50 / portTICK_PERIOD_MS);
   }
   battery_read_off();
@@ -63,13 +55,6 @@ int read_battery_percentage(void) {
   return (int)(bat_percent);
 }
 
-/**
- * @brief Calculate the battery value as a percentage
- *
- * @param voltage battery voltage
- *
- * @return percent value
- */
 static float battery_calculate_percentage(uint16_t voltage) {
   float percent;
 
@@ -82,4 +67,12 @@ static float battery_calculate_percentage(uint16_t voltage) {
   }
 
   return percent;
+}
+
+static void battery_read_on() {
+  gpio_write(BATTERY_READ_ON_GPIO, 1);
+}
+
+static void battery_read_off() {
+  gpio_write(BATTERY_READ_ON_GPIO, 0);
 }

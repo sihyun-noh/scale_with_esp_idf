@@ -52,7 +52,6 @@ sc_ctx_t *sc_ctx = NULL;
 uint8_t main_mac_addr[6] = { 0xF4, 0x12, 0xFA, 0x52, 0x07, 0xD1 };
 
 extern "C" {
-extern int read_battery_percentage(void);
 extern void sdcard_init(void);
 extern void sdcard_write_data(void);
 }
