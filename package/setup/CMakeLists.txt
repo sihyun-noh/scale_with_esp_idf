@@ -1,7 +1,5 @@
-if(CONFIG_SMARTFARM_EASYSETUP_FEATURE)
 set(req freertos log mdns time syscfg syslog sysevent wifi esp_hw_support esp_https_server json ping monitor ethernet)
 set(certs "certs/cacert.pem" "certs/prvtkey.pem")
-endif()
 
 if(CONFIG_SMARTFARM_EASYSETUP_FEATURE)
 if(CONFIG_SMARTFARM_ETHERNET_FEATURE)

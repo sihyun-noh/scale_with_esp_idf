@@ -1,4 +1,4 @@
-set(req esp_http_client spi_flash bootloader_support app_update syslog)
+set(req esp_http_client spi_flash bootloader_support app_update syslog syscfg)
 
 set(srcs)
 set(includes)
