@@ -5,7 +5,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "ui.h"
+#include "ui_helpers.h"
 #include "log.h"
 #include "espnow.h"
 #include "time_api.h"
@@ -66,14 +66,6 @@ void set_main_time(time_t *curr_time) {
   set_local_time(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min,
                  timeinfo.tm_sec);
   LOGI(TAG, "main time is synced");
-}
-
-void enable_buttons(void) {
-  /* Enable button */
-  lv_obj_clear_state(ui_StartButton, LV_STATE_DISABLED);
-  lv_obj_clear_state(ui_StopButton, LV_STATE_DISABLED);
-  lv_obj_clear_state(ui_SettingButton, LV_STATE_DISABLED);
-  lv_obj_clear_state(ui_ResetButton, LV_STATE_DISABLED);
 }
 
 bool send_response_data(message_type_t sender) {

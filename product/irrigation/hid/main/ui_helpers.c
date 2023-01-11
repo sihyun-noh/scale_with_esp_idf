@@ -165,9 +165,46 @@ void _ui_slider_set_text_value(lv_obj_t *trg, lv_obj_t *src, char *prefix, char 
   lv_snprintf(buf, sizeof(buf), "%s%d%s", prefix, (int)lv_slider_get_value(src), postfix);
   lv_label_set_text(trg, buf);
 }
+
 void _ui_checked_set_text_value(lv_obj_t *trg, lv_obj_t *src, char *txt_on, char *txt_off) {
   if (lv_obj_has_state(src, LV_STATE_CHECKED))
     lv_label_set_text(trg, txt_on);
   else
     lv_label_set_text(trg, txt_off);
+}
+
+static void msgbox_event_cb(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *msgbox = lv_event_get_current_target(e);
+
+  if (code == LV_EVENT_VALUE_CHANGED) {
+    lv_msgbox_close(msgbox);
+  }
+}
+
+void warnning_msgbox(char *message) {
+  static const char *btns[] = { "Close", "" };
+
+  lv_obj_t *warn_mbox = lv_msgbox_create(NULL, "Warnning", message, btns, true);
+  lv_obj_add_event_cb(warn_mbox, msgbox_event_cb, LV_EVENT_ALL, NULL);
+  lv_obj_center(warn_mbox);
+}
+
+void enable_buttons(void) {
+  /* Enable button */
+  _ui_state_modify(ui_StartButton, _UI_MODIFY_STATE_REMOVE, LV_STATE_DISABLED);
+  _ui_state_modify(ui_StopButton, _UI_MODIFY_STATE_REMOVE, LV_STATE_DISABLED);
+  _ui_state_modify(ui_SettingButton, _UI_MODIFY_STATE_REMOVE, LV_STATE_DISABLED);
+  _ui_state_modify(ui_ResetButton, _UI_MODIFY_STATE_REMOVE, LV_STATE_DISABLED);
+  // lv_obj_clear_state(ui_StartButton, LV_STATE_DISABLED);
+  // lv_obj_clear_state(ui_StopButton, LV_STATE_DISABLED);
+  // lv_obj_clear_state(ui_SettingButton, LV_STATE_DISABLED);
+  // lv_obj_clear_state(ui_ResetButton, LV_STATE_DISABLED);
+}
+
+void disable_buttons(void) {
+  _ui_state_modify(ui_StartButton, _UI_MODIFY_STATE_ADD, LV_STATE_DISABLED);
+  _ui_state_modify(ui_StopButton, _UI_MODIFY_STATE_ADD, LV_STATE_DISABLED);
+  _ui_state_modify(ui_SettingButton, _UI_MODIFY_STATE_ADD, LV_STATE_DISABLED);
+  _ui_state_modify(ui_ResetButton, _UI_MODIFY_STATE_ADD, LV_STATE_DISABLED);
 }

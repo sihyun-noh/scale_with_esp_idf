@@ -5,7 +5,7 @@
 
 #include <string.h>
 
-#include "ui.h"
+#include "ui_helpers.h"
 
 #include "espnow.h"
 #include "syslog.h"
@@ -13,8 +13,6 @@
 #include "hid_config.h"
 
 static const char* TAG = "UI_EVENT";
-
-extern uint8_t main_mac_addr[];
 
 void OnStartEvent(lv_event_t* e) {
   config_value_t cfg = { 0 };
@@ -25,22 +23,23 @@ void OnStartEvent(lv_event_t* e) {
     // Check if the configuration files are valid or not.
     // Start time should be included in irrigation available time.
 
-    LOGI(TAG, "flow = %d", cfg.flow_rate);
     for (int i = 0; i < cfg.zone_cnt; i++) {
       LOGI(TAG, "zones = %d", cfg.zones[i]);
+      LOGI(TAG, "flow = %d", cfg.flow_rate[i]);
     }
     show_timestamp(cfg.start_time);
 
     // Send configuration data to the main controller via ESP-NOW
     msg.sender_type = SET_CONFIG;
     memcpy(&msg.config, &cfg, sizeof(config_value_t));
-    espnow_send_data(main_mac_addr, (uint8_t*)&msg, sizeof(irrigation_message_t));
+    espnow_send_data(espnow_get_master_addr(), (uint8_t*)&msg, sizeof(irrigation_message_t));
     LOGI(TAG, "Success to send Start command!!!");
     lv_label_set_text(ui_StartButtonLabel, "In-Progress");
     // Reset configuration data
     syscfg_unset(CFG_DATA, "hid_config");
   } else {
     LOGE(TAG, "Failed to send Start command!!!");
+    warnning_msgbox("There is no setting data");
   }
 }
 
