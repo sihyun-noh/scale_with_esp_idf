@@ -271,10 +271,14 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
           case START_FLOW: {
             set_control_status(CHECK_FLOW);
           } break;
-
+          
           case ZONE_COMPLETE:
-          case ALL_COMPLETE:
           case BATTERY_LEVEL: {
+            set_control_status(CHECK_SCEHDULE);
+          } break;
+
+          case ALL_COMPLETE: {
+            init_variable();
             set_control_status(CHECK_SCEHDULE);
           } break;
 
@@ -494,6 +498,7 @@ static void control_task(void* pvParameters) {
 
         // 유량 체크, 설정값과 차이가 20리터 이내로 들어올 경우 valve off 하도록... -> 테스트 후 값 변경 필요.
         if (get_flow_value() >= (flowSettingValue[flowDoneCnt] - 20)) {
+          LOGI(TAG, "Current Flow is %d. close valve ", get_flow_value());
           set_control_status(CHILD_VALVE_OFF);
         }
       } break;
@@ -525,10 +530,8 @@ static void control_task(void* pvParameters) {
         // 추가 관수 여부 확인..--> wait config 모드로
         send_esp_data(ALL_COMPLETE, ALL_COMPLETE, 0);
 
+        set_control_status(WAIT_STATE);
         LOGI(TAG, "ALL CHILD FLOW COMPLETE!!");
-
-        init_variable();
-
       } break;
 
       default: break;
