@@ -1,5 +1,4 @@
 #include "easy_setup.h"
-#include "freertos/projdefs.h"
 #include "nvs_flash.h"
 #include "shell_console.h"
 #include "syscfg.h"
@@ -224,7 +223,7 @@ int system_init(void) {
 
   syslog_init();
 
-  ret = init_sysfile();
+  ret = init_sysfile(PARTITION_NAME, BASE_PATH);
   if (ret)
     return ERR_SPIFFS_INIT;
 
