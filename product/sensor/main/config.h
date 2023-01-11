@@ -84,7 +84,8 @@
 #endif
 #endif
 
-#define BATTERY_PORT 6  // GPIO34
+#define BATTERY_ADC_CHANNEL  6  // GPIO_34
+#define BATTERY_READ_ON_GPIO 5  // GPIO_5
 
 #define LED_RED 33
 #define LED_GREEN 26
