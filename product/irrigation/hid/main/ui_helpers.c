@@ -3,6 +3,8 @@
 // LVGL VERSION: 8.3.3
 // PROJECT: SquareLine_Project
 
+#include <stdio.h>
+
 #include "ui_helpers.h"
 
 void _ui_bar_set_property(lv_obj_t *target, int id, int val) {
@@ -213,16 +215,33 @@ void disable_start_button(void) {
   _ui_state_modify(ui_StartButton, _UI_MODIFY_STATE_REMOVE, LV_STATE_DISABLED);
 }
 
-lv_obj_t *get_zone_ui(ZONE zone) {
-  lv_obj_t *zone_ui[6] = { ui_ZoneStatus1, ui_ZoneStatus2, ui_ZoneStatus3,
-                           ui_ZoneStatus4, ui_ZoneStatus5, ui_ZoneStatus6 };
-  return zone_ui[zone];
+lv_obj_t *get_zone_status(ZONE zone) {
+  lv_obj_t *zone_status[6] = { ui_ZoneStatus1, ui_ZoneStatus2, ui_ZoneStatus3,
+                               ui_ZoneStatus4, ui_ZoneStatus5, ui_ZoneStatus6 };
+  return zone_status[zone - 1];
 }
 
 void set_zone_status(ZONE zone, bool start) {
   if (start) {
-    lv_obj_set_style_bg_color(get_zone_ui(zone), lv_color_hex(0x1BFD32), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(get_zone_status(zone), lv_color_hex(0x1BFD32), LV_PART_MAIN | LV_STATE_DEFAULT);
   } else {
-    lv_obj_set_style_bg_color(get_zone_ui(zone), lv_color_hex(0xFF1E1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(get_zone_status(zone), lv_color_hex(0xFF1E1E), LV_PART_MAIN | LV_STATE_DEFAULT);
   }
+}
+
+lv_obj_t *get_zone_flow_meter(ZONE zone) {
+  lv_obj_t *zone_flow_meter[6] = { ui_ZoneFlowmeter1, ui_ZoneFlowmeter2, ui_ZoneFlowmeter3,
+                                   ui_ZoneFlowmeter4, ui_ZoneFlowmeter5, ui_ZoneFlowmeter6 };
+
+  return zone_flow_meter[zone - 1];
+}
+
+void set_zone_flow_value(ZONE zone, int flow_value) {
+  char flow[20] = { 0 };
+  int total_flow_value = 0;
+
+  const char *curr_flow_value = lv_label_get_text(get_zone_flow_meter(zone));
+  total_flow_value = atoi(curr_flow_value) + flow_value;
+  snprintf(flow, sizeof(flow), "%d", total_flow_value);
+  lv_label_set_text(ui_ZoneFlowmeter6, flow);
 }

@@ -11,27 +11,27 @@ lv_obj_t *ui_Main;
 lv_obj_t *ui_MainStatusPanel;
 lv_obj_t *ui_Zone1;
 lv_obj_t *ui_ZoneStatus1;
-lv_obj_t *ui_ZoneFlowmetar1;
+lv_obj_t *ui_ZoneFlowmeter1;
 lv_obj_t *ui_ZoneNum1;
 lv_obj_t *ui_Zone2;
 lv_obj_t *ui_ZoneStatus2;
-lv_obj_t *ui_ZoneFlowmetar2;
+lv_obj_t *ui_ZoneFlowmeter2;
 lv_obj_t *ui_ZoneNum2;
 lv_obj_t *ui_Zone3;
 lv_obj_t *ui_ZoneStatus3;
-lv_obj_t *ui_ZoneFlowmetar3;
+lv_obj_t *ui_ZoneFlowmeter3;
 lv_obj_t *ui_ZoneNum3;
 lv_obj_t *ui_Zone4;
 lv_obj_t *ui_ZoneStatus4;
-lv_obj_t *ui_ZoneFlowmetar4;
+lv_obj_t *ui_ZoneFlowmeter4;
 lv_obj_t *ui_ZoneNum4;
 lv_obj_t *ui_Zone5;
 lv_obj_t *ui_ZoneStatus5;
-lv_obj_t *ui_ZoneFlowmetar5;
+lv_obj_t *ui_ZoneFlowmeter5;
 lv_obj_t *ui_ZoneNum5;
 lv_obj_t *ui_Zone6;
 lv_obj_t *ui_ZoneStatus6;
-lv_obj_t *ui_ZoneFlowmetar6;
+lv_obj_t *ui_ZoneFlowmeter6;
 lv_obj_t *ui_ZoneNum6;
 void ui_event_StartButton(lv_event_t *e);
 lv_obj_t *ui_StartButton;
@@ -194,22 +194,22 @@ void ui_Main_screen_init(void) {
   lv_obj_set_style_outline_color(ui_ZoneStatus1, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_outline_opa(ui_ZoneStatus1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  ui_ZoneFlowmetar1 = lv_label_create(ui_Zone1);
-  lv_obj_set_width(ui_ZoneFlowmetar1, 55);
-  lv_obj_set_height(ui_ZoneFlowmetar1, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_ZoneFlowmetar1, 0);
-  lv_obj_set_y(ui_ZoneFlowmetar1, 55);
-  lv_obj_set_align(ui_ZoneFlowmetar1, LV_ALIGN_TOP_MID);
-  lv_label_set_long_mode(ui_ZoneFlowmetar1, LV_LABEL_LONG_DOT);
-  lv_label_set_text(ui_ZoneFlowmetar1, "0");
-  lv_obj_set_style_text_align(ui_ZoneFlowmetar1, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_radius(ui_ZoneFlowmetar1, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_color(ui_ZoneFlowmetar1, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_opa(ui_ZoneFlowmetar1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_width(ui_ZoneFlowmetar1, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_side(ui_ZoneFlowmetar1, LV_BORDER_SIDE_FULL, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_outline_color(ui_ZoneFlowmetar1, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_outline_opa(ui_ZoneFlowmetar1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  ui_ZoneFlowmeter1 = lv_label_create(ui_Zone1);
+  lv_obj_set_width(ui_ZoneFlowmeter1, 55);
+  lv_obj_set_height(ui_ZoneFlowmeter1, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_ZoneFlowmeter1, 0);
+  lv_obj_set_y(ui_ZoneFlowmeter1, 55);
+  lv_obj_set_align(ui_ZoneFlowmeter1, LV_ALIGN_TOP_MID);
+  lv_label_set_long_mode(ui_ZoneFlowmeter1, LV_LABEL_LONG_DOT);
+  lv_label_set_text(ui_ZoneFlowmeter1, "0");
+  lv_obj_set_style_text_align(ui_ZoneFlowmeter1, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_radius(ui_ZoneFlowmeter1, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_ZoneFlowmeter1, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_ZoneFlowmeter1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_ZoneFlowmeter1, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_side(ui_ZoneFlowmeter1, LV_BORDER_SIDE_FULL, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_outline_color(ui_ZoneFlowmeter1, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_outline_opa(ui_ZoneFlowmeter1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
   ui_ZoneNum1 = lv_label_create(ui_Zone1);
   lv_obj_set_width(ui_ZoneNum1, 55);
@@ -257,22 +257,22 @@ void ui_Main_screen_init(void) {
   lv_obj_set_style_outline_color(ui_ZoneStatus2, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_outline_opa(ui_ZoneStatus2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  ui_ZoneFlowmetar2 = lv_label_create(ui_Zone2);
-  lv_obj_set_width(ui_ZoneFlowmetar2, 55);
-  lv_obj_set_height(ui_ZoneFlowmetar2, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_ZoneFlowmetar2, 0);
-  lv_obj_set_y(ui_ZoneFlowmetar2, 55);
-  lv_obj_set_align(ui_ZoneFlowmetar2, LV_ALIGN_TOP_MID);
-  lv_label_set_long_mode(ui_ZoneFlowmetar2, LV_LABEL_LONG_DOT);
-  lv_label_set_text(ui_ZoneFlowmetar2, "0");
-  lv_obj_set_style_text_align(ui_ZoneFlowmetar2, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_radius(ui_ZoneFlowmetar2, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_color(ui_ZoneFlowmetar2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_opa(ui_ZoneFlowmetar2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_width(ui_ZoneFlowmetar2, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_side(ui_ZoneFlowmetar2, LV_BORDER_SIDE_FULL, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_outline_color(ui_ZoneFlowmetar2, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_outline_opa(ui_ZoneFlowmetar2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  ui_ZoneFlowmeter2 = lv_label_create(ui_Zone2);
+  lv_obj_set_width(ui_ZoneFlowmeter2, 55);
+  lv_obj_set_height(ui_ZoneFlowmeter2, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_ZoneFlowmeter2, 0);
+  lv_obj_set_y(ui_ZoneFlowmeter2, 55);
+  lv_obj_set_align(ui_ZoneFlowmeter2, LV_ALIGN_TOP_MID);
+  lv_label_set_long_mode(ui_ZoneFlowmeter2, LV_LABEL_LONG_DOT);
+  lv_label_set_text(ui_ZoneFlowmeter2, "0");
+  lv_obj_set_style_text_align(ui_ZoneFlowmeter2, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_radius(ui_ZoneFlowmeter2, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_ZoneFlowmeter2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_ZoneFlowmeter2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_ZoneFlowmeter2, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_side(ui_ZoneFlowmeter2, LV_BORDER_SIDE_FULL, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_outline_color(ui_ZoneFlowmeter2, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_outline_opa(ui_ZoneFlowmeter2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
   ui_ZoneNum2 = lv_label_create(ui_Zone2);
   lv_obj_set_width(ui_ZoneNum2, 55);
@@ -320,22 +320,22 @@ void ui_Main_screen_init(void) {
   lv_obj_set_style_outline_color(ui_ZoneStatus3, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_outline_opa(ui_ZoneStatus3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  ui_ZoneFlowmetar3 = lv_label_create(ui_Zone3);
-  lv_obj_set_width(ui_ZoneFlowmetar3, 55);
-  lv_obj_set_height(ui_ZoneFlowmetar3, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_ZoneFlowmetar3, 0);
-  lv_obj_set_y(ui_ZoneFlowmetar3, 55);
-  lv_obj_set_align(ui_ZoneFlowmetar3, LV_ALIGN_TOP_MID);
-  lv_label_set_long_mode(ui_ZoneFlowmetar3, LV_LABEL_LONG_DOT);
-  lv_label_set_text(ui_ZoneFlowmetar3, "0");
-  lv_obj_set_style_text_align(ui_ZoneFlowmetar3, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_radius(ui_ZoneFlowmetar3, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_color(ui_ZoneFlowmetar3, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_opa(ui_ZoneFlowmetar3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_width(ui_ZoneFlowmetar3, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_side(ui_ZoneFlowmetar3, LV_BORDER_SIDE_FULL, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_outline_color(ui_ZoneFlowmetar3, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_outline_opa(ui_ZoneFlowmetar3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  ui_ZoneFlowmeter3 = lv_label_create(ui_Zone3);
+  lv_obj_set_width(ui_ZoneFlowmeter3, 55);
+  lv_obj_set_height(ui_ZoneFlowmeter3, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_ZoneFlowmeter3, 0);
+  lv_obj_set_y(ui_ZoneFlowmeter3, 55);
+  lv_obj_set_align(ui_ZoneFlowmeter3, LV_ALIGN_TOP_MID);
+  lv_label_set_long_mode(ui_ZoneFlowmeter3, LV_LABEL_LONG_DOT);
+  lv_label_set_text(ui_ZoneFlowmeter3, "0");
+  lv_obj_set_style_text_align(ui_ZoneFlowmeter3, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_radius(ui_ZoneFlowmeter3, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_ZoneFlowmeter3, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_ZoneFlowmeter3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_ZoneFlowmeter3, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_side(ui_ZoneFlowmeter3, LV_BORDER_SIDE_FULL, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_outline_color(ui_ZoneFlowmeter3, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_outline_opa(ui_ZoneFlowmeter3, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
   ui_ZoneNum3 = lv_label_create(ui_Zone3);
   lv_obj_set_width(ui_ZoneNum3, 55);
@@ -383,22 +383,22 @@ void ui_Main_screen_init(void) {
   lv_obj_set_style_outline_color(ui_ZoneStatus4, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_outline_opa(ui_ZoneStatus4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  ui_ZoneFlowmetar4 = lv_label_create(ui_Zone4);
-  lv_obj_set_width(ui_ZoneFlowmetar4, 55);
-  lv_obj_set_height(ui_ZoneFlowmetar4, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_ZoneFlowmetar4, 0);
-  lv_obj_set_y(ui_ZoneFlowmetar4, 55);
-  lv_obj_set_align(ui_ZoneFlowmetar4, LV_ALIGN_TOP_MID);
-  lv_label_set_long_mode(ui_ZoneFlowmetar4, LV_LABEL_LONG_DOT);
-  lv_label_set_text(ui_ZoneFlowmetar4, "0");
-  lv_obj_set_style_text_align(ui_ZoneFlowmetar4, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_radius(ui_ZoneFlowmetar4, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_color(ui_ZoneFlowmetar4, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_opa(ui_ZoneFlowmetar4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_width(ui_ZoneFlowmetar4, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_side(ui_ZoneFlowmetar4, LV_BORDER_SIDE_FULL, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_outline_color(ui_ZoneFlowmetar4, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_outline_opa(ui_ZoneFlowmetar4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  ui_ZoneFlowmeter4 = lv_label_create(ui_Zone4);
+  lv_obj_set_width(ui_ZoneFlowmeter4, 55);
+  lv_obj_set_height(ui_ZoneFlowmeter4, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_ZoneFlowmeter4, 0);
+  lv_obj_set_y(ui_ZoneFlowmeter4, 55);
+  lv_obj_set_align(ui_ZoneFlowmeter4, LV_ALIGN_TOP_MID);
+  lv_label_set_long_mode(ui_ZoneFlowmeter4, LV_LABEL_LONG_DOT);
+  lv_label_set_text(ui_ZoneFlowmeter4, "0");
+  lv_obj_set_style_text_align(ui_ZoneFlowmeter4, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_radius(ui_ZoneFlowmeter4, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_ZoneFlowmeter4, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_ZoneFlowmeter4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_ZoneFlowmeter4, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_side(ui_ZoneFlowmeter4, LV_BORDER_SIDE_FULL, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_outline_color(ui_ZoneFlowmeter4, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_outline_opa(ui_ZoneFlowmeter4, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
   ui_ZoneNum4 = lv_label_create(ui_Zone4);
   lv_obj_set_width(ui_ZoneNum4, 55);
@@ -446,22 +446,22 @@ void ui_Main_screen_init(void) {
   lv_obj_set_style_outline_color(ui_ZoneStatus5, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_outline_opa(ui_ZoneStatus5, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  ui_ZoneFlowmetar5 = lv_label_create(ui_Zone5);
-  lv_obj_set_width(ui_ZoneFlowmetar5, 55);
-  lv_obj_set_height(ui_ZoneFlowmetar5, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_ZoneFlowmetar5, 0);
-  lv_obj_set_y(ui_ZoneFlowmetar5, 55);
-  lv_obj_set_align(ui_ZoneFlowmetar5, LV_ALIGN_TOP_MID);
-  lv_label_set_long_mode(ui_ZoneFlowmetar5, LV_LABEL_LONG_DOT);
-  lv_label_set_text(ui_ZoneFlowmetar5, "0");
-  lv_obj_set_style_text_align(ui_ZoneFlowmetar5, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_radius(ui_ZoneFlowmetar5, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_color(ui_ZoneFlowmetar5, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_opa(ui_ZoneFlowmetar5, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_width(ui_ZoneFlowmetar5, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_side(ui_ZoneFlowmetar5, LV_BORDER_SIDE_FULL, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_outline_color(ui_ZoneFlowmetar5, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_outline_opa(ui_ZoneFlowmetar5, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  ui_ZoneFlowmeter5 = lv_label_create(ui_Zone5);
+  lv_obj_set_width(ui_ZoneFlowmeter5, 55);
+  lv_obj_set_height(ui_ZoneFlowmeter5, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_ZoneFlowmeter5, 0);
+  lv_obj_set_y(ui_ZoneFlowmeter5, 55);
+  lv_obj_set_align(ui_ZoneFlowmeter5, LV_ALIGN_TOP_MID);
+  lv_label_set_long_mode(ui_ZoneFlowmeter5, LV_LABEL_LONG_DOT);
+  lv_label_set_text(ui_ZoneFlowmeter5, "0");
+  lv_obj_set_style_text_align(ui_ZoneFlowmeter5, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_radius(ui_ZoneFlowmeter5, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_ZoneFlowmeter5, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_ZoneFlowmeter5, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_ZoneFlowmeter5, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_side(ui_ZoneFlowmeter5, LV_BORDER_SIDE_FULL, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_outline_color(ui_ZoneFlowmeter5, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_outline_opa(ui_ZoneFlowmeter5, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
   ui_ZoneNum5 = lv_label_create(ui_Zone5);
   lv_obj_set_width(ui_ZoneNum5, 55);
@@ -509,22 +509,22 @@ void ui_Main_screen_init(void) {
   lv_obj_set_style_outline_color(ui_ZoneStatus6, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_outline_opa(ui_ZoneStatus6, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  ui_ZoneFlowmetar6 = lv_label_create(ui_Zone6);
-  lv_obj_set_width(ui_ZoneFlowmetar6, 55);
-  lv_obj_set_height(ui_ZoneFlowmetar6, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_ZoneFlowmetar6, 0);
-  lv_obj_set_y(ui_ZoneFlowmetar6, 55);
-  lv_obj_set_align(ui_ZoneFlowmetar6, LV_ALIGN_TOP_MID);
-  lv_label_set_long_mode(ui_ZoneFlowmetar6, LV_LABEL_LONG_DOT);
-  lv_label_set_text(ui_ZoneFlowmetar6, "0");
-  lv_obj_set_style_text_align(ui_ZoneFlowmetar6, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_radius(ui_ZoneFlowmetar6, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_color(ui_ZoneFlowmetar6, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_opa(ui_ZoneFlowmetar6, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_width(ui_ZoneFlowmetar6, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_side(ui_ZoneFlowmetar6, LV_BORDER_SIDE_FULL, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_outline_color(ui_ZoneFlowmetar6, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_outline_opa(ui_ZoneFlowmetar6, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  ui_ZoneFlowmeter6 = lv_label_create(ui_Zone6);
+  lv_obj_set_width(ui_ZoneFlowmeter6, 55);
+  lv_obj_set_height(ui_ZoneFlowmeter6, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_ZoneFlowmeter6, 0);
+  lv_obj_set_y(ui_ZoneFlowmeter6, 55);
+  lv_obj_set_align(ui_ZoneFlowmeter6, LV_ALIGN_TOP_MID);
+  lv_label_set_long_mode(ui_ZoneFlowmeter6, LV_LABEL_LONG_DOT);
+  lv_label_set_text(ui_ZoneFlowmeter6, "0");
+  lv_obj_set_style_text_align(ui_ZoneFlowmeter6, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_radius(ui_ZoneFlowmeter6, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_ZoneFlowmeter6, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_ZoneFlowmeter6, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_ZoneFlowmeter6, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_side(ui_ZoneFlowmeter6, LV_BORDER_SIDE_FULL, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_outline_color(ui_ZoneFlowmeter6, lv_color_hex(0xC3CE1A), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_outline_opa(ui_ZoneFlowmeter6, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
   ui_ZoneNum6 = lv_label_create(ui_Zone6);
   lv_obj_set_width(ui_ZoneNum6, 55);

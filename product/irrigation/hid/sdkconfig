@@ -1995,12 +1995,6 @@ CONFIG_LV_USE_SNAPSHOT=y
 # end of LVGL configuration
 
 #
-# ESP-ASIO
-#
-# CONFIG_ASIO_SSL_SUPPORT is not set
-# end of ESP-ASIO
-
-#
 # Modbus configuration
 #
 CONFIG_FMB_COMM_MODE_TCP_EN=y
@@ -2056,6 +2050,12 @@ CONFIG_MDNS_PREDEF_NETIF_AP=y
 CONFIG_MDNS_PREDEF_NETIF_ETH=y
 # end of MDNS Predefined interfaces
 # end of mDNS
+
+#
+# ESP-ASIO
+#
+# CONFIG_ASIO_SSL_SUPPORT is not set
+# end of ESP-ASIO
 # end of Component config
 
 # Deprecated options for backward compatibility

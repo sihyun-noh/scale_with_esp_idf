@@ -83,20 +83,33 @@ bool send_response_data(message_type_t sender) {
 void ctrl_msg_handler(irrigation_message_t *message) {
   switch (message->sender_type) {
     case SET_CONFIG: break;
-    case TIME_SYNC:
+    case TIME_SYNC: {
       set_main_time(&message->current_time);
       set_time_sync(1);
       enable_buttons();
-      break;
+    } break;
     case RESPONSE: break;
-    case BATTERY_LEVEL:
+    case BATTERY_LEVEL: {
       // add battery level to the logging data
       set_battery_level(1);
       send_response_data(message->sender_type);
-      break;
-    case START_FLOW: send_response_data(message->sender_type); break;
-    case ZONE_COMPLETE: send_response_data(message->sender_type); break;
-    case ALL_COMPLETE: send_response_data(message->sender_type); break;
+    } break;
+    case START_FLOW: {
+      int zone_id = message->deviceId;
+      set_zone_status(zone_id, true);
+      send_response_data(message->sender_type);
+    } break;
+    case ZONE_COMPLETE: {
+      int zone_id = message->deviceId;
+      int flow_value = message->flow_value;
+      set_zone_status(zone_id, false);
+      set_zone_flow_value(zone_id, flow_value);
+      send_response_data(message->sender_type);
+    } break;
+    case ALL_COMPLETE: {
+      enable_start_button();
+      send_response_data(message->sender_type);
+    } break;
     case SET_SLEEP: break;
     default: break;
   }

@@ -9,7 +9,7 @@
 #include "ui.h"
 
 typedef enum {
-  ZONE_1 = 0,
+  ZONE_1 = 1,
   ZONE_2,
   ZONE_3,
   ZONE_4,
@@ -108,5 +108,6 @@ void enable_start_button(void);
 void disable_start_button(void);
 
 void set_zone_status(ZONE zone, bool start);
+void set_zone_flow_value(ZONE zone, int flow_value);
 
 #endif
