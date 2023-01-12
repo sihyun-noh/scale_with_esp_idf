@@ -126,7 +126,7 @@ static time_t get_current_time(void) {
 
 // receive mac addr 이 현 set mac addr 인지 확인 함수
 bool check_address_matching_current_set(const uint8_t* mac) {
-  for (int i = 0; i < 7; i++) {
+  for (int i = 0; i < TOTAL_DEVICES; i++) {
     uint8_t compareAddr[6] = {
       0,
     };
@@ -359,6 +359,9 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
 
       case REQ_TIME_SYNC: {
         send_esp_data(TIME_SYNC, TIME_SYNC, 7);
+        
+        LOGI(TAG, "SEND TIME SYNC / REQ_TIME_SYNC!!");
+        set_control_status(WAIT_STATE);
       } break;
 
       default: break;
