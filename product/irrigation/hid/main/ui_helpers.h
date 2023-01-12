@@ -8,6 +8,15 @@
 
 #include "ui.h"
 
+typedef enum {
+  ZONE_1 = 0,
+  ZONE_2,
+  ZONE_3,
+  ZONE_4,
+  ZONE_5,
+  ZONE_6,
+} ZONE;
+
 #define _UI_TEMPORARY_STRING_BUFFER_SIZE 32
 #define _UI_BAR_PROPERTY_VALUE 0
 #define _UI_BAR_PROPERTY_VALUE_WITH_ANIM 1
@@ -94,5 +103,10 @@ void warnning_msgbox(char *message);
 
 void enable_buttons(void);
 void disable_buttons(void);
+
+void enable_start_button(void);
+void disable_start_button(void);
+
+void set_zone_status(ZONE zone, bool start);
 
 #endif
