@@ -232,6 +232,8 @@ int system_init(void) {
 
   check_model();
 
+  battery_init();
+  
   create_mqtt_task();
 
   if (!is_battery_model()) {

@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+void battery_init(void);
 int read_battery_percentage(void);
 
 #ifdef __cplusplus
