@@ -208,11 +208,11 @@ void disable_buttons(void) {
 }
 
 void enable_start_button(void) {
-  _ui_state_modify(ui_StartButton, _UI_MODIFY_STATE_ADD, LV_STATE_DISABLED);
+  _ui_state_modify(ui_StartButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_REMOVE);
 }
 
 void disable_start_button(void) {
-  _ui_state_modify(ui_StartButton, _UI_MODIFY_STATE_REMOVE, LV_STATE_DISABLED);
+  _ui_state_modify(ui_StartButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_ADD);
 }
 
 lv_obj_t *get_zone_status(ZONE zone) {

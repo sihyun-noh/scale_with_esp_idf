@@ -34,7 +34,7 @@ void OnStartEvent(lv_event_t* e) {
     memcpy(&msg.config, &cfg, sizeof(config_value_t));
     espnow_send_data(espnow_get_master_addr(), (uint8_t*)&msg, sizeof(irrigation_message_t));
     LOGI(TAG, "Success to send Start command!!!");
-    lv_label_set_text(ui_StartButtonLabel, "In-Progress");
+    // lv_label_set_text(ui_StartButtonLabel, "In-Progress");
     // Reset configuration data
     syscfg_unset(CFG_DATA, "hid_config");
   } else {

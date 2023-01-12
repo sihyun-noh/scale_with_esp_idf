@@ -5,17 +5,17 @@
 
 typedef enum {
   SET_CONFIG = 0,
-  TIME_SYNC,
-  START_FLOW,
-  BATTERY_LEVEL,
-  SET_VALVE_ON,
-  SET_VALVE_OFF,
-  FLOW_STATUS,
-  SET_SLEEP,
-  RESPONSE,
-  ZONE_COMPLETE,
-  ALL_COMPLETE,
-  FORCE_STOP,
+  TIME_SYNC,      // 1
+  START_FLOW,     // 2
+  BATTERY_LEVEL,  // 3
+  SET_VALVE_ON,   // 4
+  SET_VALVE_OFF,  // 5
+  FLOW_STATUS,    // 6
+  SET_SLEEP,      // 7
+  RESPONSE,       // 8
+  ZONE_COMPLETE,  // 9
+  ALL_COMPLETE,   // 10, 0a
+  FORCE_STOP,     // 11, 0b
   NONE
 } message_type_t;
 

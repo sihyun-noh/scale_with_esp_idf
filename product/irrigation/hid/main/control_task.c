@@ -88,7 +88,15 @@ void ctrl_msg_handler(irrigation_message_t *message) {
       set_time_sync(1);
       enable_buttons();
     } break;
-    case RESPONSE: break;
+    case RESPONSE: {
+      if (message->receive_type == SET_CONFIG && message->resp == SUCCESS) {
+        LOGI(TAG, "Success SET_CONFIG, disable start button");
+        disable_start_button();
+      } else if (message->receive_type == FORCE_STOP && message->resp == SUCCESS) {
+        LOGI(TAG, "Success FORCE_STOP, enable start button");
+        enable_start_button();
+      }
+    } break;
     case BATTERY_LEVEL: {
       // add battery level to the logging data
       set_battery_level(1);
