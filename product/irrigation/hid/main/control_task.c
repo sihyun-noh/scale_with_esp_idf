@@ -118,6 +118,7 @@ void ctrl_msg_handler(irrigation_message_t *message) {
       int zone_id = message->deviceId;
       set_zone_status(zone_id, true);
       // send_response_data(message->sender_type);
+      disable_start_button();
       send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
     } break;
     case ZONE_COMPLETE: {
