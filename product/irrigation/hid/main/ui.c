@@ -555,6 +555,8 @@ void ui_Main_screen_init(void) {
   lv_obj_set_style_radius(ui_StartButton, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(ui_StartButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_opa(ui_StartButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  // lv_obj_add_state(ui_StartButton, LV_STATE_DISABLED);
+  //_ui_state_modify(ui_StartButton, _UI_MODIFY_STATE_ADD, LV_STATE_DISABLED);
 
   ui_StartButtonLabel = lv_label_create(ui_StartButton);
   lv_obj_set_width(ui_StartButtonLabel, LV_SIZE_CONTENT);   /// 1
@@ -577,6 +579,8 @@ void ui_Main_screen_init(void) {
   lv_obj_set_style_radius(ui_StopButton, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(ui_StopButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_opa(ui_StopButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  // lv_obj_add_state(ui_StopButton, LV_STATE_DISABLED);
+  // _ui_state_modify(ui_StopButton, _UI_MODIFY_STATE_ADD, LV_STATE_DISABLED);
 
   ui_StopButtonLabel = lv_label_create(ui_StopButton);
   lv_obj_set_width(ui_StopButtonLabel, LV_SIZE_CONTENT);   /// 1
@@ -599,6 +603,8 @@ void ui_Main_screen_init(void) {
   lv_obj_set_style_radius(ui_ResetButton, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(ui_ResetButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_opa(ui_ResetButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  // lv_obj_add_state(ui_ResetButton, LV_STATE_DISABLED);
+  // _ui_state_modify(ui_ResetButton, _UI_MODIFY_STATE_ADD, LV_STATE_DISABLED);
 
   ui_ResetButtonLabel = lv_label_create(ui_ResetButton);
   lv_obj_set_width(ui_ResetButtonLabel, LV_SIZE_CONTENT);   /// 1
@@ -620,6 +626,8 @@ void ui_Main_screen_init(void) {
   lv_obj_set_style_radius(ui_SettingButton, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(ui_SettingButton, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_opa(ui_SettingButton, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  // lv_obj_add_state(ui_SettingButton, LV_STATE_DISABLED);
+  // _ui_state_modify(ui_SettingButton, _UI_MODIFY_STATE_ADD, LV_STATE_DISABLED);
 
   ui_SettingButtonLabel = lv_label_create(ui_SettingButton);
   lv_obj_set_width(ui_SettingButtonLabel, LV_SIZE_CONTENT);   /// 1

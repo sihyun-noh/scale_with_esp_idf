@@ -194,17 +194,17 @@ void warnning_msgbox(char *message) {
 
 void enable_buttons(void) {
   /* Enable button */
-  _ui_state_modify(ui_StartButton, _UI_MODIFY_STATE_REMOVE, LV_STATE_DISABLED);
-  _ui_state_modify(ui_StopButton, _UI_MODIFY_STATE_REMOVE, LV_STATE_DISABLED);
-  _ui_state_modify(ui_SettingButton, _UI_MODIFY_STATE_REMOVE, LV_STATE_DISABLED);
-  _ui_state_modify(ui_ResetButton, _UI_MODIFY_STATE_REMOVE, LV_STATE_DISABLED);
+  _ui_state_modify(ui_StartButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_REMOVE);
+  _ui_state_modify(ui_StopButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_REMOVE);
+  _ui_state_modify(ui_SettingButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_REMOVE);
+  _ui_state_modify(ui_ResetButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_REMOVE);
 }
 
 void disable_buttons(void) {
-  _ui_state_modify(ui_StartButton, _UI_MODIFY_STATE_ADD, LV_STATE_DISABLED);
-  _ui_state_modify(ui_StopButton, _UI_MODIFY_STATE_ADD, LV_STATE_DISABLED);
-  _ui_state_modify(ui_SettingButton, _UI_MODIFY_STATE_ADD, LV_STATE_DISABLED);
-  _ui_state_modify(ui_ResetButton, _UI_MODIFY_STATE_ADD, LV_STATE_DISABLED);
+  _ui_state_modify(ui_StartButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_ADD);
+  _ui_state_modify(ui_StopButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_ADD);
+  _ui_state_modify(ui_SettingButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_ADD);
+  _ui_state_modify(ui_ResetButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_ADD);
 }
 
 void enable_start_button(void) {
