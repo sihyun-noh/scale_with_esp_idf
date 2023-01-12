@@ -14,9 +14,9 @@
 #include "comm_packet.h"
 #include "battery_task.h"
 
-#define RESP_THRES      10
-#define NUMBER_CHILD    6
-#define TOTAL_DEVICES   7
+#define RESP_THRES 10
+#define NUMBER_CHILD 6
+#define TOTAL_DEVICES 7
 
 static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;
@@ -39,19 +39,19 @@ typedef enum {
 
 condtrol_status_t controlStatus = CHECK_ADDR;
 
-message_type_t sendCmd; // send cmd name
-bool sendMessageFlag;   // cmd send true/false
-int respTimeCnt;        // response 
-int receivedId;         // received device Id
+message_type_t sendCmd;  // send cmd name
+bool sendMessageFlag;    // cmd send true/false
+int respTimeCnt;         // response
+int receivedId;          // received device Id
 int respBroadCast[TOTAL_DEVICES];
 
-bool setConfig;        // config setting 여부
-bool flowStart;        // 관수 시작 flag
-time_t flowStartTime;  // 관수 시작 설정 시간
-int zoneFlowCnt;       // 관수 설정된 zone 갯수
-int flowOrder[NUMBER_CHILD];      // 관수 순서
+bool setConfig;                      // config setting 여부
+bool flowStart;                      // 관수 시작 flag
+time_t flowStartTime;                // 관수 시작 설정 시간
+int zoneFlowCnt;                     // 관수 설정된 zone 갯수
+int flowOrder[NUMBER_CHILD];         // 관수 순서
 int flowSettingValue[NUMBER_CHILD];  // 관수 설정 값
-int zoneBattery[TOTAL_DEVICES];    // 0: master, 1~6: child 배터리 잔량
+int zoneBattery[TOTAL_DEVICES];      // 0: master, 1~6: child 배터리 잔량
 
 int flowDoneCnt;  // zone 변 관수 완료 카운트
 int batteryCnt;   // child 배터리 수신 횟수
@@ -125,9 +125,11 @@ static time_t get_current_time(void) {
 }
 
 // receive mac addr 이 현 set mac addr 인지 확인 함수
-bool check_address_matching_current_set(const uint8_t* mac){
+bool check_address_matching_current_set(const uint8_t* mac) {
   for (int i = 0; i < 7; i++) {
-    uint8_t compareAddr[6] = { 0, };
+    uint8_t compareAddr[6] = {
+      0,
+    };
     get_addr(compareAddr, i);
 
     if (memcmp(mac, compareAddr, sizeof(compareAddr)) == 0) {
@@ -271,7 +273,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
           case START_FLOW: {
             set_control_status(CHECK_FLOW);
           } break;
-          
+
           case ZONE_COMPLETE:
           case BATTERY_LEVEL: {
             set_control_status(CHECK_SCEHDULE);
@@ -307,7 +309,8 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
 
           case TIME_SYNC: {
             zoneBattery[recv_message.deviceId] = recv_message.battery_level[recv_message.deviceId];
-            LOGI(TAG, "ID: %D, Battery level: %d", recv_message.deviceId, recv_message.battery_level[recv_message.deviceId]);
+            LOGI(TAG, "ID: %D, Battery level: %d", recv_message.deviceId,
+                 recv_message.battery_level[recv_message.deviceId]);
             batteryCnt++;
             sendMessageFlag = true;
             sendCmd = recv_message.receive_type;
@@ -320,7 +323,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
               sendCmd = NONE;
               zoneBattery[0] = read_battery_percentage();
               LOGI(TAG, "Battery Level, Master: %d, Child : %d, %d, %d, %d, %d, %d ", zoneBattery[0], zoneBattery[1],
-                  zoneBattery[2], zoneBattery[3], zoneBattery[4], zoneBattery[5], zoneBattery[6]);
+                   zoneBattery[2], zoneBattery[3], zoneBattery[4], zoneBattery[5], zoneBattery[6]);
 
               send_esp_data(BATTERY_LEVEL, BATTERY_LEVEL, 0);
 
@@ -352,6 +355,10 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
           init_variable();
           set_control_status(CHECK_SCEHDULE);
         }
+      } break;
+
+      case REQ_TIME_SYNC: {
+        send_esp_data(TIME_SYNC, TIME_SYNC, 7);
       } break;
 
       default: break;
@@ -425,12 +432,12 @@ void check_schedule(void) {
 void retry_send_cmd(int rcvId) {
   if (rcvId > NUMBER_CHILD) {
     // broadcasting 후에 못 받은 것들 체크....
-    for(int i = 0; i < TOTAL_DEVICES; i++) {
+    for (int i = 0; i < TOTAL_DEVICES; i++) {
       if (respBroadCast[i] == 0) {
         send_esp_data(sendCmd, sendCmd, i);
       }
       receivedId = TOTAL_DEVICES;
-   }
+    }
   } else {
     send_esp_data(sendCmd, sendCmd, rcvId);
   }
@@ -477,7 +484,7 @@ static void control_task(void* pvParameters) {
 
       case WAIT_STATE: {
         // 대기 상태
-        check_cmd_response();        
+        check_cmd_response();
       } break;
 
       case CHECK_SCEHDULE: {

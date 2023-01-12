@@ -1,3 +1,4 @@
+#include "command.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -11,6 +12,7 @@
 #include "time_api.h"
 #include "sys_status.h"
 #include "comm_packet.h"
+#include "command.h"
 
 #define CTRL_MSG_QUEUE_LEN 16
 
@@ -37,6 +39,7 @@ static bool _get_msg_event(irrigation_message_t **msg) {
   return ctrl_msg_queue && (xQueueReceive(ctrl_msg_queue, msg, portMAX_DELAY) == pdPASS);
 }
 
+#if 0
 static time_t get_current_time(void) {
   time_t now;
   struct tm timeinfo = { 0 };
@@ -46,6 +49,7 @@ static time_t get_current_time(void) {
 
   return mktime(&timeinfo);
 }
+#endif
 
 void send_msg_to_ctrl_task(void *msg, size_t msg_len) {
   irrigation_message_t *message = NULL;
@@ -65,9 +69,12 @@ void set_main_time(time_t *curr_time) {
   localtime_r(curr_time, &timeinfo);
   set_local_time(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min,
                  timeinfo.tm_sec);
+  // set time sync event flag
+  set_time_sync(1);
   LOGI(TAG, "main time is synced");
 }
 
+#if 0
 bool send_response_data(message_type_t sender) {
   irrigation_message_t resp_data;
 
@@ -79,13 +86,13 @@ bool send_response_data(message_type_t sender) {
 
   return espnow_send_data(espnow_get_master_addr(), (uint8_t *)&resp_data, sizeof(resp_data));
 }
+#endif
 
 void ctrl_msg_handler(irrigation_message_t *message) {
   switch (message->sender_type) {
     case SET_CONFIG: break;
     case TIME_SYNC: {
       set_main_time(&message->current_time);
-      set_time_sync(1);
       enable_buttons();
     } break;
     case RESPONSE: {
@@ -100,23 +107,31 @@ void ctrl_msg_handler(irrigation_message_t *message) {
     case BATTERY_LEVEL: {
       // add battery level to the logging data
       set_battery_level(1);
-      send_response_data(message->sender_type);
+      if (!is_time_sync()) {
+        set_main_time(&message->current_time);
+        enable_buttons();
+      }
+      // send_response_data(message->sender_type);
+      send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
     } break;
     case START_FLOW: {
       int zone_id = message->deviceId;
       set_zone_status(zone_id, true);
-      send_response_data(message->sender_type);
+      // send_response_data(message->sender_type);
+      send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
     } break;
     case ZONE_COMPLETE: {
       int zone_id = message->deviceId;
       int flow_value = message->flow_value;
       set_zone_status(zone_id, false);
       set_zone_flow_value(zone_id, flow_value);
-      send_response_data(message->sender_type);
+      // send_response_data(message->sender_type);
+      send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
     } break;
     case ALL_COMPLETE: {
       enable_start_button();
-      send_response_data(message->sender_type);
+      // send_response_data(message->sender_type);
+      send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
     } break;
     case SET_SLEEP: break;
     default: break;

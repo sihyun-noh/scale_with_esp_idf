@@ -58,12 +58,21 @@ timezone_t timezone_list[] = { { 1, "EST5EDT,M3.2.0,M11.1.0", "America/New_York"
                                { 19, "CET-1CEST,M3.5.0,M10.5.0/3", "Europe/Rome" },
                                { 20, "CET-1CEST,M3.5.0,M10.5.0/3", "Europe/Amsterdam" } };
 
-static unsigned long millis() {
+unsigned long millis(void) {
   return (unsigned long)(esp_timer_get_time() / 1000ULL);
 }
 
-static void delay_ms(uint32_t ms) {
+void delay_ms(uint32_t ms) {
   vTaskDelay(ms / portTICK_PERIOD_MS);
+}
+
+bool is_elapsed_uptime(uint32_t start_ms, uint32_t uptime_ms) {
+  uint32_t now = millis();
+
+  if (now - start_ms <= uptime_ms) {
+    return false;
+  }
+  return true;
 }
 
 #if 0
@@ -233,18 +242,17 @@ void rtc_time_init(void) {
 
   vTaskDelay(pdMS_TO_TICKS(250));
   rtc_get_time(&timeinfo);
-  set_local_time(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+  set_local_time(timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min,
+                 timeinfo.tm_sec);
 }
 
 void rtc_set_time(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec) {
-  struct tm time = {
-      .tm_year = year - 1900,  // since 1900
-      .tm_mon = month - 1,     // 0-based
-      .tm_mday = day,
-      .tm_hour = hour,
-      .tm_min = min,
-      .tm_sec = sec
-  };
+  struct tm time = { .tm_year = year - 1900,  // since 1900
+                     .tm_mon = month - 1,     // 0-based
+                     .tm_mday = day,
+                     .tm_hour = hour,
+                     .tm_min = min,
+                     .tm_sec = sec };
   ESP_ERROR_CHECK(ds3231_set_time(&rtc_dev, &time));
 }
 

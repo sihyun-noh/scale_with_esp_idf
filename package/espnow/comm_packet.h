@@ -14,8 +14,9 @@ typedef enum {
   SET_SLEEP,      // 7
   RESPONSE,       // 8
   ZONE_COMPLETE,  // 9
-  ALL_COMPLETE,   // 10, 0a
-  FORCE_STOP,     // 11, 0b
+  ALL_COMPLETE,   // 10, 0x0a
+  FORCE_STOP,     // 11, 0x0b
+  REQ_TIME_SYNC,  // 12, 0x0c
   NONE
 } message_type_t;
 

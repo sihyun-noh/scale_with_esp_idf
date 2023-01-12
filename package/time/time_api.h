@@ -19,6 +19,7 @@
 #define _TIME_API_H_
 
 #include <stdbool.h>
+#include <time.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,6 +85,12 @@ bool tm_get_local_time(struct tm* info, uint32_t ms);
 void set_ntp_time(void);
 
 bool get_ntp_time(int tz_offset, int dst_offset);
+
+bool is_elapsed_uptime(uint32_t start_ms, uint32_t uptime_ms);
+
+unsigned long millis(void);
+
+void delay_ms(uint32_t ms);
 
 #if defined(CONFIG_SMARTFARM_RTC_DS3231_FEATURE)
 void rtc_time_init(void);

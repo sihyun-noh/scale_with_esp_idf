@@ -18,6 +18,8 @@
 #include "espnow.h"
 #include "control_task.h"
 #include "file_manager.h"
+#include "time_api.h"
+#include "command.h"
 
 #include <string.h>
 
@@ -51,6 +53,8 @@ sc_ctx_t *sc_ctx = NULL;
 
 // uint8_t main_mac_addr[6] = { 0xF4, 0x12, 0xFA, 0x52, 0x07, 0xD1 };
 uint8_t *main_mac_addr;
+
+uint32_t start_ms = 0;
 
 extern "C" {
 extern void sdcard_init(void);
@@ -189,7 +193,17 @@ int system_init(void) {
 
   fm_init(PARTITION_NAME, BASE_PATH);
 
+  start_ms = millis();
+
   return SYSINIT_OK;
+}
+
+bool is_time_sync_within_uptime(uint32_t uptime_ms) {
+  // if time sync is not set within 10 mins after booting up, send req time sync command to the master
+  if (!is_time_sync() && is_elapsed_uptime(start_ms, uptime_ms)) {
+    return false;
+  }
+  return true;
 }
 
 void loop_task(void) {
@@ -216,14 +230,18 @@ void loop_task(void) {
         }
         main_mac_addr = espnow_get_master_addr();
         LOG_BUFFER_HEX(TAG, main_mac_addr, MAC_ADDR_LEN);
-        set_operation_mode(RUNNING_MODE);
+        set_operation_mode(MONITOR_MODE);
       } break;
-      case RUNNING_MODE: {
+      case MONITOR_MODE: {
+        if (!is_time_sync_within_uptime(600 * 1000)) {
+          send_command_data(REQ_TIME_SYNC_COMMAND, NULL, 0);
+          LOGI(TAG, "Send Request Time sync command!!!");
+        }
         set_operation_mode(SLEEP_MODE);
       } break;
       case SLEEP_MODE: {
         vTaskDelay(send_interval * 1000 / portTICK_PERIOD_MS);
-        set_operation_mode(RUNNING_MODE);
+        set_operation_mode(MONITOR_MODE);
       } break;
     }
     vTaskDelay(100 / portTICK_PERIOD_MS);
