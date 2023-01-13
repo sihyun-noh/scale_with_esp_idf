@@ -346,6 +346,32 @@ void sys_stat_set_battery_level(uint8_t status) {
   }
 }
 
+int sys_stat_get_start_irrigation(void) {
+  EventBits_t bits = xEventGroupGetBits(irrigation_status_events);
+  return ((bits & STATUS_START_IRRIGATION) == STATUS_START_IRRIGATION);
+}
+
+void sys_stat_set_start_irrigation(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(irrigation_status_events, STATUS_START_IRRIGATION);
+  } else {
+    xEventGroupClearBits(irrigation_status_events, STATUS_START_IRRIGATION);
+  }
+}
+
+int sys_stat_get_stop_irrigation(void) {
+  EventBits_t bits = xEventGroupGetBits(irrigation_status_events);
+  return ((bits & STATUS_STOP_IRRIGATION) == STATUS_STOP_IRRIGATION);
+}
+
+void sys_stat_set_stop_irrigation(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(irrigation_status_events, STATUS_STOP_IRRIGATION);
+  } else {
+    xEventGroupClearBits(irrigation_status_events, STATUS_STOP_IRRIGATION);
+  }
+}
+
 int sys_stat_init(void) {
   sw_status_events = xEventGroupCreate();
   if (sw_status_events == NULL) {

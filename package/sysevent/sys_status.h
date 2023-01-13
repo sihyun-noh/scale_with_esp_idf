@@ -41,9 +41,11 @@ extern "C" {
 #define STATUS_ERROR (1 << 1) /* Error */
 
 /* Irrigation Status */
-#define STATUS_TIME_SYNC (1 << 0)     /* Time sync */
-#define STATUS_BATTERY_LEVEL (1 << 1) /* Battery level */
-#define STATUS_SET_CONFIG (1 << 2)    /* Set Configuration */
+#define STATUS_TIME_SYNC (1 << 0)        /* Time sync */
+#define STATUS_BATTERY_LEVEL (1 << 1)    /* Battery level */
+#define STATUS_SET_CONFIG (1 << 2)       /* Set Configuration */
+#define STATUS_START_IRRIGATION (1 << 3) /* Start Irrigation */
+#define STATUS_STOP_IRRIGATION (1 << 4)  /* Stop Irrigation */
 
 #define is_device_configured sys_stat_get_configured
 #define set_device_configured sys_stat_set_configured
@@ -116,6 +118,12 @@ extern "C" {
 
 #define is_battery_level sys_stat_get_battery_level
 #define set_battery_level sys_stat_set_battery_level
+
+#define is_start_irrigation sys_stat_get_start_irrigation
+#define set_start_irrigation sys_stat_set_start_irrigation
+
+#define is_stop_irrigation sys_stat_get_stop_irrigation
+#define set_stop_irrigation sys_stat_set_stop_irrigation
 
 int sys_stat_get_configured(void);
 void sys_stat_set_configured(uint8_t status);
@@ -190,6 +198,12 @@ void sys_stat_set_time_sync(uint8_t status);
 
 int sys_stat_get_battery_level(void);
 void sys_stat_set_battery_level(uint8_t status);
+
+int sys_stat_get_start_irrigation(void);
+void sys_stat_set_start_irrigation(uint8_t status);
+
+int sys_stat_get_stop_irrigation(void);
+void sys_stat_set_stop_irrigation(uint8_t status);
 
 #ifdef __cplusplus
 }

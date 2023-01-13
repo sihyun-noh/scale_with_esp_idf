@@ -232,6 +232,21 @@ lv_obj_t *get_zone_flow_meter_obj(ZONE zone) {
   return zone_flow_meter[zone - 1];
 }
 
+char *get_checked_zones(void) {
+  static char zones[20] = { 0 };
+  int i, pos = 0;
+
+  lv_obj_t *zone_check_ui[6] = { ui_Zone1, ui_Zone2, ui_Zone3, ui_Zone4, ui_Zone5, ui_Zone6 };
+
+  for (i = 0; i < 6; i++) {
+    if (lv_obj_has_state(zone_check_ui[i], LV_STATE_CHECKED)) {
+      pos += snprintf(&zones[pos], sizeof(zones), "%d,", i + 1);
+    }
+  }
+  zones[strlen(zones) - 1] = '\0';
+  return zones;
+}
+
 void set_zone_status(ZONE zone, bool start) {
   if (start) {
     lv_label_set_text(get_zone_status_obj(zone), "start");
@@ -258,4 +273,16 @@ void set_zone_flow_value(ZONE zone, int flow_value) {
   total_flow_value = atoi(curr_flow_value) + flow_value;
   snprintf(flow, sizeof(flow), "%d", total_flow_value);
   lv_label_set_text(ui_ZoneFlowmeter6, flow);
+}
+
+void reset_settings(void) {
+  lv_textarea_set_text(ui_FlowRateText, "");
+  lv_textarea_set_text(ui_TimeHourText, "");
+  lv_textarea_set_text(ui_TimeMinuteText, "");
+  _ui_state_modify(ui_Zone1, LV_STATE_CHECKED, _UI_MODIFY_STATE_REMOVE);
+  _ui_state_modify(ui_Zone2, LV_STATE_CHECKED, _UI_MODIFY_STATE_REMOVE);
+  _ui_state_modify(ui_Zone3, LV_STATE_CHECKED, _UI_MODIFY_STATE_REMOVE);
+  _ui_state_modify(ui_Zone4, LV_STATE_CHECKED, _UI_MODIFY_STATE_REMOVE);
+  _ui_state_modify(ui_Zone5, LV_STATE_CHECKED, _UI_MODIFY_STATE_REMOVE);
+  _ui_state_modify(ui_Zone6, LV_STATE_CHECKED, _UI_MODIFY_STATE_REMOVE);
 }

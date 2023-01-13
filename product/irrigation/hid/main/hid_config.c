@@ -48,8 +48,8 @@ bool save_hid_config(const char *flow, const char *start_time_hour, const char *
   int hour = 0, min = 0;
   char *beg = NULL, *pch = NULL;
 
-  if (!flow || !start_time_hour || strlen(flow) == 0 || strlen(start_time_hour) == 0) {
-    LOGW(TAG, "flow and start_time should be filled!!!");
+  if (!flow || !start_time_hour || !zones || strlen(flow) == 0 || strlen(start_time_hour) == 0 || strlen(zones) == 0) {
+    LOGW(TAG, "flow and start_time and zone should be filled!!!");
     return false;
   }
 

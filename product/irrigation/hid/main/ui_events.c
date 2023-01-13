@@ -11,6 +11,7 @@
 #include "espnow.h"
 #include "syslog.h"
 #include "syscfg.h"
+#include "sys_status.h"
 #include "hid_config.h"
 #include "command.h"
 
@@ -32,16 +33,13 @@ void OnStartEvent(lv_event_t* e) {
     show_timestamp(cfg.start_time);
 
     // Send configuration data to the main controller via ESP-NOW
-#if 0
-    msg.sender_type = SET_CONFIG;
-    memcpy(&msg.config, &cfg, sizeof(config_value_t));
-    espnow_send_data(espnow_get_master_addr(), (uint8_t*)&msg, sizeof(irrigation_message_t));
-#endif
     send_command_data(SET_CONFIG_COMMAND, &cfg, sizeof(config_value_t));
     LOGI(TAG, "Success to send Start command!!!");
-    // lv_label_set_text(ui_StartButtonLabel, "In-Progress");
-    // Reset configuration data
+    // Reset configuration data that is available in this current time,
+    // if conf data will be available in next irrigation time, it should be keep and will send command in next time.
     syscfg_unset(CFG_DATA, "hid_config");
+    // Set start irrigation flag
+    set_start_irrigation(1);
   } else {
     LOGE(TAG, "Failed to send Start command!!!");
     warnning_msgbox("There is no setting data");
@@ -50,6 +48,11 @@ void OnStartEvent(lv_event_t* e) {
 
 void OnStopEvent(lv_event_t* e) {
   // Your code here
+  set_stop_irrigation(1);
+}
+
+void OnSettingEvent(lv_event_t* e) {
+  reset_settings();
 }
 
 void OnResetEvent(lv_event_t* e) {
@@ -60,13 +63,6 @@ void OnFlowRateEvent(lv_event_t* e) {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_CLICKED) {
     lv_keyboard_set_textarea(ui_SettingKeyboard, ui_FlowRateText);
-  }
-}
-
-void OnZoneAreaEvent(lv_event_t* e) {
-  lv_event_code_t code = lv_event_get_code(e);
-  if (code == LV_EVENT_CLICKED) {
-    lv_keyboard_set_textarea(ui_SettingKeyboard, ui_ZoneAreaText);
   }
 }
 
@@ -88,7 +84,7 @@ void OnSettingSaveEvent(lv_event_t* e) {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_CLICKED) {
     const char* flow = lv_textarea_get_text(ui_FlowRateText);
-    const char* zones = lv_textarea_get_text(ui_ZoneAreaText);
+    const char* zones = (const char*)get_checked_zones();
     const char* start_time_hour = lv_textarea_get_text(ui_TimeHourText);
     const char* start_time_minute = lv_textarea_get_text(ui_TimeMinuteText);
     // validation check for start time : two time zone can be available for irrigation

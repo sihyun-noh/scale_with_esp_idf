@@ -39,18 +39,6 @@ static bool _get_msg_event(irrigation_message_t **msg) {
   return ctrl_msg_queue && (xQueueReceive(ctrl_msg_queue, msg, portMAX_DELAY) == pdPASS);
 }
 
-#if 0
-static time_t get_current_time(void) {
-  time_t now;
-  struct tm timeinfo = { 0 };
-
-  time(&now);
-  localtime_r(&now, &timeinfo);
-
-  return mktime(&timeinfo);
-}
-#endif
-
 void send_msg_to_ctrl_task(void *msg, size_t msg_len) {
   irrigation_message_t *message = NULL;
   if (msg && (msg_len == sizeof(irrigation_message_t))) {
@@ -73,20 +61,6 @@ void set_main_time(time_t *curr_time) {
   set_time_sync(1);
   LOGI(TAG, "main time is synced");
 }
-
-#if 0
-bool send_response_data(message_type_t sender) {
-  irrigation_message_t resp_data;
-
-  memset(&resp_data, 0x00, sizeof(resp_data));
-  resp_data.sender_type = RESPONSE;
-  resp_data.receive_type = sender;
-  resp_data.resp = SUCCESS;
-  resp_data.current_time = get_current_time();
-
-  return espnow_send_data(espnow_get_master_addr(), (uint8_t *)&resp_data, sizeof(resp_data));
-}
-#endif
 
 void ctrl_msg_handler(irrigation_message_t *message) {
   switch (message->sender_type) {
@@ -111,14 +85,12 @@ void ctrl_msg_handler(irrigation_message_t *message) {
         set_main_time(&message->current_time);
         enable_buttons();
       }
-      // send_response_data(message->sender_type);
       send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
     } break;
     case START_FLOW: {
       int zone_id = message->deviceId;
       set_zone_status(zone_id, true);
       set_zone_number(zone_id, true);
-      // send_response_data(message->sender_type);
       disable_start_button();
       send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
     } break;
@@ -128,12 +100,10 @@ void ctrl_msg_handler(irrigation_message_t *message) {
       set_zone_status(zone_id, false);
       set_zone_number(zone_id, false);
       set_zone_flow_value(zone_id, flow_value);
-      // send_response_data(message->sender_type);
       send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
     } break;
     case ALL_COMPLETE: {
       enable_start_button();
-      // send_response_data(message->sender_type);
       send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
     } break;
     case SET_SLEEP: {
