@@ -476,8 +476,9 @@ static void control_task(void* pvParameters) {
         // master 시간을 기준으로 message 생성하여 broadcasting
         // 각 device 에서는 전달받은 시간 값으로 time sync
         // 다른 device 별 rtc 차이로 깨어 나는 시간 차이를 위해 시간 버퍼 추가.
-        // 10분으로 시간 버퍼 적용 --> 테스트 진행 후 값 튜닝 필요
-        vTaskDelay((1000 * 60 * 10) / portTICK_PERIOD_MS);
+        // 5 분으로 시간 버퍼 적용 --> 테스트 진행 후 값 튜닝 필요
+        // HID 에서는 wake up 후 10분 안에 time sync 가 없을 경우 master 로 다시 time sync req 
+        vTaskDelay((1000 * 60 * 5) / portTICK_PERIOD_MS);
 
         send_esp_data(TIME_SYNC, TIME_SYNC, 7);
 
