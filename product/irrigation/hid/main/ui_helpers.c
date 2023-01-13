@@ -221,6 +221,17 @@ lv_obj_t *get_zone_status_obj(ZONE zone) {
   return zone_status[zone - 1];
 }
 
+lv_obj_t *get_zone_num_obj(ZONE zone) {
+  lv_obj_t *zone_num[6] = { ui_ZoneNum1, ui_ZoneNum2, ui_ZoneNum3, ui_ZoneNum4, ui_ZoneNum5, ui_ZoneNum6 };
+  return zone_num[zone - 1];
+}
+
+lv_obj_t *get_zone_flow_meter_obj(ZONE zone) {
+  lv_obj_t *zone_flow_meter[6] = { ui_ZoneFlowmeter1, ui_ZoneFlowmeter2, ui_ZoneFlowmeter3,
+                                   ui_ZoneFlowmeter4, ui_ZoneFlowmeter5, ui_ZoneFlowmeter6 };
+  return zone_flow_meter[zone - 1];
+}
+
 void set_zone_status(ZONE zone, bool start) {
   if (start) {
     lv_label_set_text(get_zone_status_obj(zone), "start");
@@ -231,11 +242,12 @@ void set_zone_status(ZONE zone, bool start) {
   }
 }
 
-lv_obj_t *get_zone_flow_meter_obj(ZONE zone) {
-  lv_obj_t *zone_flow_meter[6] = { ui_ZoneFlowmeter1, ui_ZoneFlowmeter2, ui_ZoneFlowmeter3,
-                                   ui_ZoneFlowmeter4, ui_ZoneFlowmeter5, ui_ZoneFlowmeter6 };
-
-  return zone_flow_meter[zone - 1];
+void set_zone_number(ZONE zone, bool start) {
+  if (start) {
+    lv_obj_set_style_bg_color(get_zone_num_obj(zone), lv_color_hex(0x1BFD32), LV_PART_MAIN | LV_STATE_DEFAULT);
+  } else {
+    lv_obj_set_style_bg_color(get_zone_num_obj(zone), lv_color_hex(0xFF1E1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+  }
 }
 
 void set_zone_flow_value(ZONE zone, int flow_value) {

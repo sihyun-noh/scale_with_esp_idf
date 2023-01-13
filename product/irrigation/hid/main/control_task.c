@@ -1,7 +1,7 @@
-#include "command.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "esp_sleep.h"
 
 #include <string.h>
 #include <time.h>
@@ -117,6 +117,7 @@ void ctrl_msg_handler(irrigation_message_t *message) {
     case START_FLOW: {
       int zone_id = message->deviceId;
       set_zone_status(zone_id, true);
+      set_zone_number(zone_id, true);
       // send_response_data(message->sender_type);
       disable_start_button();
       send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
@@ -125,6 +126,7 @@ void ctrl_msg_handler(irrigation_message_t *message) {
       int zone_id = message->deviceId;
       int flow_value = message->flow_value;
       set_zone_status(zone_id, false);
+      set_zone_number(zone_id, false);
       set_zone_flow_value(zone_id, flow_value);
       // send_response_data(message->sender_type);
       send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
@@ -134,7 +136,12 @@ void ctrl_msg_handler(irrigation_message_t *message) {
       // send_response_data(message->sender_type);
       send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
     } break;
-    case SET_SLEEP: break;
+    case SET_SLEEP: {
+      uint64_t wakeup_time_sec = message->remain_time_sleep;
+      LOGI(TAG, "Entering sleep mode wtih time = %llus", wakeup_time_sec);
+      esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000);
+      esp_deep_sleep_start();
+    } break;
     default: break;
   }
 

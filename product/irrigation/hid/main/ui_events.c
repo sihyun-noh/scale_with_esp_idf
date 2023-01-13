@@ -91,6 +91,11 @@ void OnSettingSaveEvent(lv_event_t* e) {
     const char* zones = lv_textarea_get_text(ui_ZoneAreaText);
     const char* start_time_hour = lv_textarea_get_text(ui_TimeHourText);
     const char* start_time_minute = lv_textarea_get_text(ui_TimeMinuteText);
+    // validation check for start time : two time zone can be available for irrigation
+    // device wakeup time : 5 am ~ 10 am (morning time), 5pm ~ 10pm (night time)
+    // 05:00 ~ 10:00, 17:00 ~ 22:00 (0 ~ 24 hour)
+    // device deep sleep time : 10:10 am ~ 04:50pm, 10:10 pm ~ 04:50 am
+    // 10:10 ~ 16:50 , 22:10 ~ 04:50
     if (save_hid_config(flow, start_time_hour, start_time_minute, zones)) {
       LOGI(TAG, "Success to save the configuration!!!");
     }

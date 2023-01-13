@@ -118,7 +118,7 @@ bool syscfg_get_to_add_peer(const char *key, uint8_t *mac_addr) {
     return false;
   }
   ascii_to_hex(s_mac, MAC_ADDR_LEN * 2, mac_addr);
-  LOG_BUFFER_HEXDUMP(TAG, mac_addr, sizeof(mac_addr), LOG_INFO);
+  LOG_BUFFER_HEXDUMP(TAG, mac_addr, MAC_ADDR_LEN, LOG_INFO);
   return espnow_add_peer(mac_addr, CONFIG_ESPNOW_CHANNEL, ESPNOW_WIFI_IF);
 }
 // TODO : Implement to read the device's mac address from MFG data
