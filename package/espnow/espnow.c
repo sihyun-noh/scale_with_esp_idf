@@ -86,7 +86,11 @@ int get_address_matching_id(void) {
   char s_compare_mac[SYSCFG_S_MASTER_MAC] = { 0 };
   uint8_t my_mac[ESP_NOW_ETH_ALEN] = { 0 };
   uint8_t compare_mac[ESP_NOW_ETH_ALEN] = { 0 };
+#if (CONFIG_ESPNOW_WIFI_MODE == STATION)
+  esp_read_mac(my_mac, ESP_MAC_WIFI_STA);
+#elif (CONFIG_ESPNOW_WIFI_MODE == SOFTAP)
   esp_read_mac(my_mac, ESP_MAC_WIFI_SOFTAP);
+#endif
 
   for (int i = 0; i < 8; i++) {
     if (syscfg_get(MFG_DATA, master_peer_list[i], s_compare_mac, sizeof(s_compare_mac))) {

@@ -157,7 +157,11 @@ int system_init(void) {
 
   // Get a main mac address that will be used in espnow
   uint8_t mac[6] = { 0 };
+#if (CONFIG_ESPNOW_WIFI_MODE == STATION)
+  esp_read_mac(mac, ESP_MAC_WIFI_STA);
+#elif (CONFIG_ESPNOW_WIFI_MODE == SOFTAP)
   esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
+#endif
   LOG_BUFFER_HEX(TAG, mac, sizeof(mac));
 
   return SYSINIT_OK;

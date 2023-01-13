@@ -674,12 +674,12 @@ int wifi_espnow_mode_impl(wifi_context_t *ctx) {
     return -1;
   }
 
-  // Set WiFi as WiFi AP mode for esp-now working
-  if (!enable_ap_mode(true)) {
-    LOGE(TAG, "Failed to enable AP mode!!!");
+  // Set WiFi as WiFi STA mode for esp-now working
+  if (!enable_sta_mode(true)) {
+    LOGE(TAG, "Failed to enable STA mode!!!");
     return -1;
   }
 
-  esp_wifi_set_protocol(WIFI_MODE_AP, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR);
+  esp_wifi_set_protocol(WIFI_MODE_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR);
   return 0;
 }

@@ -25,15 +25,17 @@
 extern "C" {
 #endif
 
-// #define CONFIG_ESPNOW_WIFI_MODE_STATION 1
-// # CONFIG_ESPNOW_WIFI_MODE_STATION_SOFTAP is not set
+#define STATION 0
+#define SOFTAP 1
+#define CONFIG_ESPNOW_WIFI_MODE STATION
+
 #define CONFIG_ESPNOW_CHANNEL 1
 
 /* ESPNOW can work in both station and softap mode. It is configured in menuconfig. */
-#if CONFIG_ESPNOW_WIFI_MODE_STATION
+#if CONFIG_ESPNOW_WIFI_MODE == STATION
 #define ESPNOW_WIFI_MODE WIFI_MODE_STA
 #define ESPNOW_WIFI_IF ESP_IF_WIFI_STA
-#else
+#elif CONFIG_ESPNOW_WIFI_MODE == SOFTAP
 #define ESPNOW_WIFI_MODE WIFI_MODE_AP
 #define ESPNOW_WIFI_IF ESP_IF_WIFI_AP
 #endif
