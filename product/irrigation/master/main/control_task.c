@@ -54,8 +54,9 @@ int flowOrder[NUMBER_CHILD];         // 관수 순서
 int flowSettingValue[NUMBER_CHILD];  // 관수 설정 값
 int zoneBattery[TOTAL_DEVICES];      // 0: master, 1~6: child 배터리 잔량
 
-int flowDoneCnt;  // zone 변 관수 완료 카운트
-int batteryCnt;   // child 배터리 수신 횟수
+int flowDoneCnt;      // zone 변 관수 완료 카운트
+int batteryCnt;       // child 배터리 수신 횟수
+int syncTimeBuffCnt;  // Time sync buffer check count
 
 uint64_t remainSleepTime;  // sleep 시간
 
@@ -77,6 +78,7 @@ void init_variable(void) {
   memset(&zoneBattery, 0x00, sizeof(zoneBattery));
   flowDoneCnt = 0;
   batteryCnt = 0;
+  syncTimeBuffCnt = 0;
   remainSleepTime = 0;
 }
 
@@ -482,13 +484,15 @@ static void control_task(void* pvParameters) {
         // 각 device 에서는 전달받은 시간 값으로 time sync
         // 다른 device 별 rtc 차이로 깨어 나는 시간 차이를 위해 시간 버퍼 추가.
         // 5 분으로 시간 버퍼 적용 --> 테스트 진행 후 값 튜닝 필요
-        // HID 에서는 wake up 후 10분 안에 time sync 가 없을 경우 master 로 다시 time sync req 
-        vTaskDelay((1000 * 60 * SYNC_TIME_BUFF) / portTICK_PERIOD_MS);
+        // HID 에서는 wake up 후 10분 안에 time sync 가 없을 경우 master 로 다시 time sync req
+        syncTimeBuffCnt++;
+        if (syncTimeBuffCnt > (SYNC_TIME_BUFF * 60)) {
+          send_esp_data(TIME_SYNC, TIME_SYNC, 7);
 
-        send_esp_data(TIME_SYNC, TIME_SYNC, 7);
-
-        LOGI(TAG, "SEND HID/CHILD TIME SYNC !!");
-        set_control_status(WAIT_STATE);
+          LOGI(TAG, "SEND HID/CHILD TIME SYNC !!");
+          set_control_status(WAIT_STATE);
+          syncTimeBuffCnt = 0;
+        }
       } break;
 
       case WAIT_STATE: {
