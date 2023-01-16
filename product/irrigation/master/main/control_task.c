@@ -14,9 +14,10 @@
 #include "comm_packet.h"
 #include "battery_task.h"
 
-#define RESP_THRES 10
-#define NUMBER_CHILD 6
-#define TOTAL_DEVICES 7
+#define RESP_THRES      10
+#define NUMBER_CHILD    6
+#define TOTAL_DEVICES   7
+#define SYNC_TIME_BUFF  5
 
 static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;
@@ -231,6 +232,86 @@ bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
   return true;
 }
 
+void check_response(irrigation_message_t msg) {
+  if ((sendCmd == msg.receive_type) && (msg.resp == SUCCESS)) {
+    sendMessageFlag = false;
+    sendCmd = NONE;
+  }
+
+  switch (msg.receive_type) {
+    case START_FLOW: {
+      set_control_status(CHECK_FLOW);
+    } break;
+
+    case ZONE_COMPLETE:
+    case BATTERY_LEVEL: {
+      set_control_status(CHECK_SCEHDULE);
+    } break;
+
+    case ALL_COMPLETE: {
+      init_variable();
+      set_control_status(CHECK_SCEHDULE);
+    } break;
+
+    case SET_VALVE_ON: {
+      if (msg.resp == SUCCESS) {
+        start_flow();
+        // 관수 시작을 HID 에 전달
+        send_esp_data(START_FLOW, START_FLOW, 0);
+
+        LOGI(TAG, "RECEIVE VALVE ON RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
+        set_control_status(WAIT_STATE);
+      }
+    } break;
+
+    case SET_VALVE_OFF: {
+      if (msg.resp == SUCCESS) {
+        // 관수 완료를 HID 에 전달
+        send_esp_data(ZONE_COMPLETE, ZONE_COMPLETE, 0);
+
+        LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
+        flowDoneCnt++;
+        reset_water_flow_liters();
+        set_control_status(WAIT_STATE);
+      }
+    } break;
+
+    case TIME_SYNC: {
+      zoneBattery[msg.deviceId] = msg.battery_level[msg.deviceId];
+      LOGI(TAG, "ID: %D, Battery level: %d", msg.deviceId,
+            msg.battery_level[msg.deviceId]);
+      batteryCnt++;
+      sendMessageFlag = true;
+      sendCmd = msg.receive_type;
+
+      respBroadCast[msg.deviceId] = 1;
+
+      if (batteryCnt >= NUMBER_CHILD) {
+        memset(&respBroadCast, 0x00, sizeof(respBroadCast));
+        sendMessageFlag = false;
+        sendCmd = NONE;
+        zoneBattery[0] = read_battery_percentage();
+        LOGI(TAG, "Battery Level, Master: %d, Child : %d, %d, %d, %d, %d, %d ", zoneBattery[0], zoneBattery[1],
+              zoneBattery[2], zoneBattery[3], zoneBattery[4], zoneBattery[5], zoneBattery[6]);
+
+        send_esp_data(BATTERY_LEVEL, BATTERY_LEVEL, 0);
+
+        batteryCnt = 0;
+        set_control_status(WAIT_STATE);
+      }
+    } break;
+
+    case FORCE_STOP: {
+      send_esp_data(RESPONSE, FORCE_STOP, 0);
+
+      init_variable();
+      set_control_status(CHECK_SCEHDULE);
+    } break;
+
+    default: break;
+  }
+}
+
 void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
   if (!check_address_matching_current_set(mac)) {
     LOGI(TAG, "Receive data from other SET");
@@ -264,83 +345,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
       } break;
 
       case RESPONSE: {
-        if ((sendCmd == recv_message.receive_type) && (recv_message.resp == SUCCESS)) {
-          sendMessageFlag = false;
-          sendCmd = NONE;
-        }
-
-        switch (recv_message.receive_type) {
-          case START_FLOW: {
-            set_control_status(CHECK_FLOW);
-          } break;
-
-          case ZONE_COMPLETE:
-          case BATTERY_LEVEL: {
-            set_control_status(CHECK_SCEHDULE);
-          } break;
-
-          case ALL_COMPLETE: {
-            init_variable();
-            set_control_status(CHECK_SCEHDULE);
-          } break;
-
-          case SET_VALVE_ON: {
-            if (recv_message.resp == SUCCESS) {
-              start_flow();
-              // 관수 시작을 HID 에 전달
-              send_esp_data(START_FLOW, START_FLOW, 0);
-
-              LOGI(TAG, "RECEIVE VALVE ON RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
-              set_control_status(WAIT_STATE);
-            }
-          } break;
-
-          case SET_VALVE_OFF: {
-            if (recv_message.resp == SUCCESS) {
-              // 관수 완료를 HID 에 전달
-              send_esp_data(ZONE_COMPLETE, ZONE_COMPLETE, 0);
-
-              LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
-              flowDoneCnt++;
-              reset_water_flow_liters();
-              set_control_status(WAIT_STATE);
-            }
-          } break;
-
-          case TIME_SYNC: {
-            zoneBattery[recv_message.deviceId] = recv_message.battery_level[recv_message.deviceId];
-            LOGI(TAG, "ID: %D, Battery level: %d", recv_message.deviceId,
-                 recv_message.battery_level[recv_message.deviceId]);
-            batteryCnt++;
-            sendMessageFlag = true;
-            sendCmd = recv_message.receive_type;
-
-            respBroadCast[recv_message.deviceId] = 1;
-
-            if (batteryCnt >= NUMBER_CHILD) {
-              memset(&respBroadCast, 0x00, sizeof(respBroadCast));
-              sendMessageFlag = false;
-              sendCmd = NONE;
-              zoneBattery[0] = read_battery_percentage();
-              LOGI(TAG, "Battery Level, Master: %d, Child : %d, %d, %d, %d, %d, %d ", zoneBattery[0], zoneBattery[1],
-                   zoneBattery[2], zoneBattery[3], zoneBattery[4], zoneBattery[5], zoneBattery[6]);
-
-              send_esp_data(BATTERY_LEVEL, BATTERY_LEVEL, 0);
-
-              batteryCnt = 0;
-              set_control_status(WAIT_STATE);
-            }
-          } break;
-
-          case FORCE_STOP: {
-            send_esp_data(RESPONSE, FORCE_STOP, 0);
-
-            init_variable();
-            set_control_status(CHECK_SCEHDULE);
-          } break;
-
-          default: break;
-        }
+        check_response(recv_message);
       } break;
 
       case FORCE_STOP: {
@@ -478,7 +483,7 @@ static void control_task(void* pvParameters) {
         // 다른 device 별 rtc 차이로 깨어 나는 시간 차이를 위해 시간 버퍼 추가.
         // 5 분으로 시간 버퍼 적용 --> 테스트 진행 후 값 튜닝 필요
         // HID 에서는 wake up 후 10분 안에 time sync 가 없을 경우 master 로 다시 time sync req 
-        vTaskDelay((1000 * 60 * 5) / portTICK_PERIOD_MS);
+        vTaskDelay((1000 * 60 * SYNC_TIME_BUFF) / portTICK_PERIOD_MS);
 
         send_esp_data(TIME_SYNC, TIME_SYNC, 7);
 
