@@ -354,9 +354,9 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         if (flowStart) {
           stop_flow();
           send_esp_data(FORCE_STOP, FORCE_STOP, flowOrder[flowDoneCnt]);
-
           set_control_status(WAIT_STATE);
         } else {
+          send_esp_data(RESPONSE, FORCE_STOP, 0);
           init_variable();
           set_control_status(CHECK_SCEHDULE);
         }
