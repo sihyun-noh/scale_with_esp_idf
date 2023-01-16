@@ -89,6 +89,7 @@ void set_control_status(condtrol_status_t value) {
 
 void start_flow(void) {
   // sent message to zone valve on
+  reset_water_flow_liters();
   pump_on();
 }
 
@@ -270,8 +271,7 @@ void check_response(irrigation_message_t msg) {
         send_esp_data(ZONE_COMPLETE, ZONE_COMPLETE, 0);
 
         LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
-        flowDoneCnt++;
-        reset_water_flow_liters();
+        flowDoneCnt++;        
         set_control_status(WAIT_STATE);
       }
     } break;
