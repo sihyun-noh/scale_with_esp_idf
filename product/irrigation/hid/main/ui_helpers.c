@@ -216,25 +216,34 @@ void disable_start_button(void) {
 }
 
 lv_obj_t *get_zone_status_obj(ZONE zone) {
-  lv_obj_t *zone_status[6] = { ui_ZoneStatus1, ui_ZoneStatus2, ui_ZoneStatus3,
-                               ui_ZoneStatus4, ui_ZoneStatus5, ui_ZoneStatus6 };
-  return zone_status[zone - 1];
+  if (zone >= 1 && zone <= 6) {
+    lv_obj_t *zone_status[6] = { ui_ZoneStatus1, ui_ZoneStatus2, ui_ZoneStatus3,
+                                 ui_ZoneStatus4, ui_ZoneStatus5, ui_ZoneStatus6 };
+    return zone_status[zone - 1];
+  }
+  return (lv_obj_t *)NULL;
 }
 
 lv_obj_t *get_zone_num_obj(ZONE zone) {
-  lv_obj_t *zone_num[6] = { ui_ZoneNum1, ui_ZoneNum2, ui_ZoneNum3, ui_ZoneNum4, ui_ZoneNum5, ui_ZoneNum6 };
-  return zone_num[zone - 1];
+  if (zone >= 1 && zone <= 6) {
+    lv_obj_t *zone_num[6] = { ui_ZoneNum1, ui_ZoneNum2, ui_ZoneNum3, ui_ZoneNum4, ui_ZoneNum5, ui_ZoneNum6 };
+    return zone_num[zone - 1];
+  }
+  return (lv_obj_t *)NULL;
 }
 
 lv_obj_t *get_zone_flow_meter_obj(ZONE zone) {
-  lv_obj_t *zone_flow_meter[6] = { ui_ZoneFlowmeter1, ui_ZoneFlowmeter2, ui_ZoneFlowmeter3,
-                                   ui_ZoneFlowmeter4, ui_ZoneFlowmeter5, ui_ZoneFlowmeter6 };
-  return zone_flow_meter[zone - 1];
+  if (zone >= 1 && zone <= 6) {
+    lv_obj_t *zone_flow_meter[6] = { ui_ZoneFlowmeter1, ui_ZoneFlowmeter2, ui_ZoneFlowmeter3,
+                                     ui_ZoneFlowmeter4, ui_ZoneFlowmeter5, ui_ZoneFlowmeter6 };
+    return zone_flow_meter[zone - 1];
+  }
+  return (lv_obj_t *)NULL;
 }
 
 char *get_checked_zones(void) {
-  static char zones[20] = { 0 };
   int i, pos = 0;
+  static char zones[20] = { 0 };
 
   lv_obj_t *zone_check_ui[6] = { ui_Zone1, ui_Zone2, ui_Zone3, ui_Zone4, ui_Zone5, ui_Zone6 };
 
@@ -243,25 +252,34 @@ char *get_checked_zones(void) {
       pos += snprintf(&zones[pos], sizeof(zones), "%d,", i + 1);
     }
   }
-  zones[strlen(zones) - 1] = '\0';
+  pos = strlen(zones);
+  if (pos) {
+    zones[pos - 1] = '\0';
+  }
   return zones;
 }
 
 void set_zone_status(ZONE zone, bool start) {
-  if (start) {
-    lv_label_set_text(get_zone_status_obj(zone), "start");
-    lv_obj_set_style_bg_color(get_zone_status_obj(zone), lv_color_hex(0x1BFD32), LV_PART_MAIN | LV_STATE_DEFAULT);
-  } else {
-    lv_label_set_text(get_zone_status_obj(zone), "stop");
-    lv_obj_set_style_bg_color(get_zone_status_obj(zone), lv_color_hex(0xFF1E1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_t *zone_status = get_zone_status_obj(zone);
+  if (zone_status) {
+    if (start) {
+      lv_label_set_text(zone_status, "start");
+      lv_obj_set_style_bg_color(zone_status, lv_color_hex(0x1BFD32), LV_PART_MAIN | LV_STATE_DEFAULT);
+    } else {
+      lv_label_set_text(zone_status, "stop");
+      lv_obj_set_style_bg_color(zone_status, lv_color_hex(0xFF1E1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
   }
 }
 
 void set_zone_number(ZONE zone, bool start) {
-  if (start) {
-    lv_obj_set_style_bg_color(get_zone_num_obj(zone), lv_color_hex(0x1BFD32), LV_PART_MAIN | LV_STATE_DEFAULT);
-  } else {
-    lv_obj_set_style_bg_color(get_zone_num_obj(zone), lv_color_hex(0xFF1E1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_t *zone_number = get_zone_num_obj(zone);
+  if (zone_number) {
+    if (start) {
+      lv_obj_set_style_bg_color(zone_number, lv_color_hex(0x1BFD32), LV_PART_MAIN | LV_STATE_DEFAULT);
+    } else {
+      lv_obj_set_style_bg_color(zone_number, lv_color_hex(0xFF1E1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
   }
 }
 
@@ -269,10 +287,13 @@ void set_zone_flow_value(ZONE zone, int flow_value) {
   char flow[20] = { 0 };
   int total_flow_value = 0;
 
-  const char *curr_flow_value = lv_label_get_text(get_zone_flow_meter_obj(zone));
-  total_flow_value = atoi(curr_flow_value) + flow_value;
-  snprintf(flow, sizeof(flow), "%d", total_flow_value);
-  lv_label_set_text(ui_ZoneFlowmeter6, flow);
+  lv_obj_t *zone_flow = get_zone_flow_meter_obj(zone);
+  if (zone_flow) {
+    const char *curr_flow_value = lv_label_get_text(get_zone_flow_meter_obj(zone));
+    total_flow_value = atoi(curr_flow_value) + flow_value;
+    snprintf(flow, sizeof(flow), "%d", total_flow_value);
+    lv_label_set_text(ui_ZoneFlowmeter6, flow);
+  }
 }
 
 void reset_settings(void) {

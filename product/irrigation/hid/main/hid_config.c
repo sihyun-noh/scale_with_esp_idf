@@ -7,7 +7,7 @@
 
 static const char *TAG = "hid_config";
 
-static time_t generate_start_time(int hour, int min) {
+static time_t generate_time(int hour, int min) {
   time_t now;
   struct tm timeinfo = { 0 };
 
@@ -21,6 +21,47 @@ static time_t generate_start_time(int hour, int min) {
        timeinfo.tm_min, timeinfo.tm_sec);
 
   return mktime(&timeinfo);
+}
+
+static time_t get_current_time(void) {
+  time_t now;
+  struct tm timeinfo = { 0 };
+
+  time(&now);
+  localtime_r(&now, &timeinfo);
+
+  return mktime(&timeinfo);
+}
+
+bool validation_of_start_irrigation_time(time_t start_time, stage_t *p_stage) {
+  // Get current time of hid and check if the irrigation start time is setting within two irrigation time zone
+  // Generate a time of morning/evening irrigation time zone
+  time_t curr_time = get_current_time();
+  time_t start_time_of_morning = generate_time(5, 00);
+  time_t end_time_of_morning = generate_time(9, 30);
+  time_t start_time_of_evening = generate_time(17, 00);
+  time_t end_time_of_evening = generate_time(20, 30);
+
+  *p_stage = NONE_STAGE;
+  if (start_time <= curr_time) {
+    return false;
+  }
+
+  if (curr_time < end_time_of_morning) {
+    if (start_time > start_time_of_morning && start_time <= end_time_of_morning) {
+      *p_stage = CURR_STAGE;
+      return true;
+    } else if (start_time > start_time_of_evening && start_time <= end_time_of_evening) {
+      *p_stage = NEXT_STAGE;
+      return true;
+    }
+  } else if (curr_time > start_time_of_evening && curr_time <= end_time_of_evening) {
+    if (start_time > start_time_of_evening && start_time <= end_time_of_evening) {
+      *p_stage = CURR_STAGE;
+      return true;
+    }
+  }
+  return false;
 }
 
 void show_timestamp(time_t now) {
@@ -61,9 +102,9 @@ bool save_hid_config(const char *flow, const char *start_time_hour, const char *
   LOGI(TAG, "%d:%d", hour, min);
   time_t now = time(NULL);
   show_timestamp(now);
-  time_t tm = generate_start_time(hour, min);
-  show_timestamp(tm);
-  cfg.start_time = tm;
+  time_t start_tm = generate_time(hour, min);
+  show_timestamp(start_tm);
+  cfg.start_time = start_tm;
 
   // Zone Areas
   if (zones) {

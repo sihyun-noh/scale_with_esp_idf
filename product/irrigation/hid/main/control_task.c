@@ -64,7 +64,6 @@ void set_main_time(time_t *curr_time) {
 
 void ctrl_msg_handler(irrigation_message_t *message) {
   switch (message->sender_type) {
-    case SET_CONFIG: break;
     case TIME_SYNC: {
       set_main_time(&message->current_time);
       enable_buttons();
@@ -89,10 +88,14 @@ void ctrl_msg_handler(irrigation_message_t *message) {
     } break;
     case START_FLOW: {
       int zone_id = message->deviceId;
-      set_zone_status(zone_id, true);
-      set_zone_number(zone_id, true);
-      disable_start_button();
-      send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
+      if (zone_id >= 1 && zone_id <= 6) {
+        set_zone_status(zone_id, true);
+        set_zone_number(zone_id, true);
+        disable_start_button();
+        send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
+      } else {
+        LOGW(TAG, "Got invalid zone_id for start flow = [%d]", zone_id);
+      }
     } break;
     case ZONE_COMPLETE: {
       int zone_id = message->deviceId;

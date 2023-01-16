@@ -5,7 +5,6 @@
 
 #include <string.h>
 
-#include "comm_packet.h"
 #include "ui_helpers.h"
 
 #include "espnow.h"
@@ -19,7 +18,7 @@ static const char* TAG = "UI_EVENT";
 
 void OnStartEvent(lv_event_t* e) {
   config_value_t cfg = { 0 };
-  // irrigation_message_t msg = { 0 };
+  stage_t stage = NONE_STAGE;
 
   // Read config value
   if (read_hid_config(&cfg)) {
@@ -32,14 +31,30 @@ void OnStartEvent(lv_event_t* e) {
     }
     show_timestamp(cfg.start_time);
 
-    // Send configuration data to the main controller via ESP-NOW
-    send_command_data(SET_CONFIG_COMMAND, &cfg, sizeof(config_value_t));
-    LOGI(TAG, "Success to send Start command!!!");
-    // Reset configuration data that is available in this current time,
-    // if conf data will be available in next irrigation time, it should be keep and will send command in next time.
-    syscfg_unset(CFG_DATA, "hid_config");
-    // Set start irrigation flag
-    set_start_irrigation(1);
+    // validation check for start time : two time zone can be available for irrigation
+    // device wakeup time : 5 am ~ 10 am (morning time), 5pm ~ 9pm (night time)
+    // 05:00 ~ 10:00, 17:00 ~ 21:00 (0 ~ 24 hour)
+    // device deep sleep time : 10:10 am ~ 04:50pm, 09:10 pm ~ 04:50 am
+    // irrigation available time zones : 05:00 ~ 10:00 , 17:00 ~ 21:00
+    if (!validation_of_start_irrigation_time(cfg.start_time, &stage)) {
+      LOGW(TAG, "start_time is not available, please correct start time!!!");
+      syscfg_unset(CFG_DATA, "hid_config");
+      warnning_msgbox("start time is not available, please correct start time");
+      return;
+    }
+
+    if (stage == CURR_STAGE) {
+      // Send configuration data to the main controller via ESP-NOW
+      send_command_data(SET_CONFIG_COMMAND, &cfg, sizeof(config_value_t));
+      LOGI(TAG, "Success to send Start command!!!");
+      // Reset configuration data that is available in this current time,
+      // if conf data will be available in next irrigation time, it should be keep and will send command in next time.
+      syscfg_unset(CFG_DATA, "hid_config");
+      // Set start irrigation flag
+      set_start_irrigation(1);
+    } else if (stage == NEXT_STAGE) {
+      LOGI(TAG, "Start command will be runned at next stage");
+    }
   } else {
     LOGE(TAG, "Failed to send Start command!!!");
     warnning_msgbox("There is no setting data");
@@ -87,11 +102,6 @@ void OnSettingSaveEvent(lv_event_t* e) {
     const char* zones = (const char*)get_checked_zones();
     const char* start_time_hour = lv_textarea_get_text(ui_TimeHourText);
     const char* start_time_minute = lv_textarea_get_text(ui_TimeMinuteText);
-    // validation check for start time : two time zone can be available for irrigation
-    // device wakeup time : 5 am ~ 10 am (morning time), 5pm ~ 10pm (night time)
-    // 05:00 ~ 10:00, 17:00 ~ 22:00 (0 ~ 24 hour)
-    // device deep sleep time : 10:10 am ~ 04:50pm, 10:10 pm ~ 04:50 am
-    // 10:10 ~ 16:50 , 22:10 ~ 04:50
     if (save_hid_config(flow, start_time_hour, start_time_minute, zones)) {
       LOGI(TAG, "Success to save the configuration!!!");
     }

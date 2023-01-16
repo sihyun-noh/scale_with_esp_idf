@@ -121,7 +121,14 @@ static void recv_data_cb(const uint8_t *mac_addr, const uint8_t *data, int data_
   }
 }
 
-static void send_data_cb(const uint8_t *mac_addr, esp_now_send_status_t status) {}
+static void send_data_cb(const uint8_t *mac_addr, esp_now_send_status_t status) {
+  if (status == ESP_NOW_SEND_SUCCESS) {
+    LOGI(TAG, "Delivery Success to ");
+  } else {
+    LOGI(TAG, "Delivery Failed to ");
+  }
+  LOG_BUFFER_HEX(TAG, mac_addr, MAC_ADDR_LEN);
+}
 
 int set_interval_cmd(int argc, char **argv) {
   int interval = 0;
