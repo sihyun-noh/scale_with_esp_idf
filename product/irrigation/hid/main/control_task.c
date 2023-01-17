@@ -95,7 +95,7 @@ void ctrl_msg_handler(irrigation_message_t *message) {
         set_zone_status(zone_id, true);
         set_zone_number(zone_id, true);
         disable_start_button();
-        snprintf(op_msg, sizeof(op_msg), "Start to irrigation of zone[%d] at %s", zone_id, get_current_timestamp());
+        snprintf(op_msg, sizeof(op_msg), "Start to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
         add_operation_list(op_msg);
       } else {
         LOGW(TAG, "Got invalid zone_id for start flow = [%d]", zone_id);
@@ -109,7 +109,7 @@ void ctrl_msg_handler(irrigation_message_t *message) {
       set_zone_number(zone_id, false);
       set_zone_flow_value(zone_id, flow_value);
       send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
-      snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s", zone_id, get_current_timestamp());
+      snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
       add_operation_list(op_msg);
     } break;
     case ALL_COMPLETE: {

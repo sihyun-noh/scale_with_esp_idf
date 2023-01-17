@@ -117,6 +117,30 @@ extern "C" {
 #define SYSCFG_S_CHILD6_MAC 16
 #define SYSCFG_I_CHILD6_MAC MFG_DATA
 
+#define SYSCFG_N_ZONE1_FLOW "zone1_flow"
+#define SYSCFG_S_ZONE1_FLOW 12
+#define SYSCFG_I_ZONE1_FLOW CFG_DATA
+
+#define SYSCFG_N_ZONE2_FLOW "zone2_flow"
+#define SYSCFG_S_ZONE2_FLOW 12
+#define SYSCFG_I_ZONE2_FLOW CFG_DATA
+
+#define SYSCFG_N_ZONE3_FLOW "zone3_flow"
+#define SYSCFG_S_ZONE3_FLOW 12
+#define SYSCFG_I_ZONE3_FLOW CFG_DATA
+
+#define SYSCFG_N_ZONE4_FLOW "zone4_flow"
+#define SYSCFG_S_ZONE4_FLOW 12
+#define SYSCFG_I_ZONE4_FLOW CFG_DATA
+
+#define SYSCFG_N_ZONE5_FLOW "zone5_flow"
+#define SYSCFG_S_ZONE5_FLOW 12
+#define SYSCFG_I_ZONE5_FLOW CFG_DATA
+
+#define SYSCFG_N_ZONE6_FLOW "zone6_flow"
+#define SYSCFG_S_ZONE6_FLOW 12
+#define SYSCFG_I_ZONE6_FLOW CFG_DATA
+
 int get_syscfg_idx(char *name);
 void dump_syscfg(void);
 void generate_syscfg(void);

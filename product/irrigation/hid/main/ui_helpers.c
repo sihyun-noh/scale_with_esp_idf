@@ -7,6 +7,8 @@
 
 #include "ui_helpers.h"
 
+#include "sys_config.h"
+
 void _ui_bar_set_property(lv_obj_t *target, int id, int val) {
   if (id == _UI_BAR_PROPERTY_VALUE_WITH_ANIM)
     lv_bar_set_value(target, val, LV_ANIM_ON);
@@ -283,6 +285,17 @@ void set_zone_number(ZONE zone, bool start) {
   }
 }
 
+void syscfg_set_flow_value(ZONE zone, char *flow_value) {
+  int syscfg_idx[6] = { SYSCFG_I_ZONE1_FLOW, SYSCFG_I_ZONE2_FLOW, SYSCFG_I_ZONE3_FLOW,
+                        SYSCFG_I_ZONE4_FLOW, SYSCFG_I_ZONE5_FLOW, SYSCFG_I_ZONE6_FLOW };
+  char *syscfg_name[6] = { SYSCFG_N_ZONE1_FLOW, SYSCFG_N_ZONE2_FLOW, SYSCFG_N_ZONE3_FLOW,
+                           SYSCFG_N_ZONE4_FLOW, SYSCFG_N_ZONE5_FLOW, SYSCFG_N_ZONE6_FLOW };
+
+  if (zone >= 1 && zone <= 6) {
+    syscfg_set(syscfg_idx[zone - 1], syscfg_name[zone - 1], flow_value);
+  }
+}
+
 void set_zone_flow_value(ZONE zone, int flow_value) {
   char flow[20] = { 0 };
   int total_flow_value = 0;
@@ -292,7 +305,8 @@ void set_zone_flow_value(ZONE zone, int flow_value) {
     const char *curr_flow_value = lv_label_get_text(get_zone_flow_meter_obj(zone));
     total_flow_value = atoi(curr_flow_value) + flow_value;
     snprintf(flow, sizeof(flow), "%d", total_flow_value);
-    lv_label_set_text(ui_ZoneFlowmeter6, flow);
+    lv_label_set_text(zone_flow, flow);
+    syscfg_set_flow_value(zone, flow);
   }
 }
 
