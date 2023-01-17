@@ -35,6 +35,9 @@ bool send_command_data(command_t cmd, void *payload, size_t payload_len) {
     case REQ_TIME_SYNC_COMMAND: {
       message.sender_type = REQ_TIME_SYNC;
     } break;
+    case STOP_COMMAND: {
+      message.sender_type = FORCE_STOP;
+    } break;
     default: break;
   }
 

@@ -51,6 +51,7 @@ void ui_event_SettingButton(lv_event_t *e);
 extern lv_obj_t *ui_SettingButton;
 extern lv_obj_t *ui_SettingButtonLabel;
 extern lv_obj_t *ui_OperationListPanel;
+extern lv_obj_t *ui_OperationList;
 extern lv_obj_t *ui_Setting;
 extern lv_obj_t *ui_SettingPanel;
 extern lv_obj_t *ui_SettingKeyboard;

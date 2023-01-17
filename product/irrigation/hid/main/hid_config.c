@@ -44,24 +44,47 @@ bool validation_of_start_irrigation_time(time_t start_time, stage_t *p_stage) {
 
   *p_stage = NONE_STAGE;
   if (start_time <= curr_time) {
+    LOGI(TAG, "Start time = %ld is less than Curr time = %ld", start_time, curr_time);
     return false;
   }
 
+  show_timestamp(curr_time);
+  show_timestamp(start_time);
+  show_timestamp(start_time_of_morning);
+  show_timestamp(end_time_of_morning);
+  show_timestamp(start_time_of_evening);
+  show_timestamp(end_time_of_evening);
+
   if (curr_time < end_time_of_morning) {
+    LOGI(TAG, "Currnt time is running on Morning time zone");
     if (start_time > start_time_of_morning && start_time <= end_time_of_morning) {
+      LOGI(TAG, "Stage is current");
       *p_stage = CURR_STAGE;
       return true;
     } else if (start_time > start_time_of_evening && start_time <= end_time_of_evening) {
+      LOGI(TAG, "Stage is next");
       *p_stage = NEXT_STAGE;
       return true;
     }
   } else if (curr_time > start_time_of_evening && curr_time <= end_time_of_evening) {
+    LOGI(TAG, "Currnt time is running on Evening time zone");
     if (start_time > start_time_of_evening && start_time <= end_time_of_evening) {
+      LOGI(TAG, "Stage is current");
       *p_stage = CURR_STAGE;
       return true;
     }
   }
   return false;
+}
+
+char *get_current_timestamp(void) {
+  time_t now;
+  static char timestamp[80] = { 0 };
+
+  time(&now);
+  struct tm *tm = localtime(&now);
+  strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", tm);
+  return timestamp;
 }
 
 void show_timestamp(time_t now) {

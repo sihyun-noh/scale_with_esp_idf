@@ -63,6 +63,7 @@ void OnStartEvent(lv_event_t* e) {
 
 void OnStopEvent(lv_event_t* e) {
   // Your code here
+  send_command_data(STOP_COMMAND, NULL, 0);
   set_stop_irrigation(1);
 }
 

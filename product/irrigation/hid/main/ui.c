@@ -46,6 +46,7 @@ void ui_event_SettingButton(lv_event_t *e);
 lv_obj_t *ui_SettingButton;
 lv_obj_t *ui_SettingButtonLabel;
 lv_obj_t *ui_OperationListPanel;
+lv_obj_t *ui_OperationList;
 lv_obj_t *ui_Setting;
 lv_obj_t *ui_SettingPanel;
 lv_obj_t *ui_SettingKeyboard;
@@ -649,13 +650,21 @@ void ui_Main_screen_init(void) {
   lv_obj_set_style_text_font(ui_SettingButtonLabel, &lv_font_montserrat_18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
   ui_OperationListPanel = lv_obj_create(ui_Main);
-  lv_obj_set_width(ui_OperationListPanel, 413);
+  lv_obj_set_width(ui_OperationListPanel, 447);
   lv_obj_set_height(ui_OperationListPanel, 80);
-  lv_obj_set_x(ui_OperationListPanel, -4);
+  lv_obj_set_x(ui_OperationListPanel, -1);
   lv_obj_set_y(ui_OperationListPanel, 104);
   lv_obj_set_align(ui_OperationListPanel, LV_ALIGN_CENTER);
   lv_obj_clear_flag(ui_OperationListPanel, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
   lv_obj_set_style_radius(ui_OperationListPanel, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_OperationList = lv_textarea_create(ui_OperationListPanel);
+  lv_obj_set_width(ui_OperationList, 428);
+  lv_obj_set_height(ui_OperationList, 70);
+  lv_obj_set_x(ui_OperationList, 1);
+  lv_obj_set_y(ui_OperationList, 0);
+  lv_obj_set_align(ui_OperationList, LV_ALIGN_CENTER);
+  lv_textarea_set_placeholder_text(ui_OperationList, "Placeholder...");
 
   lv_obj_add_event_cb(ui_StartButton, ui_event_StartButton, LV_EVENT_ALL, NULL);
   lv_obj_add_event_cb(ui_StopButton, ui_event_StopButton, LV_EVENT_ALL, NULL);

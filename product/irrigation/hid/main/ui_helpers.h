@@ -110,9 +110,8 @@ void disable_start_button(void);
 void set_zone_status(ZONE zone, bool start);
 void set_zone_number(ZONE zone, bool start);
 void set_zone_flow_value(ZONE zone, int flow_value);
-
 char *get_checked_zones(void);
-
 void reset_settings(void);
+void add_operation_list(const char *op_msg);
 
 #endif

@@ -307,3 +307,7 @@ void reset_settings(void) {
   _ui_state_modify(ui_Zone5, LV_STATE_CHECKED, _UI_MODIFY_STATE_REMOVE);
   _ui_state_modify(ui_Zone6, LV_STATE_CHECKED, _UI_MODIFY_STATE_REMOVE);
 }
+
+void add_operation_list(const char *op_msg) {
+  lv_textarea_add_text(ui_OperationList, op_msg);
+}
