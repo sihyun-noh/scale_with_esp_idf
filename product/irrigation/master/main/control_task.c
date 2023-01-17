@@ -19,6 +19,8 @@
 #define TOTAL_DEVICES   7
 #define SYNC_TIME_BUFF  5
 
+#define DEBUG_TEST      1  // for Test
+
 static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;
 
@@ -314,6 +316,20 @@ void check_response(irrigation_message_t msg) {
   }
 }
 
+void show_config_debug(void) {
+#if defined (DEBUG_TEST)
+  struct tm timeinfo = { 0 };
+  localtime_r(&flowStartTime, &timeinfo);
+
+  LOGI(TAG, "flow start time %02d : %02d ", timeinfo.tm_hour, timeinfo.tm_min);
+  LOGI(TAG, "Zone flow cnt : %d ", zoneFlowCnt);
+
+  for (int i = 0; i < zoneFlowCnt; i++) {
+    LOGI(TAG, "flow zone: %d, flow rate: %d ", flowOrder[i], flowSettingValue[i]);
+  }
+#endif
+}
+
 void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
   if (!check_address_matching_current_set(mac)) {
     LOGI(TAG, "Receive data from other SET");
@@ -339,6 +355,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         memcpy(flowSettingValue, recv_message.config.flow_rate, sizeof(flowSettingValue));
         flowDoneCnt = 0;
         setConfig = true;
+        show_config_debug();
 
         send_esp_data(RESPONSE, SET_CONFIG, 0);
 
