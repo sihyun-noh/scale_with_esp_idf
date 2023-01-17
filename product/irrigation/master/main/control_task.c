@@ -424,14 +424,27 @@ void check_set_local_time(void) {
   }
 }
 
+bool is_flow_start(void) {
+  time_t currentTime;
+  struct tm currentTimeinfo = { 0 };
+  struct tm flowTimeinfo = { 0 };
+
+  time(&currentTime);
+  localtime_r(&currentTime, &currentTimeinfo);
+  localtime_r(&flowStartTime, &flowTimeinfo);
+
+  if ((currentTimeinfo.tm_hour == flowTimeinfo.tm_hour) && (currentTimeinfo.tm_min == flowTimeinfo.tm_min)) {
+    return true;
+  }
+  return false;
+}
+
 void check_schedule(void) {
   // 현재 시간과 관수 스케쥴 시간을 비교 하는 단계.
   // 스케쥴 시간에 도달하면 valve on 과 함께 관수 시작
   if (setConfig) {  // 설정된 config가 있을 경우에 config 에 따라 스케줄 관리 시작
     if (!flowStart) {
-      double diffTime = difftime(flowStartTime, get_current_time());
-
-      if (diffTime < 2.0 && diffTime > (-10.0)) {
+      if (is_flow_start()) {
         set_control_status(CHILD_VALVE_ON);
         LOGI(TAG, "START FLOW!!");
         flowStart = true;
