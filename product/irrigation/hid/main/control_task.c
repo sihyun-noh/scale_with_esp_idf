@@ -75,7 +75,17 @@ void ctrl_msg_handler(irrigation_message_t *message) {
         disable_start_button();
       } else if (message->receive_type == FORCE_STOP && message->resp == SUCCESS) {
         LOGI(TAG, "Success FORCE_STOP, enable start button");
-        enable_start_button();
+        char op_msg[128] = { 0 };
+        int zone_id = message->deviceId;
+        int flow_value = message->flow_value;
+        if (zone_id >= 1 && zone_id <= 6) {
+          set_zone_status(zone_id, false);
+          set_zone_number(zone_id, false);
+          set_zone_flow_value(zone_id, flow_value);
+          enable_start_button();
+          snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
+          add_operation_list(op_msg);
+        }
       }
     } break;
     case BATTERY_LEVEL: {
@@ -136,8 +146,10 @@ static void control_task(void *pvParameter) {
       ctrl_msg_handler(msg);
     } else {
       LOGE(TAG, "Cannot receive ctrl message form queue");
+      vTaskDelay(1000);
       continue;
     }
+    vTaskDelay(500);
   }
   vTaskDelete(NULL);
   control_handle = NULL;
