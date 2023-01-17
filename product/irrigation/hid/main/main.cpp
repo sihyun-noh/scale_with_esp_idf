@@ -202,6 +202,12 @@ int system_init(void) {
 
   start_ms = millis();
 
+  // TODO : Temporary code for testing, the code below will be removed after implementing of espnow_add_peers()
+  // Get a main mac address that will be used in espnow
+  uint8_t mac[6] = { 0 };
+  esp_read_mac(mac, ESP_MAC_WIFI_STA);
+  LOG_BUFFER_HEX(TAG, mac, sizeof(mac));
+
   return SYSINIT_OK;
 }
 
