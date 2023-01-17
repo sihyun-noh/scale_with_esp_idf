@@ -200,11 +200,13 @@ bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
 
     case START_FLOW: {
       send_message.deviceId = flowOrder[flowDoneCnt];
+      LOGI(TAG, "start flow zone : %d ", send_message.deviceId);
     } break;
 
     case ZONE_COMPLETE: {
       send_message.deviceId = flowOrder[flowDoneCnt];
       send_message.flow_value = get_flow_value();
+      LOGI(TAG, "flow complete zone : %d ", send_message.deviceId);
     } break;
 
     case BATTERY_LEVEL: {
@@ -503,7 +505,7 @@ static void control_task(void* pvParameters) {
         // 5 분으로 시간 버퍼 적용 --> 테스트 진행 후 값 튜닝 필요
         // HID 에서는 wake up 후 10분 안에 time sync 가 없을 경우 master 로 다시 time sync req
         syncTimeBuffCnt++;
-        if (syncTimeBuffCnt > (SYNC_TIME_BUFF * 60)) {
+        if (syncTimeBuffCnt > (60 * SYNC_TIME_BUFF)) {
           send_esp_data(TIME_SYNC, TIME_SYNC, 7);
 
           LOGI(TAG, "SEND HID/CHILD TIME SYNC !!");
@@ -534,8 +536,9 @@ static void control_task(void* pvParameters) {
         */
 
         // 유량 체크, 설정값과 차이가 20리터 이내로 들어올 경우 valve off 하도록... -> 테스트 후 값 변경 필요.
-        if (get_flow_value() >= (flowSettingValue[flowDoneCnt] - 20)) {
-          LOGI(TAG, "Current Flow is %d. close valve ", get_flow_value());
+        int currentFlowValue = get_flow_value();
+        if (currentFlowValue >= flowSettingValue[flowDoneCnt]) {
+          LOGI(TAG, "Current Flow is %d. close valve ", currentFlowValue);
           set_control_status(CHILD_VALVE_OFF);
         }
       } break;
