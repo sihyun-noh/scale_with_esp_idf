@@ -434,6 +434,7 @@ bool is_flow_start(void) {
   localtime_r(&flowStartTime, &flowTimeinfo);
 
   if ((currentTimeinfo.tm_hour == flowTimeinfo.tm_hour) && (currentTimeinfo.tm_min == flowTimeinfo.tm_min)) {
+    LOGI(TAG, "It's time for Flow Start!! ");
     return true;
   }
   return false;
@@ -570,6 +571,7 @@ static void control_task(void* pvParameters) {
         // 관수 스케줄에 따라 pump / zone pump on, off 컨트롤
         // 관수 중지 시 : pump off -> zone valve off
         stop_flow();
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
 
         send_esp_data(SET_VALVE_OFF, SET_VALVE_OFF, flowOrder[flowDoneCnt]);
 
