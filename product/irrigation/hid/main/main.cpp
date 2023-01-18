@@ -304,6 +304,7 @@ void touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data) {
  * you should lock on the very same semaphore! */
 SemaphoreHandle_t xGuiSemaphore;
 
+#if 0
 static void lvgl_timer_task(void *pvParameter) {
   (void)pvParameter;
 
@@ -322,21 +323,12 @@ static void lvgl_timer_task(void *pvParameter) {
 
   vTaskDelete(NULL);
 }
+#endif
 
-extern "C" {
-void app_main(void) {
-  int rc = SYSINIT_OK;
+static void gui_task(void *pvParameter) {
+  (void)pvParameter;
 
-  if ((rc = system_init()) != SYSINIT_OK) {
-    LOGE(TAG, "Failed to initialize device, error = [%d]", rc);
-    return;
-  }
-
-  // Start interactive shell command line
-  sc_ctx = sc_init();
-  if (sc_ctx) {
-    sc_start(sc_ctx);
-  }
+  xGuiSemaphore = xSemaphoreCreateMutex();
 
   // Initialize LovyanGFX
   lcd.init();
@@ -377,7 +369,79 @@ void app_main(void) {
 
   ui_init();
 
+  while (1) {
+    // Delay 1 tick (FreeRTOS tick is 10ms)
+    vTaskDelay(pdMS_TO_TICKS(10));
+
+    // Try to take the semaphore, call lvgl related function on success
+    if (pdTRUE == xSemaphoreTake(xGuiSemaphore, portMAX_DELAY)) {
+      lv_timer_handler();
+      xSemaphoreGive(xGuiSemaphore);
+    }
+  }
+
+  vTaskDelete(NULL);
+}
+
+extern "C" {
+void app_main(void) {
+  int rc = SYSINIT_OK;
+
+  if ((rc = system_init()) != SYSINIT_OK) {
+    LOGE(TAG, "Failed to initialize device, error = [%d]", rc);
+    return;
+  }
+
+  // Start interactive shell command line
+  sc_ctx = sc_init();
+  if (sc_ctx) {
+    sc_start(sc_ctx);
+  }
+
+#if 0
+  // Initialize LovyanGFX
+  lcd.init();
+
+  // Initialize lvgl
+  lv_init();
+
+  // Setting display to landscape
+  lcd.setRotation(lcd.getRotation() ^ 1);
+
+  // LVGL : Setting up buffer to use for display
+  lv_disp_draw_buf_init(&draw_buf, buf, NULL, screenWidth * 10);
+
+  // LVGL : Setup and Initialize the display device driver
+  static lv_disp_drv_t disp_drv;
+  lv_disp_drv_init(&disp_drv);
+  disp_drv.hor_res = screenWidth;
+  disp_drv.ver_res = screenHeight;
+  disp_drv.flush_cb = display_flush;
+  disp_drv.draw_buf = &draw_buf;
+  lv_disp_drv_register(&disp_drv);
+
+  // LVGL : Setup & Initialize the input device driver
+  static lv_indev_drv_t indev_drv;
+  lv_indev_drv_init(&indev_drv);
+  indev_drv.type = LV_INDEV_TYPE_POINTER;
+  indev_drv.read_cb = touchpad_read;
+  lv_indev_drv_register(&indev_drv);
+  // Configuration is completed.
+
+  // Create and start a periodic timer interrupt to call lv_tick_inc
+  LOGI(TAG, "Install LVGL tick timer");
+  // Tick interface for LVGL (using esp_timer to generate 2ms periodic event)
+  const esp_timer_create_args_t lvgl_tick_timer_args = { .callback = &lv_tick_task, .name = "lvgl_tick" };
+  esp_timer_handle_t lvgl_tick_timer = NULL;
+  ESP_ERROR_CHECK(esp_timer_create(&lvgl_tick_timer_args, &lvgl_tick_timer));
+  ESP_ERROR_CHECK(esp_timer_start_periodic(lvgl_tick_timer, LV_TICK_PERIOD_MS * 1000));
+
+  ui_init();
+
   xTaskCreatePinnedToCore(lvgl_timer_task, "lvgl_timer", 4096 * 2, NULL, tskIDLE_PRIORITY, NULL, 0);
+#endif
+
+  xTaskCreatePinnedToCore(gui_task, "gui_task", 4096 * 2, NULL, tskIDLE_PRIORITY, NULL, 1);
 
   create_control_task();
 

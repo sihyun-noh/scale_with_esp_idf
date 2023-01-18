@@ -32,23 +32,21 @@ static QueueHandle_t ctrl_msg_queue = NULL;
 // (7) set_sleep => remain_time_sleep
 /***************************************************/
 
-static bool _send_msg_event(irrigation_message_t **msg) {
+static bool _send_msg_event(irrigation_message_t *msg) {
   return ctrl_msg_queue && (xQueueSend(ctrl_msg_queue, msg, portMAX_DELAY) == pdPASS);
 }
 
-static bool _get_msg_event(irrigation_message_t **msg) {
+static bool _get_msg_event(irrigation_message_t *msg) {
   return ctrl_msg_queue && (xQueueReceive(ctrl_msg_queue, msg, portMAX_DELAY) == pdPASS);
 }
 
 void send_msg_to_ctrl_task(void *msg, size_t msg_len) {
-  irrigation_message_t *message = NULL;
+  irrigation_message_t message = { 0 };
+
   if (msg && (msg_len == sizeof(irrigation_message_t))) {
-    message = calloc(1, sizeof(irrigation_message_t));
-    if (message) {
-      memcpy(message, msg, sizeof(irrigation_message_t));
-      if (!_send_msg_event(&message)) {
-        free((void *)(message));
-      }
+    memcpy(&message, msg, sizeof(irrigation_message_t));
+    if (!_send_msg_event(&message)) {
+      LOGI(TAG, "Failed to send ctrl messag event!!!");
     }
   }
 }
@@ -101,12 +99,12 @@ void ctrl_msg_handler(irrigation_message_t *message) {
       int zone_id = message->deviceId;
       if (zone_id >= 1 && zone_id <= 6) {
         char op_msg[128] = { 0 };
-        send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
         set_zone_status(zone_id, true);
         set_zone_number(zone_id, true);
         disable_start_button();
         snprintf(op_msg, sizeof(op_msg), "Start to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
         add_operation_list(op_msg);
+        send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
       } else {
         LOGW(TAG, "Got invalid zone_id for start flow = [%d]", zone_id);
       }
@@ -114,13 +112,15 @@ void ctrl_msg_handler(irrigation_message_t *message) {
     case ZONE_COMPLETE: {
       char op_msg[128] = { 0 };
       int zone_id = message->deviceId;
-      int flow_value = message->flow_value;
-      set_zone_status(zone_id, false);
-      set_zone_number(zone_id, false);
-      set_zone_flow_value(zone_id, flow_value);
-      send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
-      snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
-      add_operation_list(op_msg);
+      if (zone_id >= 1 && zone_id <= 6) {
+        int flow_value = message->flow_value;
+        set_zone_status(zone_id, false);
+        set_zone_number(zone_id, false);
+        set_zone_flow_value(zone_id, flow_value);
+        snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
+        add_operation_list(op_msg);
+        send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
+      }
     } break;
     case ALL_COMPLETE: {
       enable_start_button();
@@ -134,18 +134,17 @@ void ctrl_msg_handler(irrigation_message_t *message) {
     } break;
     default: break;
   }
-
-  free((void *)message);
 }
 
 static void control_task(void *pvParameter) {
-  irrigation_message_t *msg = NULL;
+  irrigation_message_t msg;
 
   for (;;) {
+    memset(&msg, 0x00, sizeof(irrigation_message_t));
     if (_get_msg_event(&msg)) {
-      ctrl_msg_handler(msg);
+      ctrl_msg_handler(&msg);
     } else {
-      LOGE(TAG, "Cannot receive ctrl message form queue");
+      LOGE(TAG, "Failed to receive ctrl message form queue");
       vTaskDelay(1000);
       continue;
     }
@@ -157,7 +156,7 @@ static void control_task(void *pvParameter) {
 
 void create_control_task(void) {
   uint16_t stack_size = 8192;
-  UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
+  UBaseType_t task_priority = tskIDLE_PRIORITY;
 
   if (control_handle) {
     LOGI(TAG, "control task is already running...");
@@ -169,5 +168,5 @@ void create_control_task(void) {
     return;
   }
 
-  xTaskCreatePinnedToCore(control_task, "control_task", stack_size, NULL, task_priority, &control_handle, 1);
+  xTaskCreatePinnedToCore(control_task, "control_task", stack_size, NULL, task_priority, &control_handle, 0);
 }
