@@ -17,6 +17,7 @@ typedef enum {
   ALL_COMPLETE,   // 10, 0x0a
   FORCE_STOP,     // 11, 0x0b
   REQ_TIME_SYNC,  // 12, 0x0c
+  DEVICE_ERROR,   // 13, 0x0d
   NONE
 } message_type_t;
 
@@ -41,6 +42,7 @@ typedef struct irrigation_message {
   int deviceId;  // zone number or HID or master
   uint64_t remain_time_sleep;
   int battery_level[7];  // 0: HID, 1~6: child 1~6
+  int child_status[6];   // 1~6: child 1~6, value 0 -> normal, other = error
   time_t current_time;
 } irrigation_message_t;
 

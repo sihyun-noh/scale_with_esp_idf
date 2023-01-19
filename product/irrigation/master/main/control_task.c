@@ -47,6 +47,7 @@ bool sendMessageFlag;    // cmd send true/false
 int respTimeCnt;         // response
 int receivedId;          // received device Id
 int respBroadCast[TOTAL_DEVICES];
+int retryCntMsg[TOTAL_DEVICES];
 
 bool setConfig;                      // config setting 여부
 bool flowStart;                      // 관수 시작 flag
@@ -70,6 +71,7 @@ void init_variable(void) {
   respTimeCnt = 0;
   receivedId = -1;
   memset(&respBroadCast, 0x00, sizeof(respBroadCast));
+  memset(&retryCntMsg, 0x00, sizeof(retryCntMsg));
 
   setConfig = false;
   flowStart = false;
@@ -130,8 +132,8 @@ static time_t get_current_time(void) {
   return mktime(&timeinfo);
 }
 
-// receive mac addr 이 현 set mac addr 인지 확인 함수
-bool check_address_matching_current_set(const uint8_t* mac) {
+// 입력 mac addr 이 현 set mac addr 인지 확인 함수
+int check_address_matching_current_set(const uint8_t* mac) {
   for (int i = 0; i < TOTAL_DEVICES; i++) {
     uint8_t compareAddr[6] = {
       0,
@@ -140,10 +142,10 @@ bool check_address_matching_current_set(const uint8_t* mac) {
 
     if (memcmp(mac, compareAddr, sizeof(compareAddr)) == 0) {
       LOGI(TAG, "addr matched zone ID : %d ", i);
-      return true;
+      return i;
     }
   }
-  return false;
+  return -1;
 }
 
 // if return 0 -> wake up 시간대
@@ -217,6 +219,14 @@ bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
       send_message.remain_time_sleep = remainSleepTime;
     } break;
 
+    case DEVICE_ERROR: {
+      for (int i = 0; i < NUMBER_CHILD; i++) {
+        if (retryCntMsg[i + 1] > 3) {
+          send_message.child_status[i] = 1;
+        }
+      }
+    } break;
+
     case RESPONSE: {
       send_message.receive_type = receiver;
       send_message.resp = SUCCESS;
@@ -255,6 +265,7 @@ void check_response(irrigation_message_t msg) {
       set_control_status(CHECK_SCEHDULE);
     } break;
 
+    case DEVICE_ERROR: 
     case ALL_COMPLETE: {
       init_variable();
       set_control_status(CHECK_SCEHDULE);
@@ -333,10 +344,13 @@ void show_config_debug(void) {
 }
 
 void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
-  if (!check_address_matching_current_set(mac)) {
+  int msgFromId = check_address_matching_current_set(mac);
+  if (msgFromId == (-1)) {
     LOGI(TAG, "Receive data from other SET");
     return;
   }
+
+  retryCntMsg[msgFromId] = 0;
 
   irrigation_message_t recv_message;
   memcpy(&recv_message, incomingData, sizeof(recv_message));
@@ -376,6 +390,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
           stop_flow();
           send_esp_data(FORCE_STOP, FORCE_STOP, flowOrder[flowDoneCnt]);
           set_control_status(WAIT_STATE);
+          flowStart = false;
         } else {
           send_esp_data(RESPONSE, FORCE_STOP, 0);
           init_variable();
@@ -472,17 +487,39 @@ void check_schedule(void) {
   }
 }
 
+void check_retry_cmd(void) {
+  if (retryCntMsg[0] > 3) {
+    LOGI(TAG, "HID Device ERROR !! ");
+    set_control_status(CHECK_SCEHDULE);
+    retryCntMsg[0] = 0;
+  }
+
+  int childErrorCnt = 0;
+  for (int i = 1; i < TOTAL_DEVICES; i++) {
+    if (retryCntMsg[i] > 3) {
+      childErrorCnt++;
+      LOGI(TAG, "Zone-%d Device ERROR !!", i);
+    }
+  }
+
+  if (childErrorCnt > 0) {
+    send_esp_data(DEVICE_ERROR, DEVICE_ERROR, 0);
+  }
+}
+
 void retry_send_cmd(int rcvId) {
   if (rcvId > NUMBER_CHILD) {
     // broadcasting 후에 못 받은 것들 체크....
     for (int i = 0; i < TOTAL_DEVICES; i++) {
       if (respBroadCast[i] == 0) {
         send_esp_data(sendCmd, sendCmd, i);
+        retryCntMsg[i] += 1;
       }
       receivedId = TOTAL_DEVICES;
     }
   } else {
     send_esp_data(sendCmd, sendCmd, rcvId);
+    retryCntMsg[rcvId] += 1;
   }
   respTimeCnt = 0;
 }
@@ -494,6 +531,7 @@ void check_cmd_response(void) {
     if (respTimeCnt > RESP_THRES) {
       LOGI(TAG, "Retry CMD to %d ", receivedId);
       retry_send_cmd(receivedId);
+      check_retry_cmd();
     }
   } else {
     respTimeCnt = 0;
