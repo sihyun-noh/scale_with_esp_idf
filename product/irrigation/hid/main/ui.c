@@ -79,6 +79,35 @@ lv_obj_t *ui_Screen1FICLabel;
 lv_obj_t *ui_Screen1TimeLabel;
 lv_obj_t *ui_Screen1DateLabel;
 
+lv_obj_t *ui_SettingSelect_screen;
+lv_obj_t *ui_SS_MainPanel;
+void ui_event_SS_OpSet_Button(lv_event_t *e);
+lv_obj_t *ui_SS_OpSet_Button;
+lv_obj_t *ui_SS_OpSet_Label;
+void ui_event_SS_Device_mag_Button(lv_event_t *e);
+lv_obj_t *ui_SS_Device_mag_Button;
+lv_obj_t *ui_SS_Device_mag_Label;
+lv_obj_t *ui_DeviceManager_screen;
+lv_obj_t *ui_DM_MainPanel;
+lv_obj_t *ui_DM_Roller;
+lv_obj_t *ui_DM_Add_Button;
+lv_obj_t *ui_DM_Add_Label;
+void ui_event_DM_Del_Button(lv_event_t *e);
+lv_obj_t *ui_DM_Del_Button;
+lv_obj_t *ui_DM_Del_Label;
+void ui_event_DM_Exit_Button(lv_event_t *e);
+lv_obj_t *ui_DM_Exit_Button;
+lv_obj_t *ui_DM_Exit_Label;
+lv_obj_t *ui_DeviceManagerReg_screen;
+lv_obj_t *ui_DMR_MainPanel;
+lv_obj_t *ui_DMR_Keyboard;
+lv_obj_t *ui_DMR_TextArea;
+lv_obj_t *ui_DMR_Reg_Button;
+lv_obj_t *ui_DMR_Reg_Label;
+void ui_event_DMR_Exit_Button(lv_event_t *e);
+lv_obj_t *ui_DMR_Exit_Button;
+lv_obj_t *ui_DMR_Exit_Label;
+
 static lv_style_t style_clock;
 char timeString[9];
 char dateString[30];
@@ -124,7 +153,8 @@ void ui_event_SettingButton(lv_event_t *e) {
   lv_obj_t *target = lv_event_get_target(e);
   if (event_code == LV_EVENT_CLICKED) {
     OnSettingEvent(e);
-    _ui_screen_change(ui_Setting, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
+    _ui_screen_change(ui_SettingSelect_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
+    //_ui_screen_change(ui_Setting, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
   }
 }
 void ui_event_FlowRateText(lv_event_t *e) {
@@ -153,14 +183,51 @@ void ui_event_SettingSaveButton(lv_event_t *e) {
   lv_obj_t *target = lv_event_get_target(e);
   if (event_code == LV_EVENT_CLICKED) {
     OnSettingSaveEvent(e);
-    _ui_screen_change(ui_Main, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0);
+    _ui_screen_change(ui_Main, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
   }
 }
 void ui_event_SettingCancelButton(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   if (event_code == LV_EVENT_CLICKED) {
-    _ui_screen_change(ui_Main, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 500, 0);
+    _ui_screen_change(ui_Main, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
+  }
+}
+
+void ui_event_SS_OpSet_Button(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(ui_Setting, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
+  }
+}
+
+void ui_event_SS_Device_mag_Button(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(ui_DeviceManager_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
+  }
+}
+void ui_event_DM_Del_Button(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(ui_Main, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
+  }
+}
+void ui_event_DM_Exit_Button(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(ui_DeviceManagerReg_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
+  }
+}
+void ui_event_DMR_Exit_Button(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(ui_DeviceManager_screen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
   }
 }
 
@@ -890,6 +957,267 @@ void ui_Setting_screen_init(void) {
   lv_obj_add_event_cb(ui_SettingCancelButton, ui_event_SettingCancelButton, LV_EVENT_ALL, NULL);
 }
 
+void ui_SettingSelect_screen_init(void) {
+  ui_SettingSelect_screen = lv_obj_create(NULL);
+  lv_obj_clear_flag(ui_SettingSelect_screen, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
+  lv_obj_set_style_radius(ui_SettingSelect_screen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_SettingSelect_screen, lv_color_hex(0x011245), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_SettingSelect_screen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_SS_MainPanel = lv_obj_create(ui_SettingSelect_screen);
+  lv_obj_set_width(ui_SS_MainPanel, 445);
+  lv_obj_set_height(ui_SS_MainPanel, 292);
+  lv_obj_set_align(ui_SS_MainPanel, LV_ALIGN_CENTER);
+  lv_obj_clear_flag(ui_SS_MainPanel, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
+  lv_obj_set_style_bg_grad_color(ui_SS_MainPanel, lv_color_hex(0x9FA6F3), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_grad_dir(ui_SS_MainPanel, LV_GRAD_DIR_HOR, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_SS_OpSet_Button = lv_btn_create(ui_SS_MainPanel);
+  lv_obj_set_width(ui_SS_OpSet_Button, 239);
+  lv_obj_set_height(ui_SS_OpSet_Button, 50);
+  lv_obj_set_x(ui_SS_OpSet_Button, 0);
+  lv_obj_set_y(ui_SS_OpSet_Button, -40);
+  lv_obj_set_align(ui_SS_OpSet_Button, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_SS_OpSet_Button, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_SS_OpSet_Button, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_bg_color(ui_SS_OpSet_Button, lv_color_hex(0xC8DAD9), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_SS_OpSet_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_color(ui_SS_OpSet_Button, lv_color_hex(0x585454), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_opa(ui_SS_OpSet_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_SS_OpSet_Button, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_color(ui_SS_OpSet_Button, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_opa(ui_SS_OpSet_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_width(ui_SS_OpSet_Button, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_spread(ui_SS_OpSet_Button, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_SS_OpSet_Label = lv_label_create(ui_SS_OpSet_Button);
+  lv_obj_set_width(ui_SS_OpSet_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_SS_OpSet_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_align(ui_SS_OpSet_Label, LV_ALIGN_CENTER);
+  lv_label_set_text(ui_SS_OpSet_Label, "OperationSetting");
+  lv_obj_set_style_text_color(ui_SS_OpSet_Label, lv_color_hex(0x241D1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_opa(ui_SS_OpSet_Label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_SS_Device_mag_Button = lv_btn_create(ui_SS_MainPanel);
+  lv_obj_set_width(ui_SS_Device_mag_Button, 239);
+  lv_obj_set_height(ui_SS_Device_mag_Button, 50);
+  lv_obj_set_x(ui_SS_Device_mag_Button, 0);
+  lv_obj_set_y(ui_SS_Device_mag_Button, 40);
+  lv_obj_set_align(ui_SS_Device_mag_Button, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_SS_Device_mag_Button, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_SS_Device_mag_Button, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_bg_color(ui_SS_Device_mag_Button, lv_color_hex(0xC8DAD9), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_SS_Device_mag_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_color(ui_SS_Device_mag_Button, lv_color_hex(0x585454), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_opa(ui_SS_Device_mag_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_SS_Device_mag_Button, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_color(ui_SS_Device_mag_Button, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_opa(ui_SS_Device_mag_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_width(ui_SS_Device_mag_Button, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_spread(ui_SS_Device_mag_Button, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_SS_Device_mag_Label = lv_label_create(ui_SS_Device_mag_Button);
+  lv_obj_set_width(ui_SS_Device_mag_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_SS_Device_mag_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_align(ui_SS_Device_mag_Label, LV_ALIGN_CENTER);
+  lv_label_set_text(ui_SS_Device_mag_Label, "Device Management");
+  lv_obj_set_style_text_color(ui_SS_Device_mag_Label, lv_color_hex(0x241D1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_opa(ui_SS_Device_mag_Label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_add_event_cb(ui_SS_OpSet_Button, ui_event_SS_OpSet_Button, LV_EVENT_ALL, NULL);
+  lv_obj_add_event_cb(ui_SS_Device_mag_Button, ui_event_SS_Device_mag_Button, LV_EVENT_ALL, NULL);
+}
+void ui_DeviceManager_screen_init(void) {
+  ui_DeviceManager_screen = lv_obj_create(NULL);
+  lv_obj_clear_flag(ui_DeviceManager_screen, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
+  lv_obj_set_style_radius(ui_DeviceManager_screen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_DeviceManager_screen, lv_color_hex(0x011245), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_DeviceManager_screen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_DM_MainPanel = lv_obj_create(ui_DeviceManager_screen);
+  lv_obj_set_width(ui_DM_MainPanel, 450);
+  lv_obj_set_height(ui_DM_MainPanel, 300);
+  lv_obj_set_align(ui_DM_MainPanel, LV_ALIGN_CENTER);
+  lv_obj_clear_flag(ui_DM_MainPanel, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
+  lv_obj_set_style_bg_grad_color(ui_DM_MainPanel, lv_color_hex(0x9FA6F3), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_grad_dir(ui_DM_MainPanel, LV_GRAD_DIR_HOR, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_DM_Roller = lv_roller_create(ui_DM_MainPanel);
+  lv_roller_set_options(ui_DM_Roller,
+                        "F412FAC088DB\nF412FAC088DB\nF412FAC088DB\nF412FAC088DB\nF412FAC088DB\nF412FAC088DB\nF412FAC0"
+                        "88DB\nF412FAC088DB\nF412FAC088DB\n",
+                        LV_ROLLER_MODE_NORMAL);
+  lv_obj_set_height(ui_DM_Roller, 270);
+  lv_obj_set_width(ui_DM_Roller, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_DM_Roller, -100);
+  lv_obj_set_y(ui_DM_Roller, 0);
+  lv_obj_set_align(ui_DM_Roller, LV_ALIGN_CENTER);
+
+  ui_DM_Add_Button = lv_btn_create(ui_DM_MainPanel);
+  lv_obj_set_width(ui_DM_Add_Button, 100);
+  lv_obj_set_height(ui_DM_Add_Button, 50);
+  lv_obj_set_x(ui_DM_Add_Button, 83);
+  lv_obj_set_y(ui_DM_Add_Button, 0);
+  lv_obj_set_align(ui_DM_Add_Button, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_DM_Add_Button, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_DM_Add_Button, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_bg_color(ui_DM_Add_Button, lv_color_hex(0xED2D40), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_DM_Add_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_color(ui_DM_Add_Button, lv_color_hex(0xF0D0D4), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_opa(ui_DM_Add_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_DM_Add_Button, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_color(ui_DM_Add_Button, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_opa(ui_DM_Add_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_width(ui_DM_Add_Button, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_spread(ui_DM_Add_Button, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_DM_Add_Label = lv_label_create(ui_DM_Add_Button);
+  lv_obj_set_width(ui_DM_Add_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_DM_Add_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_align(ui_DM_Add_Label, LV_ALIGN_CENTER);
+  lv_label_set_text(ui_DM_Add_Label, "DELETE");
+
+  ui_DM_Del_Button = lv_btn_create(ui_DM_MainPanel);
+  lv_obj_set_width(ui_DM_Del_Button, 100);
+  lv_obj_set_height(ui_DM_Del_Button, 50);
+  lv_obj_set_x(ui_DM_Del_Button, 83);
+  lv_obj_set_y(ui_DM_Del_Button, 75);
+  lv_obj_set_align(ui_DM_Del_Button, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_DM_Del_Button, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_DM_Del_Button, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_bg_color(ui_DM_Del_Button, lv_color_hex(0xC8DAD9), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_DM_Del_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_color(ui_DM_Del_Button, lv_color_hex(0x585454), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_opa(ui_DM_Del_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_DM_Del_Button, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_color(ui_DM_Del_Button, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_opa(ui_DM_Del_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_width(ui_DM_Del_Button, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_spread(ui_DM_Del_Button, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_DM_Del_Label = lv_label_create(ui_DM_Del_Button);
+  lv_obj_set_width(ui_DM_Del_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_DM_Del_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_align(ui_DM_Del_Label, LV_ALIGN_CENTER);
+  lv_label_set_text(ui_DM_Del_Label, "EXIT");
+  lv_obj_set_style_text_color(ui_DM_Del_Label, lv_color_hex(0x241D1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_opa(ui_DM_Del_Label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_DM_Exit_Button = lv_btn_create(ui_DM_MainPanel);
+  lv_obj_set_width(ui_DM_Exit_Button, 100);
+  lv_obj_set_height(ui_DM_Exit_Button, 50);
+  lv_obj_set_x(ui_DM_Exit_Button, 83);
+  lv_obj_set_y(ui_DM_Exit_Button, -75);
+  lv_obj_set_align(ui_DM_Exit_Button, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_DM_Exit_Button, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_DM_Exit_Button, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_bg_color(ui_DM_Exit_Button, lv_color_hex(0x11EF39), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_DM_Exit_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_color(ui_DM_Exit_Button, lv_color_hex(0xDBF2DF), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_opa(ui_DM_Exit_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_DM_Exit_Button, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_color(ui_DM_Exit_Button, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_opa(ui_DM_Exit_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_width(ui_DM_Exit_Button, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_spread(ui_DM_Exit_Button, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_DM_Exit_Label = lv_label_create(ui_DM_Exit_Button);
+  lv_obj_set_width(ui_DM_Exit_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_DM_Exit_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_align(ui_DM_Exit_Label, LV_ALIGN_CENTER);
+  lv_label_set_text(ui_DM_Exit_Label, "ADD");
+
+  lv_obj_add_event_cb(ui_DM_Del_Button, ui_event_DM_Del_Button, LV_EVENT_ALL, NULL);
+  lv_obj_add_event_cb(ui_DM_Exit_Button, ui_event_DM_Exit_Button, LV_EVENT_ALL, NULL);
+}
+void ui_DeviceManagerReg_screen_init(void) {
+  ui_DeviceManagerReg_screen = lv_obj_create(NULL);
+  lv_obj_clear_flag(ui_DeviceManagerReg_screen, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
+  lv_obj_set_style_radius(ui_DeviceManagerReg_screen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_DeviceManagerReg_screen, lv_color_hex(0x011245), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_DeviceManagerReg_screen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_DMR_MainPanel = lv_obj_create(ui_DeviceManagerReg_screen);
+  lv_obj_set_width(ui_DMR_MainPanel, 445);
+  lv_obj_set_height(ui_DMR_MainPanel, 292);
+  lv_obj_set_x(ui_DMR_MainPanel, 0);
+  lv_obj_set_y(ui_DMR_MainPanel, -1);
+  lv_obj_set_align(ui_DMR_MainPanel, LV_ALIGN_CENTER);
+  lv_obj_clear_flag(ui_DMR_MainPanel, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
+  lv_obj_set_style_bg_grad_color(ui_DMR_MainPanel, lv_color_hex(0x9FA6F3), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_grad_dir(ui_DMR_MainPanel, LV_GRAD_DIR_HOR, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_DMR_Keyboard = lv_keyboard_create(ui_DMR_MainPanel);
+  lv_obj_set_width(ui_DMR_Keyboard, 440);
+  lv_obj_set_height(ui_DMR_Keyboard, 150);
+  lv_obj_set_x(ui_DMR_Keyboard, 0);
+  lv_obj_set_y(ui_DMR_Keyboard, 70);
+  lv_obj_set_align(ui_DMR_Keyboard, LV_ALIGN_CENTER);
+
+  ui_DMR_TextArea = lv_textarea_create(ui_DMR_MainPanel);
+  lv_obj_set_width(ui_DMR_TextArea, 415);
+  lv_obj_set_height(ui_DMR_TextArea, LV_SIZE_CONTENT);  /// 42
+  lv_obj_set_x(ui_DMR_TextArea, -1);
+  lv_obj_set_y(ui_DMR_TextArea, -90);
+  lv_obj_set_align(ui_DMR_TextArea, LV_ALIGN_CENTER);
+  lv_textarea_set_placeholder_text(ui_DMR_TextArea, "Mac address...");
+  lv_textarea_set_one_line(ui_DMR_TextArea, true);
+  lv_obj_add_state(ui_DMR_TextArea, LV_STATE_CHECKED);  /// States
+
+  ui_DMR_Reg_Button = lv_btn_create(ui_DMR_MainPanel);
+  lv_obj_set_width(ui_DMR_Reg_Button, 100);
+  lv_obj_set_height(ui_DMR_Reg_Button, 30);
+  lv_obj_set_x(ui_DMR_Reg_Button, -100);
+  lv_obj_set_y(ui_DMR_Reg_Button, -40);
+  lv_obj_set_align(ui_DMR_Reg_Button, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_DMR_Reg_Button, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_DMR_Reg_Button, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_bg_color(ui_DMR_Reg_Button, lv_color_hex(0x11EF39), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_DMR_Reg_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_color(ui_DMR_Reg_Button, lv_color_hex(0xDBF2DF), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_opa(ui_DMR_Reg_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_DMR_Reg_Button, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_color(ui_DMR_Reg_Button, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_opa(ui_DMR_Reg_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_width(ui_DMR_Reg_Button, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_spread(ui_DMR_Reg_Button, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_DMR_Reg_Label = lv_label_create(ui_DMR_Reg_Button);
+  lv_obj_set_width(ui_DMR_Reg_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_DMR_Reg_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_align(ui_DMR_Reg_Label, LV_ALIGN_CENTER);
+  lv_label_set_text(ui_DMR_Reg_Label, "Reg.");
+
+  ui_DMR_Exit_Button = lv_btn_create(ui_DMR_MainPanel);
+  lv_obj_set_width(ui_DMR_Exit_Button, 100);
+  lv_obj_set_height(ui_DMR_Exit_Button, 30);
+  lv_obj_set_x(ui_DMR_Exit_Button, 100);
+  lv_obj_set_y(ui_DMR_Exit_Button, -40);
+  lv_obj_set_align(ui_DMR_Exit_Button, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_DMR_Exit_Button, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_DMR_Exit_Button, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_bg_color(ui_DMR_Exit_Button, lv_color_hex(0xC8DAD9), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_DMR_Exit_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_color(ui_DMR_Exit_Button, lv_color_hex(0x585454), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_opa(ui_DMR_Exit_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_width(ui_DMR_Exit_Button, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_color(ui_DMR_Exit_Button, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_opa(ui_DMR_Exit_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_width(ui_DMR_Exit_Button, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_spread(ui_DMR_Exit_Button, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_DMR_Exit_Label = lv_label_create(ui_DMR_Exit_Button);
+  lv_obj_set_width(ui_DMR_Exit_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_DMR_Exit_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_align(ui_DMR_Exit_Label, LV_ALIGN_CENTER);
+  lv_label_set_text(ui_DMR_Exit_Label, "EXIT");
+  lv_obj_set_style_text_color(ui_DMR_Exit_Label, lv_color_hex(0x241D1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_opa(ui_DMR_Exit_Label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_keyboard_set_textarea(ui_DMR_Keyboard, ui_DMR_TextArea);
+  lv_obj_add_event_cb(ui_DMR_Exit_Button, ui_event_DMR_Exit_Button, LV_EVENT_ALL, NULL);
+}
+
 void time_timer_cb(lv_timer_t *timer) {
   time_t t = time(NULL);
   struct tm *local = localtime(&t);
@@ -912,8 +1240,11 @@ void ui_init(void) {
   ui_Main_screen_init();
   ui_Setting_screen_init();
 
-  lv_style_init(&style_clock);
+  ui_SettingSelect_screen_init();
+  ui_DeviceManager_screen_init();
+  ui_DeviceManagerReg_screen_init();
 
+  lv_style_init(&style_clock);
   static uint32_t user_data = 10;
   lv_timer_t *time_timer = lv_timer_create(time_timer_cb, 1, &user_data);
   // Disable all buttons in Main screen until applying master's time.
