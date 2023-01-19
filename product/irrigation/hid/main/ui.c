@@ -5,6 +5,8 @@
 
 #include "ui.h"
 #include "ui_helpers.h"
+#include <time.h>
+#include <stdio.h>
 
 ///////////////////// VARIABLES ////////////////////
 lv_obj_t *ui_Main;
@@ -75,6 +77,15 @@ lv_obj_t *ui_Zone6;
 lv_obj_t *ui_ZoneAreaLabel;
 lv_obj_t *ui_Screen1FICLabel;
 lv_obj_t *ui_Screen1TimeLabel;
+lv_obj_t *ui_Screen1DateLabel;
+
+static lv_style_t style_clock;
+char timeString[9];
+char dateString[30];
+
+const char *DAY[] = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+const char *MONTH[] = { "January", "February", "March",     "April",   "May",      "June",
+                        "July",    "August",   "September", "October", "November", "December" };
 
 ///////////////////// TEST LVGL SETTINGS ////////////////////
 #if LV_COLOR_DEPTH != 16
@@ -687,12 +698,24 @@ void ui_Main_screen_init(void) {
   ui_Screen1TimeLabel = lv_label_create(ui_Main);
   lv_obj_set_width(ui_Screen1TimeLabel, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_Screen1TimeLabel, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_Screen1TimeLabel, 166);
+  lv_obj_set_x(ui_Screen1TimeLabel, 175);
   lv_obj_set_y(ui_Screen1TimeLabel, -139);
   lv_obj_set_align(ui_Screen1TimeLabel, LV_ALIGN_CENTER);
-  lv_label_set_text(ui_Screen1TimeLabel, "2022-12-20 11:20:20");
+  lv_obj_add_style(ui_Screen1TimeLabel, &style_clock, 0);
+  lv_label_set_text(ui_Screen1TimeLabel, timeString);
+  lv_label_set_long_mode(ui_Screen1TimeLabel, LV_LABEL_LONG_WRAP);
   lv_obj_set_style_text_color(ui_Screen1TimeLabel, lv_color_hex(0xF5F1F1), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_text_opa(ui_Screen1TimeLabel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_Screen1DateLabel = lv_label_create(ui_Main);
+  lv_obj_set_width(ui_Screen1DateLabel, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Screen1DateLabel, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Screen1DateLabel, 100);
+  lv_obj_set_y(ui_Screen1DateLabel, -139);
+  lv_obj_set_align(ui_Screen1DateLabel, LV_ALIGN_CENTER);
+  lv_label_set_text(ui_Screen1DateLabel, dateString);
+  lv_obj_set_style_text_color(ui_Screen1DateLabel, lv_color_hex(0xF5F1F1), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_opa(ui_Screen1DateLabel, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
 void ui_Setting_screen_init(void) {
@@ -867,6 +890,20 @@ void ui_Setting_screen_init(void) {
   lv_obj_add_event_cb(ui_SettingCancelButton, ui_event_SettingCancelButton, LV_EVENT_ALL, NULL);
 }
 
+void time_timer_cb(lv_timer_t *timer) {
+  time_t t = time(NULL);
+  struct tm *local = localtime(&t);
+
+  sprintf(timeString, "%02d:%02d:%02d", local->tm_hour, local->tm_min, local->tm_sec);
+  sprintf(dateString, "%04d-%02d-%02d", local->tm_year + 1900, local->tm_mon, local->tm_mday);
+
+  //  sprintf(dateString, "%s/%s %02d %04d", DAY[local->tm_wday], MONTH[local->tm_mon], local->tm_mday,
+  //          local->tm_year + 1900);
+
+  lv_label_set_text(ui_Screen1TimeLabel, timeString);
+  lv_label_set_text(ui_Screen1DateLabel, dateString);
+}
+
 void ui_init(void) {
   lv_disp_t *dispp = lv_disp_get_default();
   lv_theme_t *theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED),
@@ -875,8 +912,13 @@ void ui_init(void) {
   ui_Main_screen_init();
   ui_Setting_screen_init();
 
+  lv_style_init(&style_clock);
+
+  static uint32_t user_data = 10;
+  lv_timer_t *time_timer = lv_timer_create(time_timer_cb, 1, &user_data);
   // Disable all buttons in Main screen until applying master's time.
   // disable_buttons();
 
   lv_disp_load_scr(ui_Main);
 }
+

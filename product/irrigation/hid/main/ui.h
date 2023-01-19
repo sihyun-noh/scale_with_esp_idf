@@ -81,6 +81,7 @@ extern lv_obj_t *ui_ZoneAreaLabel;
 
 extern lv_obj_t *ui_Screen1FICLabel;
 extern lv_obj_t *ui_Screen1TimeLabel;
+extern lv_obj_t *ui_Screen1DateLabel;
 
 void OnStartEvent(lv_event_t *e);
 void OnStopEvent(lv_event_t *e);
