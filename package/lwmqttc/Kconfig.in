@@ -1,4 +1,4 @@
-menu "SmartFarm LWMQTT feature"
+menu "LWMQTT package"
 
 config LWMQTT_ENABLED
     bool "Enable the Lightweight MQTT component"

@@ -7,7 +7,7 @@ endif()
 set(srcs)
 set(includes)
 
-if(CONFIG_SMARTFARM_MODBUS_FEATURE)
+if(CONFIG_MODBUS_PACKAGE)
   list(APPEND srcs "mb_master_rtu.c" "esp32/mb_master_impl.c")
   list(APPEND includes ".")
 endif()

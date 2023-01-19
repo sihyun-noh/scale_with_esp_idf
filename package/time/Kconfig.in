@@ -1,5 +1,5 @@
-config SMARTFARM_TIMEZONE_FEATURE
-  bool "SmartFarm Timezone feature"
+config TIMEZONE_PACKAGE
+  bool "Timezone package"
   default "y"
   help
-    TimeZone feature to support correct local time based on region
+    Enable TimeZone package to support correct local time based on region

@@ -27,7 +27,7 @@
 #include "syscfg.h"
 #include "time_api.h"
 
-#if defined(CONFIG_SMARTFARM_RTC_DS3231_FEATURE)
+#if defined(CONFIG_RTC_DS3231_PACKAGE)
 #include "ds3231.h"
 #include "ds3231_params.h"
 ds3231_dev_t rtc_dev;
@@ -234,7 +234,7 @@ bool get_ntp_time(int tz_offset, int dst_offset) {
   return s_ntp_failed;
 }
 
-#if defined(CONFIG_SMARTFARM_RTC_DS3231_FEATURE)
+#if defined(CONFIG_RTC_DS3231_PACKAGE)
 void rtc_time_init(void) {
   struct tm timeinfo;
   memset(&rtc_dev, 0, sizeof(ds3231_dev_t));
@@ -299,7 +299,7 @@ int rtc_set_time_cmd(int argc, char** argv) {
   if (time.tm_sec > 59)
     return -1;
 
-#if defined(CONFIG_SMARTFARM_RTC_DS3231_FEATURE)
+#if defined(CONFIG_RTC_DS3231_PACKAGE)
   rtc_set_time(time.tm_year, time.tm_mon, time.tm_mday, time.tm_hour, time.tm_min, time.tm_sec);
   set_local_time(time.tm_year, time.tm_mon, time.tm_mday, time.tm_hour, time.tm_min, time.tm_sec);
 #else

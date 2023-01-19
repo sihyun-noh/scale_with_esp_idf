@@ -1,5 +1,5 @@
-config SMARTFARM_ASYNC_MQTT_FEATURE
-  bool "SmartFarm Async MQTT client feature"
-  default y
+config ASYNC_MQTT_PACKAGE
+  bool "Async MQTT client package"
+  default n 
   help 
-    Enable SmartFarm Async MQTT client 
+    Enable Async MQTT client 

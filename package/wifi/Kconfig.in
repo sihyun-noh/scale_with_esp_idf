@@ -1,5 +1,5 @@
-config SMARTFARM_WIFILIB_FEATURE
-  bool "SmartFarm WiFi library feature"
+config WIFILIB_PACKAGE
+  bool "WiFi library package"
   default "y"
   help
-    WiFi library that supports AP and STA mode
+    Enable WiFi library that supports AP and STA mode

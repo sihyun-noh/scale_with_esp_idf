@@ -1,0 +1,5 @@
+config FILELOG_FEATURE
+  bool "Filelog feature"
+  default "y"
+  help
+    Enable to save log messages to the file system.

@@ -1,5 +1,5 @@
-config SMARTFARM_MQTT_FEATURE
-  bool "SmartFarm MQTT feature"
+config MQTTC_PACKAGE
+  bool "MQTT client package"
   default "y"
   help
-    MQTT feature that supports MQTT client
+    Enable MQTT client package

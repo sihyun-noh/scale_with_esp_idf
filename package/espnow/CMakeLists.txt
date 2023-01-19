@@ -3,7 +3,7 @@ set(req log wifi esp_wifi)
 set(srcs)
 set(includes)
 
-if(CONFIG_SMARTFARM_ESPNOW_FEATURE)
+if(CONFIG_ESPNOW_PACKAGE)
   list(APPEND srcs "espnow.c")
   list(APPEND includes ".")
 endif()

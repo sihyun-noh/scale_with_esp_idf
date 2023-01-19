@@ -406,82 +406,88 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
-# Smartfarm Configuration
+# Smartfarm Package
 #
-# CONFIG_SMARTFARM_ASYNC_MQTT_FEATURE is not set
+# CONFIG_ASYNC_MQTT_PACKAGE is not set
 
 #
-# SmartFarm Controller Configuration
+# Controller package
 #
-# CONFIG_LED_FEATURE is not set
-# end of SmartFarm Controller Configuration
+CONFIG_LED_PACKAGE=y
+# end of Controller package
 
-CONFIG_SMARTFARM_ESPNOW_FEATURE=y
-# CONFIG_SMARTFARM_ETHERNET_FEATURE is not set
+CONFIG_ESPNOW_PACKAGE=y
+# CONFIG_ETHERNET_PACKAGE is not set
 CONFIG_LITTLEFS_ENABLE=y
 
 #
-# SmartFarm LWMQTT feature
+# LWMQTT package
 #
 # CONFIG_LWMQTT_ENABLED is not set
-# end of SmartFarm LWMQTT feature
+# end of LWMQTT package
 
-# CONFIG_SMARTFARM_MODBUS_FEATURE is not set
-# CONFIG_SMARTFARM_MONITOR_FEATURE is not set
-# CONFIG_SMARTFARM_MQTT_FEATURE is not set
-# CONFIG_SMARTFARM_USB_HOST_MSC_FEATURE is not set
-# CONFIG_SMARTFARM_OTA_FEATURE is not set
+# CONFIG_MODBUS_PACKAGE is not set
+CONFIG_MQTTC_PACKAGE=y
 
 #
-# SmartFarm PAL Configuration
+# PAL packages
 #
 
 #
-# GPIO feature
+# GPIO package
 #
-CONFIG_GPIO_FEATURE=y
-# end of GPIO feature
+CONFIG_GPIO_PACKAGE=y
+# end of GPIO package
 
 #
-# I2C feature
+# I2C package
 #
-CONFIG_I2C_FEATURE=y
-# end of I2C feature
+CONFIG_I2C_PACKAGE=y
+# end of I2C package
 
 #
-# ADC feature
+# ADC package
 #
-CONFIG_ADC_FEATURE=y
-# end of ADC feature
+CONFIG_ADC_PACKAGE=y
+# end of ADC package
 
 #
-# DAC feature
+# DAC package
 #
-# CONFIG_DAC_FEATURE is not set
-# end of DAC feature
-# end of SmartFarm PAL Configuration
+# CONFIG_DAC_PACKAGE is not set
+# end of DAC package
+# end of PAL packages
 
-CONFIG_SMARTFARM_PING_FEATURE=y
-CONFIG_SMARTFARM_RTC_DS3231_FEATURE=y
+CONFIG_PING_PACKAGE=y
+CONFIG_RTC_DS3231_PACKAGE=y
+CONFIG_SHELL_PACKAGE=y
+CONFIG_SYSCFG_PACKAGE=y
+CONFIG_SYSEVENT_PACKAGE=y
+CONFIG_SYSFILE_PACKAGE=y
+CONFIG_SYSLOG_PACKAGE=y
+CONFIG_TIMEZONE_PACKAGE=y
+CONFIG_WIFILIB_PACKAGE=y
+# end of Smartfarm Package
 
 #
-# SmartFarm Sensors Configuration
+# Smartfarm Features
+#
+CONFIG_FILELOG_FEATURE=y
+# CONFIG_MONITOR_FEATURE is not set
+CONFIG_OTA_PACKAGE=y
+
+#
+# Sensors Features
 #
 # CONFIG_SHT3x_FEATURE is not set
 # CONFIG_SCD4x_FEATURE is not set
 # CONFIG_ATLAS_PH_FEATURE is not set
 # CONFIG_ATLAS_EC_FEATURE is not set
-# end of SmartFarm Sensors Configuration
+# end of Sensors Features
 
-# CONFIG_SMARTFARM_EASYSETUP_FEATURE is not set
-CONFIG_SMARTFARM_SHELL_FEATURE=y
-CONFIG_SMARTFARM_SYSCFG_FEATURE=y
-CONFIG_SMARTFARM_SYSEVENT_FEATURE=y
-CONFIG_SMARTFARM_FILELOG_FEATURE=y
-CONFIG_SMARTFARM_SYSLOG_FEATURE=y
-CONFIG_SMARTFARM_TIMEZONE_FEATURE=y
-CONFIG_SMARTFARM_WIFILIB_FEATURE=y
-# end of Smartfarm Configuration
+# CONFIG_EASYSETUP_FEATURE is not set
+# CONFIG_USB_HOST_FEATURE is not set
+# end of Smartfarm Features
 
 #
 # Compiler options
@@ -1995,6 +2001,12 @@ CONFIG_LV_USE_SNAPSHOT=y
 # end of LVGL configuration
 
 #
+# ESP-ASIO
+#
+# CONFIG_ASIO_SSL_SUPPORT is not set
+# end of ESP-ASIO
+
+#
 # Modbus configuration
 #
 CONFIG_FMB_COMM_MODE_TCP_EN=y
@@ -2024,12 +2036,6 @@ CONFIG_FMB_EVENT_QUEUE_TIMEOUT=20
 # CONFIG_FMB_TIMER_PORT_ENABLED is not set
 # CONFIG_FMB_TIMER_USE_ISR_DISPATCH_METHOD is not set
 # end of Modbus configuration
-
-#
-# ESP-ASIO
-#
-# CONFIG_ASIO_SSL_SUPPORT is not set
-# end of ESP-ASIO
 
 #
 # mDNS

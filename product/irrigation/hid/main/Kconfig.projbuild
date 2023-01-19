@@ -1,3 +1,6 @@
-menu "Smartfarm Configuration"
+menu "Smartfarm Package"
   rsource "../../../../package/*/Kconfig.in"
+endmenu
+menu "Smartfarm Features"
+  rsource "../../../../features/*/Kconfig.in"
 endmenu

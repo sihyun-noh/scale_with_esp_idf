@@ -1,36 +1,36 @@
-menu "SmartFarm PAL Configuration"
+menu "PAL packages"
 
-  menu "GPIO feature"
-    config GPIO_FEATURE
-      bool "GPIO feature"
+  menu "GPIO package"
+    config GPIO_PACKAGE
+      bool "GPIO package"
       default "y"
       help
-        GPIO feature to control the devices
-  endmenu # GPIO feature
+        Enable GPIO module to control the devices
+  endmenu # GPIO package
 
-  menu "I2C feature"
-    config I2C_FEATURE
-      bool "I2C feature"
+  menu "I2C package"
+    config I2C_PACKAGE
+      bool "I2C package"
       default "y"
       help
-        I2C feature to communicate the sensors
-  endmenu # SPI feature
+        Enable I2C module to communicate the sensors
+  endmenu # I2C package
 
-  menu "ADC feature"
-    config ADC_FEATURE
-      bool "ADC feature"
+  menu "ADC package"
+    config ADC_PACKAGE
+      bool "ADC package"
       default "y"
       help
-        ADC feature to get battery level of sensors
-  endmenu # ADC feature
+        Enable ADC module to get battery level of sensors
+  endmenu # ADC package
   
-  menu "DAC feature"
-    config DAC_FEATURE
-      bool "DAC feature"
-      default "y"
+  menu "DAC package"
+    config DAC_PACKAGE
+      bool "DAC package"
+      default "n"
       help
-        DAC feature
-  endmenu # DAC feature
+        Enable DAC module 
+  endmenu # DAC package
 
 endmenu
 

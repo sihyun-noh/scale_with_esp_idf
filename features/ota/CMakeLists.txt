@@ -3,7 +3,7 @@ set(req esp_http_client spi_flash bootloader_support app_update syslog syscfg)
 set(srcs)
 set(includes)
 
-if(CONFIG_SMARTFARM_OTA_FEATURE)
+if(CONFIG_OTA_PACKAGE)
   list(APPEND srcs "ota_fw.c" "esp32/ota_fw_impl.c")
   list(APPEND includes ".")
 endif()

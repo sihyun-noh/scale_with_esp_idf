@@ -1,4 +1,4 @@
-menu "SmartFarm Sensors Configuration"
+menu "Sensors Features"
   config SHT3x_FEATURE
     bool "SHT3x feature"
     default "y"

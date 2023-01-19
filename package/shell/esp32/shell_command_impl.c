@@ -40,7 +40,7 @@ extern int rtc_get_time_cmd(int argc, char **argv);
 
 extern void stop_shell(void);
 
-#if defined(SMARTFARM_MQTT_FEATURE)
+#if defined(MQTTC_PACKAGE)
 extern int mqtt_start_cmd(int argc, char **argv);
 extern int mqtt_subscribe_cmd(int argc, char **argv);
 extern int mqtt_publish_cmd(int argc, char **argv);

@@ -1,5 +1,0 @@
-config SMARTFARM_OTA_FEATURE
-  bool "SmartFarm OTA FW update"
-  default "y"
-  help
-    SmartFarm OTA FW Update

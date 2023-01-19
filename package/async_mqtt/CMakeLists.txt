@@ -8,7 +8,7 @@ endif()
 set(srcs)
 set(includes)
 
-if(CONFIG_SMARTFARM_ASYNC_MQTT_FEATURE)
+if(CONFIG_ASYNC_MQTT_PACKAGE)
   list(APPEND srcs
     "AsyncTCP.cpp"
     "AsyncMqttClient.cpp"

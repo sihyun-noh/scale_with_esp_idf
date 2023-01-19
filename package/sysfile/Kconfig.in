@@ -1,5 +1,5 @@
-config SMARTFARM_FILELOG_FEATURE
-  bool "SmartFarm filelog feature"
-  default "y"
+config SYSFILE_PACKAGE
+  bool "Sysfile package"
+  default "n"
   help
-    Smartfarm system file log feature.
+    Enable file system that supports to save the log message.

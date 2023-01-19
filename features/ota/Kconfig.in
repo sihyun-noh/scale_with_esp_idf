@@ -1,0 +1,5 @@
+config OTA_PACKAGE
+  bool "OTA Firmware update feature"
+  default "y"
+  help
+    Enable OTA Firmware Update

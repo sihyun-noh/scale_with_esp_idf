@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 
 # Set SmartFarm IoT framework component package
-set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../../../package ${CMAKE_CURRENT_SOURCE_DIR}/../../../opensource)
+set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../../../package ${CMAKE_CURRENT_SOURCE_DIR}/../../../opensource ${CMAKE_CURRENT_SOURCE_DIR}/../../../features)
 
 # Set project version
 set(PROJECT_VERSION_MAJOR 1)

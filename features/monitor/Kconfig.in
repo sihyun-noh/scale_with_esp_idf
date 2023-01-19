@@ -1,0 +1,5 @@
+config MONITOR_FEATURE
+  bool "Monitoring feature"
+  default "y"
+  help
+    Enable monitoring the system status.

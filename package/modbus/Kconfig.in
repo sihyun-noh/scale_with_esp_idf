@@ -1,5 +1,5 @@
-config SMARTFARM_MODBUS_FEATURE
-  bool "SmartFarm Modbus feature"
+config MODBUS_PACKAGE
+  bool "Modbus package"
   default "n"
   help
-    Modbus feature for RS485 Sensors 
+    Enable Modbus module for RS485 Sensors 

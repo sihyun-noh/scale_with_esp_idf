@@ -3,7 +3,7 @@ set(req freertos log esp_event esp_eth syslog)
 set(srcs)
 set(includes)
 
-if(CONFIG_SMARTFARM_ETHERNET_FEATURE)
+if(CONFIG_ETHERNET_PACKAGE)
     list(APPEND srcs "ethernet_manager.c" "esp32/ethernet_manager_impl.c")
     list(APPEND includes ".")
 endif()

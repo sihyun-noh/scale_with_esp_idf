@@ -1,0 +1,6 @@
+config USB_HOST_FEATURE
+  bool "USB Host feature"
+  depends on IDF_TARGET_ESP32S3
+  default "n"
+  help
+    Enable USB_HOST_MSC feature that supports USB Mass Storage Class
