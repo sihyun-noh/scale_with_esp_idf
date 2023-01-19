@@ -79,6 +79,9 @@ extern lv_obj_t *ui_Zone5;
 extern lv_obj_t *ui_Zone6;
 extern lv_obj_t *ui_ZoneAreaLabel;
 
+extern lv_obj_t *ui_Screen1FICLabel;
+extern lv_obj_t *ui_Screen1TimeLabel;
+
 void OnStartEvent(lv_event_t *e);
 void OnStopEvent(lv_event_t *e);
 void OnSettingEvent(lv_event_t *e);
