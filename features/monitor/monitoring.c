@@ -7,7 +7,6 @@
 #include "icmp_echo_api.h"
 #include "event_ids.h"
 #include "easy_setup.h"
-#include "filelog.h"
 
 #include "esp_wifi_types.h"
 
@@ -171,7 +170,6 @@ static int check_farmnet(void) {
   } else {
     farmnet_ready = NOT_READY;
     SLOGI(TAG, "Not found gateway router ip address!!!");
-    // FLOGI(TAG, "Not found gateway router ip address!!!");
   }
 
   set_farmnet_state(farmnet_ready);
@@ -250,7 +248,6 @@ static void monitoring_task(void *pvParameters) {
         // First, check to see if the farmnet wifi connection status.
         if (check_farmnet() == READY) {
           SLOGI(TAG, "Success ping to farmnet");
-          // FLOGI(TAG, "Success ping to farmnet");
           set_wifi_state(ON_NETWORK);
           set_wifi_led(ON_NETWORK);
           delay_ms = DELAY_10MIN;
@@ -269,7 +266,6 @@ static void monitoring_task(void *pvParameters) {
           g_last_router_check_time = 0;
 
           SLOGI(TAG, "Failure ping to farmnet");
-          // FLOGI(TAG, "Failure ping to farmnet");
 
           set_wifi_state(NO_ROUTER_CONNECTION);
           set_wifi_led(NO_ROUTER_CONNECTION);

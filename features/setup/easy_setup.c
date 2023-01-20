@@ -20,7 +20,6 @@
 #include "syslog.h"
 #include "event_ids.h"
 #include "wifi_manager.h"
-#include "filelog.h"
 
 #include "esp_wifi_types.h"
 #include "esp_mac.h"
@@ -408,7 +407,6 @@ void easy_setup_task(void *pvParameters) {
         wifi_stop_mode();
         syscfg_unset(SYSCFG_I_SSID, SYSCFG_N_SSID);
         syscfg_unset(SYSCFG_I_PASSWORD, SYSCFG_N_PASSWORD);
-        // FLOGI(TAG, "syscfg_unset!! ssid and password!");
         curr_mode = UNCONFIGURED_MODE;
         router_connect = 0;
         set_device_configured(0);
