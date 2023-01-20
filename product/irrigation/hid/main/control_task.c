@@ -87,30 +87,33 @@ void ctrl_msg_handler(irrigation_message_t *message) {
       }
     } break;
     case BATTERY_LEVEL: {
+      send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
       // add battery level to the logging data
       set_battery_level(1);
       if (!is_time_sync()) {
         set_main_time(&message->current_time);
         enable_buttons();
       }
-      send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
     } break;
     case START_FLOW: {
       int zone_id = message->deviceId;
       if (zone_id >= 1 && zone_id <= 6) {
         char op_msg[128] = { 0 };
+        send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
+        // Update UI screen
         set_zone_status(zone_id, true);
         set_zone_number(zone_id, true);
         disable_start_button();
         snprintf(op_msg, sizeof(op_msg), "Start to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
         add_operation_list(op_msg);
-        send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
       } else {
         LOGW(TAG, "Got invalid zone_id for start flow = [%d]", zone_id);
       }
     } break;
     case ZONE_COMPLETE: {
       char op_msg[128] = { 0 };
+      send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
+      // Update UI screen
       int zone_id = message->deviceId;
       if (zone_id >= 1 && zone_id <= 6) {
         int flow_value = message->flow_value;
@@ -119,12 +122,12 @@ void ctrl_msg_handler(irrigation_message_t *message) {
         set_zone_flow_value(zone_id, flow_value);
         snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
         add_operation_list(op_msg);
-        send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
       }
     } break;
     case ALL_COMPLETE: {
-      enable_start_button();
       send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
+      // Update UI screen
+      enable_start_button();
     } break;
     case SET_SLEEP: {
       uint64_t wakeup_time_sec = message->remain_time_sleep;
