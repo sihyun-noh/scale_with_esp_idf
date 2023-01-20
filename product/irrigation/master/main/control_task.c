@@ -260,7 +260,11 @@ void check_response(irrigation_message_t msg) {
       set_control_status(CHECK_FLOW);
     } break;
 
-    case ZONE_COMPLETE:
+    case ZONE_COMPLETE: {
+      flowDoneCnt++;
+      set_control_status(CHECK_SCEHDULE);
+    }
+
     case BATTERY_LEVEL: {
       set_control_status(CHECK_SCEHDULE);
     } break;
@@ -287,8 +291,7 @@ void check_response(irrigation_message_t msg) {
         // 관수 완료를 HID 에 전달
         send_esp_data(ZONE_COMPLETE, ZONE_COMPLETE, 0);
 
-        LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
-        flowDoneCnt++;        
+        LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);     
         set_control_status(WAIT_STATE);
       }
     } break;
