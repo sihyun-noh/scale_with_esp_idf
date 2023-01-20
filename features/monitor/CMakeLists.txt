@@ -1,4 +1,4 @@
-set(req freertos log esp_event syscfg sysevent syslog setup wifi esp_wifi heap ping time)
+set(req freertos log esp_event syscfg sysevent syslog setup wifi esp_wifi heap ping time filelog)
 
 set(srcs)
 set(includes)

@@ -223,7 +223,7 @@ static sc_cmd_t commands[] = {
       .help = "Publish syslog message",
       .func = syslog_pub,
   },
-#if defined(SMARTFARM_MQTT_FEATURE)
+#if defined(MQTTC_PACKAGE)
   {
       .name = "mqtt_start",
       .help = "Start MQTT client >> mqtt_start host port",
