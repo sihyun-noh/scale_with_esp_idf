@@ -495,6 +495,9 @@ void check_retry_cmd(void) {
     LOGI(TAG, "HID Device ERROR !! ");
     set_control_status(CHECK_SCEHDULE);
     retryCntMsg[0] = 0;
+    if (sendCmd == ZONE_COMPLETE) {
+      flowDoneCnt++;
+    }
   }
 
   int childErrorCnt = 0;
