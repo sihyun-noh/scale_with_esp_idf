@@ -233,7 +233,7 @@ int system_init(void) {
   check_model();
 
   battery_init();
-  
+
   create_mqtt_task();
 
   if (!is_battery_model()) {
@@ -293,7 +293,7 @@ void battery_loop_task(void) {
       } break;
       case NTP_TIME_MODE: {
         if (is_device_onboard()) {
-          struct tm timeinfo = { 0 };
+          struct tm timeinfo = { };
           tm_set_time(3600 * KR_GMT_OFFSET, 3600 * KR_DST_OFFSET, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
           if (tm_get_local_time(&timeinfo, 20000)) {
             set_operation_mode(MQTT_START_MODE);
@@ -363,7 +363,7 @@ void plugged_loop_task(void) {
       } break;
       case NTP_TIME_MODE: {
         if (is_device_onboard()) {
-          struct tm timeinfo = { 0 };
+          struct tm timeinfo = { };
           tm_set_time(3600 * KR_GMT_OFFSET, 3600 * KR_DST_OFFSET, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
           if (tm_get_local_time(&timeinfo, 20000)) {
             g_last_ntp_check_time = xTaskGetTickCount();
