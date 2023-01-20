@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 #include "ui_helpers.h"
+#include "gui.h"
 
 #include "sys_config.h"
 
@@ -196,25 +197,41 @@ void warnning_msgbox(char *message) {
 
 void enable_buttons(void) {
   /* Enable button */
+  lvgl_acquire();
+
   _ui_state_modify(ui_StartButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_REMOVE);
   _ui_state_modify(ui_StopButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_REMOVE);
   _ui_state_modify(ui_SettingButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_REMOVE);
   _ui_state_modify(ui_ResetButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_REMOVE);
+
+  lvgl_release();
 }
 
 void disable_buttons(void) {
+  lvgl_acquire();
+
   _ui_state_modify(ui_StartButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_ADD);
   _ui_state_modify(ui_StopButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_ADD);
   _ui_state_modify(ui_SettingButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_ADD);
   _ui_state_modify(ui_ResetButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_ADD);
+
+  lvgl_release();
 }
 
 void enable_start_button(void) {
+  lvgl_acquire();
+
   _ui_state_modify(ui_StartButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_REMOVE);
+
+  lvgl_release();
 }
 
 void disable_start_button(void) {
+  lvgl_acquire();
+
   _ui_state_modify(ui_StartButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_ADD);
+
+  lvgl_release();
 }
 
 lv_obj_t *get_zone_status_obj(ZONE zone) {
@@ -247,6 +264,8 @@ char *get_checked_zones(void) {
   int i, pos = 0;
   static char zones[20] = { 0 };
 
+  lvgl_acquire();
+
   lv_obj_t *zone_check_ui[6] = { ui_Zone1, ui_Zone2, ui_Zone3, ui_Zone4, ui_Zone5, ui_Zone6 };
 
   for (i = 0; i < 6; i++) {
@@ -258,10 +277,15 @@ char *get_checked_zones(void) {
   if (pos) {
     zones[pos - 1] = '\0';
   }
+
+  lvgl_release();
+
   return zones;
 }
 
 void set_zone_status(ZONE zone, bool start) {
+  lvgl_acquire();
+
   lv_obj_t *zone_status = get_zone_status_obj(zone);
   if (zone_status) {
     if (start) {
@@ -272,9 +296,13 @@ void set_zone_status(ZONE zone, bool start) {
       lv_obj_set_style_bg_color(zone_status, lv_color_hex(0xFF1E1E), LV_PART_MAIN | LV_STATE_DEFAULT);
     }
   }
+
+  lvgl_release();
 }
 
 void set_zone_number(ZONE zone, bool start) {
+  lvgl_acquire();
+
   lv_obj_t *zone_number = get_zone_num_obj(zone);
   if (zone_number) {
     if (start) {
@@ -283,6 +311,8 @@ void set_zone_number(ZONE zone, bool start) {
       lv_obj_set_style_bg_color(zone_number, lv_color_hex(0xFF1E1E), LV_PART_MAIN | LV_STATE_DEFAULT);
     }
   }
+
+  lvgl_release();
 }
 
 void syscfg_set_flow_value(ZONE zone, char *flow_value) {
@@ -300,6 +330,8 @@ void set_zone_flow_value(ZONE zone, int flow_value) {
   char flow[20] = { 0 };
   int total_flow_value = 0;
 
+  lvgl_acquire();
+
   lv_obj_t *zone_flow = get_zone_flow_meter_obj(zone);
   if (zone_flow) {
     const char *curr_flow_value = lv_label_get_text(get_zone_flow_meter_obj(zone));
@@ -308,9 +340,13 @@ void set_zone_flow_value(ZONE zone, int flow_value) {
     lv_label_set_text(zone_flow, flow);
     syscfg_set_flow_value(zone, flow);
   }
+
+  lvgl_release();
 }
 
 void reset_settings(void) {
+  lvgl_acquire();
+
   lv_textarea_set_text(ui_FlowRateText, "");
   lv_textarea_set_text(ui_TimeHourText, "");
   lv_textarea_set_text(ui_TimeMinuteText, "");
@@ -320,8 +356,14 @@ void reset_settings(void) {
   _ui_state_modify(ui_Zone4, LV_STATE_CHECKED, _UI_MODIFY_STATE_REMOVE);
   _ui_state_modify(ui_Zone5, LV_STATE_CHECKED, _UI_MODIFY_STATE_REMOVE);
   _ui_state_modify(ui_Zone6, LV_STATE_CHECKED, _UI_MODIFY_STATE_REMOVE);
+
+  lvgl_release();
 }
 
 void add_operation_list(const char *op_msg) {
+  lvgl_acquire();
+
   lv_textarea_add_text(ui_OperationList, op_msg);
+
+  lvgl_release();
 }
