@@ -138,8 +138,8 @@ int start_ota_fw_task_wait(char* fw_download_url) {
       LOGW(TAG, "[%s] Failed to create OTA FW Task", __FUNCTION__);
     } else {
       for (;;) {
-        unsigned int id, value;
-        unsigned int notification = 0;
+        uint32_t id, value;
+        uint32_t notification = 0;
 
         /* Wait for the result of mqtt publishing status */
         if (xTaskNotifyWait(ULONG_MAX, ULONG_MAX, &notification, pdMS_TO_TICKS(OTA_TIMEOUT_MS)) != pdTRUE) {

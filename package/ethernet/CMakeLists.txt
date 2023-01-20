@@ -1,4 +1,4 @@
-set(req freertos log esp_event esp_eth syslog)
+set(req freertos log esp_event esp_eth syslog esp_netif)
 
 set(srcs)
 set(includes)
