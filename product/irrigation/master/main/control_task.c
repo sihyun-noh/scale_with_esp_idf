@@ -263,7 +263,7 @@ void check_response(irrigation_message_t msg) {
     case ZONE_COMPLETE: {
       flowDoneCnt++;
       set_control_status(CHECK_SCEHDULE);
-    }
+    } break;
 
     case BATTERY_LEVEL: {
       set_control_status(CHECK_SCEHDULE);
