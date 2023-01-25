@@ -597,6 +597,7 @@ static void control_task(void* pvParameters) {
         int currentFlowValue = get_flow_value();
         if (currentFlowValue >= flowSettingValue[flowDoneCnt]) {
           LOGI(TAG, "Current Flow is %d. close valve ", currentFlowValue);
+          stop_flow();  // main pump off
           set_control_status(CHILD_VALVE_OFF);
         }
       } break;
@@ -614,9 +615,6 @@ static void control_task(void* pvParameters) {
       case CHILD_VALVE_OFF: {
         // 관수 스케줄에 따라 pump / zone pump on, off 컨트롤
         // 관수 중지 시 : pump off -> zone valve off
-        stop_flow();
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-
         send_esp_data(SET_VALVE_OFF, SET_VALVE_OFF, flowOrder[flowDoneCnt]);
 
         LOGI(TAG, "CHILD - %d VALVE OFF !!", flowOrder[flowDoneCnt]);
