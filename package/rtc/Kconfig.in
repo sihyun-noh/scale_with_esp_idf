@@ -15,7 +15,7 @@ config DS3231_I2C_BUS
 
 config DS3231_I2C_ADDR
   hex "DS3231 I2C ADDR"
-  default 68
+  default 0x68
   depends on RTC_DS3231_PACKAGE
   help
     I2C address to be used as DS3231_I2C_ADDR.
