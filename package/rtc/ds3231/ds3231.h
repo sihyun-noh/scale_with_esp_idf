@@ -51,8 +51,13 @@ extern "C" {
 
 #define DS3231_I2C_ADDR 0x68 //!< I2C address
 
+#if (TARGET_BOARD == TARGET_ESP32)
 #define DS3231_I2C_SDA_PIN 33
 #define DS3231_I2C_SCL_PIN 32
+#elif (TARGET_BOARD == TARGET_ESP32S3)
+#define DS3231_I2C_SDA_PIN 1
+#define DS3231_I2C_SCL_PIN 2
+#endif
 
 /**
  * Alarms

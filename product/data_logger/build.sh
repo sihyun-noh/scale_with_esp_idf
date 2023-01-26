@@ -31,11 +31,13 @@ if [ -z ${1} ] || [[ ${1} = "build" ]] || [[ ${1} = "flash" ]]; then
   read CHIPSET_ID
   if [ ${CHIPSET_ID} = "1" ]; then
     export IDF_TARGET=esp32
+    TARGET_BOARD=TARGET_ESP32
   elif [ ${CHIPSET_ID} = "2" ]; then
     export IDF_TARGET=esp32s3
+    TARGET_BOARD=TARGET_ESP32S3
   fi
 
-  echo "Please select product. 1: Temp & Humi, 2 : CO2 TH, 3 : Soil EC, 4 : Solar Radiation, 5 : Atlas pH, 6 : Atlas EC, 7 : Water PH, 8 : Wind Direction, 9 : Wind Speed, 10 : Water EC"
+  echo "Please select product. 1: Temp & Humi, 2 : CO2 TH, 3 : Soil EC, 4 : Solar Radiation, 5 : Atlas pH, 6 : Atlas EC, 7 : Water PH, 8 : Wind Direction, 9 : Wind Speed, 10 : Water EC, 11 : Soil EC(Renke)"
   read SELECT_NUM
 
   if [ ${SELECT_NUM} = "1" ]; then
@@ -58,6 +60,8 @@ if [ -z ${1} ] || [[ ${1} = "build" ]] || [[ ${1} = "flash" ]]; then
     PRODUCT_NAME="RK100_02"
   elif [ ${SELECT_NUM} = "10" ]; then
     PRODUCT_NAME="RK500_13"
+  elif [ ${SELECT_NUM} = "11" ]; then
+    PRODUCT_NAME="RS_ECTH"
   fi
 
   echo "select ${PRODUCT_NAME}"
@@ -69,6 +73,14 @@ if [ -z ${1} ] || [[ ${1} = "build" ]] || [[ ${1} = "flash" ]]; then
   if [ -n "${DEFINED_PROD}" ]; then
     perl -pi -e "s/${DEFINED_PROD}/${COMPILE_PROD}/g" main/config.h
   fi
+
+  DEFINED_PROD=$(grep -h '#define TARGET_BOARD*' main/config.h)
+  COMPILE_PROD="#define TARGET_BOARD ${TARGET_BOARD}"
+
+  if [ -n "${DEFINED_PROD}" ]; then
+    perl -pi -e "s/${DEFINED_PROD}/${COMPILE_PROD}/g" main/config.h
+  fi
+
 fi
 
 if [ ${#} -eq 0 ]; then
@@ -99,6 +111,8 @@ if [ ! -d "${TOOL_PATH}" ]; then
   mkdir -p ${TOOL_PATH}
   downloadSdk
 fi
+
+git submodule update --init --recursive
 
 # tool setup & env setting
 cd ${TOOL_PATH}/esp-idf

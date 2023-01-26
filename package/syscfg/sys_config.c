@@ -174,6 +174,7 @@ void generate_syscfg(void) {
   char region_code[SYSCFG_S_REGIONCODE] = { 0 };
   char power_mode[SYSCFG_S_POWERMODE] = { 0 };
   char send_interval[SYSCFG_S_SEND_INTERVAL] = { 0 };
+  char op_time[SYSCFG_S_OP_TIME] = { 0 };
   char reconnect[SYSCFG_S_RECONNECT] = { 0 };
 
   /* Check if syscfg variable exists and set default value if not present */
@@ -255,6 +256,16 @@ void generate_syscfg(void) {
     else
       syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, "30");
   }
+
+  syscfg_get(SYSCFG_I_OP_TIME, SYSCFG_N_OP_TIME, op_time, sizeof(op_time));
+  if (op_time[0] == 0) {
+    if (!strncmp(power_mode, "B", 1)) {
+      syscfg_set(SYSCFG_I_OP_TIME, SYSCFG_N_OP_TIME, "0618");
+    } else {
+      syscfg_set(SYSCFG_I_OP_TIME, SYSCFG_N_OP_TIME, "0618");
+    }
+  }
+
   syscfg_get(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, reconnect, sizeof(reconnect));
   if (reconnect[0] == 0) {
     syscfg_set(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, "0");

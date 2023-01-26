@@ -13,7 +13,7 @@
 #include "atlas_ec_params.h"
 #endif
 #if ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500) || (SENSOR_TYPE == RK500_02) || \
-     (SENSOR_TYPE == RK110_02) || (SENSOR_TYPE == RK100_02) || (SENSOR_TYPE == RK500_13))
+     (SENSOR_TYPE == RK110_02) || (SENSOR_TYPE == RK100_02) || (SENSOR_TYPE == RK500_13) || (SENSOR_TYPE == RS_ECTH))
 #include "mb_master_rtu.h"
 #endif
 #include "utils.h"
@@ -23,6 +23,7 @@
 #include "sysevent.h"
 #include "sys_status.h"
 #include "main.h"
+#include "filelog.h"
 
 #include <string.h>
 #include <math.h>
@@ -32,15 +33,18 @@
 #define SENSOR_TEST 0
 
 typedef enum {
-  RK_TH_SLAVE_ID = 0x01,     // Rika Temperature/Humidity sensor
-  RK_WD_SLAVE_ID = 0x02,     // Rika Wind direction sensor
-  RK_WS_SLAVE_ID = 0x03,     // Rika Wind speed sensor
-  RK_WPH_SLAVE_ID = 0x04,    // Rika Water PH sensor
-  RK_SEC_SLAVE_ID = 0x05,    // Rika Soil EC sensor
-  RK_SPH_SLAVE_ID = 0x06,    // Rika Soil PH sensor
-  RK_WEC_SLAVE_ID = 0x07,    // Rika Water EC sensor
-  KD_SOLAR_SLAVE_ID = 0x1F,  // Korea Digital Solar sensor
-  KD_CO2_SLAVE_ID = 0x1F,    // Korea Digitial Co2 sensor
+  RK_TH_SLAVE_ID = 0x01,        // Rika Temperature/Humidity sensor
+  RK_WD_SLAVE_ID = 0x02,        // Rika Wind direction sensor
+  RK_WS_SLAVE_ID = 0x03,        // Rika Wind speed sensor
+  RK_WPH_SLAVE_ID = 0x04,       // Rika Water PH sensor
+  RK_SEC_SLAVE_ID = 0x05,       // Rika Soil EC sensor
+  RK_SPH_SLAVE_ID = 0x06,       // Rika Soil PH sensor
+  RK_WEC_SLAVE_ID = 0x07,       // Rika Water EC sensor
+  KD_SOLAR_SLAVE_ID = 0x1F,     // Korea Digital Solar sensor
+  KD_CO2_SLAVE_ID = 0x1F,       // Korea Digitial Co2 sensor
+  RENKE_SEC_SLAVE_ID_1 = 0x01,  // EC sensor ranke sensor
+  RENKE_SEC_SLAVE_ID_2 = 0x02,  // EC sensor ranke sensor
+  RENKE_SEC_SLAVE_ID_3 = 0x03,  // EC sensor ranke sensor
 } MB_SLAVE_ADDR;
 
 static const char* TAG = "sensor_task";
@@ -54,7 +58,8 @@ atlas_ph_dev_t dev;
 #elif (SENSOR_TYPE == ATLAS_EC)
 atlas_ec_dev_t dev;
 #elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500) || (SENSOR_TYPE == RK500_02) || \
-       (SENSOR_TYPE == RK110_02) || (SENSOR_TYPE == RK100_02) || (SENSOR_TYPE == RK500_13))
+       (SENSOR_TYPE == RK110_02) || (SENSOR_TYPE == RK100_02) || (SENSOR_TYPE == RK500_13) || \
+       (SENSOR_TYPE == RS_ECTH))
 int num_characteristic = 0;
 mb_characteristic_info_t mb_characteristic[3] = { 0 };
 #endif
@@ -106,7 +111,8 @@ int sensor_init(void) {
     return res;
   }
 #elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500) || (SENSOR_TYPE == RK500_02) || \
-       (SENSOR_TYPE == RK110_02) || (SENSOR_TYPE == RK100_02) || (SENSOR_TYPE == RK500_13))
+       (SENSOR_TYPE == RK110_02) || (SENSOR_TYPE == RK100_02) || (SENSOR_TYPE == RK500_13) || \
+       (SENSOR_TYPE == RS_ECTH))
   // Refer to the modbus function code and register in EC Water RK500-13.pdf
   // << Water EC Sensor >>
   // Slave ID = 0x07, Function Code = 0x03, Start Address = 0x0000, Read Register Len = 0x000A
@@ -139,6 +145,15 @@ int sensor_init(void) {
                                                0x0000, 0x0003 } };
   memcpy(&mb_characteristic, mb_soil_ec, sizeof(mb_soil_ec));
   num_characteristic = 1;
+
+#elif (SENSOR_TYPE == RS_ECTH)
+  mb_characteristic_info_t mb_soil_ec[3] = {
+    { 0, "Data_1", "Binary", DATA_BINARY, 6, RENKE_SEC_SLAVE_ID_1, MB_HOLDING_REG, 0x0000, 0x0003 },
+    { 1, "Data_2", "Binary", DATA_BINARY, 6, RENKE_SEC_SLAVE_ID_2, MB_HOLDING_REG, 0x0000, 0x0003 },
+    { 2, "Data_3", "Binary", DATA_BINARY, 6, RENKE_SEC_SLAVE_ID_3, MB_HOLDING_REG, 0x0000, 0x0003 },
+  };
+  memcpy(&mb_characteristic, mb_soil_ec, sizeof(mb_soil_ec));
+  num_characteristic = 3;
 #elif (SENSOR_TYPE == SWSR7500)
   // Korea Digital Solar Radiation(Pyranometer) Sensor
   mb_characteristic_info_t mb_solar[1] = {
@@ -288,7 +303,7 @@ int read_co2_temperature_humidity(void) {
 }
 #endif
 
-#if (SENSOR_TYPE == RK520_02)
+#if ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == RS_ECTH))
 float convert_bulk_to_saturation_ec(float temp, float mos, float ec) {
   float raw, eb, ep, op, saturation_ec;
 
@@ -306,7 +321,9 @@ float convert_bulk_to_saturation_ec(float temp, float mos, float ec) {
 
   return saturation_ec;
 }
+#endif
 
+#if (SENSOR_TYPE == RK520_02)
 int read_soil_ec(void) {
   int res = 0;
   int data_len = 0;
@@ -327,7 +344,7 @@ int read_soil_ec(void) {
 
   for (int i = 0; i < num_characteristic; i++) {
     if (mb_master_read_characteristic(mb_characteristic[i].cid, mb_characteristic[i].name, value, &data_len) == -1) {
-      LOGE(TAG, "Failed to read value");
+      LOGE(TAG, "Failed to read value : %d ", i);
       set_rs485_conn_fail(1);
       res = -1;
     } else {
@@ -335,6 +352,7 @@ int read_soil_ec(void) {
       for (int k = 0; k < data_len; k++) {
         LOGI(TAG, "value[%d] = [0x%x]", k, value[k]);
       }
+
       memcpy(&u_temp, value, 2);
       memcpy(&u_mos, value + 2, 2);
       memcpy(&u_ec, value + 4, 2);
@@ -357,9 +375,82 @@ int read_soil_ec(void) {
       sysevent_set(MB_SOIL_BULK_EC_EVENT, s_ec);
 
       if (is_battery_model()) {
-        LOGI(TAG, "ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
+        LOGI(TAG, "SEN1 :ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
       } else {
-        LOGI(TAG, "Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
+        LOGI(TAG, "SEN1 :Power mode > ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
+      }
+
+      vTaskDelay(500 / portTICK_PERIOD_MS);
+    }
+  }
+  return res;
+}
+#endif
+
+#if (SENSOR_TYPE == RS_ECTH)
+int read_soil_ec_rs_ecth(void) {
+  int res = 0;
+  int data_len = 0;
+  uint8_t value[30] = { 0 };
+  char s_temperature[10] = { 0 };
+  char s_moisture[10] = { 0 };
+  char s_ec[10] = { 0 };
+  char s_saturation_ec[10] = { 0 };
+  char s_bat_volt[10] = { 0 };
+
+  float f_temp = 0.0;
+  float f_mos = 0.0;
+  float f_ec = 0.0;
+  float f_saturation_ec = 0.0;
+
+  uint16_t u_temp = 0;
+  uint16_t u_mos = 0;
+  uint16_t u_ec = 0;
+
+  sysevent_get(SYSEVENT_BASE, ADC_BATTERY_EVENT, s_bat_volt, sizeof(s_bat_volt));
+  for (int i = 0; i < num_characteristic; i++) {
+    if (mb_master_read_characteristic(mb_characteristic[i].cid, mb_characteristic[i].name, value, &data_len) == -1) {
+      LOGE(TAG, "Failed to read value : %d ", i);
+      set_rs485_conn_fail(1);
+      res = -1;
+    } else {
+      set_rs485_conn_fail(0);
+      for (int k = 0; k < data_len; k++) {
+        LOGI(TAG, "value[%d] = [0x%x]", k, value[k]);
+      }
+      memcpy(&u_mos, value, 2);
+      memcpy(&u_temp, value + 2, 2);
+      memcpy(&u_ec, value + 4, 2);
+      f_temp = (float)(u_temp / 10.00);
+      f_mos = (float)(u_mos / 10.0);
+      f_ec = (float)(u_ec / 1000.00);
+      LOGI(TAG, "ec = %.2f", f_ec);
+      LOGI(TAG, "moisture = %.2f", f_mos);
+      LOGI(TAG, "temperature = %.2f", f_temp);
+      snprintf(s_temperature, sizeof(s_temperature), "%.2f", f_temp);
+      snprintf(s_moisture, sizeof(s_moisture), "%.2f", f_mos);
+      snprintf(s_ec, sizeof(s_ec), "%.2f", f_ec);
+
+      f_saturation_ec = convert_bulk_to_saturation_ec(f_temp, (f_mos / 100), f_ec);
+      snprintf(s_saturation_ec, sizeof(s_saturation_ec), "%.2f", f_saturation_ec);
+      /*
+            sysevent_set(MB_TEMPERATURE_EVENT, s_temperature);
+            sysevent_set(MB_MOISTURE_EVENT, s_moisture);
+            sysevent_set(MB_SOIL_EC_EVENT, s_saturation_ec);
+            sysevent_set(MB_SOIL_BULK_EC_EVENT, s_ec);
+      */
+
+      if (i == SEN1) {
+        LOGI(TAG, "SEN1 :ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
+        FDATA(SEN_DATA_PATH_1, "%.2f %.2f %.2f %s", f_saturation_ec, f_mos, f_temp, s_bat_volt);
+      } else if (i == SEN2) {
+        LOGI(TAG, "SEN2 :ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
+        FDATA(SEN_DATA_PATH_2, "%.2f %.2f %.2f %s", f_saturation_ec, f_mos, f_temp, s_bat_volt);
+      } else if (i == SEN3) {
+        LOGI(TAG, "SEN3 : ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
+        FDATA(SEN_DATA_PATH_3, "%.2f %.2f %.2f %s", f_saturation_ec, f_mos, f_temp, s_bat_volt);
+      } else {
+        LOGE(TAG, "log data not saved.");
       }
 
       vTaskDelay(500 / portTICK_PERIOD_MS);
@@ -682,6 +773,8 @@ int sensor_read(void) {
   rc = read_co2_temperature_humidity();
 #elif (SENSOR_TYPE == RK520_02)
   rc = read_soil_ec();
+#elif (SENSOR_TYPE == RS_ECTH)
+  rc = read_soil_ec_rs_ecth();
 #elif (SENSOR_TYPE == RK500_02)
   rc = read_water_ph();
 #elif (SENSOR_TYPE == SWSR7500)

@@ -1,6 +1,9 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 typedef enum {
   SYSINIT_OK,
   ERR_NVS_FLASH,
@@ -21,10 +24,23 @@ typedef enum {
 } err_system_t;
 
 typedef enum {
-  SENSOR_INIT_MODE = 0,
-  SENSOR_READ_MODE,
-  SENSOR_PUB_MODE,
-  SLEEP_MODE
-} operation_mode_t;
+  SEN1 = 0,
+  SEN2,
+  SEN3,
+} sen_set_t;
 
+#if (CONFIG_LITTLEFS_ENABLE)
+#define SEN_DATA_PATH_1 "/storage/Sen1"
+#define SEN_DATA_PATH_2 "/storage/Sen2"
+#define SEN_DATA_PATH_3 "/storage/Sen3"
+#else
+#define SEN_DATA_PATH_1 "/spiffs/Sen1"
+#define SEN_DATA_PATH_2 "/spiffs/Sen2"
+#define SEN_DATA_PATH_3 "/spiffs/Sen3"
+#endif
+typedef enum { SENSOR_INIT_MODE = 0, SENSOR_READ_MODE, SENSOR_PUB_MODE, SLEEP_MODE } operation_mode_t;
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* _MAIN_H_ */

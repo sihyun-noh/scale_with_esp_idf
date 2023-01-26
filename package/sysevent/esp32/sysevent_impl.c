@@ -22,9 +22,10 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "esp_wifi.h"
+#include "esp_wifi_types.h"
 #include "esp_event.h"
 #include "esp_event_base.h"
+#include "esp_netif_types.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/portmacro.h"
 #include "freertos/task.h"

@@ -30,8 +30,8 @@
 
 #define FILE_LOG_MAX_BUFF_SIZE 1024
 #define FILE_LOG_MAX_MSG_SIZE (FILE_LOG_MAX_BUFF_SIZE)
-#define FILE_LOG_MAX_FILE_SIZE (FILE_LOG_MAX_MSG_SIZE * 50)
-#define FILE_COUNT 12
+#define FILE_LOG_MAX_FILE_SIZE (FILE_LOG_MAX_MSG_SIZE * 500)
+#define FILE_COUNT 8
 
 static const char *TAG = "FILE_LOG";
 
@@ -108,14 +108,11 @@ static int file_status_check(const char *dirpath) {
     }
     file_count++;
   }
-
   file_ctx.file_num = file_count;
-
-  LOGI(TAG, "latest file : %s", file_ctx.latest_file);
-  LOGI(TAG, "latest file szie : %d", file_ctx.latest_file_size);
-  LOGI(TAG, "oldest file : %s", file_ctx.oldest_file);
-  LOGI(TAG, "file_num : %d", file_ctx.file_num);
-  LOGI(TAG, "file_path : %s", file_ctx.filepath);
+  // LOGI(TAG, "latest file : %s", file_ctx.latest_file);
+  // LOGI(TAG, "oldest file : %s", file_ctx.oldest_file);
+  // LOGI(TAG, "file_num : %d", file_ctx.file_num);
+  // LOGI(TAG, "file_path : %s", file_ctx.filepath);
 
   closedir(dir);
   return 0;

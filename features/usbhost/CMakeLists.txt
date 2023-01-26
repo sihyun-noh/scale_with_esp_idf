@@ -1,6 +1,4 @@
-if(CONFIG_USB_HOST_FEATURE)
-  set(req usb_host_msc usb vfs)
-endif()
+set(req usb_host_msc usb vfs sysevent)
 
 set(srcs)
 set(includes)

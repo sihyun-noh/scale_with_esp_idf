@@ -33,8 +33,6 @@ extern "C" {
 #define STATUS_WIFI_FAIL (1 << 2)       /* WiFi is not connected */
 #define STATUS_EASY_SETUP_FAIL (1 << 3) /* Easy setup is not completed */
 #define STATUS_IDENTIFICATION (1 << 4)  /* Identification is running */
-#define STATUS_SDCARD_FAIL (1 << 5)     /* Identification is running */
-#define STATUS_RS485_CONN_FAIL (1 << 6) /* Identification is running */
 
 /* Actuator Status */
 #define STATUS_OPEN (1 << 0)  /* Open  */
@@ -46,6 +44,21 @@ extern "C" {
 #define STATUS_SET_CONFIG (1 << 2)       /* Set Configuration */
 #define STATUS_START_IRRIGATION (1 << 3) /* Start Irrigation */
 #define STATUS_STOP_IRRIGATION (1 << 4)  /* Stop Irrigation */
+
+/* Data logger Status */
+typedef enum {
+  USB_COPYING = 0,
+  USB_COPY_FAIL,
+  USB_COPY_SUCCESS,
+} usb_stat_t;
+/* V1 */
+#define STATUS_SDCARD_FAIL (1 << 0)     /* Data logger confirm SD card insert */
+#define STATUS_RS485_CONN_FAIL (1 << 1) /* Data logger comfirm sensor connect */
+/* V2 */
+#define STATUS_USB_COPYING (1 << 2)      /* Data logger logfile copying */
+#define STATUS_USB_COPY_FAIL (1 << 3)    /* Data logger logfile copy fail */
+#define STATUS_USB_COPY_SUCCESS (1 << 4) /* Data logger logfile copy success */
+#define STATUS_USB_DISCONN (1 << 5)      /* Data logger notify USB disconnect */
 
 #define is_device_configured sys_stat_get_configured
 #define set_device_configured sys_stat_set_configured
@@ -91,6 +104,12 @@ extern "C" {
 
 #define is_rs485_conn_fail sys_stat_get_rs485_conn_fail
 #define set_rs485_conn_fail sys_stat_set_rs485_conn_fail
+
+#define is_usb_copying(x) sys_stat_get_usb_copying(x)
+#define set_usb_copying(x, y) sys_stat_set_usb_copying(x, y)
+
+#define is_usb_disconnect_notify sys_stat_get_usb_disconnect_notify
+#define set_usb_disconnect_notify sys_stat_set_usb_disconnect_notify
 
 #define is_mqtt_connected sys_stat_get_mqtt_connected
 #define set_mqtt_connected sys_stat_set_mqtt_connected
@@ -204,6 +223,12 @@ void sys_stat_set_start_irrigation(uint8_t status);
 
 int sys_stat_get_stop_irrigation(void);
 void sys_stat_set_stop_irrigation(uint8_t status);
+
+int sys_stat_get_usb_copying(usb_stat_t usb_status);
+void sys_stat_set_usb_copying(usb_stat_t usb_status, uint8_t status);
+
+int sys_stat_get_usb_disconnect_notify(void);
+void sys_stat_set_usb_disconnect_notify(uint8_t status);
 
 #ifdef __cplusplus
 }
