@@ -1,4 +1,6 @@
+if(${IDF_TARGET} MATCHES "esp32s3")
 set(req usb_host_msc usb vfs sysevent)
+endif()
 
 set(srcs)
 set(includes)
