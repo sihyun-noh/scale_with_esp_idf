@@ -3,10 +3,13 @@
 // LVGL VERSION: 8.3.3
 // PROJECT: SquareLine_Project
 
-#include "ui.h"
-#include "ui_helpers.h"
 #include <time.h>
 #include <stdio.h>
+
+#include "gui.h"
+#include "ui_helpers.h"
+#include "hid_config.h"
+#include "comm_packet.h"
 
 ///////////////////// VARIABLES ////////////////////
 lv_obj_t *ui_Main;
@@ -123,6 +126,60 @@ const char *MONTH[] = { "January", "February", "March",     "April",   "May",   
 #if LV_COLOR_16_SWAP != 0
 #error "LV_COLOR_16_SWAP should be 0 to match SquareLine Studio's settings"
 #endif
+
+static void status_change_cb(void *s, lv_msg_t *m) {
+  LV_UNUSED(s);
+
+  lvgl_acquire();
+
+  unsigned int msg_id = lv_msg_get_id(m);
+
+  switch (msg_id) {
+    case MSG_TIME_SYNCED: enable_buttons(); break;
+    case MSG_BATTERY_STATUS: break;
+    case MSG_RESPONSE_STATUS: {
+      irrigation_message_t *msg_payload = (irrigation_message_t *)lv_msg_get_payload(m);
+      if (msg_payload->receive_type == SET_CONFIG) {
+        disable_start_button();
+      } else if (msg_payload->receive_type == FORCE_STOP) {
+        char op_msg[128] = { 0 };
+        int zone_id = msg_payload->deviceId;
+        int flow_value = msg_payload->flow_value;
+        if (zone_id >= 1 && zone_id <= 6) {
+          set_zone_status(zone_id, false);
+          set_zone_number(zone_id, false);
+          set_zone_flow_value(zone_id, flow_value);
+          enable_start_button();
+          snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
+          add_operation_list(op_msg);
+        }
+      }
+    } break;
+    case MSG_IRRIGATION_STATUS: {
+      char op_msg[128] = { 0 };
+      irrigation_message_t *msg_payload = (irrigation_message_t *)lv_msg_get_payload(m);
+      int zone_id = msg_payload->deviceId;
+      if (msg_payload->sender_type == START_FLOW) {
+        set_zone_status(zone_id, true);
+        set_zone_number(zone_id, true);
+        disable_start_button();
+        snprintf(op_msg, sizeof(op_msg), "Start to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
+        add_operation_list(op_msg);
+      } else if (msg_payload->sender_type == ZONE_COMPLETE) {
+        int flow_value = msg_payload->flow_value;
+        set_zone_status(zone_id, false);
+        set_zone_number(zone_id, false);
+        snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
+        add_operation_list(op_msg);
+      } else if (msg_payload->sender_type == ALL_COMPLETE) {
+        enable_start_button();
+      }
+    } break;
+    default: break;
+  }
+
+  lvgl_release();
+}
 
 ///////////////////// ANIMATIONS ////////////////////
 
@@ -1027,6 +1084,7 @@ void ui_SettingSelect_screen_init(void) {
   lv_obj_add_event_cb(ui_SS_OpSet_Button, ui_event_SS_OpSet_Button, LV_EVENT_ALL, NULL);
   lv_obj_add_event_cb(ui_SS_Device_mag_Button, ui_event_SS_Device_mag_Button, LV_EVENT_ALL, NULL);
 }
+
 void ui_DeviceManager_screen_init(void) {
   ui_DeviceManager_screen = lv_obj_create(NULL);
   lv_obj_clear_flag(ui_DeviceManager_screen, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
@@ -1237,12 +1295,19 @@ void ui_init(void) {
   lv_theme_t *theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED),
                                             false, LV_FONT_DEFAULT);
   lv_disp_set_theme(dispp, theme);
+
   ui_Main_screen_init();
   ui_Setting_screen_init();
-
   ui_SettingSelect_screen_init();
   ui_DeviceManager_screen_init();
   ui_DeviceManagerReg_screen_init();
+
+  // registers message subscriber to handle update the lvgl gui components
+  // MSG_TIME_SYNCED - Update the buttons when receiving a time info from the main node
+  lv_msg_subsribe(MSG_TIME_SYNCED, status_change_cb, NULL);
+  lv_msg_subsribe(MSG_BATTERY_STATUS, status_change_cb, NULL);
+  // MSG_IRRIGATION_STATUS - start(zone_id), stop(zone_id, flow_value)
+  lv_msg_subsribe(MSG_IRRIGATION_STATUS, status_change_cb, NULL);
 
   lv_style_init(&style_clock);
   static uint32_t user_data = 10;
@@ -1252,4 +1317,3 @@ void ui_init(void) {
 
   lv_disp_load_scr(ui_Main);
 }
-

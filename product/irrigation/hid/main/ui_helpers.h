@@ -17,6 +17,10 @@ typedef enum {
   ZONE_6,
 } ZONE;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define _UI_TEMPORARY_STRING_BUFFER_SIZE 32
 #define _UI_BAR_PROPERTY_VALUE 0
 #define _UI_BAR_PROPERTY_VALUE_WITH_ANIM 1
@@ -113,5 +117,9 @@ void set_zone_flow_value(ZONE zone, int flow_value);
 char *get_checked_zones(void);
 void reset_settings(void);
 void add_operation_list(const char *op_msg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -62,7 +62,6 @@ void OnStartEvent(lv_event_t* e) {
 }
 
 void OnStopEvent(lv_event_t* e) {
-  // Your code here
   send_command_data(STOP_COMMAND, NULL, 0);
   set_stop_irrigation(1);
 }
@@ -71,9 +70,7 @@ void OnSettingEvent(lv_event_t* e) {
   reset_settings();
 }
 
-void OnResetEvent(lv_event_t* e) {
-  // Your code here
-}
+void OnResetEvent(lv_event_t* e) {}
 
 void OnFlowRateEvent(lv_event_t* e) {
   lv_event_code_t code = lv_event_get_code(e);

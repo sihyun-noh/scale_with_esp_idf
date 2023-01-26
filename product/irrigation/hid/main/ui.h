@@ -12,6 +12,11 @@ extern "C" {
 
 #include "lvgl/lvgl.h"
 
+#define MSG_TIME_SYNCED 10
+#define MSG_BATTERY_STATUS 11
+#define MSG_RESPONSE_STATUS 12
+#define MSG_IRRIGATION_STATUS 13
+
 extern lv_obj_t *ui_Main;
 extern lv_obj_t *ui_MainStatusPanel;
 extern lv_obj_t *ui_ZonePanel1;

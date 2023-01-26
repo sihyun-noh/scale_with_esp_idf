@@ -10,15 +10,17 @@
 #include "LovyanGFX.h"
 #include "conf_WT32SCO1-Plus.h"
 
-#include "ui.h"
 #include "log.h"
 #include "gui.h"
+#include "sys_status.h"
+#include "ui_helpers.h"
 
-// #define BUFF_SIZE 40
-#define BUFF_SIZE 10
+#define BUFF_SIZE 40
+// #define BUFF_SIZE 10
+// #define LVGL_STATIC_BUFFER
 #define LVGL_DOUBLE_BUFFER
 
-static const char *tag = "DISP";
+static const char *tag = "GUI";
 
 /* Setup screen resolution for LVGL */
 static const uint16_t screenWidth = 480;
@@ -28,6 +30,10 @@ static lv_disp_draw_buf_t draw_buf;
 static lv_disp_t *disp;
 
 static LGFX lcd;  // LCD driver
+
+#if defined(LVGL_STATIC_BUFFER)
+static lv_color_t buf1[screenWidth * screenHeight / BUFF_SIZE];
+#endif
 
 /* Creates a semaphore to handle concurrent call to lvgl stuff
  * If you wish to call *any* lvgl function from other threads/tasks
@@ -77,6 +83,9 @@ int lv_display_init(void) {
   // lcd.setColorDepth(16);
   // lcd.setBrightness(128);
 
+#if defined(LVGL_STATIC_BUFFER)
+  lv_disp_draw_buf_init(&draw_buf, buf1, NULL, screenWidth * screenHeight / BUFF_SIZE);
+#else
 #if defined(LVGL_DOUBLE_BUFFER)
   lv_color_t *buf1 = (lv_color_t *)heap_caps_malloc(screenWidth * BUFF_SIZE * sizeof(lv_color_t), MALLOC_CAP_DMA);
   lv_color_t *buf2 = (lv_color_t *)heap_caps_malloc(screenWidth * BUFF_SIZE * sizeof(lv_color_t), MALLOC_CAP_DMA);
@@ -85,6 +94,7 @@ int lv_display_init(void) {
 #else
   lv_color_t *buf1 = (lv_color_t *)heap_caps_malloc(screenWidth * BUFF_SIZE * sizeof(lv_color_t), MALLOC_CAP_DMA);
   lv_disp_draw_buf_init(&draw_buf, buf1, NULL, screenWidth * BUFF_SIZE);
+#endif
 #endif
 
   // LVGL : Setup & Initialize the display device driver
