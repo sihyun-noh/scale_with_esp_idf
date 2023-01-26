@@ -14,13 +14,12 @@
 #include "esp_sleep.h"
 #include "event_ids.h"
 #include "sysfile.h"
-#include "rtc_task.h"
 #include "msc.h"
 #include "config.h"
 #include "main.h"
 #include "file_copy.h"
 #include "battery_task.h"
-
+#include "time_api.h"
 #include "gpio_api.h"
 
 #include <string.h>
@@ -358,8 +357,6 @@ void app_main(void) {
     LOGE(TAG, "Failed to initialize device, error = [%d]", rc);
     return;
   }
-
-  set_sys_time_with_ds3231();
 
 #if defined(SPIFFS_IMPL)
   const char* file_path = "/spiffs/";

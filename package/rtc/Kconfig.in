@@ -1,5 +1,39 @@
+menu "RTC DS3231"
+
 config RTC_DS3231_PACKAGE
   bool "RTC DS3231 package"
   default "y"
   help
     RTC DS3231 package to support correct local time
+
+config DS3231_I2C_BUS
+  int "DS3231 I2C BUS"
+  default 0
+  depends on RTC_DS3231_PACKAGE
+  help
+    I2C bus to be used as DS3231_I2C_BUS.
+
+config DS3231_I2C_ADDR
+  hex "DS3231 I2C ADDR"
+  default 68
+  depends on RTC_DS3231_PACKAGE
+  help
+    I2C address to be used as DS3231_I2C_ADDR.
+
+config DS3231_I2C_SDA_PIN
+  int "DS3231 I2C SDA PIN"
+  default 33 if IDF_TARGET_ESP32
+  default 1 if IDF_TARGET_ESP32S3
+  depends on RTC_DS3231_PACKAGE
+  help
+    I2C pin number to be used as DS3231_I2C_SDA_PIN.
+
+config DS3231_I2C_SCL_PIN
+  int "DS3231 I2C SCL PIN"
+  default 32 if IDF_TARGET_ESP32
+  default 2 if IDF_TARGET_ESP32S3
+  depends on RTC_DS3231_PACKAGE
+  help
+    I2C pin number to be used as DS3231_I2C_SCL_PIN.
+
+endmenu

@@ -22,28 +22,17 @@
 extern "C" {
 #endif
 
-/**
- * @brief Default I2C device access macro
- */
-#ifndef I2C_BUS
-#define I2C_BUS(x) (x)
-#endif
-
-/**
- * @name    DS3231 default configuration parameters
- * @{
- */
 #ifndef DS3231_PARAM_I2C_BUS
-#define DS3231_PARAM_I2C_BUS (I2C_BUS(0))
+#define DS3231_PARAM_I2C_BUS (CONFIG_DS3231_I2C_BUS)
 #endif
 #ifndef DS3231_PARAM_I2C_ADDR
-#define DS3231_PARAM_I2C_ADDR (DS3231_I2C_ADDR)
+#define DS3231_PARAM_I2C_ADDR (CONFIG_DS3231_I2C_ADDR)
 #endif
 #ifndef DS3231_PARAM_I2C_SDA
-#define DS3231_PARAM_I2C_SDA (DS3231_I2C_SDA_PIN)
+#define DS3231_PARAM_I2C_SDA (CONFIG_DS3231_I2C_SDA_PIN)
 #endif
 #ifndef DS3231_PARAM_I2C_SCL
-#define DS3231_PARAM_I2C_SCL (DS3231_I2C_SCL_PIN)
+#define DS3231_PARAM_I2C_SCL (CONFIG_DS3231_I2C_SCL_PIN)
 #endif
 
 #ifndef DS3231_PARAMS
