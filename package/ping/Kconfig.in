@@ -1,5 +1,5 @@
 config PING_PACKAGE
   bool "Ping package"
-  default "n"
+  default "y"
   help
     Enable Ping api and Command tool

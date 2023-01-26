@@ -1,5 +1,5 @@
 config MONITOR_FEATURE
   bool "Monitoring feature"
-  default "y"
+  depends on PING_PACKAGE
   help
     Enable monitoring the system status.
