@@ -1,4 +1,3 @@
-#include "easy_setup.h"
 #include "freertos/projdefs.h"
 #include "nvs_flash.h"
 #include "shell_console.h"
@@ -17,6 +16,7 @@
 #include "mqtt_task.h"
 #include "main.h"
 #include "esp32/rom/rtc.h"
+#include "easy_setup.h"
 
 #include <string.h>
 #include <time.h>
