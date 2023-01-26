@@ -1,4 +1,4 @@
-config OTA_PACKAGE
+config OTA_FEATURE
   bool "OTA Firmware update feature"
   default "y"
   help

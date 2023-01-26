@@ -9,7 +9,6 @@
 #include "sys_status.h"
 #include "sysevent.h"
 #include "syslog.h"
-#include "filelog.h"
 #include "wifi_manager.h"
 #include "event_ids.h"
 #include "sysfile.h"

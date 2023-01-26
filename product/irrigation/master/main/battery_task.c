@@ -3,7 +3,6 @@
 #include "sysevent.h"
 #include "sys_status.h"
 #include "event_ids.h"
-#include "filelog.h"
 #include "adc_api.h"
 #include "gpio_api.h"
 #include "utils.h"
