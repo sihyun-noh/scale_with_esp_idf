@@ -1,0 +1,5 @@
+config UTILS_PACKAGE
+  bool "Utility package"
+  default "y"
+  help
+    Enable Utility package to support comparison, average calculation
