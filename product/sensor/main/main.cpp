@@ -41,10 +41,7 @@ extern "C" {
 #endif
 
 void modbus_sensor_test(int mb_sensor);
-
-#if defined(CONFIG_LED_FEATURE)
 void create_led_task(void);
-#endif
 
 extern int start_file_server(uint32_t port);
 
@@ -463,9 +460,7 @@ void app_main(void) {
 
   set_device_onboard(0);
 
-#if defined(CONFIG_LED_FEATURE)
   create_led_task();
-#endif
 
   if (is_battery_model()) {
     battery_loop_task();

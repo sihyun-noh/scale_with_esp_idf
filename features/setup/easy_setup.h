@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-#if defined(CONFIG_SMARTFARM_ETHERNET)
+#if defined(CONFIG_ETHERNET_PACKAGE)
 /**
  * @brief Initialize ethernet easy setup
  *
@@ -28,7 +28,7 @@ void create_easy_setup_task(void);
  * @return bool true if taks is running, false if task is done
  */
 bool is_running_setup_task(void);
-#endif  // CONFIG_SMARTFARM_ETHERNET
+#endif  // CONFIG_ETHERNET_PACKAGE
 
 #ifdef __cplusplus
 }
