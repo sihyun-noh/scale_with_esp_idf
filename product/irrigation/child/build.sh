@@ -26,6 +26,8 @@ checkArgVariable() {
   fi
 }
 
+export IDF_TARGET=esp32
+
 PRODUCT_NAME="CHILD"
 export CURRENT_PROJECT=${PRODUCT_NAME}
 
