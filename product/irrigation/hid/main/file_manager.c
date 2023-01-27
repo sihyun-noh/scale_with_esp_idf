@@ -172,7 +172,7 @@ static int fnmatch(const char *pattern, const char *string, int flags) {
   return 0;
 }
 
-static void TraverseDir(char *direntName, int level, int indent) {
+static void traverse_dir(char *direntName, int level, int indent) {
   DIR *p_dir = NULL;
   struct dirent *p_dirent = NULL;
 
@@ -250,7 +250,7 @@ static void TraverseDir(char *direntName, int level, int indent) {
       strcat(backupDirName, p_dirent->d_name);
 
       if (level > 0) {
-        TraverseDir(backupDirName, level - 1, indent + 1);
+        traverse_dir(backupDirName, level - 1, indent + 1);
       }
 
       free(backupDirName);
@@ -354,7 +354,8 @@ void fm_init(const char *partition_name, const char *root_path) {
   strcpy(g_root_path, root_path);
 
   init_sysfile(partition_name, root_path);
-  sysfile_show_file();
+  fm_file_list(root_path);
+  // sysfile_show_file();
 }
 
 const char *fm_get_rootpath(void) {
@@ -367,7 +368,7 @@ void fm_file_list(const char *path) {
 
 void fm_print_dir(char *direntName, int level) {
   printf("Traverse directory %s\n", direntName);
-  TraverseDir(direntName, level, 0);
+  traverse_dir(direntName, level, 0);
   printf("\r\n");
 }
 

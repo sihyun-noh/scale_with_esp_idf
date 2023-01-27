@@ -110,13 +110,13 @@ void ctrl_msg_handler(irrigation_message_t *message) {
       }
     } break;
     case START_FLOW: {
+      send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
+      // Update UI screen
+      lv_msg_send(MSG_IRRIGATION_STATUS, message);
+#if 0
       int zone_id = message->deviceId;
       if (zone_id >= 1 && zone_id <= 6) {
         char op_msg[128] = { 0 };
-        send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
-        // Update UI screen
-        lv_msg_send(MSG_IRRIGATION_STATUS, message);
-#if 0
         lvgl_acquire();
         set_zone_status(zone_id, true);
         set_zone_number(zone_id, true);
@@ -124,13 +124,12 @@ void ctrl_msg_handler(irrigation_message_t *message) {
         snprintf(op_msg, sizeof(op_msg), "Start to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
         add_operation_list(op_msg);
         lvgl_release();
-#endif
       } else {
         LOGW(TAG, "Got invalid zone_id for start flow = [%d]", zone_id);
       }
+#endif
     } break;
     case ZONE_COMPLETE: {
-      char op_msg[128] = { 0 };
       send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
       // Update UI screen
       lv_msg_send(MSG_IRRIGATION_STATUS, message);
@@ -138,6 +137,7 @@ void ctrl_msg_handler(irrigation_message_t *message) {
       int zone_id = message->deviceId;
       if (zone_id >= 1 && zone_id <= 6) {
         lvgl_acquire();
+        char op_msg[128] = { 0 };
         int flow_value = message->flow_value;
         set_zone_status(zone_id, false);
         set_zone_number(zone_id, false);

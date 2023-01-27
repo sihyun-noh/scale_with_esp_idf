@@ -73,6 +73,10 @@ bool validation_of_start_irrigation_time(time_t start_time, stage_t *p_stage) {
       *p_stage = CURR_STAGE;
       return true;
     }
+  } else if (curr_time > end_time_of_morning && curr_time < start_time_of_evening) {
+    LOGI(TAG, "Stage is next");
+    *p_stage = NEXT_STAGE;
+    return true;
   }
   return false;
 }

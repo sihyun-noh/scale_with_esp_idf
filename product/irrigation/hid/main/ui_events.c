@@ -45,7 +45,7 @@ void OnStartEvent(lv_event_t* e) {
       return;
     }
 
-    if (stage == CURR_STAGE) {
+    if (stage == CURR_STAGE || stage == NEXT_STAGE) {
       // Send configuration data to the main controller via ESP-NOW
       send_command_data(SET_CONFIG_COMMAND, &cfg, sizeof(config_value_t));
       LOGI(TAG, "Success to send Start command!!!");
@@ -54,8 +54,6 @@ void OnStartEvent(lv_event_t* e) {
       syscfg_unset(CFG_DATA, "hid_config");
       // Set start irrigation flag
       set_start_irrigation(1);
-    } else if (stage == NEXT_STAGE) {
-      LOGI(TAG, "Start command will be runned at next stage");
     }
   } else {
     LOGE(TAG, "Failed to send Start command!!!");

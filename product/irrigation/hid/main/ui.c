@@ -10,6 +10,8 @@
 #include "ui_helpers.h"
 #include "hid_config.h"
 #include "comm_packet.h"
+#include "sysfile.h"
+#include "filelog.h"
 
 ///////////////////// VARIABLES ////////////////////
 lv_obj_t *ui_Main;
@@ -155,6 +157,7 @@ static void status_change_cb(void *s, lv_msg_t *m) {
           enable_start_button();
           snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
           add_operation_list(op_msg);
+          FDATA(BASE_PATH, "%s", op_msg);
         }
       }
     } break;
@@ -168,14 +171,17 @@ static void status_change_cb(void *s, lv_msg_t *m) {
         disable_start_button();
         snprintf(op_msg, sizeof(op_msg), "Start to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
         add_operation_list(op_msg);
+        FDATA(BASE_PATH, "%s", op_msg);
       } else if (msg_payload->sender_type == ZONE_COMPLETE) {
         int flow_value = msg_payload->flow_value;
         set_zone_status(zone_id, false);
         set_zone_number(zone_id, false);
         snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
         add_operation_list(op_msg);
+        FDATA(BASE_PATH, "%s", op_msg);
       } else if (msg_payload->sender_type == ALL_COMPLETE) {
         enable_start_button();
+        FDATA(BASE_PATH, "%s", "All irrigation progress are complete done!!!");
       }
     } break;
     default: break;
@@ -1342,10 +1348,7 @@ void time_timer_cb(lv_timer_t *timer) {
   struct tm *local = localtime(&t);
 
   sprintf(timeString, "%02d:%02d:%02d", local->tm_hour, local->tm_min, local->tm_sec);
-  sprintf(dateString, "%04d-%02d-%02d", local->tm_year + 1900, local->tm_mon, local->tm_mday);
-
-  //  sprintf(dateString, "%s/%s %02d %04d", DAY[local->tm_wday], MONTH[local->tm_mon], local->tm_mday,
-  //          local->tm_year + 1900);
+  sprintf(dateString, "%04d-%02d-%02d", local->tm_year + 1900, local->tm_mon + 1, local->tm_mday);
 
   lv_label_set_text(ui_Screen1TimeLabel, timeString);
   lv_label_set_text(ui_Screen1DateLabel, dateString);
