@@ -98,6 +98,7 @@ extern lv_obj_t *ui_SS_Device_mag_Button;
 extern lv_obj_t *ui_SS_Device_mag_Label;
 extern lv_obj_t *ui_DeviceManager_screen;
 extern lv_obj_t *ui_DM_MainPanel;
+extern lv_obj_t *ui_DM_Roller_Label;
 extern lv_obj_t *ui_DM_Roller;
 extern lv_obj_t *ui_DM_Add_Button;
 extern lv_obj_t *ui_DM_Add_Label;
@@ -107,6 +108,8 @@ extern lv_obj_t *ui_DM_Del_Label;
 void ui_event_DM_Exit_Button(lv_event_t *e);
 extern lv_obj_t *ui_DM_Exit_Button;
 extern lv_obj_t *ui_DM_Exit_Label;
+void ui_event_DM_Dropdown_Select(lv_event_t *e);
+extern lv_obj_t *ui_DeviceManager_screen_Dropdown;
 extern lv_obj_t *ui_DeviceManagerReg_screen;
 extern lv_obj_t *ui_DMR_MainPanel;
 extern lv_obj_t *ui_DMR_Keyboard;
@@ -116,6 +119,8 @@ extern lv_obj_t *ui_DMR_Reg_Label;
 void ui_event_DMR_Exit_Button(lv_event_t *e);
 extern lv_obj_t *ui_DMR_Exit_Button;
 extern lv_obj_t *ui_DMR_Exit_Label;
+extern lv_obj_t *ui_DeviceManagerReg_screen_Dropdown;
+void ui_event_DMR_Dropdown_Select(lv_event_t *e);
 
 void OnStartEvent(lv_event_t *e);
 void OnStopEvent(lv_event_t *e);
@@ -125,6 +130,9 @@ void OnFlowRateEvent(lv_event_t *e);
 void OnTimeHourEvent(lv_event_t *e);
 void OnTimeMinuteEvent(lv_event_t *e);
 void OnSettingSaveEvent(lv_event_t *e);
+
+void DeviceManagementEvent(char *type, lv_event_t *e);
+void DM_roller_event(char *type, lv_event_t *e);
 
 void ui_init(void);
 

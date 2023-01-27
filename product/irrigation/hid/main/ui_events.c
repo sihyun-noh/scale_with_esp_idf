@@ -4,12 +4,14 @@
 // PROJECT: SquareLine_Project
 
 #include <string.h>
+#include <stdio.h>
 
 #include "ui_helpers.h"
 
 #include "espnow.h"
 #include "syslog.h"
 #include "syscfg.h"
+#include "sys_config.h"
 #include "sys_status.h"
 #include "hid_config.h"
 #include "command.h"
@@ -103,5 +105,89 @@ void OnSettingSaveEvent(lv_event_t* e) {
     if (save_hid_config(flow, start_time_hour, start_time_minute, zones)) {
       LOGI(TAG, "Success to save the configuration!!!");
     }
+  }
+}
+
+void DeviceManagementEvent(char* type, lv_event_t* e) {
+  int k = 0;
+  char mac[16] = { 0 };
+  char list_buf[200] = { 0 };
+  LOGI(TAG, "type : %s", type);
+  if (strncmp(type, "Master", 6) == 0) {
+    syscfg_get(SYSCFG_I_MASTER_MAC, SYSCFG_N_MASTER_MAC, mac, sizeof(mac));
+    snprintf(list_buf, sizeof(mac) + 1, "%s\n", mac);
+    lv_roller_set_options(ui_DM_Roller, list_buf, LV_ROLLER_MODE_NORMAL);
+  } else if (strncmp(type, "Child", 5) == 0) {
+    syscfg_get(SYSCFG_I_CHILD1_MAC, SYSCFG_N_CHILD1_MAC, mac, sizeof(mac));
+    k += snprintf(list_buf + k, sizeof(mac) + 1, "%s\n", mac);
+
+    syscfg_get(SYSCFG_I_CHILD2_MAC, SYSCFG_N_CHILD2_MAC, mac, sizeof(mac));
+    k += snprintf(list_buf + k, sizeof(mac) + 1, "%s\n", mac);
+
+    syscfg_get(SYSCFG_I_CHILD3_MAC, SYSCFG_N_CHILD3_MAC, mac, sizeof(mac));
+    k += snprintf(list_buf + k, sizeof(mac) + 1, "%s\n", mac);
+
+    syscfg_get(SYSCFG_I_CHILD4_MAC, SYSCFG_N_CHILD4_MAC, mac, sizeof(mac));
+    k += snprintf(list_buf + k, sizeof(mac) + 1, "%s\n", mac);
+
+    syscfg_get(SYSCFG_I_CHILD5_MAC, SYSCFG_N_CHILD5_MAC, mac, sizeof(mac));
+    k += snprintf(list_buf + k, sizeof(mac) + 1, "%s\n", mac);
+
+    syscfg_get(SYSCFG_I_CHILD6_MAC, SYSCFG_N_CHILD6_MAC, mac, sizeof(mac));
+    k += snprintf(list_buf + k, sizeof(mac) + 1, "%s\n", mac);
+
+    lv_roller_set_options(ui_DM_Roller, list_buf, LV_ROLLER_MODE_NORMAL);
+
+  } else {
+    LOGI(TAG, "Error!!");
+  }
+
+  // Your code here
+}
+
+void DM_roller_event(char* type, lv_event_t* e) {
+  char mac[16] = { 0 };
+  LOGI(TAG, "roller_select : %s", type);
+
+  syscfg_get(SYSCFG_I_MASTER_MAC, SYSCFG_N_MASTER_MAC, mac, sizeof(mac));
+  if (strncmp(type, mac, sizeof(mac)) == 0) {
+    lv_label_set_text(ui_DM_Roller_Label, "Master");
+    return;
+  }
+
+  syscfg_get(SYSCFG_I_CHILD1_MAC, SYSCFG_N_CHILD1_MAC, mac, sizeof(mac));
+  if (strncmp(type, mac, sizeof(mac)) == 0) {
+    lv_label_set_text(ui_DM_Roller_Label, "Child_1");
+    return;
+  }
+
+  syscfg_get(SYSCFG_I_CHILD2_MAC, SYSCFG_N_CHILD2_MAC, mac, sizeof(mac));
+  if (strncmp(type, mac, sizeof(mac)) == 0) {
+    lv_label_set_text(ui_DM_Roller_Label, "Child_2");
+    return;
+  }
+
+  syscfg_get(SYSCFG_I_CHILD3_MAC, SYSCFG_N_CHILD3_MAC, mac, sizeof(mac));
+  if (strncmp(type, mac, sizeof(mac)) == 0) {
+    lv_label_set_text(ui_DM_Roller_Label, "Child_3");
+    return;
+  }
+
+  syscfg_get(SYSCFG_I_CHILD4_MAC, SYSCFG_N_CHILD4_MAC, mac, sizeof(mac));
+  if (strncmp(type, mac, sizeof(mac)) == 0) {
+    lv_label_set_text(ui_DM_Roller_Label, "Child_4");
+    return;
+  }
+
+  syscfg_get(SYSCFG_I_CHILD5_MAC, SYSCFG_N_CHILD5_MAC, mac, sizeof(mac));
+  if (strncmp(type, mac, sizeof(mac)) == 0) {
+    lv_label_set_text(ui_DM_Roller_Label, "Child_5");
+    return;
+  }
+
+  syscfg_get(SYSCFG_I_CHILD6_MAC, SYSCFG_N_CHILD6_MAC, mac, sizeof(mac));
+  if (strncmp(type, mac, sizeof(mac)) == 0) {
+    lv_label_set_text(ui_DM_Roller_Label, "Child_6");
+    return;
   }
 }

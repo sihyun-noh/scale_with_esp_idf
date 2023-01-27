@@ -93,6 +93,7 @@ lv_obj_t *ui_SS_Device_mag_Label;
 lv_obj_t *ui_DeviceManager_screen;
 lv_obj_t *ui_DM_MainPanel;
 lv_obj_t *ui_DM_Roller;
+lv_obj_t *ui_DM_Roller_Label;
 lv_obj_t *ui_DM_Add_Button;
 lv_obj_t *ui_DM_Add_Label;
 void ui_event_DM_Del_Button(lv_event_t *e);
@@ -101,6 +102,7 @@ lv_obj_t *ui_DM_Del_Label;
 void ui_event_DM_Exit_Button(lv_event_t *e);
 lv_obj_t *ui_DM_Exit_Button;
 lv_obj_t *ui_DM_Exit_Label;
+lv_obj_t *ui_DeviceManager_screen_Dropdown;
 lv_obj_t *ui_DeviceManagerReg_screen;
 lv_obj_t *ui_DMR_MainPanel;
 lv_obj_t *ui_DMR_Keyboard;
@@ -110,6 +112,7 @@ lv_obj_t *ui_DMR_Reg_Label;
 void ui_event_DMR_Exit_Button(lv_event_t *e);
 lv_obj_t *ui_DMR_Exit_Button;
 lv_obj_t *ui_DMR_Exit_Label;
+lv_obj_t *ui_DeviceManagerReg_screen_Dropdown;
 
 static lv_style_t style_clock;
 char timeString[9];
@@ -263,6 +266,7 @@ void ui_event_SS_Device_mag_Button(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   if (event_code == LV_EVENT_CLICKED) {
+    // DeviceManagementEvent(e);
     _ui_screen_change(ui_DeviceManager_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
   }
 }
@@ -285,6 +289,36 @@ void ui_event_DMR_Exit_Button(lv_event_t *e) {
   lv_obj_t *target = lv_event_get_target(e);
   if (event_code == LV_EVENT_CLICKED) {
     _ui_screen_change(ui_DeviceManager_screen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
+  }
+}
+
+void ui_event_DM_Roller_Select(lv_event_t *e) {
+  char buf[32] = { 0 };
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *obj = lv_event_get_target(e);
+  if (code == LV_EVENT_VALUE_CHANGED) {
+    lv_roller_get_selected_str(obj, buf, sizeof(buf));
+    printf("Selected month: %s\n", buf);
+    DM_roller_event(buf, e);
+  }
+}
+
+void ui_event_DM_Dropdown_Select(lv_event_t *e) {
+  char buf[32] = { 0 };
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *obj = lv_event_get_target(e);
+  if (code == LV_EVENT_VALUE_CHANGED) {
+    lv_dropdown_get_selected_str(obj, buf, sizeof(buf));
+    DeviceManagementEvent(buf, e);
+  }
+}
+
+void ui_event_DMR_Dropdown_Select(lv_event_t *e) {
+  char buf[32] = { 0 };
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *obj = lv_event_get_target(e);
+  if (code == LV_EVENT_VALUE_CHANGED) {
+    lv_dropdown_get_selected_str(obj, buf, sizeof(buf));
   }
 }
 
@@ -1101,20 +1135,25 @@ void ui_DeviceManager_screen_init(void) {
   lv_obj_set_style_bg_grad_dir(ui_DM_MainPanel, LV_GRAD_DIR_HOR, LV_PART_MAIN | LV_STATE_DEFAULT);
 
   ui_DM_Roller = lv_roller_create(ui_DM_MainPanel);
-  lv_roller_set_options(ui_DM_Roller,
-                        "F412FAC088DB\nF412FAC088DB\nF412FAC088DB\nF412FAC088DB\nF412FAC088DB\nF412FAC088DB\nF412FAC0"
-                        "88DB\nF412FAC088DB\nF412FAC088DB\n",
-                        LV_ROLLER_MODE_NORMAL);
-  lv_obj_set_height(ui_DM_Roller, 270);
-  lv_obj_set_width(ui_DM_Roller, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_DM_Roller, -100);
+  lv_roller_set_options(ui_DM_Roller, "Select\n", LV_ROLLER_MODE_NORMAL);
+  lv_obj_set_height(ui_DM_Roller, 243);
+  lv_obj_set_width(ui_DM_Roller, 150);  /// 1
+  lv_obj_set_x(ui_DM_Roller, 0);
   lv_obj_set_y(ui_DM_Roller, 0);
   lv_obj_set_align(ui_DM_Roller, LV_ALIGN_CENTER);
+
+  ui_DM_Roller_Label = lv_label_create(ui_DM_MainPanel);
+  lv_obj_set_width(ui_DM_Roller_Label, 100);  /// 1
+  lv_obj_set_height(ui_DM_Roller_Label, 30);  /// 1
+  lv_obj_set_x(ui_DM_Roller_Label, -150);
+  lv_obj_set_y(ui_DM_Roller_Label, 0);
+  lv_obj_set_align(ui_DM_Roller_Label, LV_ALIGN_CENTER);
+  lv_label_set_text(ui_DM_Roller_Label, "....");
 
   ui_DM_Add_Button = lv_btn_create(ui_DM_MainPanel);
   lv_obj_set_width(ui_DM_Add_Button, 100);
   lv_obj_set_height(ui_DM_Add_Button, 50);
-  lv_obj_set_x(ui_DM_Add_Button, 83);
+  lv_obj_set_x(ui_DM_Add_Button, 150);
   lv_obj_set_y(ui_DM_Add_Button, 0);
   lv_obj_set_align(ui_DM_Add_Button, LV_ALIGN_CENTER);
   lv_obj_add_flag(ui_DM_Add_Button, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
@@ -1138,8 +1177,8 @@ void ui_DeviceManager_screen_init(void) {
   ui_DM_Del_Button = lv_btn_create(ui_DM_MainPanel);
   lv_obj_set_width(ui_DM_Del_Button, 100);
   lv_obj_set_height(ui_DM_Del_Button, 50);
-  lv_obj_set_x(ui_DM_Del_Button, 83);
-  lv_obj_set_y(ui_DM_Del_Button, 75);
+  lv_obj_set_x(ui_DM_Del_Button, 150);
+  lv_obj_set_y(ui_DM_Del_Button, 95);
   lv_obj_set_align(ui_DM_Del_Button, LV_ALIGN_CENTER);
   lv_obj_add_flag(ui_DM_Del_Button, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
   lv_obj_clear_flag(ui_DM_Del_Button, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
@@ -1164,8 +1203,8 @@ void ui_DeviceManager_screen_init(void) {
   ui_DM_Exit_Button = lv_btn_create(ui_DM_MainPanel);
   lv_obj_set_width(ui_DM_Exit_Button, 100);
   lv_obj_set_height(ui_DM_Exit_Button, 50);
-  lv_obj_set_x(ui_DM_Exit_Button, 83);
-  lv_obj_set_y(ui_DM_Exit_Button, -75);
+  lv_obj_set_x(ui_DM_Exit_Button, 150);
+  lv_obj_set_y(ui_DM_Exit_Button, -95);
   lv_obj_set_align(ui_DM_Exit_Button, LV_ALIGN_CENTER);
   lv_obj_add_flag(ui_DM_Exit_Button, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
   lv_obj_clear_flag(ui_DM_Exit_Button, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
@@ -1185,9 +1224,21 @@ void ui_DeviceManager_screen_init(void) {
   lv_obj_set_align(ui_DM_Exit_Label, LV_ALIGN_CENTER);
   lv_label_set_text(ui_DM_Exit_Label, "ADD");
 
+  ui_DeviceManager_screen_Dropdown = lv_dropdown_create(ui_DM_MainPanel);
+  lv_dropdown_set_options(ui_DeviceManager_screen_Dropdown, "Master\nChild");
+  lv_obj_set_width(ui_DeviceManager_screen_Dropdown, 100);
+  lv_obj_set_height(ui_DeviceManager_screen_Dropdown, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_DeviceManager_screen_Dropdown, -150);
+  lv_obj_set_y(ui_DeviceManager_screen_Dropdown, -100);
+  lv_obj_set_align(ui_DeviceManager_screen_Dropdown, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_DeviceManager_screen_Dropdown, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+
   lv_obj_add_event_cb(ui_DM_Del_Button, ui_event_DM_Del_Button, LV_EVENT_ALL, NULL);
   lv_obj_add_event_cb(ui_DM_Exit_Button, ui_event_DM_Exit_Button, LV_EVENT_ALL, NULL);
+  lv_obj_add_event_cb(ui_DeviceManager_screen_Dropdown, ui_event_DM_Dropdown_Select, LV_EVENT_ALL, NULL);
+  lv_obj_add_event_cb(ui_DM_Roller, ui_event_DM_Roller_Select, LV_EVENT_ALL, NULL);
 }
+
 void ui_DeviceManagerReg_screen_init(void) {
   ui_DeviceManagerReg_screen = lv_obj_create(NULL);
   lv_obj_clear_flag(ui_DeviceManagerReg_screen, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
@@ -1213,9 +1264,9 @@ void ui_DeviceManagerReg_screen_init(void) {
   lv_obj_set_align(ui_DMR_Keyboard, LV_ALIGN_CENTER);
 
   ui_DMR_TextArea = lv_textarea_create(ui_DMR_MainPanel);
-  lv_obj_set_width(ui_DMR_TextArea, 415);
+  lv_obj_set_width(ui_DMR_TextArea, 287);
   lv_obj_set_height(ui_DMR_TextArea, LV_SIZE_CONTENT);  /// 42
-  lv_obj_set_x(ui_DMR_TextArea, -1);
+  lv_obj_set_x(ui_DMR_TextArea, 64);
   lv_obj_set_y(ui_DMR_TextArea, -90);
   lv_obj_set_align(ui_DMR_TextArea, LV_ALIGN_CENTER);
   lv_textarea_set_placeholder_text(ui_DMR_TextArea, "Mac address...");
@@ -1272,8 +1323,18 @@ void ui_DeviceManagerReg_screen_init(void) {
   lv_obj_set_style_text_color(ui_DMR_Exit_Label, lv_color_hex(0x241D1E), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_text_opa(ui_DMR_Exit_Label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+  ui_DeviceManagerReg_screen_Dropdown = lv_dropdown_create(ui_DeviceManagerReg_screen);
+  lv_dropdown_set_options(ui_DeviceManagerReg_screen_Dropdown, "Master\nChild");
+  lv_obj_set_width(ui_DeviceManagerReg_screen_Dropdown, 98);
+  lv_obj_set_height(ui_DeviceManagerReg_screen_Dropdown, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_DeviceManagerReg_screen_Dropdown, -142);
+  lv_obj_set_y(ui_DeviceManagerReg_screen_Dropdown, -93);
+  lv_obj_set_align(ui_DeviceManagerReg_screen_Dropdown, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_DeviceManagerReg_screen_Dropdown, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+
   lv_keyboard_set_textarea(ui_DMR_Keyboard, ui_DMR_TextArea);
   lv_obj_add_event_cb(ui_DMR_Exit_Button, ui_event_DMR_Exit_Button, LV_EVENT_ALL, NULL);
+  lv_obj_add_event_cb(ui_DeviceManagerReg_screen_Dropdown, ui_event_DMR_Dropdown_Select, LV_EVENT_ALL, NULL);
 }
 
 void time_timer_cb(lv_timer_t *timer) {
