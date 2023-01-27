@@ -407,6 +407,17 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
+# Smartfarm Product
+#
+CONFIG_PRODUCT_VENDOR="FIC"
+CONFIG_PRODUCT_NAME="DATALOGGER"
+CONFIG_PRODUCT_SKU=""
+# CONFIG_BS_PLATFORM_SENSORS is not set
+# CONFIG_BS_PLATFORM_ACTUATORS is not set
+CONFIG_BS_PLATFORM_DATALOGGER=y
+# CONFIG_BS_PLATFORM_IRRIGATION is not set
+
+#
 # Smartfarm Package
 #
 # CONFIG_ASYNC_MQTT_PACKAGE is not set
@@ -501,6 +512,7 @@ CONFIG_SCD4x_FEATURE=y
 # CONFIG_EASYSETUP_FEATURE is not set
 CONFIG_USB_HOST_FEATURE=y
 # end of Smartfarm Features
+# end of Smartfarm Product
 
 #
 # Compiler options
