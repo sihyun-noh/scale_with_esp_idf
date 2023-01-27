@@ -306,6 +306,17 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
+# Smartfarm Product
+#
+CONFIG_PRODUCT_VENDOR="FIC"
+CONFIG_PRODUCT_NAME="IRRIGATION_MASTER"
+CONFIG_PRODUCT_SKU=""
+# CONFIG_BS_PLATFROM_SENSORS is not set
+# CONFIG_BS_PLATFORM_ACTUATORS is not set
+# CONFIG_BS_PLATFORM_DATALOGGER is not set
+CONFIG_BS_PLATFORM_IRRIGATION=y
+
+#
 # Smartfarm Package
 #
 # CONFIG_ASYNC_MQTT_PACKAGE is not set
@@ -327,7 +338,7 @@ CONFIG_ESPNOW_PACKAGE=y
 # end of LWMQTT package
 
 # CONFIG_MODBUS_PACKAGE is not set
-CONFIG_MQTTC_PACKAGE=y
+# CONFIG_MQTTC_PACKAGE is not set
 
 #
 # PAL packages
@@ -384,7 +395,7 @@ CONFIG_WIFILIB_PACKAGE=y
 # Smartfarm Features
 #
 # CONFIG_ESPNOW_GATEWAY_FEATURE is not set
-# CONFIG_FILELOG_FEATURE is not set
+CONFIG_FILELOG_FEATURE=y
 # CONFIG_MONITOR_FEATURE is not set
 # CONFIG_OTA_FEATURE is not set
 
@@ -399,6 +410,7 @@ CONFIG_WIFILIB_PACKAGE=y
 
 # CONFIG_EASYSETUP_FEATURE is not set
 # end of Smartfarm Features
+# end of Smartfarm Product
 
 #
 # Compiler options
