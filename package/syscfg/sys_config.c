@@ -1,7 +1,6 @@
 #include "sys_config.h"
 #include "esp_mac.h"
 #include "syslog.h"
-#include "config.h"
 
 #include <string.h>
 
@@ -34,7 +33,7 @@ syscfg_data_t syscfg_table[] = {
   { SYSCFG_N_RECONNECT, SYSCFG_I_RECONNECT, SYSCFG_S_RECONNECT },
   { SYSCFG_N_TIMEZONE, SYSCFG_I_TIMEZONE, SYSCFG_S_TIMEZONE },
   { SYSCFG_N_REGIONCODE, SYSCFG_I_REGIONCODE, SYSCFG_S_REGIONCODE },
-#if (IRRIGATION_TYPE == HID)
+#if (CONFIG_IRRIGATION_HID)
   { SYSCFG_N_ZONE1_FLOW, SYSCFG_I_ZONE1_FLOW, SYSCFG_S_ZONE1_FLOW },
   { SYSCFG_N_ZONE2_FLOW, SYSCFG_I_ZONE2_FLOW, SYSCFG_S_ZONE2_FLOW },
   { SYSCFG_N_ZONE3_FLOW, SYSCFG_I_ZONE3_FLOW, SYSCFG_S_ZONE3_FLOW },
@@ -53,33 +52,33 @@ static void generate_default_serial(char *serial_no, size_t buff_len) {
   int seq_id = 1;        // 00001 ~ FFFFF
   char prod_code[10] = { 0 };
 
-#if (SENSOR_TYPE == SHT3X)
+#if (CONFIG_SENSOR_SHT3X)
   snprintf(prod_code, sizeof(prod_code), "%s", "TH");
-#elif (SENSOR_TYPE == SCD4X)
+#elif (CONFIG_SENSOR_SCD4X)
   snprintf(prod_code, sizeof(prod_code), "%s", "CO");
-#elif (SENSOR_TYPE == RK520_02)
+#elif (CONFIG_SENSOR_RK520_02)
   snprintf(prod_code, sizeof(prod_code), "%s", "SE");
-#elif (SENSOR_TYPE == SWSR7200)
+#elif (CONFIG_SENSOR_SWSR7500)
   snprintf(prod_code, sizeof(prod_code), "%s", "SO");
-#elif (SENSOR_TYPE == ATLAS_PH || SENSOR_TYPE == RK500_02)
+#elif (CONFIG_SENSOR_ATLAS_PH || CONFIG_SENSOR_RK500_02)
   snprintf(prod_code, sizeof(prod_code), "%s", "WP");
-#elif (SENSOR_TYPE == ATLAS_EC || SENSOR_TYPE == RK500_13)
+#elif (CONFIG_SENSOR_ATLAS_EC || CONFIG_SENSOR_RK500_13)
   snprintf(prod_code, sizeof(prod_code), "%s", "WE");
-#elif (SENSOR_TYPE == RK110_02)
+#elif (CONFIG_SENSOR_RK110_02)
   snprintf(prod_code, sizeof(prod_code), "%s", "WD");
-#elif (SENSOR_TYPE == RK100_02)
+#elif (CONFIG_SENSOR_RK100_02)
   snprintf(prod_code, sizeof(prod_code), "%s", "WS");
 #endif
-#if (ACTUATOR_TYPE == SWITCH)
+#if (CONFIG_ACTUATOR_SWITCH)
   snprintf(prod_code, sizeof(prod_code), "%s", "SW");
-#elif (ACTUATOR_TYPE == MOTOR)
+#elif (CONFIG_ACTUATOR_MOTOR)
   snprintf(prod_code, sizeof(prod_code), "%s", "MT");
 #endif
-#if (IRRIGATION_TYPE == MASTER)
+#if (CONFIG_IRRIGATION_MASTER)
   snprintf(prod_code, sizeof(prod_code), "%s", "MS");
-#elif (IRRIGATION_TYPE == HID)
+#elif (CONFIG_IRRIGATION_HID)
   snprintf(prod_code, sizeof(prod_code), "%s", "HD");
-#elif (IRRIGATION_TYPE == CHILD)
+#elif (CONFIG_IRRIGATION_CHILD)
   snprintf(prod_code, sizeof(prod_code), "%s", "CH");
 #endif
   snprintf(serial_no, buff_len, "%02d%02d%02d%s%05d", supplier_id, year_mfr, week_mfr, prod_code, seq_id);
@@ -187,33 +186,33 @@ void generate_syscfg(void) {
   }
   syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
   if (model_name[0] == 0) {
-#if (SENSOR_TYPE == SHT3X)
+#if (CONFIG_SENSOR_SHT3X)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSTH");
-#elif (SENSOR_TYPE == SCD4X)
+#elif (CONFIG_SENSOR_SCD4X)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSCO");
-#elif (SENSOR_TYPE == RK520_02)
+#elif (CONFIG_SENSOR_RK520_02)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSSE");
-#elif (SENSOR_TYPE == SWSR7500)
+#elif (CONFIG_SENSOR_SWSR7500)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSSO");
-#elif (SENSOR_TYPE == ATLAS_PH || SENSOR_TYPE == RK500_02)
+#elif (CONFIG_SENSOR_ATLAS_PH || CONFIG_SENSOR_RK500_02)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSWP");
-#elif (SENSOR_TYPE == ATLAS_EC || SENSOR_TYPE == RK500_13)
+#elif (CONFIG_SENSOR_ATLAS_EC || CONFIG_SENSOR_RK500_13)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSWE");
-#elif (SENSOR_TYPE == RK110_02)
+#elif (CONFIG_SENSOR_RK110_02)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSWD");
-#elif (SENSOR_TYPE == RK100_02)
+#elif (CONFIG_SENSOR_RK100_02)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSWS");
 #endif
-#if (ACTUATOR_TYPE == SWITCH)
+#if (CONFIG_ACTUATOR_SWITCH)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLASW");
-#elif (ACTUATOR_TYPE == MOTOR)
+#elif (CONFIG_ACTUATOR_MOTOR)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLAMT");
 #endif
-#if (IRRIGATION_TYPE == MASTER)
+#if (CONFIG_IRRIGATION_MASTER)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLIMS");
-#elif (IRRIGATION_TYPE == HID)
+#elif (CONFIG_IRRIGATION_HID)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLIHD");
-#elif (IRRIGATION_TYPE == CHILD)
+#elif (CONFIG_IRRIGATION_CHILD)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLICH");
 #endif
     syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
