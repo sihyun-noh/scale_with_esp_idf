@@ -100,9 +100,14 @@ void ctrl_msg_handler(irrigation_message_t *message) {
     case BATTERY_LEVEL: {
       send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
       // add battery level to the logging data
+      for (int id = 1; id < 7; id++) {
+        LOGI(TAG, "Zone[%d] : Battery level = %d", id, message->battery_level[id]);
+      }
       set_battery_level(1);
+      lv_msg_send(MSG_BATTERY_STATUS, message);
       if (!is_time_sync()) {
         set_main_time(&message->current_time);
+        LOGI(TAG, "Call timesync in Battery level");
         lv_msg_send(MSG_TIME_SYNCED, NULL);
 #if 0
         enable_buttons();

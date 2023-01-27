@@ -10,6 +10,7 @@
 #include "ui_helpers.h"
 #include "hid_config.h"
 #include "comm_packet.h"
+#include "log.h"
 #include "sysfile.h"
 #include "filelog.h"
 
@@ -124,6 +125,8 @@ const char *DAY[] = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "F
 const char *MONTH[] = { "January", "February", "March",     "April",   "May",      "June",
                         "July",    "August",   "September", "October", "November", "December" };
 
+static const char *TAG = "UI";
+
 ///////////////////// TEST LVGL SETTINGS ////////////////////
 #if LV_COLOR_DEPTH != 16
 #error "LV_COLOR_DEPTH should be 16bit to match SquareLine Studio's settings"
@@ -141,12 +144,19 @@ static void status_change_cb(void *s, lv_msg_t *m) {
 
   switch (msg_id) {
     case MSG_TIME_SYNCED: enable_buttons(); break;
-    case MSG_BATTERY_STATUS: break;
+    case MSG_BATTERY_STATUS: {
+      irrigation_message_t *msg_payload = (irrigation_message_t *)lv_msg_get_payload(m);
+      for (int id = 1; id < 7; id++) {
+        FDATA(BASE_PATH, "Zone[%d] : Battery level = %d", id, msg_payload->battery_level[id]);
+      }
+    } break;
     case MSG_RESPONSE_STATUS: {
       irrigation_message_t *msg_payload = (irrigation_message_t *)lv_msg_get_payload(m);
-      if (msg_payload->receive_type == SET_CONFIG) {
+      if (msg_payload->receive_type == SET_CONFIG && msg_payload->resp == SUCCESS) {
+        LOGI(TAG, "Got SetConfig response, Call disable start button()");
         disable_start_button();
       } else if (msg_payload->receive_type == FORCE_STOP) {
+        LOGI(TAG, "Got Force Stop response");
         char op_msg[128] = { 0 };
         int zone_id = msg_payload->deviceId;
         int flow_value = msg_payload->flow_value;
@@ -166,6 +176,7 @@ static void status_change_cb(void *s, lv_msg_t *m) {
       irrigation_message_t *msg_payload = (irrigation_message_t *)lv_msg_get_payload(m);
       int zone_id = msg_payload->deviceId;
       if (msg_payload->sender_type == START_FLOW) {
+        LOGI(TAG, "Got Start Flow response");
         set_zone_status(zone_id, true);
         set_zone_number(zone_id, true);
         disable_start_button();
@@ -173,13 +184,16 @@ static void status_change_cb(void *s, lv_msg_t *m) {
         add_operation_list(op_msg);
         FDATA(BASE_PATH, "%s", op_msg);
       } else if (msg_payload->sender_type == ZONE_COMPLETE) {
+        LOGI(TAG, "Got Zone Complete response");
         int flow_value = msg_payload->flow_value;
         set_zone_status(zone_id, false);
         set_zone_number(zone_id, false);
+        set_zone_flow_value(zone_id, flow_value);
         snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
         add_operation_list(op_msg);
         FDATA(BASE_PATH, "%s", op_msg);
       } else if (msg_payload->sender_type == ALL_COMPLETE) {
+        LOGI(TAG, "Got All Complete response");
         enable_start_button();
         FDATA(BASE_PATH, "%s", "All irrigation progress are complete done!!!");
       }
@@ -1370,6 +1384,7 @@ void ui_init(void) {
   // MSG_TIME_SYNCED - Update the buttons when receiving a time info from the main node
   lv_msg_subsribe(MSG_TIME_SYNCED, status_change_cb, NULL);
   lv_msg_subsribe(MSG_BATTERY_STATUS, status_change_cb, NULL);
+  lv_msg_subsribe(MSG_RESPONSE_STATUS, status_change_cb, NULL);
   // MSG_IRRIGATION_STATUS - start(zone_id), stop(zone_id, flow_value)
   lv_msg_subsribe(MSG_IRRIGATION_STATUS, status_change_cb, NULL);
 
