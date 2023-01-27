@@ -11,13 +11,3 @@ endif()
 idf_component_register(SRCS ${srcs}
                     INCLUDE_DIRS ${includes}
                     REQUIRES ${req})
-
-if(${PROJECT_TYPE} MATCHES SENSOR)
-include_directories(INCLUDE_DIRS "../../product/sensor/main")
-endif()
-if(${PROJECT_TYPE} MATCHES ACTUATOR)
-include_directories(INCLUDE_DIRS "../../product/actuator/main")
-endif()
-if(${PROJECT_TYPE} MATCHES LOGGER)
-include_directories(INCLUDE_DIRS "../../product/data_logger/main")
-endif()

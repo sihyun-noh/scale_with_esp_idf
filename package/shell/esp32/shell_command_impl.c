@@ -27,7 +27,6 @@
 
 #include "icmp_echo_cmd.h"
 #include "sysfile.h"
-#include "config.h"
 #include "wifi_manager.h"
 
 #ifdef DS3231_I2C_SDA_PIN
@@ -48,9 +47,9 @@ extern int mqtt_publish_cmd(int argc, char **argv);
 
 extern char *uptime(void);
 
-#if (SENSOR_TYPE == ATLAS_PH)
+#if (CONFIG_SENSOR_ATLAS_PH)
 extern int atlas_ph_cal_cmd(int argc, char **argv);
-#elif (SENSOR_TYPE == ATLAS_EC)
+#elif (CONFIG_SENSOR_ATLAS_EC)
 extern int atlas_ec_cal_cmd(int argc, char **argv);
 extern int atlas_ec_probe_cmd(int argc, char **argv);
 #endif
@@ -270,14 +269,14 @@ static sc_cmd_t commands[] = {
       .help = "Get IDF-SDK version",
       .func = sdk_version,
   },
-#if (SENSOR_TYPE == ATLAS_PH)
+#if (CONFIG_SENSOR_ATLAS_PH)
   {
       .name = "atlas_ph_cal",
       .help = "Atlas pH Sensor Calibration",
       .func = atlas_ph_cal_cmd,
   },
 #endif
-#if (SENSOR_TYPE == ATLAS_EC)
+#if (CONFIG_SENSOR_ATLAS_EC)
   {
       .name = "atlas_ec_cal",
       .help = "Atlas EC Sensor Calibration",
