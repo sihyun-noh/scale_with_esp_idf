@@ -306,6 +306,27 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
+# Smartfarm Product
+#
+CONFIG_PRODUCT_VENDOR="FIC"
+CONFIG_PRODUCT_NAME="SENSOR"
+CONFIG_PRODUCT_SKU=""
+CONFIG_BS_PLATFORM_SENSORS=y
+CONFIG_SENSOR_SHT3X=y
+# CONFIG_SENSOR_SCD4X is not set
+# CONFIG_SENSOR_RK520_02 is not set
+# CONFIG_SENSOR_SWSR7500 is not set
+# CONFIG_SENSOR_ATLAS_PH is not set
+# CONFIG_SENSOR_ATLAS_EC is not set
+# CONFIG_SENSOR_RK500_02 is not set
+# CONFIG_SENSOR_RK110_02 is not set
+# CONFIG_SENSOR_RK100_02 is not set
+# CONFIG_SENSOR_RK500_13 is not set
+# CONFIG_BS_PLATFORM_ACTUATORS is not set
+# CONFIG_BS_PLATFORM_DATALOGGER is not set
+# CONFIG_BS_PLATFORM_IRRIGATION is not set
+
+#
 # Smartfarm Package
 #
 # CONFIG_ASYNC_MQTT_PACKAGE is not set
@@ -395,6 +416,7 @@ CONFIG_ATLAS_EC_FEATURE=y
 
 CONFIG_EASYSETUP_FEATURE=y
 # end of Smartfarm Features
+# end of Smartfarm Product
 
 #
 # Compiler options
