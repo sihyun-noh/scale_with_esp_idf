@@ -3,13 +3,13 @@ set(req driver freertos hal esp_adc syslog pal)
 set(srcs)
 set(includes)
 
-if(CONFIG_SHT3x_FEATURE)
+if(CONFIG_SHT3X_FEATURE)
   list(APPEND srcs
     "sht3x/sht3x.c")
   list(APPEND includes "./sht3x")
 endif()
 
-if(CONFIG_SCD4x_FEATURE)
+if(CONFIG_SCD4X_FEATURE)
   list(APPEND srcs
     "scd4x/scd4x.c")
   list(APPEND includes "./scd4x")

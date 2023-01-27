@@ -1,11 +1,11 @@
 menu "Sensors Features"
-  config SHT3x_FEATURE
+  config SHT3X_FEATURE
     bool "SHT3x feature"
     default "y"
     help
       SHT3x Temperature and Humidity Sensor
 
-  config SCD4x_FEATURE
+  config SCD4X_FEATURE
     bool "SCD4x feature"
     default "y"
     help
