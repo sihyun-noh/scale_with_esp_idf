@@ -11,7 +11,6 @@
 #include "time_api.h"
 #include "monitoring.h"
 #include "sysfile.h"
-#include "config.h"
 #include "filelog.h"
 #include "mqtt_task.h"
 #include "main.h"

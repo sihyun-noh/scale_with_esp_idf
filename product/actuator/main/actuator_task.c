@@ -5,11 +5,15 @@
 #include "event_ids.h"
 #include "syslog.h"
 #include "gpio_api.h"
-#include "config.h"
 
 static char model_name[10] = { 0 };
 
+#define ACT_OLIMEX_HW 10
+#define ACT_GLS_HW 20 /* Greenlabs HW */
+#define ACT_BOARD_VER ACT_GLS_HW
+
 #if defined(ACT_BOARD_VER) && (ACT_BOARD_VER == ACT_OLIMEX_HW)
+#define PIN_PHY_POWER 12
 static uint8_t gpio_arry[] = { 2, 4, 32, 33, 14, 0, 13, 15, 16 };
 #else
 static uint8_t gpio_arry[] = { 2, 4, 32, 33, 14, 12, 13, 15, 16 };
@@ -99,7 +103,7 @@ void test_gpio(void) {
   }
 }
 
-#if (ACTUATOR_TYPE == SWITCH)
+#if (CONFIG_ACTUATOR_SWITCH)
 static void actuator_switch_action(void) {
   char s_actuator[20] = { 0 };
 
@@ -123,7 +127,7 @@ static void actuator_switch_action(void) {
     }
   }
 }
-#elif (ACTUATOR_TYPE == MOTOR)
+#elif (CONFIG_ACTUATOR_MOTOR)
 static void actuator_motor_action(void) {
   char s_actuator[20] = { 0 };
 
@@ -161,9 +165,9 @@ static void actuator_motor_action(void) {
 #endif
 
 void actuator_task(void) {
-#if (ACTUATOR_TYPE == SWITCH)
+#if (CONFIG_ACTUATOR_SWITCH)
   actuator_switch_action();
-#elif (ACTUATOR_TYPE == MOTOR)
+#elif (CONFIG_ACTUATOR_MOTOR)
   actuator_motor_action();
 #endif
 }

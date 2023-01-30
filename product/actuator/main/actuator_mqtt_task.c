@@ -15,7 +15,6 @@
 #include "AsyncMqttClient.h"
 #endif
 #include "syscfg.h"
-#include "config.h"
 #include "filelog.h"
 #include "ota_task.h"
 #include "sysfile.h"
@@ -207,7 +206,7 @@ static char *gen_default_resp(char *resp_type) {
   return json_resp;
 }
 
-#if (ACTUATOR_TYPE == SWITCH)
+#if (CONFIG_ACTUATOR_SWITCH)
 static char *create_json_actuator_switch(void) {
   /*
   {
@@ -400,7 +399,7 @@ static void actuator_switch_passing(cJSON *root) {
   // cJSON_Delete(root);
 }
 
-#elif (ACTUATOR_TYPE == MOTOR)
+#elif (CONFIG_ACTUATOR_MOTOR)
 static char *create_json_actuator_motor(void) {
   /*
   {
@@ -988,14 +987,14 @@ static int mqtt_req_cmd_handler(mqtt_topic_payload_t *p_mqtt) {
     else if (!strcmp(req_type->valuestring, REQRES_V_SYSCFG)) {
       syscfg_cmd_handler(mqtt_data);
     }
-#if (ACTUATOR_TYPE == SWITCH)
+#if (CONFIG_ACTUATOR_SWITCH)
     /* actuator switch control command */
     else if (!strcmp(req_type->valuestring, REQRES_V_SWITCH)) {
       actuator_switch_passing(mqtt_data);
       mqtt_publish_actuator_data();
     }
 #endif
-#if (ACTUATOR_TYPE == MOTOR)
+#if (CONFIG_ACTUATOR_MOTOR)
     /* actuator motor control command */
     else if (!strcmp(req_type->valuestring, REQRES_V_MOTOR)) {
       actuator_motor_passing(mqtt_data);
@@ -1258,14 +1257,14 @@ void mqtt_publish_actuator_data(void) {
 
   syscfg_get(SYSCFG_I_DEVICEID, SYSCFG_N_DEVICEID, device_id, SYSCFG_S_DEVICEID);
 
-#if (ACTUATOR_TYPE == SWITCH)
+#if (CONFIG_ACTUATOR_SWITCH)
   char mqtt_switch[80] = { 0 };
   snprintf(mqtt_switch, sizeof(mqtt_switch), ACTUATOR_SWITCH_PUB_SUB_TOPIC, device_id);
   ret = mqtt_publish(mqtt_switch, create_json_actuator_switch(), ACTUATOR_QOS, 0);
   if (ret < 0) {
     LOGI(TAG, "mqtt_publish error!");
   }
-#elif (ACTUATOR_TYPE == MOTOR)
+#elif (CONFIG_ACTUATOR_MOTOR)
   char mqtt_motor[80] = { 0 };
   snprintf(mqtt_motor, sizeof(mqtt_motor), ACTUATOR_MOTOR_PUB_SUB_TOPIC, device_id);
   ret = mqtt_publish(mqtt_motor, create_json_actuator_motor(), ACTUATOR_QOS, 0);
@@ -1360,7 +1359,6 @@ void create_mqtt_task(void) {
 
 #endif
 
-  xTaskCreatePinnedToCore(mqtt_task, MQTT_TASK_NAME, ACT_MQTT_TASK_STACK_SIZE, NULL, ACT_MQTT_TASK_PRIORITY,
+  xTaskCreatePinnedToCore(mqtt_task, MQTT_TASK_NAME, 4096, NULL, (tskIDLE_PRIORITY + 5),
                           &mqtt_task_handle, 1);
-  // xTaskCreatePinnedToCore(mqtt_task_restart, "restart", 2048, NULL, 10, NULL, 1);
 }
