@@ -26,7 +26,6 @@ static const char *TAG = "main_app";
 
 sc_ctx_t *sc_ctx = NULL;
 
-// uint8_t main_mac_addr[6] = { 0xF4, 0x12, 0xFA, 0x52, 0x07, 0xD1 };
 uint8_t *main_mac_addr;
 
 uint32_t start_ms = 0;
@@ -39,7 +38,7 @@ extern void sdcard_write_data(void);
 static void check_model(void);
 
 static operation_mode_t s_curr_mode;
-static int send_interval;
+static int main_sleep_delay = 30;
 
 void set_operation_mode(operation_mode_t mode) {
   s_curr_mode = mode;
@@ -71,19 +70,11 @@ int sleep_timer_wakeup(uint64_t wakeup_time_sec) {
 static void check_model(void) {
   char model_name[10] = { 0 };
   char power_mode[10] = { 0 };
-  char s_send_interval[10] = { 0 };
 
   syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
   syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
-  syscfg_get(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, s_send_interval, sizeof(s_send_interval));
-  if (s_send_interval[0]) {
-    send_interval = atoi(s_send_interval);
-  } else {
-    send_interval = 30;
-  }
 
   LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
-  LOGI(TAG, "send_interval : %d", send_interval);
 
   set_battery_model(1);
 }
@@ -103,32 +94,6 @@ static void send_data_cb(const uint8_t *mac_addr, esp_now_send_status_t status) 
     LOGI(TAG, "Delivery Failed to ");
   }
   LOG_BUFFER_HEX(TAG, mac_addr, MAC_ADDR_LEN);
-}
-
-int set_interval_cmd(int argc, char **argv) {
-  int interval = 0;
-
-  if (argc != 2) {
-    printf("Usage: 1 ~ 600 (sec)  <ex:set_interval 60>\n");
-    return -1;
-  }
-  interval = atoi(argv[1]);
-  if (interval < 1)
-    return -1;
-
-  syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, argv[1]);
-  send_interval = interval;
-
-  return 0;
-}
-
-int get_interval_cmd(int argc, char **argv) {
-  char s_send_interval[10] = { 0 };
-
-  syscfg_get(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, s_send_interval, sizeof(s_send_interval));
-  printf("INTERVAL: %d\n", atoi(s_send_interval));
-
-  return 0;
 }
 
 int system_init(void) {
@@ -228,7 +193,7 @@ void loop_task(void) {
         set_operation_mode(SLEEP_MODE);
       } break;
       case SLEEP_MODE: {
-        vTaskDelay(send_interval * 1000 / portTICK_PERIOD_MS);
+        vTaskDelay(main_sleep_delay * 1000 / portTICK_PERIOD_MS);
         set_operation_mode(MONITOR_MODE);
       } break;
     }
