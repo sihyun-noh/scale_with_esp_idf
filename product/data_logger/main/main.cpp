@@ -209,6 +209,19 @@ void battery_loop_task(void) {
   set_operation_mode(SENSOR_INIT_MODE);
 
   while (1) {
+    /*
+    #if defined(SPIFFS_IMPL)
+        const char* file_path1 = "/spiffs";
+        file_list(file_path1);
+    #elif defined(LITTLEFS_IMPL)
+        const char* file_path1 = "/storage/Sen1";
+        file_list(file_path1);
+        const char* file_path2 = "/storage/Sen2";
+        file_list(file_path2);
+        const char* file_path3 = "/storage/Sen3";
+        file_list(file_path3);
+    #endif
+    */
     op_flag = operating_time();
     if (op_flag) {
       switch (get_operation_mode()) {
@@ -232,12 +245,17 @@ void battery_loop_task(void) {
             sysevent_set(ADC_BATTERY_EVENT, (char*)"0");
           }
           vTaskDelay(100 / portTICK_PERIOD_MS);
-          if (sensor_read() == CHECK_OK) {
-            set_operation_mode(SLEEP_MODE);
+
+          if (is_usb_copying(USB_COPYING)) {  // while copying don't use of FLOG function.
+            LOGE(TAG, "usb copying...");
           } else {
-            rc = ERR_SENSOR_READ;
-            LOGE(TAG, "sensor read, error = [%d]", rc);
-            set_operation_mode(SLEEP_MODE);
+            if (sensor_read() == CHECK_OK) {
+              set_operation_mode(SLEEP_MODE);
+            } else {
+              rc = ERR_SENSOR_READ;
+              LOGE(TAG, "sensor read, error = [%d]", rc);
+              set_operation_mode(SLEEP_MODE);
+            }
           }
           sensor_power_off();
         } break;

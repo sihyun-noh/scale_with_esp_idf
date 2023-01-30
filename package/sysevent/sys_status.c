@@ -434,6 +434,19 @@ void sys_stat_set_usb_disconnect_notify(uint8_t status) {
   }
 }
 
+int sys_stat_get_file_write_flag(void) {
+  EventBits_t bits = xEventGroupGetBits(data_logger_status_events);
+  return ((bits & STATUS_LOG_FILE_WRITE) == STATUS_LOG_FILE_WRITE);
+}
+
+void sys_stat_set_file_write_flag(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(data_logger_status_events, STATUS_LOG_FILE_WRITE);
+  } else {
+    xEventGroupClearBits(data_logger_status_events, STATUS_LOG_FILE_WRITE);
+  }
+}
+
 int sys_stat_init(void) {
   sw_status_events = xEventGroupCreate();
   if (sw_status_events == NULL) {

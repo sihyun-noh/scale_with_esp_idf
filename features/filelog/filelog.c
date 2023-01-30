@@ -31,7 +31,8 @@
 #define FILE_LOG_MAX_BUFF_SIZE 1024
 #define FILE_LOG_MAX_MSG_SIZE (FILE_LOG_MAX_BUFF_SIZE)
 #define FILE_LOG_MAX_FILE_SIZE (FILE_LOG_MAX_MSG_SIZE * 500)
-#define FILE_COUNT 8
+#define DIR_COUNT 3
+#define FILE_COUNT 3
 
 static const char *TAG = "FILE_LOG";
 
@@ -216,8 +217,9 @@ int file_log_write_datalogger(char *path, char *format, ...) {
   vsnprintf(buff, sizeof(buff), format, list);
   va_end(list);
 
-  LOGI(TAG, " buff : %s", buff);
+  LOGE(TAG, " file count : %d", file_ctx.file_num);
   LOGI(TAG, " path : %s", path);
+  LOGI(TAG, " buff : %s", buff);
   //  ret = file_status_check(BASE_PATH);
   ret = file_status_check(path);
   if (ret != 0) {
@@ -242,6 +244,7 @@ int file_log_write_datalogger(char *path, char *format, ...) {
   }
 
   if (file_ctx.file_num > FILE_COUNT) {
+    LOGE(TAG, "file delete!");
     if (file_delete(file_ctx.oldest_file, path) != 0) {
       LOGE(TAG, "file delete erorr!");
     }

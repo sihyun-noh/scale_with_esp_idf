@@ -35,7 +35,7 @@ int file_log_write(char *format, ...);
 int file_log_write_datalogger(char *path, char *format, ...);
 
 #define FILE_LOG_FORMAT(letter, format) #letter " (%s) %s: " format "\r\n"
-#define FILE_LOG_FORMAT_FOR_DATALOGGER(letter, format) #letter " (%s) " format "\n"
+#define FILE_LOG_FORMAT_FOR_DATALOGGER(letter, format) #letter " %s " format "\n"
 
 #define FILELOGI(tag, format, ...) FILE_LOG_LEVEL(LOG_INFO, tag, format, ##__VA_ARGS__)
 #define FILELOGW(tag, format, ...) FILE_LOG_LEVEL(LOG_WARN, tag, format, ##__VA_ARGS__)

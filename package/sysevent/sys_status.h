@@ -59,6 +59,7 @@ typedef enum {
 #define STATUS_USB_COPY_FAIL (1 << 3)    /* Data logger logfile copy fail */
 #define STATUS_USB_COPY_SUCCESS (1 << 4) /* Data logger logfile copy success */
 #define STATUS_USB_DISCONN (1 << 5)      /* Data logger notify USB disconnect */
+#define STATUS_LOG_FILE_WRITE (1 << 6)   /* Data logger notify file write */
 
 #define is_device_configured sys_stat_get_configured
 #define set_device_configured sys_stat_set_configured
@@ -110,6 +111,9 @@ typedef enum {
 
 #define is_usb_disconnect_notify sys_stat_get_usb_disconnect_notify
 #define set_usb_disconnect_notify sys_stat_set_usb_disconnect_notify
+
+#define is_log_file_write_flag sys_stat_get_file_write_flag
+#define set_log_file_write_flag sys_stat_set_file_write_flag
 
 #define is_mqtt_connected sys_stat_get_mqtt_connected
 #define set_mqtt_connected sys_stat_set_mqtt_connected
@@ -229,6 +233,9 @@ void sys_stat_set_usb_copying(usb_stat_t usb_status, uint8_t status);
 
 int sys_stat_get_usb_disconnect_notify(void);
 void sys_stat_set_usb_disconnect_notify(uint8_t status);
+
+int sys_stat_get_file_write_flag(void);
+void sys_stat_set_file_write_flag(uint8_t status);
 
 #ifdef __cplusplus
 }

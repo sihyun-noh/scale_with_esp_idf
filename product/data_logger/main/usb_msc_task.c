@@ -59,9 +59,9 @@ int file_operations(void) {
   memset(copy_data, 0, sizeof(copy_ctx_t));
 
   syscfg_get(SYSCFG_I_MACADDRESS, SYSCFG_N_MACADDRESS, mac_address, sizeof(mac_address));
-  strncpy(empty, mac_address, sizeof(empty) - 2);
+  strncpy(empty, mac_address + 4, sizeof(empty) - 2);
   snprintf(directory, sizeof(directory), "%s/%s", USBROOT, empty);
-  // ESP_LOGE(TAG, "dir__: %s", directory);
+  LOGE(TAG, "dir__: %s", directory);
 
   bool directory_exists = stat((const char *)directory, &file_data->sb) == 0;
   if (!directory_exists) {
@@ -116,13 +116,13 @@ int file_operations(void) {
       if (file_data->to_file_size == file_data->from_file_size) {
         // delete file in spiffs
         LOGI(TAG, "file copy success! (file_num : %d)", file_data->file_num);
-        set_usb_copying(USB_COPYING, 0);
+        // set_usb_copying(USB_COPYING, 0);
         set_usb_copying(USB_COPY_SUCCESS, 1);
         // OK;
       } else {
         LOGI(TAG, "to file : %lld, from file : %lld", file_data->to_file_size, file_data->from_file_size);
         LOGI(TAG, "file copy fail!");  // FAIL;
-        set_usb_copying(USB_COPYING, 0);
+        // set_usb_copying(USB_COPYING, 0);
         set_usb_copying(USB_COPY_FAIL, 1);
       }
       free(copy_data->file_name);
@@ -148,11 +148,18 @@ void usb_host_msc_task(void) {
 
       usb_device_init(device_address);
 
+      while (is_log_file_write_flag()) {
+        LOGE(TAG, "wait....");
+        vTaskDelay(500 / portTICK_PERIOD_MS);
+      }
       set_usb_copying(USB_COPYING, 1);
       file_operations();
+      set_usb_disconnect_notify(1);
 
       while (!wait_for_event(DEVICE_DISCONNECTED, 200)) {}
 
+      set_usb_disconnect_notify(0);
+      set_usb_copying(USB_COPYING, 0);
       set_usb_copying(USB_COPY_FAIL, 0);
       set_usb_copying(USB_COPY_SUCCESS, 0);
 

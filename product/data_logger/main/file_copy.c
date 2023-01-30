@@ -275,11 +275,11 @@ int file_copy(const char *to, const char *from) {
     char *out_ptr = buf;
     ssize_t nwritten;
 
-    printf("nread = %d\n", nread);
+    //   printf("nread = %d\n", nread);
 
     do {
       nwritten = fwrite(out_ptr, 1, nread, fd_to);
-      printf("nwritten = %d\n", nwritten);
+      //     printf("nwritten = %d\n", nwritten);
 
       if (nwritten >= 0) {
         nread -= nwritten;

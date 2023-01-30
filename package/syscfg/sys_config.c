@@ -237,7 +237,7 @@ void generate_syscfg(void) {
   }
   syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
   if (power_mode[0] == 0) {
-    syscfg_set(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, "P");
+    syscfg_set(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, "B");
   }
   syscfg_get(SYSCFG_I_HWVERSION, SYSCFG_N_HWVERSION, hw_version, sizeof(hw_version));
   if (hw_version[0] == 0) {
@@ -269,7 +269,7 @@ void generate_syscfg(void) {
   syscfg_get(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, send_interval, sizeof(send_interval));
   if (send_interval[0] == 0) {
     if (!strncmp(power_mode, "B", 1))
-      syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, "60");
+      syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, "600");
     else
       syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, "30");
   }
@@ -277,9 +277,9 @@ void generate_syscfg(void) {
   syscfg_get(SYSCFG_I_OP_TIME, SYSCFG_N_OP_TIME, op_time, sizeof(op_time));
   if (op_time[0] == 0) {
     if (!strncmp(power_mode, "B", 1)) {
-      syscfg_set(SYSCFG_I_OP_TIME, SYSCFG_N_OP_TIME, "0618");
+      syscfg_set(SYSCFG_I_OP_TIME, SYSCFG_N_OP_TIME, "0620");
     } else {
-      syscfg_set(SYSCFG_I_OP_TIME, SYSCFG_N_OP_TIME, "0618");
+      syscfg_set(SYSCFG_I_OP_TIME, SYSCFG_N_OP_TIME, "0620");
     }
   }
 
