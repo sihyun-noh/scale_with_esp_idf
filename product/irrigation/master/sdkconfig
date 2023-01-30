@@ -404,8 +404,8 @@ CONFIG_WIFILIB_PACKAGE=y
 #
 # Sensors Features
 #
-# CONFIG_SHT3x_FEATURE is not set
-# CONFIG_SCD4x_FEATURE is not set
+# CONFIG_SHT3X_FEATURE is not set
+# CONFIG_SCD4X_FEATURE is not set
 # CONFIG_ATLAS_PH_FEATURE is not set
 # CONFIG_ATLAS_EC_FEATURE is not set
 # end of Sensors Features
