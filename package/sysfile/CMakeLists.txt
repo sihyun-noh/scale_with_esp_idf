@@ -4,13 +4,11 @@ set(srcs)
 set(includes)
 
 if(CONFIG_SYSFILE_PACKAGE)
-  if(CONFIG_LITTLEFS_ENABLE)
-    idf_build_set_property(COMPILE_DEFINITIONS "-DLITTLEFS_IMPL" APPEND)
+  if(CONFIG_LITTLEFS_PACKAGE)
     list(APPEND srcs
       "sysfile.c"
       "esp32/littlefs_impl.c")
   else()
-    idf_build_set_property(COMPILE_DEFINITIONS "-DSPIFFS_IMPL" APPEND)
     list(APPEND srcs
       "sysfile.c"
       "esp32/spiffs_impl.c")

@@ -16,7 +16,7 @@ config BS_PLATFORM_IRRIGATION
 
     config IRRIGATION_HID
       bool "HID"
-      depends on FILELOG_FEATURE
+      select FILELOG_FEATURE
       help
         Irrigation HID
 

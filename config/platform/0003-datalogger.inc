@@ -1,5 +1,7 @@
 config BS_PLATFORM_DATALOGGER
   bool "DataLogger"
+  select FILELOG_FEATURE
+
   help
     DataLogger gathers the log data of sensor
 

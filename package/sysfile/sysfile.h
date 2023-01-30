@@ -1,9 +1,9 @@
 #ifndef _SYSFILE_H_
 #define _SYSFILE_H_
 
-#if defined(SPIFFS_IMPL)
+#if defined(CONFIG_SPIFFS_PACKAGE)
 #include "esp32/spiffs_impl.h"
-#elif defined(LITTLEFS_IMPL)
+#elif defined(CONFIG_LITTLEFS_PACKAGE)
 #include "esp32/littlefs_impl.h"
 #endif
 

@@ -17,18 +17,18 @@
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
 #include "sysfile.h"
-#if defined(SPIFFS_IMPL)
+#if defined(CONFIG_SPIFFS_PACKAGE)
 #include "esp32/spiffs_impl.h"
-#elif defined(LITTLEFS_IMPL)
+#elif defined(CONFIG_LITTLEFS_PACKAGE)
 #include "esp32/littlefs_impl.h"
 #endif
 
 int init_sysfile(const char *partition_name, const char *root_path) {
   int ret = 0;
 
-#if defined(SPIFFS_IMPL)
+#if defined(CONFIG_SPIFFS_PACKAGE)
   ret = init_spiffs_impl(partition_name, root_path);
-#elif defined(LITTLEFS_IMPL)
+#elif defined(CONFIG_LITTLEFS_PACKAGE)
   ret = init_littlefs_impl(partition_name, root_path);
 #endif
   return ret;
@@ -37,9 +37,9 @@ int init_sysfile(const char *partition_name, const char *root_path) {
 int sysfile_format(void) {
   int ret = 0;
 
-#if defined(SPIFFS_IMPL)
+#if defined(CONFIG_SPIFFS_PACKAGE)
   ret = format_spiffs_impl();
-#elif defined(LITTLEFS_IMPL)
+#elif defined(CONFIG_LITTLEFS_PACKAGE)
   ret = format_littlefs_impl();
 #endif
   return ret;
