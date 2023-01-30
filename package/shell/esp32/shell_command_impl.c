@@ -301,6 +301,16 @@ static sc_cmd_t commands[] = {
       .help = "Get interval",
       .func = get_interval_cmd,
   },
+  {
+      .name = "set_op_time",
+      .help = "Set operation time",
+      .func = set_op_time_cmd,
+  },
+  {
+      .name = "get_op_time",
+      .help = "Get operation time",
+      .func = get_op_time_cmd,
+  },
 };
 
 /**

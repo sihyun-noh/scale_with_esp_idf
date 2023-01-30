@@ -102,6 +102,8 @@ int rtc_set_time_cmd(int argc, char** argv);
 int rtc_get_time_cmd(int argc, char** argv);
 int set_interval_cmd(int argc, char** argv);
 int get_interval_cmd(int argc, char** argv);
+int set_op_time_cmd(int argc, char** argv);
+int get_op_time_cmd(int argc, char** argv);
 
 #ifdef __cplusplus
 }

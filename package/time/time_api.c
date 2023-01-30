@@ -349,3 +349,42 @@ int get_interval_cmd(int argc, char** argv) {
 
   return 0;
 }
+
+int set_op_time_cmd(int argc, char** argv) {
+  int s_op_time = 0;
+  int s_op_start_time = 0;
+  int s_op_end_time = 0;
+
+  if (argc != 2) {
+    printf("Usage: 00(start hour)00(end hour)(hour)  <ex:set_op_time 0618>\n");
+    return -1;
+  }
+  s_op_time = atoi(argv[1]);
+  s_op_start_time = s_op_time / 100;
+  s_op_end_time = s_op_time % 100;
+
+  if (s_op_time < 1) {
+    printf("invalid argument!(time error)\n");
+    return -1;
+  }
+  if (s_op_start_time < 0 || s_op_start_time > 24) {
+    printf("invalid argument!(start set time error) \n");
+    return -1;
+  }
+  if (s_op_end_time < 0 || s_op_end_time > 24 || s_op_start_time >= s_op_end_time) {
+    printf("invalid argument!(end set time error) \n");
+    return -1;
+  }
+
+  syscfg_set(SYSCFG_I_OP_TIME, SYSCFG_N_OP_TIME, argv[1]);
+
+  return 0;
+}
+
+int get_op_time_cmd(int argc, char** argv) {
+  char s_op_time[10] = { 0 };
+
+  syscfg_get(SYSCFG_I_OP_TIME, SYSCFG_N_OP_TIME, s_op_time, sizeof(s_op_time));
+  printf("OP_TIME: %d\n", atoi(s_op_time));
+  return 0;
+}
