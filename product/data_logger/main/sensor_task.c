@@ -1,21 +1,6 @@
-#include "config.h"
+#include <string.h>
+#include <math.h>
 #include "log.h"
-#if (SENSOR_TYPE == SHT3X)
-#include "sht3x_params.h"
-#endif
-#if (SENSOR_TYPE == SCD4X)
-#include "scd4x_params.h"
-#endif
-#if (SENSOR_TYPE == ATLAS_PH)
-#include "atlas_ph_params.h"
-#endif
-#if (SENSOR_TYPE == ATLAS_EC)
-#include "atlas_ec_params.h"
-#endif
-#if ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500) || (SENSOR_TYPE == RK500_02) || \
-     (SENSOR_TYPE == RK110_02) || (SENSOR_TYPE == RK100_02) || (SENSOR_TYPE == RK500_13) || (SENSOR_TYPE == RS_ECTH))
-#include "mb_master_rtu.h"
-#endif
 #include "utils.h"
 #include "syslog.h"
 #include "syscfg.h"
@@ -24,9 +9,23 @@
 #include "sys_status.h"
 #include "main.h"
 #include "filelog.h"
-
-#include <string.h>
-#include <math.h>
+#include "config.h"
+#if (CONFIG_DATALOGGER_SHT3X)
+#include "sht3x_params.h"
+#endif
+#if (CONFIG_DATALOGGER_SCD4X)
+#include "scd4x_params.h"
+#endif
+#if (CONFIG_DATALOGGER_ATLAS_PH)
+#include "atlas_ph_params.h"
+#endif
+#if (CONFIG_DATALOGGER_ATLAS_EC)
+#include "atlas_ec_params.h"
+#endif
+#if ((CONFIG_DATALOGGER_RK520_02) || (CONFIG_DATALOGGER_SWSR7500) || (CONFIG_DATALOGGER_RK500_02) || \
+     (CONFIG_DATALOGGER_RK110_02) || (CONFIG_DATALOGGER_RK100_02) || (CONFIG_DATALOGGER_RK500_13) || (CONFIG_DATALOGGER_RS_ECTH))
+#include "mb_master_rtu.h"
+#endif
 
 #define MIN_READ_CNT 2
 
@@ -49,17 +48,17 @@ typedef enum {
 
 static const char* TAG = "sensor_task";
 
-#if (SENSOR_TYPE == SHT3X)
+#if (CONFIG_DATALOGGER_SHT3X)
 sht3x_dev_t dev;
-#elif (SENSOR_TYPE == SCD4X)
+#elif (CONFIG_DATALOGGER_SCD4X)
 scd4x_dev_t dev;
-#elif (SENSOR_TYPE == ATLAS_PH)
+#elif (CONFIG_DATALOGGER_ATLAS_PH)
 atlas_ph_dev_t dev;
-#elif (SENSOR_TYPE == ATLAS_EC)
+#elif (CONFIG_DATALOGGER_ATLAS_EC)
 atlas_ec_dev_t dev;
-#elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500) || (SENSOR_TYPE == RK500_02) || \
-       (SENSOR_TYPE == RK110_02) || (SENSOR_TYPE == RK100_02) || (SENSOR_TYPE == RK500_13) || \
-       (SENSOR_TYPE == RS_ECTH))
+#elif ((CONFIG_DATALOGGER_RK520_02) || (CONFIG_DATALOGGER_SWSR7500) || (CONFIG_DATALOGGER_RK500_02) || \
+       (CONFIG_DATALOGGER_RK110_02) || (CONFIG_DATALOGGER_RK100_02) || (CONFIG_DATALOGGER_RK500_13) || \
+       (CONFIG_DATALOGGER_RS_ECTH))
 int num_characteristic = 0;
 mb_characteristic_info_t mb_characteristic[3] = { 0 };
 #endif
@@ -89,30 +88,30 @@ int sensor_init(void) {
   return res;
 #endif
 
-#if (SENSOR_TYPE == SHT3X)
+#if (CONFIG_DATALOGGER_SHT3X)
   if ((res = sht3x_init(&dev, &sht3x_params[0])) != SHT3X_OK) {
     LOGI(TAG, "Could not initialize SHT3x sensor = %d", res);
     return res;
   }
-#elif (SENSOR_TYPE == SCD4X)
+#elif (CONFIG_DATALOGGER_SCD4X)
   // Please implement the SCD4x initialize code.
   if ((res = scd4x_init(&dev, &scd4x_params[0])) != 0) {
     LOGI(TAG, "Could not initialize SCD4X sensor = %d", res);
     return res;
   }
-#elif (SENSOR_TYPE == ATLAS_PH)
+#elif (CONFIG_DATALOGGER_ATLAS_PH)
   if ((res = atlas_ph_init(&dev, &atlas_ph_params[0])) != 0) {
     LOGI(TAG, "Could not initialize Atlas pH sensor = %d", res);
     return res;
   }
-#elif (SENSOR_TYPE == ATLAS_EC)
+#elif (CONFIG_DATALOGGER_ATLAS_EC)
   if ((res = atlas_ec_init(&dev, &atlas_ec_params[0])) != 0) {
     LOGI(TAG, "Could not initialize Atlas EC sensor = %d", res);
     return res;
   }
-#elif ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == SWSR7500) || (SENSOR_TYPE == RK500_02) || \
-       (SENSOR_TYPE == RK110_02) || (SENSOR_TYPE == RK100_02) || (SENSOR_TYPE == RK500_13) || \
-       (SENSOR_TYPE == RS_ECTH))
+#elif ((CONFIG_DATALOGGER_RK520_02) || (CONFIG_DATALOGGER_SWSR7500) || (CONFIG_DATALOGGER_RK500_02) || \
+       (CONFIG_DATALOGGER_RK110_02) || (CONFIG_DATALOGGER_RK100_02) || (CONFIG_DATALOGGER_RK500_13) || \
+       (CONFIG_DATALOGGER_RS_ECTH))
   // Refer to the modbus function code and register in EC Water RK500-13.pdf
   // << Water EC Sensor >>
   // Slave ID = 0x07, Function Code = 0x03, Start Address = 0x0000, Read Register Len = 0x000A
@@ -131,7 +130,7 @@ int sensor_init(void) {
   //  { 2, "EC", "mS", DATA_U16, 2, 0x05, MB_HOLDING_REG, 0x0002, 0x0001 },
   // };
 
-#if (SENSOR_TYPE == RK520_02)
+#if (CONFIG_DATALOGGER_RK520_02)
   // Rika Soil EC Sensor
   /**
   mb_characteristic_info_t mb_soil_ec[3] = {
@@ -146,7 +145,7 @@ int sensor_init(void) {
   memcpy(&mb_characteristic, mb_soil_ec, sizeof(mb_soil_ec));
   num_characteristic = 1;
 
-#elif (SENSOR_TYPE == RS_ECTH)
+#elif (CONFIG_DATALOGGER_RS_ECTH)
   mb_characteristic_info_t mb_soil_ec[3] = {
     { 0, "Data_1", "Binary", DATA_BINARY, 6, RENKE_SEC_SLAVE_ID_1, MB_HOLDING_REG, 0x0000, 0x0003 },
     { 1, "Data_2", "Binary", DATA_BINARY, 6, RENKE_SEC_SLAVE_ID_2, MB_HOLDING_REG, 0x0000, 0x0003 },
@@ -154,34 +153,34 @@ int sensor_init(void) {
   };
   memcpy(&mb_characteristic, mb_soil_ec, sizeof(mb_soil_ec));
   num_characteristic = 3;
-#elif (SENSOR_TYPE == SWSR7500)
+#elif (CONFIG_DATALOGGER_SWSR7500)
   // Korea Digital Solar Radiation(Pyranometer) Sensor
   mb_characteristic_info_t mb_solar[1] = {
     { 0, "Pyranometer", "W", DATA_U16, 2, KD_SOLAR_SLAVE_ID, MB_INPUT_REG, 0x0006, 0x0001 },
   };
   memcpy(&mb_characteristic, mb_solar, sizeof(mb_solar));
   num_characteristic = 1;
-#elif (SENSOR_TYPE == RK500_02)
+#elif (CONFIG_DATALOGGER_RK500_02)
   // Rika Water PH Sensor
   mb_characteristic_info_t mb_water_ph[3] = {
     { 0, "PH", "ph", DATA_U16, 2, RK_WPH_SLAVE_ID, MB_HOLDING_REG, 0x0000, 0x0001 },
   };
   memcpy(&mb_characteristic, mb_water_ph, sizeof(mb_water_ph));
   num_characteristic = 1;
-#elif (SENSOR_TYPE == RK110_02)
+#elif (CONFIG_DATALOGGER_RK110_02)
   // Rika Wind Direction Sensor
   mb_characteristic_info_t mb_wind_direction[1] = { { 0, "Wind_direction", "degree", DATA_U16, 2, RK_WD_SLAVE_ID,
                                                       MB_HOLDING_REG, 0x0000, 0x0001 } };
   memcpy(&mb_characteristic, mb_wind_direction, sizeof(mb_wind_direction));
   num_characteristic = 1;
-#elif (SENSOR_TYPE == RK100_02)
+#elif (CONFIG_DATALOGGER_RK100_02)
   // Rika Wind Speed Sensor
   mb_characteristic_info_t mb_wind_speed[1] = {
     { 0, "Wind_speed", "m/s", DATA_U16, 2, RK_WS_SLAVE_ID, MB_HOLDING_REG, 0x0000, 0x0001 },
   };
   memcpy(&mb_characteristic, mb_wind_speed, sizeof(mb_wind_speed));
   num_characteristic = 1;
-#elif (SENSOR_TYPE == RK500_13)
+#elif (CONFIG_DATALOGGER_RK500_13)
   mb_characteristic_info_t mb_water_ec[1] = { { 0, "Data", "Binary", DATA_BINARY, 20, RK_WEC_SLAVE_ID, MB_HOLDING_REG,
                                                 0x0000, 0x000A } };
   memcpy(&mb_characteristic, mb_water_ec, sizeof(mb_water_ec));
@@ -205,7 +204,7 @@ int sensor_init(void) {
   return res;
 }
 
-#if (SENSOR_TYPE == SHT3X)
+#if (CONFIG_DATALOGGER_SHT3X)
 int read_temperature_humidity(void) {
   int res = 0;
   int err_cnt = 0;
@@ -255,7 +254,7 @@ int read_temperature_humidity(void) {
 }
 #endif
 
-#if (SENSOR_TYPE == SCD4X)
+#if (CONFIG_DATALOGGER_SCD4X)
 int read_co2_temperature_humidity(void) {
   int res = 0;
 
@@ -303,7 +302,7 @@ int read_co2_temperature_humidity(void) {
 }
 #endif
 
-#if ((SENSOR_TYPE == RK520_02) || (SENSOR_TYPE == RS_ECTH))
+#if ((CONFIG_DATALOGGER_RK520_02) || (CONFIG_DATALOGGER_RS_ECTH))
 float convert_bulk_to_saturation_ec(float temp, float mos, float ec) {
   float raw, eb, ep, op, saturation_ec;
 
@@ -323,7 +322,7 @@ float convert_bulk_to_saturation_ec(float temp, float mos, float ec) {
 }
 #endif
 
-#if (SENSOR_TYPE == RK520_02)
+#if (CONFIG_DATALOGGER_RK520_02)
 int read_soil_ec(void) {
   int res = 0;
   int data_len = 0;
@@ -387,7 +386,7 @@ int read_soil_ec(void) {
 }
 #endif
 
-#if (SENSOR_TYPE == RS_ECTH)
+#if (CONFIG_DATALOGGER_RS_ECTH)
 int read_soil_ec_rs_ecth(void) {
   int res = 0;
   int data_len = 0;
@@ -460,7 +459,7 @@ int read_soil_ec_rs_ecth(void) {
 }
 #endif
 
-#if (SENSOR_TYPE == RK500_02)
+#if (CONFIG_DATALOGGER_RK500_02)
 int read_water_ph(void) {
   int res = 0;
   int data_len = 0;
@@ -496,7 +495,7 @@ int read_water_ph(void) {
 }
 #endif
 
-#if (SENSOR_TYPE == SWSR7500)
+#if (CONFIG_DATALOGGER_SWSR7500)
 int read_solar_radiation(void) {
   int res = 0;
   int data_len = 0;
@@ -526,7 +525,7 @@ int read_solar_radiation(void) {
 }
 #endif
 
-#if (SENSOR_TYPE == ATLAS_PH)
+#if (CONFIG_DATALOGGER_ATLAS_PH)
 int read_ph(void) {
   int res = 0;
   char s_ph[10] = { 0 };
@@ -558,7 +557,7 @@ int atlas_ph_cal_cmd(int argc, char** argv) {
 }
 #endif
 
-#if (SENSOR_TYPE == ATLAS_EC)
+#if (CONFIG_DATALOGGER_ATLAS_EC)
 int read_ec(void) {
   int res = 0;
   char s_ec[10] = { 0 };
@@ -606,7 +605,7 @@ int atlas_ec_probe_cmd(int argc, char** argv) {
 }
 #endif
 
-#if (SENSOR_TYPE == RK110_02)
+#if (CONFIG_DATALOGGER_RK110_02)
 int read_wind_direction(void) {
   int res = 0;
   int data_len = 0;
@@ -638,7 +637,7 @@ int read_wind_direction(void) {
 }
 #endif
 
-#if (SENSOR_TYPE == RK100_02)
+#if (CONFIG_DATALOGGER_RK100_02)
 int read_wind_speed(void) {
   int res = 0;
   int data_len = 0;
@@ -672,7 +671,7 @@ int read_wind_speed(void) {
 }
 #endif
 
-#if (SENSOR_TYPE == RK500_13)
+#if (CONFIG_DATALOGGER_RK500_13)
 float convert_uint32_to_float(uint16_t low, uint16_t high) {
   float fValue = 0.0;
   uint32_t value = ((uint32_t)low << 16) | high;
@@ -743,7 +742,7 @@ int read_test_data(void) {
   snprintf(buf, sizeof(buf), "%f", random);
   sysevent_set(I2C_TEMPERATURE_EVENT, buf);
   sysevent_set(I2C_HUMIDITY_EVENT, buf);
-#if (SENSOR_TYPE == SCD4X)
+#if (CONFIG_DATALOGGER_SCD4X)
   sysevent_set(I2C_CO2_EVENT, buf);
 #endif
   if (is_battery_model())
@@ -767,27 +766,27 @@ int sensor_read(void) {
   rc = read_test_data();
   return rc;
 #endif
-#if (SENSOR_TYPE == SHT3X)
+#if (CONFIG_DATALOGGER_SHT3X)
   rc = read_temperature_humidity();
-#elif (SENSOR_TYPE == SCD4X)
+#elif (CONFIG_DATALOGGER_SCD4X)
   rc = read_co2_temperature_humidity();
-#elif (SENSOR_TYPE == RK520_02)
+#elif (CONFIG_DATALOGGER_RK520_02)
   rc = read_soil_ec();
-#elif (SENSOR_TYPE == RS_ECTH)
+#elif (CONFIG_DATALOGGER_RS_ECTH)
   rc = read_soil_ec_rs_ecth();
-#elif (SENSOR_TYPE == RK500_02)
+#elif (CONFIG_DATALOGGER_RK500_02)
   rc = read_water_ph();
-#elif (SENSOR_TYPE == SWSR7500)
+#elif (CONFIG_DATALOGGER_SWSR7500)
   rc = read_solar_radiation();
-#elif (SENSOR_TYPE == ATLAS_PH)
+#elif (CONFIG_DATALOGGER_ATLAS_PH)
   rc = read_ph();
-#elif (SENSOR_TYPE == ATLAS_EC)
+#elif (CONFIG_DATALOGGER_ATLAS_EC)
   rc = read_ec();
-#elif (SENSOR_TYPE == RK110_02)
+#elif (CONFIG_DATALOGGER_RK110_02)
   rc = read_wind_direction();
-#elif (SENSOR_TYPE == RK100_02)
+#elif (CONFIG_DATALOGGER_RK100_02)
   rc = read_wind_speed();
-#elif (SENSOR_TYPE == RK500_13)
+#elif (CONFIG_DATALOGGER_RK500_13)
   rc = read_rika_water_ec();
 #endif
   return rc;
