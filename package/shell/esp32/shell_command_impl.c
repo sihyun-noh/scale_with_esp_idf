@@ -28,14 +28,7 @@
 #include "icmp_echo_cmd.h"
 #include "sysfile.h"
 #include "wifi_manager.h"
-
-#ifdef DS3231_I2C_SDA_PIN
-#include "rtc_task.h"
-extern int set_interval_cmd(int argc, char **argv);
-extern int get_interval_cmd(int argc, char **argv);
-#endif
-extern int rtc_set_time_cmd(int argc, char **argv);
-extern int rtc_get_time_cmd(int argc, char **argv);
+#include "time_api.h"
 
 extern void stop_shell(void);
 
@@ -298,7 +291,6 @@ static sc_cmd_t commands[] = {
       .help = "Get RTC Time",
       .func = rtc_get_time_cmd,
   },
-#ifdef DS3231_I2C_SDA_PIN
   {
       .name = "set_interval",
       .help = "Set interval",
@@ -309,7 +301,6 @@ static sc_cmd_t commands[] = {
       .help = "Get interval",
       .func = get_interval_cmd,
   },
-#endif
 };
 
 /**

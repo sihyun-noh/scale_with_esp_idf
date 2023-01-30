@@ -98,6 +98,11 @@ void rtc_set_time(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8
 void rtc_get_time(struct tm* time);
 #endif
 
+int rtc_set_time_cmd(int argc, char** argv);
+int rtc_get_time_cmd(int argc, char** argv);
+int set_interval_cmd(int argc, char** argv);
+int get_interval_cmd(int argc, char** argv);
+
 #ifdef __cplusplus
 }
 #endif

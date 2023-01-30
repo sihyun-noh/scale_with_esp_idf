@@ -25,6 +25,7 @@
 #include "esp_sntp.h"
 #include "log.h"
 #include "syscfg.h"
+#include "sys_config.h"
 #include "time_api.h"
 
 #if defined(CONFIG_RTC_DS3231_PACKAGE)
@@ -318,6 +319,33 @@ int rtc_get_time_cmd(int argc, char** argv) {
 
   printf("TIME: %04d-%02d-%02d-%02d-%02d-%02d\n", timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday,
          timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+
+  return 0;
+}
+
+int set_interval_cmd(int argc, char** argv) {
+  int interval = 0;
+
+  if (argc != 2) {
+    printf("Usage: 1 ~ 3600 (sec)  <ex:set_interval 60>\n");
+    return -1;
+  }
+  interval = atoi(argv[1]);
+  if ((interval < 1) || (interval > 3600)) {
+    printf("invalid argument!\n");
+    return -1;
+  }
+
+  syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, argv[1]);
+
+  return 0;
+}
+
+int get_interval_cmd(int argc, char** argv) {
+  char s_send_interval[10] = { 0 };
+
+  syscfg_get(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, s_send_interval, sizeof(s_send_interval));
+  printf("INTERVAL: %d\n", atoi(s_send_interval));
 
   return 0;
 }
