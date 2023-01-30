@@ -52,21 +52,21 @@ static void generate_default_serial(char *serial_no, size_t buff_len) {
   int seq_id = 1;        // 00001 ~ FFFFF
   char prod_code[10] = { 0 };
 
-#if (CONFIG_SENSOR_SHT3X)
+#if (CONFIG_SENSOR_SHT3X || CONFIG_DATALOGGER_SHT3X)
   snprintf(prod_code, sizeof(prod_code), "%s", "TH");
-#elif (CONFIG_SENSOR_SCD4X)
+#elif (CONFIG_SENSOR_SCD4X || CONFIG_DATALOGGER_SCD4X)
   snprintf(prod_code, sizeof(prod_code), "%s", "CO");
-#elif (CONFIG_SENSOR_RK520_02)
+#elif (CONFIG_SENSOR_RK520_02 || CONFIG_DATALOGGER_RK520_02 || CONFIG_DATALOGGER_RS_ECTH)
   snprintf(prod_code, sizeof(prod_code), "%s", "SE");
-#elif (CONFIG_SENSOR_SWSR7500)
+#elif (CONFIG_SENSOR_SWSR7500 || CONFIG_DATALOGGER_SWSR7500)
   snprintf(prod_code, sizeof(prod_code), "%s", "SO");
-#elif (CONFIG_SENSOR_ATLAS_PH || CONFIG_SENSOR_RK500_02)
+#elif (CONFIG_SENSOR_ATLAS_PH || CONFIG_SENSOR_RK500_02 || CONFIG_DATALOGGER_ATLAS_PH || CONFIG_DATALOGGER_RK500_02)
   snprintf(prod_code, sizeof(prod_code), "%s", "WP");
-#elif (CONFIG_SENSOR_ATLAS_EC || CONFIG_SENSOR_RK500_13)
+#elif (CONFIG_SENSOR_ATLAS_EC || CONFIG_SENSOR_RK500_13 || CONFIG_DATALOGGER_ATLAS_EC || CONFIG_DATALOGGER_RK500_13)
   snprintf(prod_code, sizeof(prod_code), "%s", "WE");
-#elif (CONFIG_SENSOR_RK110_02)
+#elif (CONFIG_SENSOR_RK110_02 || CONFIG_DATALOGGER_RK110_02)
   snprintf(prod_code, sizeof(prod_code), "%s", "WD");
-#elif (CONFIG_SENSOR_RK100_02)
+#elif (CONFIG_SENSOR_RK100_02 || CONFIG_DATALOGGER_RK100_02)
   snprintf(prod_code, sizeof(prod_code), "%s", "WS");
 #endif
 #if (CONFIG_ACTUATOR_SWITCH)
@@ -214,6 +214,23 @@ void generate_syscfg(void) {
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLIHD");
 #elif (CONFIG_IRRIGATION_CHILD)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLICH");
+#endif
+#if (CONFIG_DATALOGGER_SHT3X)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDTH");
+#elif (CONFIG_DATALOGGER_SCD4X)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDCO");
+#elif (CONFIG_DATALOGGER_RK520_02 || CONFIG_DATALOGGER_RS_ECTH)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDSE");
+#elif (CONFIG_DATALOGGER_SWSR7500)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSSO");
+#elif (CONFIG_DATALOGGER_ATLAS_PH || CONFIG_DATALOGGER_RK500_02)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDWP");
+#elif (CONFIG_DATALOGGER_ATLAS_EC || CONFIG_DATALOGGER_RK500_13)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDWE");
+#elif (CONFIG_DATALOGGER_RK110_02)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDWD");
+#elif (CONFIG_DATALOGGER_RK100_02)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDWS");
 #endif
     syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
   }
