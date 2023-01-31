@@ -16,6 +16,7 @@
 #ifndef _DS3231_PARAMS_H_
 #define _DS3231_PARAMS_H_
 
+#include "sdkconfig.h"
 #include "ds3231.h"
 
 #ifdef __cplusplus

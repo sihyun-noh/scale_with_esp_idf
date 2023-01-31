@@ -1,3 +1,4 @@
+#include "sdkconfig.h"
 #include "sys_config.h"
 #include "esp_mac.h"
 #include "syslog.h"

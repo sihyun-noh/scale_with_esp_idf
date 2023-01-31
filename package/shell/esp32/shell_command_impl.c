@@ -13,6 +13,7 @@
  * IMPLIED, OR STATUTORY, INCLUDING THE IMPLIED WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
+#include "sdkconfig.h"
 #include "shell_command_impl.h"
 #include "shell_console_impl_priv.h"
 #include "syscfg_cmd.h"
