@@ -269,7 +269,7 @@ void check_response(irrigation_message_t msg) {
       set_control_status(CHECK_SCEHDULE);
     } break;
 
-    case DEVICE_ERROR: 
+    case DEVICE_ERROR:
     case ALL_COMPLETE: {
       init_variable();
       set_control_status(CHECK_SCEHDULE);
@@ -291,7 +291,7 @@ void check_response(irrigation_message_t msg) {
         // 관수 완료를 HID 에 전달
         send_esp_data(ZONE_COMPLETE, ZONE_COMPLETE, 0);
 
-        LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);     
+        LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
         set_control_status(WAIT_STATE);
       }
     } break;
@@ -403,7 +403,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
 
       case REQ_TIME_SYNC: {
         send_esp_data(TIME_SYNC, TIME_SYNC, 7);
-        
+
         LOGI(TAG, "SEND TIME SYNC / REQ_TIME_SYNC!!");
         set_control_status(WAIT_STATE);
       } break;
@@ -493,7 +493,7 @@ void check_schedule(void) {
 void check_retry_cmd(void) {
   if (retryCntMsg[0] > 3) {
     LOGI(TAG, "HID Device ERROR !! ");
-    set_control_status(CHECK_SCEHDULE);
+    set_control_status(ERROR);
     retryCntMsg[0] = 0;
     if (sendCmd == ZONE_COMPLETE) {
       flowDoneCnt++;
@@ -510,6 +510,7 @@ void check_retry_cmd(void) {
 
   if (childErrorCnt > 0) {
     send_esp_data(DEVICE_ERROR, DEVICE_ERROR, 0);
+    set_control_status(ERROR);
   }
 }
 
@@ -629,6 +630,10 @@ static void control_task(void* pvParameters) {
 
         set_control_status(WAIT_STATE);
         LOGI(TAG, "ALL CHILD FLOW COMPLETE!!");
+      } break;
+
+      case ERROR: {
+        LOGI(TAG, "No Response from sets !!, Fix SET Devices state & RESET System !!");
       } break;
 
       default: break;
