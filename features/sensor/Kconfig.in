@@ -1,25 +1,25 @@
 menu "Sensors Features"
   config SHT3X_FEATURE
     bool "SHT3x feature"
-    default "y"
+    default "n"
     help
       SHT3x Temperature and Humidity Sensor
 
   config SCD4X_FEATURE
     bool "SCD4x feature"
-    default "y"
+    default "n"
     help
       SCD4x CO2 and Temperature Humidity Sensor
 
   config ATLAS_PH_FEATURE
     bool "Atlas pH feature"
-    default "y"
+    default "n"
     help
       Atlas pH Sensor
 
   config ATLAS_EC_FEATURE
     bool "Atlas EC feature"
-    default "y"
+    default "n"
     help
       Atlas EC Sensor
 endmenu # Sensors

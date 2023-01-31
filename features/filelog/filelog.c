@@ -13,10 +13,6 @@
  * IMPLIED, OR STATUTORY, INCLUDING THE IMPLIED WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
-#include "filelog.h"
-#include "log.h"
-#include "sysfile.h"
-
 #include <signal.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -27,6 +23,10 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <sys/unistd.h>
+
+#include "filelog.h"
+#include "log.h"
+#include "sysfile.h"
 
 #define FILE_LOG_MAX_BUFF_SIZE 1024
 #define FILE_LOG_MAX_MSG_SIZE (FILE_LOG_MAX_BUFF_SIZE)
