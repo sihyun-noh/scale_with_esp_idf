@@ -46,7 +46,7 @@ int format_spiffs_impl(void);
  *
  * @return int 0 on success, -1 on failure,
  */
-int show_file_impl(void);
+int show_file_spiffs_impl(void);
 
 /**
  * @brief write log data to file.
@@ -55,7 +55,7 @@ int show_file_impl(void);
  * @param log_data Log data.
  * @return int 0 on success, -1 on failure,
  */
-int write_log_data_to_file_impl(const char *log_file_name, const char *log_data);
+int write_log_data_to_file_spiffs_impl(const char *log_file_name, const char *log_data);
 
 #ifdef __cplusplus
 }

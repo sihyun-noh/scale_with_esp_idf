@@ -73,10 +73,11 @@ int format_spiffs_impl() {
   return 0;
 }
 
-int show_file_impl() {
+int show_file_spiffs_impl(void) {
   int num = 0;
   DIR *d;
   struct dirent *dir;
+
   d = opendir(s_root_path);
   if (d) {
     while ((dir = readdir(d)) != NULL) {
@@ -90,7 +91,7 @@ int show_file_impl() {
   }
 }
 
-int write_log_data_to_file_impl(const char *log_file_name, const char *log_data) {
+int write_log_data_to_file_spiffs_impl(const char *log_file_name, const char *log_data) {
   FILE *fd = NULL;
   fd = fopen(log_file_name, "a");
   if (fd == NULL) {

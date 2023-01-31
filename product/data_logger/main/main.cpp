@@ -269,9 +269,9 @@ void app_main(void) {
     return;
   }
 
-#if defined(SPIFFS_IMPL)
+#if defined(CONFIG_SPIFFS_PACKAGE)
   const char* file_path = "/spiffs/";
-#elif defined(LITTLEFS_IMPL)
+#elif defined(CONFIG_LITTLEFS_PACKAGE)
   const char* file_path = "/storage";
   if ((rc = mkdir_datalogger()) != SYSINIT_OK) {
     LOGE(TAG, "Failed to make directory, error = [%d]", rc);

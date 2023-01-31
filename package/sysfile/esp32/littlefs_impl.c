@@ -57,7 +57,7 @@ int format_littlefs_impl(void) {
   return 0;
 }
 
-int show_file_impl() {
+int show_file_littlefs_impl(void) {
   int num = 0;
   DIR *d;
   struct dirent *dir;
@@ -77,7 +77,7 @@ int show_file_impl() {
   }
 }
 
-int write_log_data_to_file_impl(const char *log_file_name, const char *log_data) {
+int write_log_data_to_file_littlefs_impl(const char *log_file_name, const char *log_data) {
   FILE *fd = NULL;
 
   fd = fopen(log_file_name, "a");
