@@ -4,18 +4,6 @@
 /******************************************
  * Board version
  *****************************************/
-#define SENS_OLIMEX_HW 10
-
-#define SENS_TTGO_HW1 11
-#define SENS_TTGO_HW3 (SENS_TTGO_HW1 + 2)
-
-#define SENS_GLS_HW 20 /* Greenlabs HW */
-
-#define SENS_BOARD_VER SENS_GLS_HW
-//#define SENS_BOARD_VER SENS_OLIMEX_HW
-
-#if defined(SENS_BOARD_VER) && (SENS_BOARD_VER >= SENS_TTGO_HW1)
-
 #if (CONFIG_DATALOGGER_SHT3X)
 #define SHT3X_I2C_SDA_PIN 1
 #define SHT3X_I2C_SCL_PIN 2
@@ -55,44 +43,14 @@
 #define BAUD_RATE 38400
 #endif
 
-#elif defined(SENS_BOARD_VER) && (SENS_BOARD_VER == SENS_OLIMEX_HW)
-#if (CONFIG_DATALOGGER_SHT3X)
-#define SHT3X_I2C_SDA_PIN 13
-#define SHT3X_I2C_SCL_PIN 16
-#elif (CONFIG_DATALOGGER_SCD4X)
-#define SCD4X_I2C_SDA_PIN 13
-#define SCD4X_I2C_SCL_PIN 16
-#elif (CONFIG_DATALOGGER_ATLAS_PH)
-#define ATLAS_PH_I2C_SDA_PIN 13
-#define ATLAS_PH_I2C_SCL_PIN 16
-#elif (CONFIG_DATALOGGER_ATLAS_EC)
-#define ATLAS_EC_I2C_SDA_PIN 13
-#define ATLAS_EC_I2C_SCL_PIN 16
-#elif (CONFIG_DATALOGGER_RK520_02)
-// Olimex Board PIN numbers for U1RX and U1TX
-#define MB_RX_PIN 36
-#define MB_TX_PIN 4
-#define RTS_UNCHANGED (-1)
-#define CTS_UNCHANGED (-1)
-#define UART_PORT_NUM 1
-#endif
-#endif
-
 #define BATTERY_ADC_CHANNEL  3  // GPIO_4
 #define BATTERY_READ_ON_GPIO 40 // GPIO_40
 
 // esp32s3  datalogger_v2 rs485 power control pin
 #define SENSOR_POWER_CONTROL_PORT 41  // GPIO41
 
-#define LED_RED 25
+#define LED_RED   25
 #define LED_GREEN 26
-#define LED_BLUE 12
-
-#define SDCARD_SPI_MISO 2
-#define SDCARD_SPI_MOSI 15
-#define SDCARD_SPI_CLK 14
-#define SDCARD_SPI_CS 13
-
-#define SDCARD_SPI_DMA_CHAN 1
+#define LED_BLUE  12
 
 #endif /* _CONFIG_H_ */
