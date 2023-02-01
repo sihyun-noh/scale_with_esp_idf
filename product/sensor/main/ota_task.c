@@ -105,8 +105,8 @@ void start_ota_fw_task(char* fw_download_url) {
   download_url = calloc(1, MAX_FW_DOWNLOAD_URL);
   if (download_url) {
     snprintf(download_url, MAX_FW_DOWNLOAD_URL, "%s", fw_download_url);
-    xTaskCreate((TaskFunction_t)ota_fw_task, "ota_fw_task", SENS_OTAFW_TASK_STACK_SIZE, &ota_task_params,
-                SENS_OTAFW_TASK_PRIORITY, &ota_fw_handle);
+    xTaskCreate((TaskFunction_t)ota_fw_task, "ota_fw_task", 4096, &ota_task_params,
+                (tskIDLE_PRIORITY + 5), &ota_fw_handle);
   } else {
     LOGE(TAG, "Failed to calloc for download_url");
   }
@@ -133,8 +133,8 @@ int start_ota_fw_task_wait(char* fw_download_url) {
 
     xTaskNotifyStateClear(NULL);
     snprintf(download_url, MAX_FW_DOWNLOAD_URL, "%s", fw_download_url);
-    if (xTaskCreate(ota_fw_task, (char const*)"ota_fw_task", SENS_OTAFW_TASK_STACK_SIZE, &ota_task_params_wait,
-                    SENS_OTAFW_TASK_PRIORITY, &ota_fw_handle) != pdPASS) {
+    if (xTaskCreate(ota_fw_task, (char const*)"ota_fw_task", 4096, &ota_task_params_wait,
+                    (tskIDLE_PRIORITY + 5), &ota_fw_handle) != pdPASS) {
       LOGW(TAG, "[%s] Failed to create OTA FW Task", __FUNCTION__);
     } else {
       for (;;) {

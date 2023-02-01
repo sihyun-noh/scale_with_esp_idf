@@ -1295,7 +1295,6 @@ void create_mqtt_task(void) {
 
 #endif
 
-  xTaskCreatePinnedToCore(mqtt_task, MQTT_TASK_NAME, SENS_MQTT_TASK_STACK_SIZE, NULL, SENS_MQTT_TASK_PRIORITY,
+  xTaskCreatePinnedToCore(mqtt_task, MQTT_TASK_NAME, 4096, NULL, (tskIDLE_PRIORITY + 5),
                           &mqtt_task_handle, 1);
-  // xTaskCreatePinnedToCore(mqtt_task_restart, "restart", 2048, NULL, 10, NULL, 1);
 }
