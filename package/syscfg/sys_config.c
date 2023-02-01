@@ -237,7 +237,12 @@ void generate_syscfg(void) {
   }
   syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
   if (power_mode[0] == 0) {
+#if (CONFIG_BS_PLATFORM_ACTUATORS)
+    syscfg_set(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, "P");
+#else
     syscfg_set(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, "B");
+#endif
+    syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
   }
   syscfg_get(SYSCFG_I_HWVERSION, SYSCFG_N_HWVERSION, hw_version, sizeof(hw_version));
   if (hw_version[0] == 0) {
@@ -268,10 +273,15 @@ void generate_syscfg(void) {
   }
   syscfg_get(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, send_interval, sizeof(send_interval));
   if (send_interval[0] == 0) {
-    if (!strncmp(power_mode, "B", 1))
+    if (!strncmp(power_mode, "B", 1)) {
+#if (CONFIG_BS_PLATFORM_DATALOGGER)
       syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, "600");
-    else
+#else
+      syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, "60");
+#endif
+    } else {
       syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, "30");
+    }
   }
 
   syscfg_get(SYSCFG_I_OP_TIME, SYSCFG_N_OP_TIME, op_time, sizeof(op_time));
