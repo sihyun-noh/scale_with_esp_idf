@@ -29,7 +29,7 @@ typedef enum {
   SEN3,
 } sen_set_t;
 
-#if (CONFIG_LITTLEFS_ENABLE)
+#if (CONFIG_LITTLEFS_PACKAGE)
 #define SEN_DATA_PATH_1 "/storage/Sen1"
 #define SEN_DATA_PATH_2 "/storage/Sen2"
 #define SEN_DATA_PATH_3 "/storage/Sen3"
