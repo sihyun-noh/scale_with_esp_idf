@@ -187,7 +187,7 @@ void loop_task(void) {
       } break;
       case MONITOR_MODE: {
         if (!is_time_sync_within_uptime(600 * 1000)) {
-          send_command_data(REQ_TIME_SYNC_COMMAND, NULL, 0);
+          send_command_data(REQ_TIME_SYNC, NONE, NULL, 0);
           LOGI(TAG, "Send Request Time sync command!!!");
         }
         set_operation_mode(SLEEP_MODE);

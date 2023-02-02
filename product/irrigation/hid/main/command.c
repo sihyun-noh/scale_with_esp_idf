@@ -1,7 +1,7 @@
 #include <string.h>
 
+#include "log.h"
 #include "command.h"
-#include "comm_packet.h"
 #include "espnow.h"
 #include "time_api.h"
 
@@ -15,31 +15,29 @@ static time_t get_current_time(void) {
   return mktime(&timeinfo);
 }
 
-bool send_command_data(command_t cmd, void *payload, size_t payload_len) {
-  irrigation_message_t message;
+bool send_command_data(message_type_t sender, message_type_t receiver, void *payload, size_t payload_len) {
+  irrigation_message_t message = { 0 };
 
-  memset(&message, 0x00, sizeof(message));
+  message.sender_type = sender;
+  message.current_time = get_current_time();
 
-  switch (cmd) {
-    case SET_CONFIG_COMMAND: {
-      message.sender_type = SET_CONFIG;
-      memcpy(&message.config, (config_value_t *)payload, payload_len);
-      message.current_time = get_current_time();
+  switch (sender) {
+    case SET_CONFIG: {
+      if (payload && payload_len) {
+        memcpy(&message.payload, payload, payload_len);
+      }
     } break;
-    case RESPONSE_COMMAND: {
-      message.sender_type = RESPONSE;
-      memcpy(&message.receive_type, (message_type_t *)payload, payload_len);
-      message.resp = SUCCESS;
-      message.current_time = get_current_time();
+    case RESPONSE: {
+      message.receive_type = receiver;
     } break;
-    case REQ_TIME_SYNC_COMMAND: {
-      message.sender_type = REQ_TIME_SYNC;
-    } break;
-    case STOP_COMMAND: {
-      message.sender_type = FORCE_STOP;
+    case UPDATE_DEVICE_ADDR: {
+      if (payload && payload_len) {
+        memcpy(&message.payload, payload, payload_len);
+      }
     } break;
     default: break;
   }
 
-  return espnow_send_data(espnow_get_master_addr(), (uint8_t *)&message, sizeof(message));
+  LOG_BUFFER_HEXDUMP("COMMAND", (uint8_t *)&message, sizeof(irrigation_message_t), LOG_INFO);
+  return espnow_send_data(espnow_get_master_addr(), (uint8_t *)&message, sizeof(irrigation_message_t));
 }

@@ -88,7 +88,7 @@ extern lv_obj_t *ui_Screen1FICLabel;
 extern lv_obj_t *ui_Screen1TimeLabel;
 extern lv_obj_t *ui_Screen1DateLabel;
 
-extern lv_obj_t *ui_SettingSelect_screen;
+extern lv_obj_t *ui_SS_screen;
 extern lv_obj_t *ui_SS_MainPanel;
 void ui_event_SS_OpSet_Button(lv_event_t *e);
 extern lv_obj_t *ui_SS_OpSet_Button;
@@ -96,7 +96,7 @@ extern lv_obj_t *ui_SS_OpSet_Label;
 void ui_event_SS_Device_mag_Button(lv_event_t *e);
 extern lv_obj_t *ui_SS_Device_mag_Button;
 extern lv_obj_t *ui_SS_Device_mag_Label;
-extern lv_obj_t *ui_DeviceManager_screen;
+extern lv_obj_t *ui_DM_screen;
 extern lv_obj_t *ui_DM_MainPanel;
 extern lv_obj_t *ui_DM_Roller_Label;
 extern lv_obj_t *ui_DM_Roller;
@@ -109,8 +109,8 @@ void ui_event_DM_Exit_Button(lv_event_t *e);
 extern lv_obj_t *ui_DM_Exit_Button;
 extern lv_obj_t *ui_DM_Exit_Label;
 void ui_event_DM_Dropdown_Select(lv_event_t *e);
-extern lv_obj_t *ui_DeviceManager_screen_Dropdown;
-extern lv_obj_t *ui_DeviceManagerReg_screen;
+extern lv_obj_t *ui_DM_screen_Dropdown;
+extern lv_obj_t *ui_DMR_screen;
 extern lv_obj_t *ui_DMR_MainPanel;
 extern lv_obj_t *ui_DMR_Keyboard;
 extern lv_obj_t *ui_DMR_TextArea;
@@ -119,7 +119,7 @@ extern lv_obj_t *ui_DMR_Reg_Label;
 void ui_event_DMR_Exit_Button(lv_event_t *e);
 extern lv_obj_t *ui_DMR_Exit_Button;
 extern lv_obj_t *ui_DMR_Exit_Label;
-extern lv_obj_t *ui_DeviceManagerReg_screen_Dropdown;
+extern lv_obj_t *ui_DMR_screen_Dropdown;
 void ui_event_DMR_Dropdown_Select(lv_event_t *e);
 
 void OnStartEvent(lv_event_t *e);
@@ -133,6 +133,9 @@ void OnSettingSaveEvent(lv_event_t *e);
 
 void DeviceManagementEvent(char *type, lv_event_t *e);
 void DM_roller_event(char *type, lv_event_t *e);
+
+void update_mac_address(void);
+void delete_mac_address(const char *device_type, char *mac_addr);
 
 void ui_init(void);
 

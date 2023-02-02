@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "comm_packet.h"
 #include "esp_now.h"
 
 #ifdef __cplusplus
@@ -55,10 +56,28 @@ void espnow_stop(void);
 bool espnow_add_peers(device_t device_mode);
 bool espnow_add_peer(const uint8_t *mac_addr, uint8_t channel, int netif);
 bool espnow_remove_peer(const uint8_t *mac_addr);
+int espnow_remove_peers(void);
 int espnow_list_peers(peer_info_t *peers, int max_peers);
 bool espnow_has_peer(const uint8_t *mac_addr);
 bool espnow_send_data(const uint8_t *mac_addr, const uint8_t *data, size_t len);
 uint8_t *espnow_get_master_addr(void);
+
+unsigned int ascii_to_hex(const char *str, size_t size, uint8_t *hex);
+
+/**
+ * @brief Get mac address (peer address) of requested device type
+ * @param dev, device type such as MAIN, HID, CHILD
+ * @param mac_address, mac address of device type
+ * @return true on success, false on failure
+ */
+bool get_mac_address(device_type_t dev, uint8_t *mac_address);
+
+/**
+ * @brief Set mac address (peer address) of device type to the syscfg
+ * @param dev, device type
+ * @param mac_address, mac address of device type
+ */
+void set_mac_address(device_type_t dev, char *mac_address);
 
 /**
  * @brief Find the ID matched with the Mac Address

@@ -298,6 +298,20 @@ void syscfg_set_flow_value(ZONE zone, char *flow_value) {
   }
 }
 
+void syscfg_get_flow_value(ZONE zone, char *flow_value, size_t value_len) {
+  int syscfg_idx[6] = { SYSCFG_I_ZONE1_FLOW, SYSCFG_I_ZONE2_FLOW, SYSCFG_I_ZONE3_FLOW,
+                        SYSCFG_I_ZONE4_FLOW, SYSCFG_I_ZONE5_FLOW, SYSCFG_I_ZONE6_FLOW };
+  char *syscfg_name[6] = { SYSCFG_N_ZONE1_FLOW, SYSCFG_N_ZONE2_FLOW, SYSCFG_N_ZONE3_FLOW,
+                           SYSCFG_N_ZONE4_FLOW, SYSCFG_N_ZONE5_FLOW, SYSCFG_N_ZONE6_FLOW };
+
+  if (zone >= 1 && zone <= 6) {
+    syscfg_get(syscfg_idx[zone - 1], syscfg_name[zone - 1], flow_value, value_len);
+    if (flow_value[0] == 0) {
+      flow_value[0] = 0x30;
+    }
+  }
+}
+
 void set_zone_flow_value(ZONE zone, int flow_value) {
   char flow[20] = { 0 };
   int total_flow_value = 0;

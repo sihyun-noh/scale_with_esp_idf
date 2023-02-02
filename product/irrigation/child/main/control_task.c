@@ -46,7 +46,7 @@ static time_t get_current_time(void) {
 }
 
 // receive mac addr 이 master mac addr 인지 확인 함수
-bool check_address_matching_master(const uint8_t* mac){
+bool check_address_matching_master(const uint8_t* mac) {
   if (memcmp(mac, masterAddress, sizeof(masterAddress)) == 0) {
     LOGI(TAG, "Receive data from Master Address");
     return true;
@@ -56,15 +56,17 @@ bool check_address_matching_master(const uint8_t* mac){
 
 bool send_esp_data(message_type_t sender, message_type_t receiver) {
   irrigation_message_t send_message;
-  memset(&send_message, 0x00, sizeof(send_message));
+
+  memset(&send_message, 0x00, sizeof(irrigation_message_t));
+
   send_message.sender_type = sender;
   send_message.receive_type = receiver;
   send_message.resp = SUCCESS;
-  send_message.deviceId = myId;
+  send_message.payload.dev_stat.deviceId = myId;
   send_message.current_time = get_current_time();
 
   if (receiver == TIME_SYNC) {
-    send_message.battery_level[myId] = read_battery_percentage();
+    send_message.payload.dev_stat.battery_level[myId] = read_battery_percentage();
   }
 
   return espnow_send_data(masterAddress, (uint8_t*)&send_message, sizeof(send_message));
@@ -75,10 +77,13 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
     LOGI(TAG, "Receive data from other SET");
     return;
   }
-  
-  irrigation_message_t recv_message;
-  memcpy(&recv_message, incomingData, sizeof(recv_message));
-  
+
+  irrigation_message_t recv_message = { 0 };
+
+  if (incomingData && (len == sizeof(irrigation_message_t))) {
+    memcpy(&recv_message, incomingData, sizeof(recv_message));
+  }
+
   LOGI(TAG, "Receive Data from Master");
   LOG_BUFFER_HEXDUMP(TAG, incomingData, len, LOG_INFO);
 
@@ -136,7 +141,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
       case SET_SLEEP: {
         LOGI(TAG, "Start sleep");
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-        sleep_timer_wakeup(recv_message.remain_time_sleep);
+        sleep_timer_wakeup(recv_message.payload.remain_time_sleep);
       } break;
 
       default: break;

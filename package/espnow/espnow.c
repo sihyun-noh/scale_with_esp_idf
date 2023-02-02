@@ -33,7 +33,7 @@ static bool b_register_peers = false;
 
 #define HID_CHILD_CNT 7
 
-static char *master_peer_list[8] = {
+static char *device_peer_list[8] = {
   SYSCFG_N_HID_MAC,    SYSCFG_N_CHILD1_MAC, SYSCFG_N_CHILD2_MAC, SYSCFG_N_CHILD3_MAC,
   SYSCFG_N_CHILD4_MAC, SYSCFG_N_CHILD5_MAC, SYSCFG_N_CHILD6_MAC, SYSCFG_N_MASTER_MAC
 };
@@ -93,7 +93,7 @@ int get_address_matching_id(void) {
 #endif
 
   for (int i = 0; i < 8; i++) {
-    if (syscfg_get(MFG_DATA, master_peer_list[i], s_compare_mac, sizeof(s_compare_mac))) {
+    if (syscfg_get(MFG_DATA, device_peer_list[i], s_compare_mac, sizeof(s_compare_mac))) {
       LOGE(TAG, "syscfg MAC Address read error");
       return -1;
     }
@@ -121,6 +121,7 @@ bool syscfg_get_to_add_peer(const char *key, uint8_t *mac_addr) {
   LOG_BUFFER_HEXDUMP(TAG, mac_addr, MAC_ADDR_LEN, LOG_INFO);
   return espnow_add_peer(mac_addr, CONFIG_ESPNOW_CHANNEL, ESPNOW_WIFI_IF);
 }
+
 // TODO : Implement to read the device's mac address from MFG data
 // and then add mac address to the peer list in accordance with device type
 // Add mac address read from the MFG data of each devices to the esp now peer list
@@ -147,7 +148,7 @@ bool espnow_add_peers(device_t device_mode) {
       espnow_add_peer(broadcastAddress, CONFIG_ESPNOW_CHANNEL, ESPNOW_WIFI_IF);
 
       for (int i = 0; i < HID_CHILD_CNT; i++) {
-        if (syscfg_get_to_add_peer(master_peer_list[i], macAddress[i])) {
+        if (syscfg_get_to_add_peer(device_peer_list[i], macAddress[i])) {
           b_register_peers = true;
         } else {
           LOGI(TAG, "Add peer Error");
@@ -197,6 +198,23 @@ int espnow_list_peers(peer_info_t *peers, int max_peers) {
   return peer_cnt;
 }
 
+int espnow_remove_peers(void) {
+  if (!b_ready) {
+    return 0;
+  }
+
+  LOGI(TAG, "Call espnow_remove_peers()");
+
+  int peer_cnt = 0;
+  esp_now_peer_info_t peer;
+  for (esp_err_t e = esp_now_fetch_peer(true, &peer); e == ESP_OK; e = esp_now_fetch_peer(false, &peer)) {
+    LOG_BUFFER_HEX(TAG, peer.peer_addr, MAC_ADDR_LEN);
+    esp_now_del_peer(peer.peer_addr);
+    peer_cnt++;
+  }
+  return peer_cnt;
+}
+
 bool espnow_has_peer(const uint8_t *mac_addr) {
   return b_ready && esp_now_is_peer_exist(mac_addr);
 }
@@ -210,4 +228,27 @@ bool espnow_send_data(const uint8_t *mac_addr, const uint8_t *data, size_t len) 
     return false;
   }
   return esp_now_send(mac_addr, data, len) == ESP_OK;
+}
+
+bool get_mac_address(device_type_t dev, uint8_t *mac_address) {
+  char mac[SYSCFG_S_MASTER_MAC] = { 0 };
+  char *key = device_peer_list[(int)dev];
+
+  if (syscfg_get(MFG_DATA, key, mac, sizeof(mac))) {
+    LOGE(TAG, "Failed to get key = %s from syscfg", key);
+    return false;
+  }
+
+  ascii_to_hex(mac, MAC_ADDR_LEN * 2, mac_address);
+  return true;
+}
+
+void set_mac_address(device_type_t dev, char *mac_address) {
+  char *key = device_peer_list[(int)dev];
+
+  if (syscfg_set(MFG_DATA, key, mac_address)) {
+    LOGE(TAG, "Failed to save mac address = %s to syscfg", mac_address);
+  } else {
+    LOGI(TAG, "Success to save mac address = %s to syscfg", mac_address);
+  }
 }

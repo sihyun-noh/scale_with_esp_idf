@@ -85,7 +85,8 @@ lv_obj_t *ui_Screen1FICLabel;
 lv_obj_t *ui_Screen1TimeLabel;
 lv_obj_t *ui_Screen1DateLabel;
 
-lv_obj_t *ui_SettingSelect_screen;
+// Setting Select : SS
+lv_obj_t *ui_SS_screen;
 lv_obj_t *ui_SS_MainPanel;
 void ui_event_SS_OpSet_Button(lv_event_t *e);
 lv_obj_t *ui_SS_OpSet_Button;
@@ -93,29 +94,33 @@ lv_obj_t *ui_SS_OpSet_Label;
 void ui_event_SS_Device_mag_Button(lv_event_t *e);
 lv_obj_t *ui_SS_Device_mag_Button;
 lv_obj_t *ui_SS_Device_mag_Label;
-lv_obj_t *ui_DeviceManager_screen;
+// Device Manager : DM
+lv_obj_t *ui_DM_screen;
 lv_obj_t *ui_DM_MainPanel;
 lv_obj_t *ui_DM_Roller;
 lv_obj_t *ui_DM_Roller_Label;
 lv_obj_t *ui_DM_Add_Button;
 lv_obj_t *ui_DM_Add_Label;
-void ui_event_DM_Del_Button(lv_event_t *e);
+void ui_event_DM_Add_Button(lv_event_t *e);
 lv_obj_t *ui_DM_Del_Button;
 lv_obj_t *ui_DM_Del_Label;
-void ui_event_DM_Exit_Button(lv_event_t *e);
+void ui_event_DM_Del_Button(lv_event_t *e);
 lv_obj_t *ui_DM_Exit_Button;
 lv_obj_t *ui_DM_Exit_Label;
-lv_obj_t *ui_DeviceManager_screen_Dropdown;
-lv_obj_t *ui_DeviceManagerReg_screen;
+void ui_event_DM_Exit_Button(lv_event_t *e);
+// Device Manager Register : DMR
+lv_obj_t *ui_DM_screen_Dropdown;
+lv_obj_t *ui_DMR_screen;
 lv_obj_t *ui_DMR_MainPanel;
 lv_obj_t *ui_DMR_Keyboard;
 lv_obj_t *ui_DMR_TextArea;
 lv_obj_t *ui_DMR_Reg_Button;
 lv_obj_t *ui_DMR_Reg_Label;
-void ui_event_DMR_Exit_Button(lv_event_t *e);
+void ui_event_DMR_Reg_Button(lv_event_t *e);
 lv_obj_t *ui_DMR_Exit_Button;
 lv_obj_t *ui_DMR_Exit_Label;
-lv_obj_t *ui_DeviceManagerReg_screen_Dropdown;
+void ui_event_DMR_Exit_Button(lv_event_t *e);
+lv_obj_t *ui_DMR_screen_Dropdown;
 
 static lv_style_t style_clock;
 char timeString[9];
@@ -145,21 +150,23 @@ static void status_change_cb(void *s, lv_msg_t *m) {
   switch (msg_id) {
     case MSG_TIME_SYNCED: enable_buttons(); break;
     case MSG_BATTERY_STATUS: {
-      irrigation_message_t *msg_payload = (irrigation_message_t *)lv_msg_get_payload(m);
+      irrigation_message_t *msg = (irrigation_message_t *)lv_msg_get_payload(m);
+      device_status_t *dev_stat = (device_status_t *)&msg->payload.dev_stat;
       for (int id = 1; id < 7; id++) {
-        FDATA(BASE_PATH, "Zone[%d] : Battery level = %d", id, msg_payload->battery_level[id]);
+        FDATA(BASE_PATH, "Zone[%d] : Battery level = %d", id, dev_stat->battery_level[id]);
       }
     } break;
     case MSG_RESPONSE_STATUS: {
-      irrigation_message_t *msg_payload = (irrigation_message_t *)lv_msg_get_payload(m);
-      if (msg_payload->receive_type == SET_CONFIG && msg_payload->resp == SUCCESS) {
+      irrigation_message_t *msg = (irrigation_message_t *)lv_msg_get_payload(m);
+      device_status_t *dev_stat = (device_status_t *)&msg->payload.dev_stat;
+      if (msg->receive_type == SET_CONFIG && msg->resp == SUCCESS) {
         LOGI(TAG, "Got SetConfig response, Call disable start button()");
         disable_start_button();
-      } else if (msg_payload->receive_type == FORCE_STOP) {
+      } else if (msg->receive_type == FORCE_STOP) {
         LOGI(TAG, "Got Force Stop response");
         char op_msg[128] = { 0 };
-        int zone_id = msg_payload->deviceId;
-        int flow_value = msg_payload->flow_value;
+        int zone_id = dev_stat->deviceId;
+        int flow_value = dev_stat->flow_value;
         if (zone_id >= 1 && zone_id <= 6) {
           set_zone_status(zone_id, false);
           set_zone_number(zone_id, false);
@@ -173,9 +180,10 @@ static void status_change_cb(void *s, lv_msg_t *m) {
     } break;
     case MSG_IRRIGATION_STATUS: {
       char op_msg[128] = { 0 };
-      irrigation_message_t *msg_payload = (irrigation_message_t *)lv_msg_get_payload(m);
-      int zone_id = msg_payload->deviceId;
-      if (msg_payload->sender_type == START_FLOW) {
+      irrigation_message_t *msg = (irrigation_message_t *)lv_msg_get_payload(m);
+      device_status_t *dev_stat = (device_status_t *)&msg->payload.dev_stat;
+      int zone_id = dev_stat->deviceId;
+      if (msg->sender_type == START_FLOW) {
         LOGI(TAG, "Got Start Flow response");
         set_zone_status(zone_id, true);
         set_zone_number(zone_id, true);
@@ -183,19 +191,29 @@ static void status_change_cb(void *s, lv_msg_t *m) {
         snprintf(op_msg, sizeof(op_msg), "Start to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
         add_operation_list(op_msg);
         FDATA(BASE_PATH, "%s", op_msg);
-      } else if (msg_payload->sender_type == ZONE_COMPLETE) {
+      } else if (msg->sender_type == ZONE_COMPLETE) {
         LOGI(TAG, "Got Zone Complete response");
-        int flow_value = msg_payload->flow_value;
+        int flow_value = dev_stat->flow_value;
         set_zone_status(zone_id, false);
         set_zone_number(zone_id, false);
         set_zone_flow_value(zone_id, flow_value);
         snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
         add_operation_list(op_msg);
         FDATA(BASE_PATH, "%s", op_msg);
-      } else if (msg_payload->sender_type == ALL_COMPLETE) {
+      } else if (msg->sender_type == ALL_COMPLETE) {
         LOGI(TAG, "Got All Complete response");
         enable_start_button();
         FDATA(BASE_PATH, "%s", "All irrigation progress are complete done!!!");
+      } else if (msg->sender_type == DEVICE_ERROR) {
+        // Disable zone area
+        for (int i = 0; i < 6; i++) {
+          if (dev_stat->child_status[i]) {
+            // Display the device status as error
+            snprintf(op_msg, sizeof(op_msg), "Child[%d] has an error", i + 1);
+            add_operation_list(op_msg);
+            FDATA(BASE_PATH, "%s", op_msg);
+          }
+        }
       }
     } break;
     default: break;
@@ -233,7 +251,7 @@ void ui_event_SettingButton(lv_event_t *e) {
   lv_obj_t *target = lv_event_get_target(e);
   if (event_code == LV_EVENT_CLICKED) {
     OnSettingEvent(e);
-    _ui_screen_change(ui_SettingSelect_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
+    _ui_screen_change(ui_SS_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
     //_ui_screen_change(ui_Setting, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
   }
 }
@@ -286,40 +304,69 @@ void ui_event_SS_Device_mag_Button(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   if (event_code == LV_EVENT_CLICKED) {
-    // DeviceManagementEvent(e);
-    _ui_screen_change(ui_DeviceManager_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
+    DeviceManagementEvent("Child", e);
+    _ui_screen_change(ui_DM_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
   }
 }
+
+void ui_event_DM_Add_Button(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(ui_DMR_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
+  }
+}
+
 void ui_event_DM_Del_Button(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   if (event_code == LV_EVENT_CLICKED) {
-    _ui_screen_change(ui_Main, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
+    char mac_addr[32] = { 0 };
+    const char *device_type = lv_label_get_text(ui_DM_Roller_Label);
+    lv_roller_get_selected_str(ui_DM_Roller, mac_addr, sizeof(mac_addr));
+    LOGI(TAG, "device_type = %s", device_type);
+    LOGI(TAG, "mac_addr = %s", mac_addr);
+    delete_mac_address(device_type, mac_addr);
+    if (strncmp(device_type, "Master", strlen("Master")) == 0) {
+      DeviceManagementEvent("Master", e);
+    } else {
+      DeviceManagementEvent("Child", e);
+    }
+    _ui_roller_set_property(ui_DM_Roller, _UI_ROLLER_PROPERTY_SELECTED, 0);
   }
 }
+
 void ui_event_DM_Exit_Button(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   if (event_code == LV_EVENT_CLICKED) {
-    _ui_screen_change(ui_DeviceManagerReg_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
+    update_mac_address();
+    _ui_screen_change(ui_Main, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
   }
 }
+
+void ui_event_DMR_Reg_Button(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {}
+}
+
 void ui_event_DMR_Exit_Button(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   if (event_code == LV_EVENT_CLICKED) {
-    _ui_screen_change(ui_DeviceManager_screen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
+    _ui_screen_change(ui_DM_screen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
   }
 }
 
 void ui_event_DM_Roller_Select(lv_event_t *e) {
-  char buf[32] = { 0 };
+  char mac_addr[32] = { 0 };
   lv_event_code_t code = lv_event_get_code(e);
   lv_obj_t *obj = lv_event_get_target(e);
   if (code == LV_EVENT_VALUE_CHANGED) {
-    lv_roller_get_selected_str(obj, buf, sizeof(buf));
-    printf("Selected month: %s\n", buf);
-    DM_roller_event(buf, e);
+    lv_roller_get_selected_str(obj, mac_addr, sizeof(mac_addr));
+    LOGI(TAG, "Selected macaddress: %s", mac_addr);
+    DM_roller_event(mac_addr, e);
   }
 }
 
@@ -344,6 +391,13 @@ void ui_event_DMR_Dropdown_Select(lv_event_t *e) {
 
 ///////////////////// SCREENS ////////////////////
 void ui_Main_screen_init(void) {
+  char flow1[20] = { 0 };
+  char flow2[20] = { 0 };
+  char flow3[20] = { 0 };
+  char flow4[20] = { 0 };
+  char flow5[20] = { 0 };
+  char flow6[20] = { 0 };
+
   ui_Main = lv_obj_create(NULL);
   lv_obj_clear_flag(ui_Main, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
   lv_obj_set_style_radius(ui_Main, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -395,7 +449,9 @@ void ui_Main_screen_init(void) {
   lv_obj_set_y(ui_ZoneFlowmeter1, 55);
   lv_obj_set_align(ui_ZoneFlowmeter1, LV_ALIGN_TOP_MID);
   lv_label_set_long_mode(ui_ZoneFlowmeter1, LV_LABEL_LONG_DOT);
-  lv_label_set_text(ui_ZoneFlowmeter1, "0");
+  // Get flow value from syscfg
+  syscfg_get_flow_value(ZONE_1, flow1, sizeof(flow1));
+  lv_label_set_text(ui_ZoneFlowmeter1, flow1);
   lv_obj_set_style_text_align(ui_ZoneFlowmeter1, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_radius(ui_ZoneFlowmeter1, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(ui_ZoneFlowmeter1, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -459,7 +515,9 @@ void ui_Main_screen_init(void) {
   lv_obj_set_y(ui_ZoneFlowmeter2, 55);
   lv_obj_set_align(ui_ZoneFlowmeter2, LV_ALIGN_TOP_MID);
   lv_label_set_long_mode(ui_ZoneFlowmeter2, LV_LABEL_LONG_DOT);
-  lv_label_set_text(ui_ZoneFlowmeter2, "0");
+  // Get flow value from syscfg
+  syscfg_get_flow_value(ZONE_2, flow2, sizeof(flow2));
+  lv_label_set_text(ui_ZoneFlowmeter2, flow2);
   lv_obj_set_style_text_align(ui_ZoneFlowmeter2, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_radius(ui_ZoneFlowmeter2, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(ui_ZoneFlowmeter2, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -523,7 +581,9 @@ void ui_Main_screen_init(void) {
   lv_obj_set_y(ui_ZoneFlowmeter3, 55);
   lv_obj_set_align(ui_ZoneFlowmeter3, LV_ALIGN_TOP_MID);
   lv_label_set_long_mode(ui_ZoneFlowmeter3, LV_LABEL_LONG_DOT);
-  lv_label_set_text(ui_ZoneFlowmeter3, "0");
+  // Get flow value from syscfg
+  syscfg_get_flow_value(ZONE_3, flow3, sizeof(flow3));
+  lv_label_set_text(ui_ZoneFlowmeter3, flow3);
   lv_obj_set_style_text_align(ui_ZoneFlowmeter3, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_radius(ui_ZoneFlowmeter3, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(ui_ZoneFlowmeter3, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -587,7 +647,9 @@ void ui_Main_screen_init(void) {
   lv_obj_set_y(ui_ZoneFlowmeter4, 55);
   lv_obj_set_align(ui_ZoneFlowmeter4, LV_ALIGN_TOP_MID);
   lv_label_set_long_mode(ui_ZoneFlowmeter4, LV_LABEL_LONG_DOT);
-  lv_label_set_text(ui_ZoneFlowmeter4, "0");
+  // Get flow value from syscfg
+  syscfg_get_flow_value(ZONE_4, flow4, sizeof(flow4));
+  lv_label_set_text(ui_ZoneFlowmeter4, flow4);
   lv_obj_set_style_text_align(ui_ZoneFlowmeter4, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_radius(ui_ZoneFlowmeter4, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(ui_ZoneFlowmeter4, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -651,7 +713,9 @@ void ui_Main_screen_init(void) {
   lv_obj_set_y(ui_ZoneFlowmeter5, 55);
   lv_obj_set_align(ui_ZoneFlowmeter5, LV_ALIGN_TOP_MID);
   lv_label_set_long_mode(ui_ZoneFlowmeter5, LV_LABEL_LONG_DOT);
-  lv_label_set_text(ui_ZoneFlowmeter5, "0");
+  // Get flow value from syscfg
+  syscfg_get_flow_value(ZONE_5, flow5, sizeof(flow5));
+  lv_label_set_text(ui_ZoneFlowmeter5, flow5);
   lv_obj_set_style_text_align(ui_ZoneFlowmeter5, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_radius(ui_ZoneFlowmeter5, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(ui_ZoneFlowmeter5, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -715,7 +779,9 @@ void ui_Main_screen_init(void) {
   lv_obj_set_y(ui_ZoneFlowmeter6, 55);
   lv_obj_set_align(ui_ZoneFlowmeter6, LV_ALIGN_TOP_MID);
   lv_label_set_long_mode(ui_ZoneFlowmeter6, LV_LABEL_LONG_DOT);
-  lv_label_set_text(ui_ZoneFlowmeter6, "0");
+  // Get flow value from syscfg
+  syscfg_get_flow_value(ZONE_6, flow6, sizeof(flow6));
+  lv_label_set_text(ui_ZoneFlowmeter6, flow6);
   lv_obj_set_style_text_align(ui_ZoneFlowmeter6, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_radius(ui_ZoneFlowmeter6, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(ui_ZoneFlowmeter6, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1069,13 +1135,13 @@ void ui_Setting_screen_init(void) {
 }
 
 void ui_SettingSelect_screen_init(void) {
-  ui_SettingSelect_screen = lv_obj_create(NULL);
-  lv_obj_clear_flag(ui_SettingSelect_screen, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
-  lv_obj_set_style_radius(ui_SettingSelect_screen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_color(ui_SettingSelect_screen, lv_color_hex(0x011245), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_opa(ui_SettingSelect_screen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  ui_SS_screen = lv_obj_create(NULL);
+  lv_obj_clear_flag(ui_SS_screen, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
+  lv_obj_set_style_radius(ui_SS_screen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_SS_screen, lv_color_hex(0x011245), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_SS_screen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  ui_SS_MainPanel = lv_obj_create(ui_SettingSelect_screen);
+  ui_SS_MainPanel = lv_obj_create(ui_SS_screen);
   lv_obj_set_width(ui_SS_MainPanel, 445);
   lv_obj_set_height(ui_SS_MainPanel, 292);
   lv_obj_set_align(ui_SS_MainPanel, LV_ALIGN_CENTER);
@@ -1140,13 +1206,13 @@ void ui_SettingSelect_screen_init(void) {
 }
 
 void ui_DeviceManager_screen_init(void) {
-  ui_DeviceManager_screen = lv_obj_create(NULL);
-  lv_obj_clear_flag(ui_DeviceManager_screen, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
-  lv_obj_set_style_radius(ui_DeviceManager_screen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_color(ui_DeviceManager_screen, lv_color_hex(0x011245), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_opa(ui_DeviceManager_screen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  ui_DM_screen = lv_obj_create(NULL);
+  lv_obj_clear_flag(ui_DM_screen, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
+  lv_obj_set_style_radius(ui_DM_screen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_DM_screen, lv_color_hex(0x011245), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_DM_screen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  ui_DM_MainPanel = lv_obj_create(ui_DeviceManager_screen);
+  ui_DM_MainPanel = lv_obj_create(ui_DM_screen);
   lv_obj_set_width(ui_DM_MainPanel, 450);
   lv_obj_set_height(ui_DM_MainPanel, 300);
   lv_obj_set_align(ui_DM_MainPanel, LV_ALIGN_CENTER);
@@ -1178,9 +1244,9 @@ void ui_DeviceManager_screen_init(void) {
   lv_obj_set_align(ui_DM_Add_Button, LV_ALIGN_CENTER);
   lv_obj_add_flag(ui_DM_Add_Button, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
   lv_obj_clear_flag(ui_DM_Add_Button, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
-  lv_obj_set_style_bg_color(ui_DM_Add_Button, lv_color_hex(0xED2D40), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_DM_Add_Button, lv_color_hex(0xC8DAD9), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_opa(ui_DM_Add_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_color(ui_DM_Add_Button, lv_color_hex(0xF0D0D4), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_color(ui_DM_Add_Button, lv_color_hex(0x585454), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_border_opa(ui_DM_Add_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_border_width(ui_DM_Add_Button, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_shadow_color(ui_DM_Add_Button, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1192,7 +1258,9 @@ void ui_DeviceManager_screen_init(void) {
   lv_obj_set_width(ui_DM_Add_Label, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_DM_Add_Label, LV_SIZE_CONTENT);  /// 1
   lv_obj_set_align(ui_DM_Add_Label, LV_ALIGN_CENTER);
-  lv_label_set_text(ui_DM_Add_Label, "DELETE");
+  lv_label_set_text(ui_DM_Add_Label, "Add");
+  lv_obj_set_style_text_color(ui_DM_Add_Label, lv_color_hex(0x241D1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_opa(ui_DM_Add_Label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
   ui_DM_Del_Button = lv_btn_create(ui_DM_MainPanel);
   lv_obj_set_width(ui_DM_Del_Button, 100);
@@ -1216,7 +1284,7 @@ void ui_DeviceManager_screen_init(void) {
   lv_obj_set_width(ui_DM_Del_Label, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_DM_Del_Label, LV_SIZE_CONTENT);  /// 1
   lv_obj_set_align(ui_DM_Del_Label, LV_ALIGN_CENTER);
-  lv_label_set_text(ui_DM_Del_Label, "EXIT");
+  lv_label_set_text(ui_DM_Del_Label, "Delete");
   lv_obj_set_style_text_color(ui_DM_Del_Label, lv_color_hex(0x241D1E), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_text_opa(ui_DM_Del_Label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -1228,9 +1296,9 @@ void ui_DeviceManager_screen_init(void) {
   lv_obj_set_align(ui_DM_Exit_Button, LV_ALIGN_CENTER);
   lv_obj_add_flag(ui_DM_Exit_Button, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
   lv_obj_clear_flag(ui_DM_Exit_Button, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
-  lv_obj_set_style_bg_color(ui_DM_Exit_Button, lv_color_hex(0x11EF39), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_DM_Exit_Button, lv_color_hex(0xC8DAD9), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_opa(ui_DM_Exit_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_border_color(ui_DM_Exit_Button, lv_color_hex(0xDBF2DF), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_border_color(ui_DM_Exit_Button, lv_color_hex(0x585454), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_border_opa(ui_DM_Exit_Button, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_border_width(ui_DM_Exit_Button, 3, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_shadow_color(ui_DM_Exit_Button, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1242,31 +1310,34 @@ void ui_DeviceManager_screen_init(void) {
   lv_obj_set_width(ui_DM_Exit_Label, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_DM_Exit_Label, LV_SIZE_CONTENT);  /// 1
   lv_obj_set_align(ui_DM_Exit_Label, LV_ALIGN_CENTER);
-  lv_label_set_text(ui_DM_Exit_Label, "ADD");
+  lv_label_set_text(ui_DM_Exit_Label, "Exit");
+  lv_obj_set_style_text_color(ui_DM_Exit_Label, lv_color_hex(0x241D1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_opa(ui_DM_Exit_Label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  ui_DeviceManager_screen_Dropdown = lv_dropdown_create(ui_DM_MainPanel);
-  lv_dropdown_set_options(ui_DeviceManager_screen_Dropdown, "Master\nChild");
-  lv_obj_set_width(ui_DeviceManager_screen_Dropdown, 100);
-  lv_obj_set_height(ui_DeviceManager_screen_Dropdown, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_DeviceManager_screen_Dropdown, -150);
-  lv_obj_set_y(ui_DeviceManager_screen_Dropdown, -100);
-  lv_obj_set_align(ui_DeviceManager_screen_Dropdown, LV_ALIGN_CENTER);
-  lv_obj_add_flag(ui_DeviceManager_screen_Dropdown, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  ui_DM_screen_Dropdown = lv_dropdown_create(ui_DM_MainPanel);
+  lv_dropdown_set_options(ui_DM_screen_Dropdown, "Master\nChild");
+  lv_obj_set_width(ui_DM_screen_Dropdown, 100);
+  lv_obj_set_height(ui_DM_screen_Dropdown, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_DM_screen_Dropdown, -150);
+  lv_obj_set_y(ui_DM_screen_Dropdown, -100);
+  lv_obj_set_align(ui_DM_screen_Dropdown, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_DM_screen_Dropdown, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
 
+  lv_obj_add_event_cb(ui_DM_Add_Button, ui_event_DM_Add_Button, LV_EVENT_ALL, NULL);
   lv_obj_add_event_cb(ui_DM_Del_Button, ui_event_DM_Del_Button, LV_EVENT_ALL, NULL);
   lv_obj_add_event_cb(ui_DM_Exit_Button, ui_event_DM_Exit_Button, LV_EVENT_ALL, NULL);
-  lv_obj_add_event_cb(ui_DeviceManager_screen_Dropdown, ui_event_DM_Dropdown_Select, LV_EVENT_ALL, NULL);
+  lv_obj_add_event_cb(ui_DM_screen_Dropdown, ui_event_DM_Dropdown_Select, LV_EVENT_ALL, NULL);
   lv_obj_add_event_cb(ui_DM_Roller, ui_event_DM_Roller_Select, LV_EVENT_ALL, NULL);
 }
 
 void ui_DeviceManagerReg_screen_init(void) {
-  ui_DeviceManagerReg_screen = lv_obj_create(NULL);
-  lv_obj_clear_flag(ui_DeviceManagerReg_screen, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
-  lv_obj_set_style_radius(ui_DeviceManagerReg_screen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_color(ui_DeviceManagerReg_screen, lv_color_hex(0x011245), LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_bg_opa(ui_DeviceManagerReg_screen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  ui_DMR_screen = lv_obj_create(NULL);
+  lv_obj_clear_flag(ui_DMR_screen, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
+  lv_obj_set_style_radius(ui_DMR_screen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_DMR_screen, lv_color_hex(0x011245), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_DMR_screen, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  ui_DMR_MainPanel = lv_obj_create(ui_DeviceManagerReg_screen);
+  ui_DMR_MainPanel = lv_obj_create(ui_DMR_screen);
   lv_obj_set_width(ui_DMR_MainPanel, 445);
   lv_obj_set_height(ui_DMR_MainPanel, 292);
   lv_obj_set_x(ui_DMR_MainPanel, 0);
@@ -1315,7 +1386,7 @@ void ui_DeviceManagerReg_screen_init(void) {
   lv_obj_set_width(ui_DMR_Reg_Label, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_DMR_Reg_Label, LV_SIZE_CONTENT);  /// 1
   lv_obj_set_align(ui_DMR_Reg_Label, LV_ALIGN_CENTER);
-  lv_label_set_text(ui_DMR_Reg_Label, "Reg.");
+  lv_label_set_text(ui_DMR_Reg_Label, "Reg");
 
   ui_DMR_Exit_Button = lv_btn_create(ui_DMR_MainPanel);
   lv_obj_set_width(ui_DMR_Exit_Button, 100);
@@ -1339,22 +1410,23 @@ void ui_DeviceManagerReg_screen_init(void) {
   lv_obj_set_width(ui_DMR_Exit_Label, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_DMR_Exit_Label, LV_SIZE_CONTENT);  /// 1
   lv_obj_set_align(ui_DMR_Exit_Label, LV_ALIGN_CENTER);
-  lv_label_set_text(ui_DMR_Exit_Label, "EXIT");
+  lv_label_set_text(ui_DMR_Exit_Label, "Exit");
   lv_obj_set_style_text_color(ui_DMR_Exit_Label, lv_color_hex(0x241D1E), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_text_opa(ui_DMR_Exit_Label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  ui_DeviceManagerReg_screen_Dropdown = lv_dropdown_create(ui_DeviceManagerReg_screen);
-  lv_dropdown_set_options(ui_DeviceManagerReg_screen_Dropdown, "Master\nChild");
-  lv_obj_set_width(ui_DeviceManagerReg_screen_Dropdown, 98);
-  lv_obj_set_height(ui_DeviceManagerReg_screen_Dropdown, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_DeviceManagerReg_screen_Dropdown, -142);
-  lv_obj_set_y(ui_DeviceManagerReg_screen_Dropdown, -93);
-  lv_obj_set_align(ui_DeviceManagerReg_screen_Dropdown, LV_ALIGN_CENTER);
-  lv_obj_add_flag(ui_DeviceManagerReg_screen_Dropdown, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  ui_DMR_screen_Dropdown = lv_dropdown_create(ui_DMR_screen);
+  lv_dropdown_set_options(ui_DMR_screen_Dropdown, "Master\nChild");
+  lv_obj_set_width(ui_DMR_screen_Dropdown, 98);
+  lv_obj_set_height(ui_DMR_screen_Dropdown, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_DMR_screen_Dropdown, -142);
+  lv_obj_set_y(ui_DMR_screen_Dropdown, -93);
+  lv_obj_set_align(ui_DMR_screen_Dropdown, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_DMR_screen_Dropdown, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
 
   lv_keyboard_set_textarea(ui_DMR_Keyboard, ui_DMR_TextArea);
+  lv_obj_add_event_cb(ui_DMR_Reg_Button, ui_event_DMR_Reg_Button, LV_EVENT_ALL, NULL);
   lv_obj_add_event_cb(ui_DMR_Exit_Button, ui_event_DMR_Exit_Button, LV_EVENT_ALL, NULL);
-  lv_obj_add_event_cb(ui_DeviceManagerReg_screen_Dropdown, ui_event_DMR_Dropdown_Select, LV_EVENT_ALL, NULL);
+  lv_obj_add_event_cb(ui_DMR_screen_Dropdown, ui_event_DMR_Dropdown_Select, LV_EVENT_ALL, NULL);
 }
 
 void time_timer_cb(lv_timer_t *timer) {

@@ -14,12 +14,12 @@
 #include "comm_packet.h"
 #include "battery_task.h"
 
-#define RESP_THRES      10
-#define NUMBER_CHILD    6
-#define TOTAL_DEVICES   7
-#define SYNC_TIME_BUFF  5
+#define RESP_THRES 10
+#define NUMBER_CHILD 6
+#define TOTAL_DEVICES 7
+#define SYNC_TIME_BUFF 5
 
-#define DEBUG_TEST      1  // for Test
+#define DEBUG_TEST 1  // for Test
 
 static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;
@@ -63,7 +63,7 @@ int syncTimeBuffCnt;  // Time sync buffer check count
 
 uint64_t remainSleepTime;  // sleep 시간
 
-extern uint8_t macAddress[TOTAL_DEVICES][6];  // 0 = HID, 1~6 = child 1~6
+// extern uint8_t macAddress[TOTAL_DEVICES][6];  // 0 = HID, 1~6 = child 1~6
 
 void init_variable(void) {
   sendCmd = NONE;
@@ -112,13 +112,12 @@ int get_flow_value() {
   return value;
 }
 
-void get_addr(uint8_t arr[], int zone) {
-  if (zone > NUMBER_CHILD) {
-    memset(arr, 0xFF, sizeof(uint8_t) * 6);
+void get_addr(int zone, uint8_t* mac_addr) {
+  if (zone == ALL_DEV) {
+    // Broadcasting address
+    memset(mac_addr, 0xFF, sizeof(uint8_t) * MAC_ADDR_LEN);
   } else {
-    for (int i = 0; i < 6; i++) {
-      arr[i] = macAddress[zone][i];
-    }
+    get_mac_address(zone, mac_addr);
   }
 }
 
@@ -135,10 +134,12 @@ static time_t get_current_time(void) {
 // 입력 mac addr 이 현 set mac addr 인지 확인 함수
 int check_address_matching_current_set(const uint8_t* mac) {
   for (int i = 0; i < TOTAL_DEVICES; i++) {
-    uint8_t compareAddr[6] = {
-      0,
-    };
-    get_addr(compareAddr, i);
+    uint8_t compareAddr[MAC_ADDR_LEN] = { 0 };
+
+    get_addr(i, compareAddr);
+
+    LOGI(TAG, "======== zone id [%d] ========", i);
+    LOG_BUFFER_HEX(TAG, compareAddr, MAC_ADDR_LEN);
 
     if (memcmp(mac, compareAddr, sizeof(compareAddr)) == 0) {
       LOGI(TAG, "addr matched zone ID : %d ", i);
@@ -182,65 +183,64 @@ uint64_t check_sleep_time(void) {
 }
 
 bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
-  irrigation_message_t send_message;
-  memset(&send_message, 0x00, sizeof(send_message));
-  send_message.sender_type = sender;
-  send_message.current_time = get_current_time();
-  uint8_t zoneAddr[6] = {
-    0,
-  };
-  get_addr(zoneAddr, id);
+  irrigation_message_t send_message = { 0 };
+  uint8_t zoneAddr[MAC_ADDR_LEN] = { 0 };
+
+  get_addr(id, zoneAddr);
 
   receivedId = id;
 
-  LOG_BUFFER_HEXDUMP(TAG, zoneAddr, sizeof(zoneAddr), LOG_INFO);
+  send_message.sender_type = sender;
+  send_message.current_time = get_current_time();
+
+  payload_t* payload = &send_message.payload;
 
   switch (sender) {
     case TIME_SYNC: {
       respBroadCast[0] = 1;
     } break;
-
     case START_FLOW: {
-      send_message.deviceId = flowOrder[flowDoneCnt];
-      LOGI(TAG, "start flow zone : %d ", send_message.deviceId);
+      payload->dev_stat.deviceId = flowOrder[flowDoneCnt];
+      LOGI(TAG, "start flow zone : %d ", payload->dev_stat.deviceId);
     } break;
-
     case ZONE_COMPLETE: {
-      send_message.deviceId = flowOrder[flowDoneCnt];
-      send_message.flow_value = get_flow_value();
-      LOGI(TAG, "flow complete zone : %d ", send_message.deviceId);
+      payload->dev_stat.deviceId = flowOrder[flowDoneCnt];
+      payload->dev_stat.flow_value = get_flow_value();
+      LOGI(TAG, "flow complete zone : %d, flow = %d", payload->dev_stat.deviceId, payload->dev_stat.flow_value);
     } break;
-
     case BATTERY_LEVEL: {
-      memcpy(&(send_message.battery_level), zoneBattery, sizeof(send_message.battery_level));
+      memcpy(payload->dev_stat.battery_level, zoneBattery, sizeof(payload->dev_stat.battery_level));
     } break;
-
-    case SET_SLEEP: {
-      send_message.remain_time_sleep = remainSleepTime;
-    } break;
-
     case DEVICE_ERROR: {
       for (int i = 0; i < NUMBER_CHILD; i++) {
         if (retryCntMsg[i + 1] > 3) {
-          send_message.child_status[i] = 1;
+          payload->dev_stat.child_status[i] = 1;
         }
       }
     } break;
-
+    case SET_SLEEP: {
+      payload->remain_time_sleep = remainSleepTime;
+    } break;
     case RESPONSE: {
-      send_message.receive_type = receiver;
-      send_message.resp = SUCCESS;
       if (receiver == FORCE_STOP) {
-        send_message.deviceId = flowOrder[flowDoneCnt];
-        send_message.flow_value = get_flow_value();
+        payload->dev_stat.deviceId = flowOrder[flowDoneCnt];
+        payload->dev_stat.flow_value = get_flow_value();
       }
     } break;
-
     default: break;
   }
 
-  if (!espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(send_message))) {
-    espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(send_message));
+  LOGI(TAG, "============== ZoneAddr =================");
+  LOG_BUFFER_HEXDUMP(TAG, zoneAddr, sizeof(zoneAddr), LOG_INFO);
+
+  LOGI(TAG, "============== Message ==================");
+  LOG_BUFFER_HEXDUMP(TAG, &send_message, sizeof(irrigation_message_t), LOG_INFO);
+
+  if (!espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(irrigation_message_t))) {
+    LOGE(TAG, "Failed to esp send data!!!");
+    espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(irrigation_message_t));
+  } else {
+    LOGI(TAG, "Success to esp send data!!!");
   }
 
   sendCmd = sender;
@@ -249,13 +249,13 @@ bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
   return true;
 }
 
-void check_response(irrigation_message_t msg) {
-  if ((sendCmd == msg.receive_type) && (msg.resp == SUCCESS)) {
+void check_response(irrigation_message_t* msg) {
+  if ((sendCmd == msg->receive_type) && (msg->resp == SUCCESS)) {
     sendMessageFlag = false;
     sendCmd = NONE;
   }
 
-  switch (msg.receive_type) {
+  switch (msg->receive_type) {
     case START_FLOW: {
       set_control_status(CHECK_FLOW);
     } break;
@@ -276,10 +276,10 @@ void check_response(irrigation_message_t msg) {
     } break;
 
     case SET_VALVE_ON: {
-      if (msg.resp == SUCCESS) {
+      if (msg->resp == SUCCESS) {
         start_flow();
         // 관수 시작을 HID 에 전달
-        send_esp_data(START_FLOW, START_FLOW, 0);
+        send_esp_data(START_FLOW, START_FLOW, HID_DEV);
 
         LOGI(TAG, "RECEIVE VALVE ON RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
         set_control_status(WAIT_STATE);
@@ -287,9 +287,9 @@ void check_response(irrigation_message_t msg) {
     } break;
 
     case SET_VALVE_OFF: {
-      if (msg.resp == SUCCESS) {
+      if (msg->resp == SUCCESS) {
         // 관수 완료를 HID 에 전달
-        send_esp_data(ZONE_COMPLETE, ZONE_COMPLETE, 0);
+        send_esp_data(ZONE_COMPLETE, ZONE_COMPLETE, HID_DEV);
 
         LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
         set_control_status(WAIT_STATE);
@@ -297,14 +297,14 @@ void check_response(irrigation_message_t msg) {
     } break;
 
     case TIME_SYNC: {
-      zoneBattery[msg.deviceId] = msg.battery_level[msg.deviceId];
-      LOGI(TAG, "ID: %D, Battery level: %d", msg.deviceId,
-            msg.battery_level[msg.deviceId]);
+      device_status_t* dev_stat = (device_status_t*)&msg->payload.dev_stat;
+      zoneBattery[dev_stat->deviceId] = dev_stat->battery_level[dev_stat->deviceId];
+      LOGI(TAG, "ID: %D, Battery level: %d", dev_stat->deviceId, dev_stat->battery_level[dev_stat->deviceId]);
       batteryCnt++;
       sendMessageFlag = true;
-      sendCmd = msg.receive_type;
+      sendCmd = msg->receive_type;
 
-      respBroadCast[msg.deviceId] = 1;
+      respBroadCast[dev_stat->deviceId] = 1;
 
       if (batteryCnt >= NUMBER_CHILD) {
         memset(&respBroadCast, 0x00, sizeof(respBroadCast));
@@ -312,9 +312,9 @@ void check_response(irrigation_message_t msg) {
         sendCmd = NONE;
         zoneBattery[0] = read_battery_percentage();
         LOGI(TAG, "Battery Level, Master: %d, Child : %d, %d, %d, %d, %d, %d ", zoneBattery[0], zoneBattery[1],
-              zoneBattery[2], zoneBattery[3], zoneBattery[4], zoneBattery[5], zoneBattery[6]);
+             zoneBattery[2], zoneBattery[3], zoneBattery[4], zoneBattery[5], zoneBattery[6]);
 
-        send_esp_data(BATTERY_LEVEL, BATTERY_LEVEL, 0);
+        send_esp_data(BATTERY_LEVEL, BATTERY_LEVEL, HID_DEV);
 
         batteryCnt = 0;
         set_control_status(WAIT_STATE);
@@ -322,7 +322,7 @@ void check_response(irrigation_message_t msg) {
     } break;
 
     case FORCE_STOP: {
-      send_esp_data(RESPONSE, FORCE_STOP, 0);
+      send_esp_data(RESPONSE, RESPONSE, HID_DEV);
 
       init_variable();
       set_control_status(CHECK_SCEHDULE);
@@ -333,7 +333,7 @@ void check_response(irrigation_message_t msg) {
 }
 
 void show_config_debug(void) {
-#if defined (DEBUG_TEST)
+#if defined(DEBUG_TEST)
   struct tm timeinfo = { 0 };
   localtime_r(&flowStartTime, &timeinfo);
 
@@ -347,6 +347,9 @@ void show_config_debug(void) {
 }
 
 void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
+  LOGI(TAG, "===== recv mac address ========");
+  LOG_BUFFER_HEX(TAG, mac, MAC_ADDR_LEN);
+
   int msgFromId = check_address_matching_current_set(mac);
   if (msgFromId == (-1)) {
     LOGI(TAG, "Receive data from other SET");
@@ -355,8 +358,8 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
 
   retryCntMsg[msgFromId] = 0;
 
-  irrigation_message_t recv_message;
-  memcpy(&recv_message, incomingData, sizeof(recv_message));
+  irrigation_message_t recv_message = { 0 };
+  memcpy(&recv_message, incomingData, sizeof(irrigation_message_t));
 
   LOGI(TAG, "Receive Data from Other devices(HID and Any Child)");
   LOG_BUFFER_HEXDUMP(TAG, incomingData, len, LOG_INFO);
@@ -368,22 +371,23 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
     // Child 의 배터리 잔량 값.
     switch (recv_message.sender_type) {
       case SET_CONFIG: {
-        flowStartTime = recv_message.config.start_time;
-        zoneFlowCnt = recv_message.config.zone_cnt;
-        memcpy(flowOrder, recv_message.config.zones, sizeof(flowOrder));
-        memcpy(flowSettingValue, recv_message.config.flow_rate, sizeof(flowSettingValue));
+        config_value_t* config = (config_value_t*)&recv_message.payload.config;
+        flowStartTime = config->start_time;
+        zoneFlowCnt = config->zone_cnt;
+        memcpy(flowOrder, config->zones, sizeof(flowOrder));
+        memcpy(flowSettingValue, config->flow_rate, sizeof(flowSettingValue));
         flowDoneCnt = 0;
         setConfig = true;
         show_config_debug();
 
-        send_esp_data(RESPONSE, SET_CONFIG, 0);
+        send_esp_data(RESPONSE, SET_CONFIG, HID_DEV);
 
         set_control_status(CHECK_SCEHDULE);
         LOGI(TAG, "RECEIVE & SET CONFIG from HID");
       } break;
 
       case RESPONSE: {
-        check_response(recv_message);
+        check_response(&recv_message);
       } break;
 
       case FORCE_STOP: {
@@ -395,17 +399,32 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
           set_control_status(WAIT_STATE);
           flowStart = false;
         } else {
-          send_esp_data(RESPONSE, FORCE_STOP, 0);
+          send_esp_data(RESPONSE, FORCE_STOP, HID_DEV);
           init_variable();
           set_control_status(CHECK_SCEHDULE);
         }
       } break;
 
       case REQ_TIME_SYNC: {
-        send_esp_data(TIME_SYNC, TIME_SYNC, 7);
+        send_esp_data(TIME_SYNC, TIME_SYNC, ALL_DEV);
 
         LOGI(TAG, "SEND TIME SYNC / REQ_TIME_SYNC!!");
         set_control_status(WAIT_STATE);
+      } break;
+
+      case UPDATE_DEVICE_ADDR: {
+        send_esp_data(RESPONSE, UPDATE_DEVICE_ADDR, HID_DEV);
+
+        device_manage_t* dev_manage = (device_manage_t*)&recv_message.payload.dev_manage;
+        int cnt = dev_manage->update_dev_cnt;
+        device_addr_t* update_dev_addr = dev_manage->update_dev_addr;
+        LOGI(TAG, "update device addr cnt = %d", cnt);
+        espnow_remove_peers();
+        for (int i = 0; i < cnt; i++) {
+          LOGI(TAG, "device type = %d, mac_addr = %s", update_dev_addr[i].device_type, update_dev_addr[i].mac_addr);
+          set_mac_address(update_dev_addr[i].device_type, update_dev_addr[i].mac_addr);
+          espnow_add_peers(MASTER_DEVICE);
+        }
       } break;
 
       default: break;
@@ -418,13 +437,23 @@ void on_data_sent_cb(const uint8_t* macAddr, esp_now_send_status_t status) {
 }
 
 void check_peer_address(void) {
+  uint8_t peer_mac_address[TOTAL_DEVICES][MAC_ADDR_LEN] = { { 0 } };
   // 각 device mac addr 존재 여부 판단... 확인 완료 시 check mode 단계..
   if (espnow_add_peers(MASTER_DEVICE)) {
     LOGI(TAG, "Success to add hid, child addr to peer list");
   } else {
     LOGI(TAG, "Failed to add hid, child addr to peer list");
   }
-  LOG_BUFFER_HEXDUMP(TAG, macAddress, sizeof(macAddress), LOG_INFO);
+
+  get_mac_address(HID_DEV, peer_mac_address[HID_DEV]);
+  get_mac_address(CHILD_1, peer_mac_address[CHILD_1]);
+  get_mac_address(CHILD_2, peer_mac_address[CHILD_2]);
+  get_mac_address(CHILD_3, peer_mac_address[CHILD_3]);
+  get_mac_address(CHILD_4, peer_mac_address[CHILD_4]);
+  get_mac_address(CHILD_5, peer_mac_address[CHILD_5]);
+  get_mac_address(CHILD_6, peer_mac_address[CHILD_6]);
+
+  LOG_BUFFER_HEXDUMP(TAG, peer_mac_address, sizeof(peer_mac_address), LOG_INFO);
 
   set_control_status(CHECK_TIME);
   LOGI(TAG, "ADDR CHECK DONE !!");
@@ -479,7 +508,7 @@ void check_schedule(void) {
   } else {
     remainSleepTime = check_sleep_time();
     if (remainSleepTime > 0) {
-      send_esp_data(SET_SLEEP, SET_SLEEP, 7);
+      send_esp_data(SET_SLEEP, SET_SLEEP, ALL_DEV);
 
       LOGI(TAG, "SEND DEEP SLEEP MSG, SleepTime : %llus ", remainSleepTime);
       vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -509,7 +538,7 @@ void check_retry_cmd(void) {
   }
 
   if (childErrorCnt > 0) {
-    send_esp_data(DEVICE_ERROR, DEVICE_ERROR, 0);
+    send_esp_data(DEVICE_ERROR, DEVICE_ERROR, HID_DEV);
     set_control_status(ERROR);
   }
 }
@@ -565,7 +594,7 @@ static void control_task(void* pvParameters) {
         // HID 에서는 wake up 후 10분 안에 time sync 가 없을 경우 master 로 다시 time sync req
         syncTimeBuffCnt++;
         if (syncTimeBuffCnt > (60 * SYNC_TIME_BUFF)) {
-          send_esp_data(TIME_SYNC, TIME_SYNC, 7);
+          send_esp_data(TIME_SYNC, TIME_SYNC, ALL_DEV);
 
           LOGI(TAG, "SEND HID/CHILD TIME SYNC !!");
           set_control_status(WAIT_STATE);
@@ -626,7 +655,7 @@ static void control_task(void* pvParameters) {
       case COMPLETE: {
         // 관수 스케줄대로 모든 관수가 종료된 상태.
         // 추가 관수 여부 확인..--> wait config 모드로
-        send_esp_data(ALL_COMPLETE, ALL_COMPLETE, 0);
+        send_esp_data(ALL_COMPLETE, ALL_COMPLETE, HID_DEV);
 
         set_control_status(WAIT_STATE);
         LOGI(TAG, "ALL CHILD FLOW COMPLETE!!");

@@ -46,7 +46,7 @@ void send_msg_to_ctrl_task(void *msg, size_t msg_len) {
   irrigation_message_t message = { 0 };
 
   if (msg && (msg_len == sizeof(irrigation_message_t))) {
-    memcpy(&message, msg, sizeof(irrigation_message_t));
+    memcpy(&message, msg, msg_len);
     if (!_send_msg_event(&message)) {
       LOGI(TAG, "Failed to send ctrl messag event!!!");
     }
@@ -68,40 +68,22 @@ void ctrl_msg_handler(irrigation_message_t *message) {
     case TIME_SYNC: {
       set_main_time(&message->current_time);
       lv_msg_send(MSG_TIME_SYNCED, NULL);
-#if 0
-      enable_buttons();
-#endif
     } break;
     case RESPONSE: {
       if (message->receive_type == SET_CONFIG && message->resp == SUCCESS) {
         LOGI(TAG, "Success SET_CONFIG, disable start button");
         lv_msg_send(MSG_RESPONSE_STATUS, message);
-#if 0
-        disable_start_button();
-#endif
       } else if (message->receive_type == FORCE_STOP && message->resp == SUCCESS) {
         LOGI(TAG, "Success FORCE_STOP, enable start button");
         lv_msg_send(MSG_RESPONSE_STATUS, message);
-#if 0
-        char op_msg[128] = { 0 };
-        int zone_id = message->deviceId;
-        int flow_value = message->flow_value;
-        if (zone_id >= 1 && zone_id <= 6) {
-          set_zone_status(zone_id, false);
-          set_zone_number(zone_id, false);
-          set_zone_flow_value(zone_id, flow_value);
-          enable_start_button();
-          snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
-          add_operation_list(op_msg);
-      }
-#endif
       }
     } break;
     case BATTERY_LEVEL: {
-      send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
+      send_command_data(RESPONSE, message->sender_type, NULL, 0);
       // add battery level to the logging data
+      device_status_t *dev_stat = (device_status_t *)&message->payload.dev_stat;
       for (int id = 1; id < 7; id++) {
-        LOGI(TAG, "Zone[%d] : Battery level = %d", id, message->battery_level[id]);
+        LOGI(TAG, "Zone[%d] : Battery level = %d", id, dev_stat->battery_level[id]);
       }
       set_battery_level(1);
       lv_msg_send(MSG_BATTERY_STATUS, message);
@@ -109,63 +91,33 @@ void ctrl_msg_handler(irrigation_message_t *message) {
         set_main_time(&message->current_time);
         LOGI(TAG, "Call timesync in Battery level");
         lv_msg_send(MSG_TIME_SYNCED, NULL);
-#if 0
-        enable_buttons();
-#endif
       }
     } break;
     case START_FLOW: {
-      send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
+      send_command_data(RESPONSE, message->sender_type, NULL, 0);
       // Update UI screen
       lv_msg_send(MSG_IRRIGATION_STATUS, message);
-#if 0
-      int zone_id = message->deviceId;
-      if (zone_id >= 1 && zone_id <= 6) {
-        char op_msg[128] = { 0 };
-        lvgl_acquire();
-        set_zone_status(zone_id, true);
-        set_zone_number(zone_id, true);
-        disable_start_button();
-        snprintf(op_msg, sizeof(op_msg), "Start to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
-        add_operation_list(op_msg);
-        lvgl_release();
-      } else {
-        LOGW(TAG, "Got invalid zone_id for start flow = [%d]", zone_id);
-      }
-#endif
     } break;
     case ZONE_COMPLETE: {
-      send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
+      send_command_data(RESPONSE, message->sender_type, NULL, 0);
       // Update UI screen
       lv_msg_send(MSG_IRRIGATION_STATUS, message);
-#if 0
-      int zone_id = message->deviceId;
-      if (zone_id >= 1 && zone_id <= 6) {
-        lvgl_acquire();
-        char op_msg[128] = { 0 };
-        int flow_value = message->flow_value;
-        set_zone_status(zone_id, false);
-        set_zone_number(zone_id, false);
-        set_zone_flow_value(zone_id, flow_value);
-        snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
-        add_operation_list(op_msg);
-        lvgl_release();
-      }
-#endif
     } break;
     case ALL_COMPLETE: {
-      send_command_data(RESPONSE_COMMAND, &message->sender_type, sizeof(message->sender_type));
+      send_command_data(RESPONSE, message->sender_type, NULL, 0);
       // Update UI screen
       lv_msg_send(MSG_IRRIGATION_STATUS, message);
-#if 0
-      enable_start_button();
-#endif
     } break;
     case SET_SLEEP: {
-      uint64_t wakeup_time_sec = message->remain_time_sleep;
+      uint64_t wakeup_time_sec = message->payload.remain_time_sleep;
       LOGI(TAG, "Entering sleep mode wtih time = %llus", wakeup_time_sec);
       esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000);
       esp_deep_sleep_start();
+    } break;
+    case DEVICE_ERROR: {
+      send_command_data(RESPONSE, message->sender_type, NULL, 0);
+      // Update UI screen
+      lv_msg_send(MSG_IRRIGATION_STATUS, message);
     } break;
     default: break;
   }
