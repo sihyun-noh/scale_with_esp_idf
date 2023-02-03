@@ -2,6 +2,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/queue.h"
 
 #include "config.h"
 #include "log.h"
@@ -419,12 +420,14 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         int cnt = dev_manage->update_dev_cnt;
         device_addr_t* update_dev_addr = dev_manage->update_dev_addr;
         LOGI(TAG, "update device addr cnt = %d", cnt);
-        espnow_remove_peers();
+        espnow_remove_peers(MASTER_DEVICE);
         for (int i = 0; i < cnt; i++) {
           LOGI(TAG, "device type = %d, mac_addr = %s", update_dev_addr[i].device_type, update_dev_addr[i].mac_addr);
-          set_mac_address(update_dev_addr[i].device_type, update_dev_addr[i].mac_addr);
-          espnow_add_peers(MASTER_DEVICE);
+          if (update_dev_addr[i].device_type != MAIN_DEV) {
+            set_mac_address(update_dev_addr[i].device_type, update_dev_addr[i].mac_addr);
+          }
         }
+        espnow_add_peers(MASTER_DEVICE);
       } break;
 
       default: break;

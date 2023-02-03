@@ -152,8 +152,6 @@ bool espnow_add_peers(device_t device_mode) {
           b_register_peers = true;
         } else {
           LOGI(TAG, "Add peer Error");
-          b_register_peers = false;
-          break;
         }
       }
       break;
@@ -198,7 +196,7 @@ int espnow_list_peers(peer_info_t *peers, int max_peers) {
   return peer_cnt;
 }
 
-int espnow_remove_peers(void) {
+int espnow_remove_peers(device_t device_mode) {
   if (!b_ready) {
     return 0;
   }
@@ -206,11 +204,26 @@ int espnow_remove_peers(void) {
   LOGI(TAG, "Call espnow_remove_peers()");
 
   int peer_cnt = 0;
-  esp_now_peer_info_t peer;
-  for (esp_err_t e = esp_now_fetch_peer(true, &peer); e == ESP_OK; e = esp_now_fetch_peer(false, &peer)) {
-    LOG_BUFFER_HEX(TAG, peer.peer_addr, MAC_ADDR_LEN);
-    esp_now_del_peer(peer.peer_addr);
-    peer_cnt++;
+  char mac_addr[13];
+  uint8_t peer_addr[MAC_ADDR_LEN];
+
+  switch (device_mode) {
+    case HID_DEVICE:
+    case CHILD_DEVICE: {
+    } break;
+    case MASTER_DEVICE: {
+      // Remove only child mac address
+      for (int i = 1; i < 6; i++) {
+        memset(mac_addr, 0x00, sizeof(mac_addr));
+        memset(peer_addr, 0x00, sizeof(peer_addr));
+        if (syscfg_get(MFG_DATA, device_peer_list[i], mac_addr, sizeof(mac_addr)) == 0) {
+          ascii_to_hex(mac_addr, MAC_ADDR_LEN * 2, peer_addr);
+          esp_now_del_peer(peer_addr);
+          syscfg_unset(MFG_DATA, device_peer_list[i]);
+          peer_cnt++;
+        }
+      }
+    } break;
   }
   return peer_cnt;
 }
@@ -247,8 +260,8 @@ void set_mac_address(device_type_t dev, char *mac_address) {
   char *key = device_peer_list[(int)dev];
 
   if (syscfg_set(MFG_DATA, key, mac_address)) {
-    LOGE(TAG, "Failed to save mac address = %s to syscfg", mac_address);
+    LOGE(TAG, "Failed to save key = %s, mac address = %s to syscfg", key, mac_address);
   } else {
-    LOGI(TAG, "Success to save mac address = %s to syscfg", mac_address);
+    LOGI(TAG, "Success to save key = %s, mac address = %s to syscfg", key, mac_address);
   }
 }

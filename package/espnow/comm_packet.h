@@ -23,7 +23,7 @@ typedef enum {
 } message_type_t;
 
 // Keep enum value sequence for compatibility
-typedef enum { HID_DEV = 0, CHILD_1, CHILD_2, CHILD_3, CHILD_4, CHILD_5, CHILD_6, ALL_DEV, MAIN_DEV } device_type_t;
+typedef enum { HID_DEV = 0, CHILD_1, CHILD_2, CHILD_3, CHILD_4, CHILD_5, CHILD_6, MAIN_DEV, ALL_DEV } device_type_t;
 
 typedef struct config_value {
   int flow_rate[6];

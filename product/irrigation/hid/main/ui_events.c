@@ -227,15 +227,16 @@ void update_mac_address(void) {
                         SYSCFG_N_CHILD4_MAC, SYSCFG_N_CHILD5_MAC, SYSCFG_N_CHILD6_MAC };
   device_type_t dev_type[7] = { MAIN_DEV, CHILD_1, CHILD_2, CHILD_3, CHILD_4, CHILD_5, CHILD_6 };
   int dev_cnt = 0;
-  char mac_addr[13] = { 0 };
+  char mac_addr[13];
 
   payload_t payload = { 0 };
   device_manage_t* dev_manage = (device_manage_t*)&payload.dev_manage;
 
   for (int i = 0; i < 7; i++) {
+    memset(mac_addr, 0x00, sizeof(mac_addr));
     if (syscfg_get(MFG_DATA, cfg_name[i], mac_addr, sizeof(mac_addr)) == 0) {
-      memcpy(&dev_manage->update_dev_addr[i], mac_addr, sizeof(mac_addr));
-      dev_manage->update_dev_addr[i].device_type = dev_type[i];
+      memcpy(&dev_manage->update_dev_addr[dev_cnt].mac_addr, mac_addr, sizeof(mac_addr));
+      dev_manage->update_dev_addr[dev_cnt].device_type = dev_type[i];
       dev_cnt++;
     }
   }
