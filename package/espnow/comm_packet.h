@@ -57,8 +57,8 @@ typedef union payload {
 } payload_t;
 
 typedef enum {
-  FAIL = 0,
-  SUCCESS,
+  SUCCESS = 0,
+  FAILURE = 1,
 } response_type_t;
 
 typedef struct irrigation_message {

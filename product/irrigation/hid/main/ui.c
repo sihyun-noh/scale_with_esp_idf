@@ -163,10 +163,10 @@ static void status_change_cb(void *s, lv_msg_t *m) {
         LOGI(TAG, "Got SetConfig response, Call disable start button()");
         disable_start_button();
       } else if (msg->receive_type == FORCE_STOP) {
-        LOGI(TAG, "Got Force Stop response");
         char op_msg[128] = { 0 };
         int zone_id = dev_stat->deviceId;
         int flow_value = dev_stat->flow_value;
+        LOGI(TAG, "Got Force Stop response from [%d]", zone_id);
         if (zone_id >= 1 && zone_id <= 6) {
           set_zone_status(zone_id, false);
           set_zone_number(zone_id, false);
@@ -209,7 +209,7 @@ static void status_change_cb(void *s, lv_msg_t *m) {
         for (int i = 0; i < 6; i++) {
           if (dev_stat->child_status[i]) {
             // Display the device status as error
-            snprintf(op_msg, sizeof(op_msg), "Child[%d] has an error", i + 1);
+            snprintf(op_msg, sizeof(op_msg), "Child [%d] has an error\n", i + 1);
             add_operation_list(op_msg);
             FDATA(BASE_PATH, "%s", op_msg);
           }

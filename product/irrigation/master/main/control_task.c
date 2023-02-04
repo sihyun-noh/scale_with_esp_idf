@@ -192,6 +192,7 @@ bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
   receivedId = id;
 
   send_message.sender_type = sender;
+  send_message.receive_type = receiver;
   send_message.current_time = get_current_time();
 
   payload_t* payload = &send_message.payload;
@@ -323,7 +324,8 @@ void check_response(irrigation_message_t* msg) {
     } break;
 
     case FORCE_STOP: {
-      send_esp_data(RESPONSE, RESPONSE, HID_DEV);
+      // Send force stop response to the hid device when master received reposne of force stop from child node.
+      send_esp_data(RESPONSE, FORCE_STOP, HID_DEV);
 
       init_variable();
       set_control_status(CHECK_SCEHDULE);
