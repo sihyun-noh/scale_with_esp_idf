@@ -5,10 +5,10 @@
 
 typedef enum {
   SET_CONFIG = 0,
-  TIME_SYNC,      // 1
-  START_FLOW,     // 2
-  BATTERY_LEVEL,  // 3
-  SET_VALVE_ON,  // 4/var/folders/zj/c3z6chj928gbbk4zhs397brm0000gn/T/com.skitch.skitch/DMDD2521CCC-DD9F-42E9-B602-F3328FDBA1D7/카드영수증.png
+  TIME_SYNC,           // 1
+  START_FLOW,          // 2
+  BATTERY_LEVEL,       // 3
+  SET_VALVE_ON,        // 4
   SET_VALVE_OFF,       // 5
   FLOW_STATUS,         // 6
   SET_SLEEP,           // 7
