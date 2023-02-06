@@ -59,7 +59,7 @@ int flowSettingValue[NUMBER_CHILD];  // 관수 설정 값
 int zoneBattery[TOTAL_DEVICES];      // 0: master, 1~6: child 배터리 잔량
 
 int flowDoneCnt;      // zone 변 관수 완료 카운트
-int batteryCnt;       // child 배터리 수신 횟수
+int respChildCnt;     // child response 수신 횟수
 int syncTimeBuffCnt;  // Time sync buffer check count
 int totalNumberChild; // child device number
 
@@ -81,7 +81,7 @@ void init_variable(void) {
   memset(&flowSettingValue, 0x00, sizeof(flowSettingValue));
   memset(&zoneBattery, 0x00, sizeof(zoneBattery));
   flowDoneCnt = 0;
-  batteryCnt = 0;
+  respChildCnt = 0;
   syncTimeBuffCnt = 0;
   totalNumberChild = 0;
   remainSleepTime = 0;
@@ -244,11 +244,19 @@ bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
   LOGI(TAG, "============== Message ==================");
   LOG_BUFFER_HEXDUMP(TAG, &send_message, sizeof(irrigation_message_t), LOG_INFO);
 
-  if (!espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(irrigation_message_t))) {
-    LOGE(TAG, "Failed to esp send data!!!");
-    espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(irrigation_message_t));
+  if (sender == SET_SLEEP && id == ALL_DEV) {
+    for (int i = 1; i < TOTAL_DEVICES; i++) {
+      if (get_addr(i, zoneAddr)) {
+        espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(irrigation_message_t));
+      }
+    }
   } else {
-    LOGI(TAG, "Success to esp send data!!!");
+    if (!espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(irrigation_message_t))) {
+      LOGE(TAG, "Failed to esp send data!!!");
+      espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(irrigation_message_t));
+    } else {
+      LOGI(TAG, "Success to esp send data!!!");
+    }
   }
 
   sendCmd = sender;
@@ -308,13 +316,13 @@ void check_response(irrigation_message_t* msg) {
       device_status_t* dev_stat = (device_status_t*)&msg->payload.dev_stat;
       zoneBattery[dev_stat->deviceId] = dev_stat->battery_level[dev_stat->deviceId];
       LOGI(TAG, "ID: %D, Battery level: %d", dev_stat->deviceId, dev_stat->battery_level[dev_stat->deviceId]);
-      batteryCnt++;
+      respChildCnt++;
       sendMessageFlag = true;
       sendCmd = msg->receive_type;
 
       respBroadCast[dev_stat->deviceId] = 1;
 
-      if (batteryCnt >= totalNumberChild) {
+      if (respChildCnt >= totalNumberChild) {
         memset(&respBroadCast, 0x00, sizeof(respBroadCast));
         sendMessageFlag = false;
         sendCmd = NONE;
@@ -324,8 +332,25 @@ void check_response(irrigation_message_t* msg) {
 
         send_esp_data(BATTERY_LEVEL, BATTERY_LEVEL, HID_DEV);
 
-        batteryCnt = 0;
+        respChildCnt = 0;
         set_control_status(WAIT_STATE);
+      }
+    } break;
+
+    case SET_SLEEP: {
+      device_status_t* dev_stat = (device_status_t*)&msg->payload.dev_stat;
+      sendMessageFlag = true;
+      sendCmd = msg->receive_type;
+      respChildCnt++;
+
+      respBroadCast[dev_stat->deviceId] = 1;
+
+      if (respChildCnt >= totalNumberChild) {
+        memset(&respBroadCast, 0x00, sizeof(respBroadCast));
+        remainSleepTime -= TOTAL_DEVICES;
+        send_esp_data(SET_SLEEP, SET_SLEEP, HID_DEV);
+        respChildCnt = 0;
+        sleep_timer_wakeup(remainSleepTime);
       }
     } break;
 
@@ -553,10 +578,7 @@ void check_schedule(void) {
     remainSleepTime = check_sleep_time();
     if (remainSleepTime > 0) {
       send_esp_data(SET_SLEEP, SET_SLEEP, ALL_DEV);
-
-      LOGI(TAG, "SEND DEEP SLEEP MSG, SleepTime : %llus ", remainSleepTime);
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
-      sleep_timer_wakeup(remainSleepTime);
+      LOGI(TAG, "SEND DEEP SLEEP MSG, SleepTime : %llus ", remainSleepTime);      
     } else {
       LOGI(TAG, "WAIT SET CONFIG ");
     }
