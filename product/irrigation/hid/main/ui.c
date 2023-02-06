@@ -150,10 +150,13 @@ static void status_change_cb(void *s, lv_msg_t *m) {
   switch (msg_id) {
     case MSG_TIME_SYNCED: enable_buttons(); break;
     case MSG_BATTERY_STATUS: {
+      char op_msg[128] = { 0 };
       irrigation_message_t *msg = (irrigation_message_t *)lv_msg_get_payload(m);
       device_status_t *dev_stat = (device_status_t *)&msg->payload.dev_stat;
       for (int id = 1; id < 7; id++) {
         FDATA(BASE_PATH, "Zone[%d] : Battery level = %d", id, dev_stat->battery_level[id]);
+        snprintf(op_msg, sizeof(op_msg), "Zone[%d] : Battery level = %d\n", id, dev_stat->battery_level[id]);
+        add_operation_list(op_msg);
       }
     } break;
     case MSG_RESPONSE_STATUS: {
@@ -1464,7 +1467,7 @@ void ui_init(void) {
   static uint32_t user_data = 10;
   lv_timer_t *time_timer = lv_timer_create(time_timer_cb, 1, &user_data);
   // Disable all buttons in Main screen until applying master's time.
-  // disable_buttons();
+  disable_buttons();
 
   lv_disp_load_scr(ui_Main);
 }

@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 
+#include "ui.h"
 #include "ui_helpers.h"
 #include "gui.h"
 
@@ -218,6 +219,16 @@ void disable_start_button(void) {
   _ui_state_modify(ui_StartButton, LV_STATE_DISABLED, _UI_MODIFY_STATE_ADD);
 }
 
+lv_obj_t *get_zone_panel_obj(ZONE zone) {
+  if (zone >= 1 && zone <= 6) {
+    lv_obj_t *zone_panel[6] = {
+      ui_ZonePanel1, ui_ZonePanel2, ui_ZonePanel3, ui_ZonePanel4, ui_ZonePanel5, ui_ZonePanel6
+    };
+    return zone_panel[zone - 1];
+  }
+  return (lv_obj_t *)NULL;
+}
+
 lv_obj_t *get_zone_status_obj(ZONE zone) {
   if (zone >= 1 && zone <= 6) {
     lv_obj_t *zone_status[6] = { ui_ZoneStatus1, ui_ZoneStatus2, ui_ZoneStatus3,
@@ -340,4 +351,14 @@ void reset_settings(void) {
 
 void add_operation_list(const char *op_msg) {
   lv_textarea_add_text(ui_OperationList, op_msg);
+}
+
+void disable_zone(ZONE zone) {
+  // modify the state as disable
+  // set bgcolor as 0xe2e2e2 (white gray)
+
+  lv_obj_set_style_bg_color(get_zone_panel_obj(zone), lv_color_hex(0xE2E2E2), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(get_zone_num_obj(zone), lv_color_hex(0xE2E2E2), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(get_zone_status_obj(zone), lv_color_hex(0xE2E2E2), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(get_zone_flow_meter_obj(zone), lv_color_hex(0xE2E2E2), LV_PART_MAIN | LV_STATE_DEFAULT);
 }
