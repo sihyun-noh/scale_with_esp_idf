@@ -61,6 +61,7 @@ int zoneBattery[TOTAL_DEVICES];      // 0: master, 1~6: child 배터리 잔량
 int flowDoneCnt;      // zone 변 관수 완료 카운트
 int batteryCnt;       // child 배터리 수신 횟수
 int syncTimeBuffCnt;  // Time sync buffer check count
+int totalNumberChild; // child device number
 
 uint64_t remainSleepTime;  // sleep 시간
 
@@ -82,6 +83,7 @@ void init_variable(void) {
   flowDoneCnt = 0;
   batteryCnt = 0;
   syncTimeBuffCnt = 0;
+  totalNumberChild = 0;
   remainSleepTime = 0;
 }
 
@@ -312,7 +314,7 @@ void check_response(irrigation_message_t* msg) {
 
       respBroadCast[dev_stat->deviceId] = 1;
 
-      if (batteryCnt >= NUMBER_CHILD) {
+      if (batteryCnt >= totalNumberChild) {
         memset(&respBroadCast, 0x00, sizeof(respBroadCast));
         sendMessageFlag = false;
         sendCmd = NONE;
@@ -351,6 +353,59 @@ void show_config_debug(void) {
     LOGI(TAG, "flow zone: %d, flow rate: %d ", flowOrder[i], flowSettingValue[i]);
   }
 #endif
+}
+
+void device_time_sync(void) {
+  send_esp_data(TIME_SYNC, TIME_SYNC, ALL_DEV);
+
+  LOGI(TAG, "SEND HID/CHILD TIME SYNC !!");
+  set_control_status(WAIT_STATE);
+}
+
+void check_peer_address(void) {
+  uint8_t peer_mac_address[TOTAL_DEVICES][MAC_ADDR_LEN] = { { 0 } };
+  totalNumberChild = 0;
+  // 각 device mac addr 존재 여부 판단... 확인 완료 시 check mode 단계..
+  if (espnow_add_peers(MASTER_DEVICE)) {
+    LOGI(TAG, "Success to add hid, child addr to peer list");
+  } else {
+    LOGI(TAG, "Failed to add hid, child addr to peer list");
+  }
+
+  if (!get_mac_address(HID_DEV, peer_mac_address[HID_DEV])) {
+    LOGW(TAG, "Failed to get HID mac address");
+  }
+
+  if (get_mac_address(CHILD_1, peer_mac_address[CHILD_1])) {
+    totalNumberChild++;
+  }
+
+  if (get_mac_address(CHILD_2, peer_mac_address[CHILD_2])) {
+    totalNumberChild++;
+  }
+
+  if (get_mac_address(CHILD_3, peer_mac_address[CHILD_3])) {
+    totalNumberChild++;
+  }
+
+  if (get_mac_address(CHILD_4, peer_mac_address[CHILD_4])) {
+    totalNumberChild++;
+  }
+
+  if (get_mac_address(CHILD_5, peer_mac_address[CHILD_5])) {
+    totalNumberChild++;
+  }
+
+  if (get_mac_address(CHILD_6, peer_mac_address[CHILD_6])) {
+    totalNumberChild++;
+  }
+
+  LOGI(TAG, "Number of Child device : %d", totalNumberChild);
+
+  LOG_BUFFER_HEXDUMP(TAG, peer_mac_address, sizeof(peer_mac_address), LOG_INFO);
+
+  set_control_status(CHECK_TIME);
+  LOGI(TAG, "ADDR CHECK DONE !!");
 }
 
 void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
@@ -436,7 +491,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
           }
         }
         // Add updated peer address raed from syscfg to the espnow
-        espnow_add_peers(MASTER_DEVICE);
+        check_peer_address();
       } break;
 
       default: break;
@@ -446,29 +501,6 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
 
 void on_data_sent_cb(const uint8_t* macAddr, esp_now_send_status_t status) {
   LOGI(TAG, "Delivery status : %d ", status);
-}
-
-void check_peer_address(void) {
-  uint8_t peer_mac_address[TOTAL_DEVICES][MAC_ADDR_LEN] = { { 0 } };
-  // 각 device mac addr 존재 여부 판단... 확인 완료 시 check mode 단계..
-  if (espnow_add_peers(MASTER_DEVICE)) {
-    LOGI(TAG, "Success to add hid, child addr to peer list");
-  } else {
-    LOGI(TAG, "Failed to add hid, child addr to peer list");
-  }
-
-  get_mac_address(HID_DEV, peer_mac_address[HID_DEV]);
-  get_mac_address(CHILD_1, peer_mac_address[CHILD_1]);
-  get_mac_address(CHILD_2, peer_mac_address[CHILD_2]);
-  get_mac_address(CHILD_3, peer_mac_address[CHILD_3]);
-  get_mac_address(CHILD_4, peer_mac_address[CHILD_4]);
-  get_mac_address(CHILD_5, peer_mac_address[CHILD_5]);
-  get_mac_address(CHILD_6, peer_mac_address[CHILD_6]);
-
-  LOG_BUFFER_HEXDUMP(TAG, peer_mac_address, sizeof(peer_mac_address), LOG_INFO);
-
-  set_control_status(CHECK_TIME);
-  LOGI(TAG, "ADDR CHECK DONE !!");
 }
 
 void check_set_local_time(void) {
@@ -606,10 +638,7 @@ static void control_task(void* pvParameters) {
         // HID 에서는 wake up 후 10분 안에 time sync 가 없을 경우 master 로 다시 time sync req
         syncTimeBuffCnt++;
         if (syncTimeBuffCnt > (60 * SYNC_TIME_BUFF)) {
-          send_esp_data(TIME_SYNC, TIME_SYNC, ALL_DEV);
-
-          LOGI(TAG, "SEND HID/CHILD TIME SYNC !!");
-          set_control_status(WAIT_STATE);
+          device_time_sync();
           syncTimeBuffCnt = 0;
         }
       } break;
