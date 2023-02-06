@@ -64,8 +64,6 @@ int syncTimeBuffCnt;  // Time sync buffer check count
 
 uint64_t remainSleepTime;  // sleep 시간
 
-// extern uint8_t macAddress[TOTAL_DEVICES][6];  // 0 = HID, 1~6 = child 1~6
-
 void init_variable(void) {
   sendCmd = NONE;
   sendMessageFlag = false;
@@ -113,13 +111,17 @@ int get_flow_value() {
   return value;
 }
 
-void get_addr(int zone, uint8_t* mac_addr) {
+bool get_addr(int zone, uint8_t* mac_addr) {
+  bool valid_mac = false;
+
   if (zone == ALL_DEV) {
     // Broadcasting address
     memset(mac_addr, 0xFF, sizeof(uint8_t) * MAC_ADDR_LEN);
+    valid_mac = true;
   } else {
-    get_mac_address(zone, mac_addr);
+    valid_mac = get_mac_address(zone, mac_addr);
   }
+  return valid_mac;
 }
 
 static time_t get_current_time(void) {
@@ -137,14 +139,14 @@ int check_address_matching_current_set(const uint8_t* mac) {
   for (int i = 0; i < TOTAL_DEVICES; i++) {
     uint8_t compareAddr[MAC_ADDR_LEN] = { 0 };
 
-    get_addr(i, compareAddr);
+    if (get_addr(i, compareAddr)) {
+      LOGI(TAG, "======== zone id [%d] ========", i);
+      LOG_BUFFER_HEX(TAG, compareAddr, MAC_ADDR_LEN);
 
-    LOGI(TAG, "======== zone id [%d] ========", i);
-    LOG_BUFFER_HEX(TAG, compareAddr, MAC_ADDR_LEN);
-
-    if (memcmp(mac, compareAddr, sizeof(compareAddr)) == 0) {
-      LOGI(TAG, "addr matched zone ID : %d ", i);
-      return i;
+      if (memcmp(mac, compareAddr, sizeof(compareAddr)) == 0) {
+        LOGI(TAG, "addr matched zone ID : %d ", i);
+        return i;
+      }
     }
   }
   return -1;
@@ -187,7 +189,9 @@ bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
   irrigation_message_t send_message = { 0 };
   uint8_t zoneAddr[MAC_ADDR_LEN] = { 0 };
 
-  get_addr(id, zoneAddr);
+  if (!get_addr(id, zoneAddr)) {
+    return false;
+  }
 
   receivedId = id;
 
@@ -422,13 +426,16 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
         int cnt = dev_manage->update_dev_cnt;
         device_addr_t* update_dev_addr = dev_manage->update_dev_addr;
         LOGI(TAG, "update device addr cnt = %d", cnt);
+        // Remove all peer address from espnow
         espnow_remove_peers(MASTER_DEVICE);
+        // Save the updated peer address to the syscfg (Only child address should be updated)
         for (int i = 0; i < cnt; i++) {
           LOGI(TAG, "device type = %d, mac_addr = %s", update_dev_addr[i].device_type, update_dev_addr[i].mac_addr);
           if (update_dev_addr[i].device_type != MAIN_DEV) {
             set_mac_address(update_dev_addr[i].device_type, update_dev_addr[i].mac_addr);
           }
         }
+        // Add updated peer address raed from syscfg to the espnow
         espnow_add_peers(MASTER_DEVICE);
       } break;
 

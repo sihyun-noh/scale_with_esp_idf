@@ -94,7 +94,7 @@ int get_address_matching_id(void) {
 
   for (int i = 0; i < 8; i++) {
     if (syscfg_get(MFG_DATA, device_peer_list[i], s_compare_mac, sizeof(s_compare_mac))) {
-      LOGE(TAG, "syscfg MAC Address read error");
+      LOGW(TAG, "syscfg MAC Address read error");
       return -1;
     }
     ascii_to_hex(s_compare_mac, sizeof(compare_mac) * 2, compare_mac);
@@ -114,7 +114,7 @@ bool syscfg_get_to_add_peer(const char *key, uint8_t *mac_addr) {
   char s_mac[SYSCFG_S_MASTER_MAC] = { 0 };
 
   if (syscfg_get(MFG_DATA, key, s_mac, sizeof(s_mac))) {
-    LOGE(TAG, "syscfg MAC Address read error");
+    LOGW(TAG, "syscfg MAC Address read error");
     return false;
   }
   ascii_to_hex(s_mac, MAC_ADDR_LEN * 2, mac_addr);
@@ -151,7 +151,7 @@ bool espnow_add_peers(device_t device_mode) {
         if (syscfg_get_to_add_peer(device_peer_list[i], macAddress[i])) {
           b_register_peers = true;
         } else {
-          LOGI(TAG, "Add peer Error");
+          LOGI(TAG, "%s device seems to be removed", device_peer_list[i]);
         }
       }
       break;
@@ -248,7 +248,7 @@ bool get_mac_address(device_type_t dev, uint8_t *mac_address) {
   char *key = device_peer_list[(int)dev];
 
   if (syscfg_get(MFG_DATA, key, mac, sizeof(mac))) {
-    LOGE(TAG, "Failed to get key = %s from syscfg", key);
+    LOGW(TAG, "Failed to get key = %s from syscfg", key);
     return false;
   }
 
@@ -260,7 +260,7 @@ void set_mac_address(device_type_t dev, char *mac_address) {
   char *key = device_peer_list[(int)dev];
 
   if (syscfg_set(MFG_DATA, key, mac_address)) {
-    LOGE(TAG, "Failed to save key = %s, mac address = %s to syscfg", key, mac_address);
+    LOGW(TAG, "Failed to save key = %s, mac address = %s to syscfg", key, mac_address);
   } else {
     LOGI(TAG, "Success to save key = %s, mac address = %s to syscfg", key, mac_address);
   }
