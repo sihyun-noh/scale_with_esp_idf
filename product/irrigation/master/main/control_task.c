@@ -281,11 +281,14 @@ void check_response(irrigation_message_t* msg) {
       set_control_status(CHECK_SCEHDULE);
     } break;
 
+    case DEVICE_ERROR: { 
+      set_control_status(ERROR);
+    } break;
+
     case BATTERY_LEVEL: {
       set_control_status(CHECK_SCEHDULE);
     } break;
 
-    case DEVICE_ERROR:
     case ALL_COMPLETE: {
       init_variable();
       set_control_status(CHECK_SCEHDULE);
@@ -342,6 +345,8 @@ void check_response(irrigation_message_t* msg) {
       sendMessageFlag = true;
       sendCmd = msg->receive_type;
       respChildCnt++;
+
+      LOGI(TAG, "resp CNT Child : %d ", respChildCnt);
 
       respBroadCast[dev_stat->deviceId] = 1;
 
@@ -578,6 +583,7 @@ void check_schedule(void) {
     remainSleepTime = check_sleep_time();
     if (remainSleepTime > 0) {
       send_esp_data(SET_SLEEP, SET_SLEEP, ALL_DEV);
+      set_control_status(WAIT_STATE);
       LOGI(TAG, "SEND DEEP SLEEP MSG, SleepTime : %llus ", remainSleepTime);      
     } else {
       LOGI(TAG, "WAIT SET CONFIG ");
@@ -605,17 +611,20 @@ void check_retry_cmd(void) {
 
   if (childErrorCnt > 0) {
     send_esp_data(DEVICE_ERROR, DEVICE_ERROR, HID_DEV);
-    set_control_status(ERROR);
+    memset(&respBroadCast, 0x00, sizeof(respBroadCast));
+    respChildCnt = 0;
+    set_control_status(WAIT_STATE);
   }
 }
 
 void retry_send_cmd(int rcvId) {
   if (rcvId > NUMBER_CHILD) {
     // broadcasting 후에 못 받은 것들 체크....
-    for (int i = 0; i < TOTAL_DEVICES; i++) {
+    for (int i = 1; i < TOTAL_DEVICES; i++) {
       if (respBroadCast[i] == 0) {
-        send_esp_data(sendCmd, sendCmd, i);
-        retryCntMsg[i] += 1;
+        if (send_esp_data(sendCmd, sendCmd, i)) {
+          retryCntMsg[i] += 1;
+        }
       }
       receivedId = TOTAL_DEVICES;
     }
@@ -698,11 +707,14 @@ static void control_task(void* pvParameters) {
       case CHILD_VALVE_ON: {
         // 관수 스케줄에 따라 pump / zone pump on, off 컨트롤
         // 관수 시작 시 : zone valve on -> pump on
-        send_esp_data(SET_VALVE_ON, SET_VALVE_ON, flowOrder[flowDoneCnt]);
-
-        LOGI(TAG, "CHILD -%d VALVE ON !!", flowOrder[flowDoneCnt]);
-        set_control_status(WAIT_STATE);
-
+        if (send_esp_data(SET_VALVE_ON, SET_VALVE_ON, flowOrder[flowDoneCnt])) {
+          LOGI(TAG, "CHILD -%d VALVE ON !!", flowOrder[flowDoneCnt]);
+          set_control_status(WAIT_STATE);
+        } else {
+          LOGI(TAG, "CHILD -%d is unavailable !!", flowOrder[flowDoneCnt]);
+          flowDoneCnt++;
+          set_control_status(CHECK_SCEHDULE);
+        }        
       } break;
 
       case CHILD_VALVE_OFF: {
