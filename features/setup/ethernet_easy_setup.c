@@ -147,8 +147,8 @@ static httpd_handle_t start_webserver(void) {
 
   extern const unsigned char cacert_pem_start[] asm("_binary_cacert_pem_start");
   extern const unsigned char cacert_pem_end[] asm("_binary_cacert_pem_end");
-  conf.cacert_pem = cacert_pem_start;
-  conf.cacert_len = cacert_pem_end - cacert_pem_start;
+  conf.servercert = cacert_pem_start;
+  conf.servercert_len = cacert_pem_end - cacert_pem_start;
 
   extern const unsigned char prvtkey_pem_start[] asm("_binary_prvtkey_pem_start");
   extern const unsigned char prvtkey_pem_end[] asm("_binary_prvtkey_pem_end");

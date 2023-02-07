@@ -208,8 +208,8 @@ static httpd_handle_t start_webserver(void) {
 
   extern const unsigned char cacert_pem_start[] asm("_binary_cacert_pem_start");
   extern const unsigned char cacert_pem_end[] asm("_binary_cacert_pem_end");
-  conf.cacert_pem = cacert_pem_start;
-  conf.cacert_len = cacert_pem_end - cacert_pem_start;
+  conf.servercert = cacert_pem_start;
+  conf.servercert_len = cacert_pem_end - cacert_pem_start;
 
   extern const unsigned char prvtkey_pem_start[] asm("_binary_prvtkey_pem_start");
   extern const unsigned char prvtkey_pem_end[] asm("_binary_prvtkey_pem_end");
@@ -342,15 +342,18 @@ void easy_setup_task(void *pvParameters) {
         curr_mode = STA_CONNECT_MODE;
       } break;
       case STA_CONNECT_MODE: {
-        char *best_ssid;
         vTaskDelay(500 / portTICK_PERIOD_MS);
         wifi_sta_mode();
-        if ((best_ssid = get_best_wifi_ssid()) && strcmp(farmssid, best_ssid) != 0) {
-          snprintf(farmssid, sizeof(farmssid), "%s", best_ssid);
-          syscfg_set(SYSCFG_I_SSID, SYSCFG_N_SSID, farmssid);
-        }
-        if (best_ssid) {
-          free(best_ssid);
+        // 배터리모델이거나, 이지셋업 중에는 wifi 스캔하지않음 - wifi스캔으로 인한 지연시간이 걸려 셋업에 문제가 생김
+        if (!is_battery_model() && farmip[0]) {
+          char *best_ssid;
+          if ((best_ssid = get_best_wifi_ssid()) && strcmp(farmssid, best_ssid) != 0) {
+            snprintf(farmssid, sizeof(farmssid), "%s", best_ssid);
+            syscfg_set(SYSCFG_I_SSID, SYSCFG_N_SSID, farmssid);
+          }
+          if (best_ssid) {
+            free(best_ssid);
+          }
         }
         wifi_connect_ap(farmssid, farmpw);
         LOGI(TAG, "Connecting to AP with SSID:%s password:%s", farmssid, farmpw);

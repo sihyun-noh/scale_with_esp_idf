@@ -31,7 +31,7 @@ ota_err_t ota_fw_active_new_image(fw_ctx_t *fwctx) {
 }
 
 ota_err_t ota_fw_reset_device(fw_ctx_t *fwctx) {
-  return ota_fw_reset_device(fwctx);
+  return ota_fw_reset_device_impl(fwctx);
 }
 
 ota_state_t ota_fw_get_state(fw_ctx_t *fwctx) {

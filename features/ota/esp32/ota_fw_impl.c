@@ -194,7 +194,6 @@ int ota_fw_download_impl(fw_ctx_t *const fwctx) {
 
   while (total_data_read < fw_image_len) {
     data_read = esp_http_client_read(client, (char *)image_buffer, BUFFER_SIZE);
-    image_buffer[data_read] = 0;
 
     if (data_read == 0) {
       /*
@@ -205,7 +204,12 @@ int ota_fw_download_impl(fw_ctx_t *const fwctx) {
         LOGE(TAG, "Connection closed, errno = %d", errno);
         break;
       }
+    } else if (data_read < 0) {
+      LOGE(TAG, "Connection retry, errno = %d, data_read = %d", errno, data_read);
+      vTaskDelay(500 / portTICK_PERIOD_MS);
+      continue;
     }
+    image_buffer[data_read] = 0;
 
     fw_status = check_fw_image(running, image_buffer, data_read);
     if (fw_status == INVALID_FIRMWARE) {
@@ -226,6 +230,7 @@ int ota_fw_download_impl(fw_ctx_t *const fwctx) {
 
     total_data_read += data_read;
     LOGI(TAG, "total_data_read = %d, data_read = %d", total_data_read, data_read);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
   }
 
   if (fw_status == INVALID_FIRMWARE) {
