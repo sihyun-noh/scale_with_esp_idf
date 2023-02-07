@@ -18,6 +18,9 @@ jobs:
     steps:
     - name: Checkout sensor
       uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
     - name: esp-idf build
       uses: espressif/esp-idf-ci-action@main
       with:
