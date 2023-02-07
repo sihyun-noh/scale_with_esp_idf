@@ -1,0 +1,26 @@
+name: Build check irrigation child
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'product/irrigation/child/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'product/irrigation/child/**'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout sensor
+      uses: actions/checkout@v2
+    - name: esp-idf build
+      uses: espressif/esp-idf-ci-action@main
+      with:
+        esp_idf_version: v5.0
+        target: esp32
+        path: './product/irrigation/child'

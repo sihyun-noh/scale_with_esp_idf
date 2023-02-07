@@ -1,14 +1,14 @@
-name: Build check sensor
+name: Build check irrigation hid
 
 on:
   push:
     branches: [main]
     paths:
-      - 'product/sensor/**'
+      - 'product/irrigation/hid/**'
   pull_request:
     branches: [main]
     paths:
-      - 'product/sensor/**'
+      - 'product/irrigation/hid/**'
 
 jobs:
   build:
@@ -21,6 +21,6 @@ jobs:
     - name: esp-idf build
       uses: espressif/esp-idf-ci-action@main
       with:
-        esp_idf_version: v4.4
-        target: esp32
-        path: './product/sensor'
+        esp_idf_version: v5.0
+        target: esp32s3
+        path: './product/irrigation/hid'

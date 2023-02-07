@@ -1,0 +1,26 @@
+name: Build check data logger
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'product/data_logger/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'product/data_logger/**'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout data logger
+      uses: actions/checkout@v2
+    - name: esp-idf build
+      uses: espressif/esp-idf-ci-action@main
+      with:
+        esp_idf_version: v5.0
+        target: esp32s3
+        path: './product/data_logger'
