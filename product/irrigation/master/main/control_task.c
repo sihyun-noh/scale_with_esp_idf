@@ -612,6 +612,7 @@ void check_retry_cmd(void) {
   if (childErrorCnt > 0) {
     send_esp_data(DEVICE_ERROR, DEVICE_ERROR, HID_DEV);
     memset(&respBroadCast, 0x00, sizeof(respBroadCast));
+    memset(&retryCntMsg, 0x00, sizeof(retryCntMsg));
     respChildCnt = 0;
     set_control_status(WAIT_STATE);
   }
