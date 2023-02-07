@@ -1,0 +1,6 @@
+config FILELOG_FEATURE
+  bool "Filelog feature"
+  default "n"
+  select SYSFILE_PACKAGE
+  help
+    Enable to save log messages to the file system.

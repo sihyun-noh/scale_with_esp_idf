@@ -21,6 +21,7 @@
 #include "esp_err.h"
 #include "esp_netif.h"
 #include "esp_wifi.h"
+#include "esp_mac.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "log.h"
@@ -219,7 +220,6 @@ static bool wifi_stop(void) {
   if (!b_wifi_started) {
     return true;
   }
-
   b_wifi_started = false;
   err = esp_wifi_stop();
   if (err) {
@@ -667,4 +667,19 @@ int get_ap_info_impl(wifi_context_t *ctx, ap_info_t *ap_info) {
     ap_info->primary_channel = ap_record.primary;
   }
   return (rc == ESP_OK) ? 0 : -1;
+}
+
+int wifi_espnow_mode_impl(wifi_context_t *ctx) {
+  if (ctx == NULL) {
+    return -1;
+  }
+
+  // Set WiFi as WiFi STA mode for esp-now working
+  if (!enable_sta_mode(true)) {
+    LOGE(TAG, "Failed to enable STA mode!!!");
+    return -1;
+  }
+
+  esp_wifi_set_protocol(WIFI_MODE_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR);
+  return 0;
 }

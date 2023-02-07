@@ -13,6 +13,7 @@
  * IMPLIED, OR STATUTORY, INCLUDING THE IMPLIED WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
+#include "sdkconfig.h"
 #include "shell_command_impl.h"
 #include "shell_console_impl_priv.h"
 #include "syscfg_cmd.h"
@@ -27,24 +28,22 @@
 
 #include "icmp_echo_cmd.h"
 #include "sysfile.h"
-#include "config.h"
 #include "wifi_manager.h"
-
-#ifdef DS3231_I2C_SDA_PIN
-#include "rtc_task.h"
-extern int set_interval_cmd(int argc, char **argv);
-extern int get_interval_cmd(int argc, char **argv);
-#endif
+#include "time_api.h"
 
 extern void stop_shell(void);
+
+#if defined(MQTTC_PACKAGE)
 extern int mqtt_start_cmd(int argc, char **argv);
 extern int mqtt_subscribe_cmd(int argc, char **argv);
 extern int mqtt_publish_cmd(int argc, char **argv);
+#endif
+
 extern char *uptime(void);
 
-#if (SENSOR_TYPE == ATLAS_PH)
+#if (CONFIG_SENSOR_ATLAS_PH)
 extern int atlas_ph_cal_cmd(int argc, char **argv);
-#elif (SENSOR_TYPE == ATLAS_EC)
+#elif (CONFIG_SENSOR_ATLAS_EC)
 extern int atlas_ec_cal_cmd(int argc, char **argv);
 extern int atlas_ec_probe_cmd(int argc, char **argv);
 #endif
@@ -217,6 +216,7 @@ static sc_cmd_t commands[] = {
       .help = "Publish syslog message",
       .func = syslog_pub,
   },
+#if defined(MQTTC_PACKAGE)
   {
       .name = "mqtt_start",
       .help = "Start MQTT client >> mqtt_start host port",
@@ -232,6 +232,7 @@ static sc_cmd_t commands[] = {
       .help = "Publish MQTT topic >> mqtt_publish topic payload qos",
       .func = mqtt_publish_cmd,
   },
+#endif
   {
       .name = "uptime",
       .help = "Device running time",
@@ -262,14 +263,14 @@ static sc_cmd_t commands[] = {
       .help = "Get IDF-SDK version",
       .func = sdk_version,
   },
-#if (SENSOR_TYPE == ATLAS_PH)
+#if (CONFIG_SENSOR_ATLAS_PH)
   {
       .name = "atlas_ph_cal",
       .help = "Atlas pH Sensor Calibration",
       .func = atlas_ph_cal_cmd,
   },
 #endif
-#if (SENSOR_TYPE == ATLAS_EC)
+#if (CONFIG_SENSOR_ATLAS_EC)
   {
       .name = "atlas_ec_cal",
       .help = "Atlas EC Sensor Calibration",
@@ -281,7 +282,6 @@ static sc_cmd_t commands[] = {
       .func = atlas_ec_probe_cmd,
   },
 #endif
-#ifdef DS3231_I2C_SDA_PIN
   {
       .name = "rtc_set_time",
       .help = "Set RTC Time",
@@ -302,7 +302,16 @@ static sc_cmd_t commands[] = {
       .help = "Get interval",
       .func = get_interval_cmd,
   },
-#endif
+  {
+      .name = "set_op_time",
+      .help = "Set operation time",
+      .func = set_op_time_cmd,
+  },
+  {
+      .name = "get_op_time",
+      .help = "Get operation time",
+      .func = get_op_time_cmd,
+  },
 };
 
 /**

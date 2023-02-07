@@ -1,8 +1,8 @@
-menu "SmartFarm Controller Configuration"
-  config LED_FEATURE
-    bool "LED feature"
+menu "Controller package"
+  config LED_PACKAGE
+    bool "LED package"
     default "y"
     help
-      LED feature to set led status
+      LED module to set led status
 
-endmenu # Controllers
+endmenu # Controller

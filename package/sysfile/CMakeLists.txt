@@ -1,13 +1,16 @@
-set(req freertos log esp_event spiffs sysevent syslog esp_wifi heap ping sysfile)
+set(req spiffs esp_littlefs syslog)
 
 set(srcs)
 set(includes)
 
-if(CONFIG_SMARTFARM_FILELOG_FEATURE)
-  list(APPEND srcs
-    "sysfile.c"
-    "esp32/spiffs_impl.c")
-  list(APPEND includes ".")
+if(CONFIG_SYSFILE_PACKAGE)
+  if(CONFIG_LITTLEFS_PACKAGE)
+    list(APPEND srcs "esp32/littlefs_impl.c")
+  elseif(CONFIG_SPIFFS_PACKAGE)
+    list(APPEND srcs "esp32/spiffs_impl.c")
+  endif()
+  list(APPEND srcs "sysfile.c")
+  list(APPEND includes "." "esp32")
 endif()
 
 idf_component_register(SRCS "${srcs}"

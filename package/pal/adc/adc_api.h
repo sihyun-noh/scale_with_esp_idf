@@ -9,33 +9,11 @@
 extern "C" {
 #endif
 
-/**
- * @brief   Initialize the given ADC bus
- *
- * The bus MUST not be acquired before initializing it, as this is handled
- * internally by the adc_init function!
- *
- * @return bool true on success, false on failure
- */
-bool adc_calibration_init(void);
+void adc_init(uint8_t channel);
 
-/**
- * @brief   Convenience function for reading adc value from a device
- *
- * @param[in]  pin          ADC peripheral device
- *
- * @return                  ADC value
- */
-int adc_read(uint8_t chan);
+int adc_read(uint8_t channel);
 
-/**
- * @brief   Convenience function for Convert an ADC reading to voltage in mV.
- *
- * @param[in]  pin          ADC peripheral device
- *
- * @return                  Voltage in mV
- */
-int adc_read_to_voltage(uint8_t chan);
+int adc_read_voltage(uint8_t channel);
 
 #ifdef __cplusplus
 }

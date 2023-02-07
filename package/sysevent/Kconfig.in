@@ -1,5 +1,5 @@
-config SMARTFARM_SYSEVENT_FEATURE
-  bool "SmartFarm Sysevent feature"
+config SYSEVENT_PACKAGE
+  bool "Sysevent package"
   default "y"
   help
-    Sysevent feature that supports event messaging between tasks.
+    Enable Sysevent package that supports event messaging between tasks.

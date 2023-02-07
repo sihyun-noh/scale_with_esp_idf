@@ -1,5 +1,5 @@
-config SMARTFARM_SYSCFG_FEATURE
-  bool "SmartFarm Syscfg feature"
+config SYSCFG_PACKAGE
+  bool "Syscfg package"
   default "y"
   help
-    Syscfg feature that set and get configuration
+    Enable Syscfg package that set and get configuration

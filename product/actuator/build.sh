@@ -26,34 +26,13 @@ checkArgVariable() {
   fi
 }
 
-if [ -z ${1} ] || [[ ${1} = "build" ]] || [[ ${1} = "flash" ]]; then
-  echo "Please select target chipset. 1: ESP32, 2: ESP32S3"
-  read CHIPSET_ID
-  if [ ${CHIPSET_ID} = "1" ]; then
-    export IDF_TARGET=esp32
-  elif [ ${CHIPSET_ID} = "2" ]; then
-    export IDF_TARGET=esp32s3
-  fi
+export IDF_TARGET=esp32
 
-  echo "Please select product. 1: On/Off Type, 2 : Forward/Reverse Type  "
-  read SELECT_NUM
-
-  if [ ${SELECT_NUM} = "1" ]; then
-    PRODUCT_NAME="SWITCH"
-  else
-    PRODUCT_NAME="MOTOR"
-  fi
-
-  echo "select ${PRODUCT_NAME}"
-  export CURRENT_PROJECT=${PRODUCT_NAME}
-
-  DEFINED_PROD=$(grep -h '#define ACTUATOR_TYPE*' main/config.h)
-  COMPILE_PROD="#define ACTUATOR_TYPE ${PRODUCT_NAME}"
-
-  if [ -n "${DEFINED_PROD}" ]; then
-    perl -pi -e "s/${DEFINED_PROD}/${COMPILE_PROD}/g" main/config.h
-  fi
-fi
+DEFINED_PROD=$(grep -h 'CONFIG_ACTUATOR_*' sdkconfig | grep -h y)
+DEFINED_PROD=${DEFINED_PROD:16}
+DEFINED_PROD=${DEFINED_PROD%=y}
+echo "select ${DEFINED_PROD}"
+export CURRENT_PROJECT=${DEFINED_PROD}
 
 if [ ${#} -eq 0 ]; then
   echo "start build project"
@@ -70,7 +49,7 @@ PARENT_PATH="${PROD_PATH%/*/*}"
 TOOL_PATH="${PARENT_PATH}/"thirdparty/esp
 
 #esp-idf version
-ESP_IDF_VER="v4.4.1"
+ESP_IDF_VER="v5.0"
 
 # get esp-idf
 downloadSdk() {

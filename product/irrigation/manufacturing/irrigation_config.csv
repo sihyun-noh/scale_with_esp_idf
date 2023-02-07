@@ -1,0 +1,10 @@
+mfg,namespace,
+master_mac,data,string,REPEAT
+hid_mac,data,string,REPEAT
+child1_mac,data,string,REPEAT
+child2_mac,data,string,REPEAT
+child3_mac,data,string,REPEAT
+child4_mac,data,string,REPEAT
+child5_mac,data,string,REPEAT
+child6_mac,data,string,REPEAT
+power_mode,data,string,REPEAT

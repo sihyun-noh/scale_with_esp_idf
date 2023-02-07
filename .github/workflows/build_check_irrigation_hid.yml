@@ -1,0 +1,29 @@
+name: Build check irrigation hid
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'product/irrigation/hid/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'product/irrigation/hid/**'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout sensor
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: esp-idf build
+      uses: espressif/esp-idf-ci-action@main
+      with:
+        esp_idf_version: v5.0
+        target: esp32s3
+        path: './product/irrigation/hid'

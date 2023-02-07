@@ -16,21 +16,49 @@
  * IMPLIED, OR STATUTORY, INCLUDING THE IMPLIED WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
+#include "sdkconfig.h"
 #include "sysfile.h"
-#include "esp32/spiffs_impl.h"
 
-int init_sysfile(void) {
-  return init_spiffs_impl();
+int init_sysfile(const char *partition_name, const char *root_path) {
+  int ret = 0;
+
+#if defined(CONFIG_SPIFFS_PACKAGE)
+  ret = init_spiffs_impl(partition_name, root_path);
+#elif defined(CONFIG_LITTLEFS_PACKAGE)
+  ret = init_littlefs_impl(partition_name, root_path);
+#endif
+  return ret;
 }
 
 int sysfile_format(void) {
-  return format_spiffs_impl();
+  int ret = 0;
+
+#if defined(CONFIG_SPIFFS_PACKAGE)
+  ret = format_spiffs_impl();
+#elif defined(CONFIG_LITTLEFS_PACKAGE)
+  ret = format_littlefs_impl();
+#endif
+  return ret;
 }
 
 int sysfile_show_file(void) {
-  return show_file_impl();
+  int ret = 0;
+
+#if defined(CONFIG_SPIFFS_PACKAGE)
+  ret = show_file_spiffs_impl();
+#elif defined(CONFIG_LITTLEFS_PACKAGE)
+  ret = show_file_littlefs_impl();
+#endif
+  return ret;
 }
 
 int write_log(const char *log_file_name, const char *log_data) {
-  return write_log_data_to_file_impl(log_file_name, log_data);
+  int ret = 0;
+
+#if defined(CONFIG_SPIFFS_PACKAGE)
+  ret = write_log_data_to_file_spiffs_impl(log_file_name, log_data);
+#elif defined(CONFIG_LITTLEFS_PACKAGE)
+  ret = write_log_data_to_file_littlefs_impl(log_file_name, log_data);
+#endif
+  return ret;
 }

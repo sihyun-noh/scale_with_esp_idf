@@ -100,3 +100,7 @@ int get_router_ipaddr(char *ip_addr, int addr_len) {
 int get_ap_info(ap_info_t *ap_info) {
   return get_ap_info_impl(ctx, ap_info);
 }
+
+int wifi_espnow_mode() {
+  return wifi_espnow_mode_impl(ctx);
+}

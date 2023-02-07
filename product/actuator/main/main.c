@@ -1,4 +1,3 @@
-#include "easy_setup.h"
 #include "freertos/projdefs.h"
 #include "nvs_flash.h"
 #include "shell_console.h"
@@ -12,13 +11,14 @@
 #include "time_api.h"
 #include "monitoring.h"
 #include "sysfile.h"
-#include "config.h"
 #include "filelog.h"
 #include "mqtt_task.h"
 #include "main.h"
 #include "esp32/rom/rtc.h"
+#include "easy_setup.h"
 
 #include <string.h>
+#include <time.h>
 
 #define DELAY_1SEC 1000
 #define DELAY_5SEC 5000
@@ -206,7 +206,7 @@ int system_init(void) {
 
   syslog_init();
 
-  ret = init_sysfile();
+  ret = init_sysfile(PARTITION_NAME, BASE_PATH);
   if (ret)
     return ERR_SPIFFS_INIT;
 
@@ -250,7 +250,7 @@ void actuator_loop_task(void) {
       } break;
       case NTP_TIME_MODE: {
         if (is_device_onboard()) {
-          struct tm time;
+          struct tm time = { 0 };
           tm_set_time(3600 * KR_GMT_OFFSET, 3600 * KR_DST_OFFSET, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
           if (tm_get_local_time(&time, 20000)) {
             g_last_ntp_check_time = xTaskGetTickCount();

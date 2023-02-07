@@ -119,7 +119,7 @@ void modbus_sensor_test(int mb_sensor) {
     LOGI(TAG, "Success to initialize modbus master");
   }
 
-  vTaskDelay(1000 / portTICK_RATE_MS);
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
 
   mb_master_register_characteristic(&mb_characteristic[0], num_characteristic);
 
@@ -165,9 +165,9 @@ void modbus_sensor_test(int mb_sensor) {
           }
         }
       }
-      vTaskDelay(500 / portTICK_RATE_MS);
+      vTaskDelay(500 / portTICK_PERIOD_MS);
     }
-    vTaskDelay(5000 / portTICK_RATE_MS);
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
   }
 
   // Or, you can read the modbus register directly using mb_master_send_request() command.
@@ -180,7 +180,7 @@ void modbus_sensor_test(int mb_sensor) {
         LOGI(TAG, "value[%d] = [0x%x]", j, value[j]);
       }
     }
-    vTaskDelay(1000 / portTICK_RATE_MS);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 #endif
 

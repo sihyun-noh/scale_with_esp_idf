@@ -1,5 +1,5 @@
 /**
- * @file sysevent_impl.c
+ * @file spiffs_impl.c
  *
  * @brief using SPIFFS is provided in the "storage/spiffs" directory.
  * This is initializes and mounts a SPIFFS partition, then writes and reads data from it using POSIX and C library APIs.
@@ -29,11 +29,17 @@
 
 static const char *TAG = "spiffs";
 
-int init_spiffs_impl(void) {
+static char s_partition_name[80];
+static char s_root_path[256];
+
+int init_spiffs_impl(const char *partition_name, const char *root_path) {
   LOGI(TAG, "Initializing SPIFFS");
   esp_vfs_spiffs_conf_t conf = {
-    .base_path = BASE_PATH, .partition_label = NULL, .max_files = 5, .format_if_mount_failed = true
+    .base_path = root_path, .partition_label = NULL, .max_files = 5, .format_if_mount_failed = true
   };
+
+  snprintf(s_partition_name, sizeof(s_partition_name), "%s", partition_name);
+  snprintf(s_root_path, sizeof(s_root_path), "%s", root_path);
 
   esp_err_t ret = esp_vfs_spiffs_register(&conf);
 
@@ -67,11 +73,12 @@ int format_spiffs_impl() {
   return 0;
 }
 
-int show_file_impl() {
+int show_file_spiffs_impl(void) {
   int num = 0;
   DIR *d;
   struct dirent *dir;
-  d = opendir(BASE_PATH);
+
+  d = opendir(s_root_path);
   if (d) {
     while ((dir = readdir(d)) != NULL) {
       LOGI(TAG, "%d : %s\n", ++num, dir->d_name);
@@ -84,7 +91,7 @@ int show_file_impl() {
   }
 }
 
-int write_log_data_to_file_impl(const char *log_file_name, const char *log_data) {
+int write_log_data_to_file_spiffs_impl(const char *log_file_name, const char *log_data) {
   FILE *fd = NULL;
   fd = fopen(log_file_name, "a");
   if (fd == NULL) {

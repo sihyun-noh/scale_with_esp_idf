@@ -1,5 +1,5 @@
-config SMARTFARM_PING_FEATURE
-  bool "SmartFarm ping command"
+config PING_PACKAGE
+  bool "Ping package"
   default "y"
   help
-    Ping api and command tool
+    Enable Ping api and Command tool

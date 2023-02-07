@@ -1,7 +1,7 @@
+#include "sdkconfig.h"
 #include "sys_config.h"
 #include "esp_mac.h"
 #include "syslog.h"
-#include "config.h"
 
 #include <string.h>
 
@@ -34,6 +34,14 @@ syscfg_data_t syscfg_table[] = {
   { SYSCFG_N_RECONNECT, SYSCFG_I_RECONNECT, SYSCFG_S_RECONNECT },
   { SYSCFG_N_TIMEZONE, SYSCFG_I_TIMEZONE, SYSCFG_S_TIMEZONE },
   { SYSCFG_N_REGIONCODE, SYSCFG_I_REGIONCODE, SYSCFG_S_REGIONCODE },
+#if (CONFIG_IRRIGATION_HID)
+  { SYSCFG_N_ZONE1_FLOW, SYSCFG_I_ZONE1_FLOW, SYSCFG_S_ZONE1_FLOW },
+  { SYSCFG_N_ZONE2_FLOW, SYSCFG_I_ZONE2_FLOW, SYSCFG_S_ZONE2_FLOW },
+  { SYSCFG_N_ZONE3_FLOW, SYSCFG_I_ZONE3_FLOW, SYSCFG_S_ZONE3_FLOW },
+  { SYSCFG_N_ZONE4_FLOW, SYSCFG_I_ZONE4_FLOW, SYSCFG_S_ZONE4_FLOW },
+  { SYSCFG_N_ZONE5_FLOW, SYSCFG_I_ZONE5_FLOW, SYSCFG_S_ZONE5_FLOW },
+  { SYSCFG_N_ZONE6_FLOW, SYSCFG_I_ZONE6_FLOW, SYSCFG_S_ZONE6_FLOW },
+#endif
 };
 
 #define NUM_OF_SYSCFG (sizeof(syscfg_table) / sizeof(syscfg_data_t))
@@ -45,27 +53,34 @@ static void generate_default_serial(char *serial_no, size_t buff_len) {
   int seq_id = 1;        // 00001 ~ FFFFF
   char prod_code[10] = { 0 };
 
-#if (SENSOR_TYPE == SHT3X)
+#if (CONFIG_SENSOR_SHT3X || CONFIG_DATALOGGER_SHT3X)
   snprintf(prod_code, sizeof(prod_code), "%s", "TH");
-#elif (SENSOR_TYPE == SCD4X)
+#elif (CONFIG_SENSOR_SCD4X || CONFIG_DATALOGGER_SCD4X)
   snprintf(prod_code, sizeof(prod_code), "%s", "CO");
-#elif (SENSOR_TYPE == RK520_02)
+#elif (CONFIG_SENSOR_RK520_02 || CONFIG_DATALOGGER_RK520_02 || CONFIG_DATALOGGER_RS_ECTH)
   snprintf(prod_code, sizeof(prod_code), "%s", "SE");
-#elif (SENSOR_TYPE == SWSR7200)
+#elif (CONFIG_SENSOR_SWSR7500 || CONFIG_DATALOGGER_SWSR7500)
   snprintf(prod_code, sizeof(prod_code), "%s", "SO");
-#elif (SENSOR_TYPE == ATLAS_PH || SENSOR_TYPE == RK500_02)
+#elif (CONFIG_SENSOR_ATLAS_PH || CONFIG_SENSOR_RK500_02 || CONFIG_DATALOGGER_ATLAS_PH || CONFIG_DATALOGGER_RK500_02)
   snprintf(prod_code, sizeof(prod_code), "%s", "WP");
-#elif (SENSOR_TYPE == ATLAS_EC || SENSOR_TYPE == RK500_13)
+#elif (CONFIG_SENSOR_ATLAS_EC || CONFIG_SENSOR_RK500_13 || CONFIG_DATALOGGER_ATLAS_EC || CONFIG_DATALOGGER_RK500_13)
   snprintf(prod_code, sizeof(prod_code), "%s", "WE");
-#elif (SENSOR_TYPE == RK110_02)
+#elif (CONFIG_SENSOR_RK110_02 || CONFIG_DATALOGGER_RK110_02)
   snprintf(prod_code, sizeof(prod_code), "%s", "WD");
-#elif (SENSOR_TYPE == RK100_02)
+#elif (CONFIG_SENSOR_RK100_02 || CONFIG_DATALOGGER_RK100_02)
   snprintf(prod_code, sizeof(prod_code), "%s", "WS");
 #endif
-#if (ACTUATOR_TYPE == SWITCH)
+#if (CONFIG_ACTUATOR_SWITCH)
   snprintf(prod_code, sizeof(prod_code), "%s", "SW");
-#elif (ACTUATOR_TYPE == MOTOR)
+#elif (CONFIG_ACTUATOR_MOTOR)
   snprintf(prod_code, sizeof(prod_code), "%s", "MT");
+#endif
+#if (CONFIG_IRRIGATION_MASTER)
+  snprintf(prod_code, sizeof(prod_code), "%s", "MS");
+#elif (CONFIG_IRRIGATION_HID)
+  snprintf(prod_code, sizeof(prod_code), "%s", "HD");
+#elif (CONFIG_IRRIGATION_CHILD)
+  snprintf(prod_code, sizeof(prod_code), "%s", "CH");
 #endif
   snprintf(serial_no, buff_len, "%02d%02d%02d%s%05d", supplier_id, year_mfr, week_mfr, prod_code, seq_id);
 }
@@ -159,6 +174,7 @@ void generate_syscfg(void) {
   char region_code[SYSCFG_S_REGIONCODE] = { 0 };
   char power_mode[SYSCFG_S_POWERMODE] = { 0 };
   char send_interval[SYSCFG_S_SEND_INTERVAL] = { 0 };
+  char op_time[SYSCFG_S_OP_TIME] = { 0 };
   char reconnect[SYSCFG_S_RECONNECT] = { 0 };
 
   /* Check if syscfg variable exists and set default value if not present */
@@ -171,33 +187,62 @@ void generate_syscfg(void) {
   }
   syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
   if (model_name[0] == 0) {
-#if (SENSOR_TYPE == SHT3X)
+#if (CONFIG_SENSOR_SHT3X)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSTH");
-#elif (SENSOR_TYPE == SCD4X)
+#elif (CONFIG_SENSOR_SCD4X)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSCO");
-#elif (SENSOR_TYPE == RK520_02)
+#elif (CONFIG_SENSOR_RK520_02)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSSE");
-#elif (SENSOR_TYPE == SWSR7500)
+#elif (CONFIG_SENSOR_SWSR7500)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSSO");
-#elif (SENSOR_TYPE == ATLAS_PH || SENSOR_TYPE == RK500_02)
+#elif (CONFIG_SENSOR_ATLAS_PH || CONFIG_SENSOR_RK500_02)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSWP");
-#elif (SENSOR_TYPE == ATLAS_EC || SENSOR_TYPE == RK500_13)
+#elif (CONFIG_SENSOR_ATLAS_EC || CONFIG_SENSOR_RK500_13)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSWE");
-#elif (SENSOR_TYPE == RK110_02)
+#elif (CONFIG_SENSOR_RK110_02)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSWD");
-#elif (SENSOR_TYPE == RK100_02)
+#elif (CONFIG_SENSOR_RK100_02)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSWS");
 #endif
-#if (ACTUATOR_TYPE == SWITCH)
+#if (CONFIG_ACTUATOR_SWITCH)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLASW");
-#elif (ACTUATOR_TYPE == MOTOR)
+#elif (CONFIG_ACTUATOR_MOTOR)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLAMT");
+#endif
+#if (CONFIG_IRRIGATION_MASTER)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLIMS");
+#elif (CONFIG_IRRIGATION_HID)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLIHD");
+#elif (CONFIG_IRRIGATION_CHILD)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLICH");
+#endif
+#if (CONFIG_DATALOGGER_SHT3X)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDTH");
+#elif (CONFIG_DATALOGGER_SCD4X)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDCO");
+#elif (CONFIG_DATALOGGER_RK520_02 || CONFIG_DATALOGGER_RS_ECTH)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDSE");
+#elif (CONFIG_DATALOGGER_SWSR7500)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSSO");
+#elif (CONFIG_DATALOGGER_ATLAS_PH || CONFIG_DATALOGGER_RK500_02)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDWP");
+#elif (CONFIG_DATALOGGER_ATLAS_EC || CONFIG_DATALOGGER_RK500_13)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDWE");
+#elif (CONFIG_DATALOGGER_RK110_02)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDWD");
+#elif (CONFIG_DATALOGGER_RK100_02)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDWS");
 #endif
     syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
   }
   syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
   if (power_mode[0] == 0) {
+#if (CONFIG_BS_PLATFORM_ACTUATORS)
     syscfg_set(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, "P");
+#else
+    syscfg_set(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, "B");
+#endif
+    syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
   }
   syscfg_get(SYSCFG_I_HWVERSION, SYSCFG_N_HWVERSION, hw_version, sizeof(hw_version));
   if (hw_version[0] == 0) {
@@ -228,11 +273,26 @@ void generate_syscfg(void) {
   }
   syscfg_get(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, send_interval, sizeof(send_interval));
   if (send_interval[0] == 0) {
-    if (!strncmp(power_mode, "B", 1))
+    if (!strncmp(power_mode, "B", 1)) {
+#if (CONFIG_BS_PLATFORM_DATALOGGER)
+      syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, "600");
+#else
       syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, "60");
-    else
+#endif
+    } else {
       syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, "30");
+    }
   }
+
+  syscfg_get(SYSCFG_I_OP_TIME, SYSCFG_N_OP_TIME, op_time, sizeof(op_time));
+  if (op_time[0] == 0) {
+    if (!strncmp(power_mode, "B", 1)) {
+      syscfg_set(SYSCFG_I_OP_TIME, SYSCFG_N_OP_TIME, "0620");
+    } else {
+      syscfg_set(SYSCFG_I_OP_TIME, SYSCFG_N_OP_TIME, "0620");
+    }
+  }
+
   syscfg_get(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, reconnect, sizeof(reconnect));
   if (reconnect[0] == 0) {
     syscfg_set(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, "0");

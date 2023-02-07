@@ -1,0 +1,7 @@
+config OTA_FEATURE
+  bool "OTA Firmware update feature"
+  default "y"
+  depends on SYSCFG_PACKAGE
+  depends on SYSEVENT_PACKAGE
+  help
+    Enable OTA Firmware Update

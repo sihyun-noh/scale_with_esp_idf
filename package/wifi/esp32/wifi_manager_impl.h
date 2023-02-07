@@ -132,6 +132,13 @@ int get_router_ipaddr_impl(wifi_context_t *ctx, char *ip_addr, int addr_len);
  */
 int get_ap_info_impl(wifi_context_t *ctx, ap_info_t *ap_info);
 
+/**
+ * @brief Set the ESP32 Wi-Fi ESP-NOW operating mode
+ *
+ * @return int 0 on success, -1 on failure
+ */
+int wifi_espnow_mode_impl(wifi_context_t *ctx);
+
 #ifdef __cplusplus
 }
 #endif

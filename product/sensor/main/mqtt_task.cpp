@@ -57,31 +57,31 @@ static char json_resp[1024];
 static char json_data[1024];
 static char json_fwup_resp[512];
 
-#if (SENSOR_TYPE == SHT3X)
+#if (CONFIG_SENSOR_SHT3X)
 char s_temperature[20] = { 0 };
 char s_humidity[20] = { 0 };
-#elif (SENSOR_TYPE == SCD4X)
+#elif (CONFIG_SENSOR_SCD4X)
 char s_co2[20] = { 0 };
 char s_temperature[20] = { 0 };
 char s_humidity[20] = { 0 };
-#elif (SENSOR_TYPE == RK520_02)
+#elif (CONFIG_SENSOR_RK520_02)
 char s_bulk_ec[20] = { 0 };
 char s_saturation_ec[20] = { 0 };
 char s_moisture[20] = { 0 };
 char s_temperature[20] = { 0 };
-#elif (SENSOR_TYPE == RK500_02)
+#elif (CONFIG_SENSOR_RK500_02)
 char s_ph[20] = { 0 };
-#elif (SENSOR_TYPE == SWSR7500)
+#elif (CONFIG_SENSOR_SWSR7500)
 char s_pyranometer[20] = { 0 };
-#elif (SENSOR_TYPE == ATLAS_PH)
+#elif (CONFIG_SENSOR_ATLAS_PH)
 char s_ph[20] = { 0 };
-#elif (SENSOR_TYPE == ATLAS_EC)
+#elif (CONFIG_SENSOR_ATLAS_EC)
 char s_ec[20] = { 0 };
-#elif (SENSOR_TYPE == RK110_02)
+#elif (CONFIG_SENSOR_RK110_02)
 char s_wind_direction[20] = { 0 };
-#elif (SENSOR_TYPE == RK100_02)
+#elif (CONFIG_SENSOR_RK100_02)
 char s_wind_speed[20] = { 0 };
-#elif (SENSOR_TYPE == RK500_13)
+#elif (CONFIG_SENSOR_RK500_13)
 char s_ec[20] = { 0 };
 char s_temperature[20] = { 0 };
 #endif
@@ -146,6 +146,8 @@ static int mqtt_publish(char *topic, char *payload, int qos, int retain) {
     } else {
       LOGW(TAG, "Cannot get mqtt semaphore!!!");
     }
+  } else {
+    LOGW(TAG, "mqtt connection may be problem...");
   }
 #elif defined(USE_LWMQTTC)
   if (is_mqtt_init_finished() && is_mqtt_connected()) {
@@ -279,7 +281,7 @@ static char *gen_sensor_resp(char *resp_type, char *value, char *bat) {
   return json_data;
 }
 
-#if (SENSOR_TYPE == RK520_02)
+#if (CONFIG_SENSOR_RK520_02)
 static char *gen_sensor_bulkec_resp(char *resp_type, char *ec, char *temp, char *mos) {
   /*
   {
@@ -362,7 +364,7 @@ static char *gen_devinfo_resp(void) {
   esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &ip_info);
   esp_ip4addr_ntoa(&ip_info.ip, ip_addr, sizeof(ip_addr));
 
-  snprintf(free_mem, sizeof(free_mem), "%d", xPortGetFreeHeapSize());
+  snprintf(free_mem, sizeof(free_mem), "%ld", xPortGetFreeHeapSize());
   syscfg_get(SYSCFG_I_FWVERSION, SYSCFG_N_FWVERSION, fw_version, sizeof(fw_version));
   syscfg_get(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, reconnect, sizeof(reconnect));
   syscfg_get(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, s_send_interval, sizeof(s_send_interval));
@@ -461,31 +463,31 @@ static void update_sensor_data_cmd_handler(cJSON *root) {
 
   mqtt_publish(mqtt_response, gen_default_resp((char *)"update"), 0, 0);
 
-#if (SENSOR_TYPE == SHT3X)
+#if (CONFIG_SENSOR_SHT3X)
   sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
   sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
-#elif (SENSOR_TYPE == SCD4X)
+#elif (CONFIG_SENSOR_SCD4X)
   sysevent_set(I2C_CO2_EVENT, s_co2);
   sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
   sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
-#elif (SENSOR_TYPE == RK520_02)
+#elif (CONFIG_SENSOR_RK520_02)
   sysevent_set(MB_SOIL_EC_EVENT, s_saturation_ec);
   sysevent_set(MB_SOIL_BULK_EC_EVENT, s_bulk_ec);
   sysevent_set(MB_MOISTURE_EVENT, s_moisture);
   sysevent_set(MB_TEMPERATURE_EVENT, s_temperature);
-#elif (SENSOR_TYPE == RK500_02)
+#elif (CONFIG_SENSOR_RK500_02)
   sysevent_set(MB_WATER_PH_EVENT, s_ph);
-#elif (SENSOR_TYPE == SWSR7500)
+#elif (CONFIG_SENSOR_SWSR7500)
   sysevent_set(MB_PYRANOMETER_EVENT, s_pyranometer);
-#elif (SENSOR_TYPE == ATLAS_PH)
+#elif (CONFIG_SENSOR_ATLAS_PH)
   sysevent_set(MB_WATER_PH_EVENT, s_ph);
-#elif (SENSOR_TYPE == ATLAS_EC)
+#elif (CONFIG_SENSOR_ATLAS_EC)
   sysevent_set(I2C_EC_EVENT, s_ec);
-#elif (SENSOR_TYPE == RK110_02)
+#elif (CONFIG_SENSOR_RK110_02)
   sysevent_set(MB_WIND_DIRECTION_EVENT, s_wind_direction);
-#elif (SENSOR_TYPE == RK100_02)
+#elif (CONFIG_SENSOR_RK100_02)
   sysevent_set(MB_WIND_SPEED_EVENT, s_wind_speed);
-#elif (SENSOR_TYPE == RK500_13)
+#elif (CONFIG_SENSOR_RK500_13)
   sysevent_set(MB_WATER_EC_EVENT, s_ec);
   sysevent_set(MB_TEMPERATURE_EVENT, s_temperature);
 #endif
@@ -1027,7 +1029,7 @@ void mqtt_publish_sensor_data(void) {
     sysevent_get(SYSEVENT_BASE, ADC_BATTERY_EVENT, &s_battery, sizeof(s_battery));
   }
 
-#if (SENSOR_TYPE == SHT3X)
+#if (CONFIG_SENSOR_SHT3X)
   char mqtt_temperature[80] = { 0 };
   char mqtt_humidity[80] = { 0 };
   snprintf(mqtt_temperature, sizeof(mqtt_temperature), TEMPERATURE_PUB_SUB_TOPIC, device_id);
@@ -1047,7 +1049,7 @@ void mqtt_publish_sensor_data(void) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
-#elif (SENSOR_TYPE == SCD4X)
+#elif (CONFIG_SENSOR_SCD4X)
   char mqtt_co2[80] = { 0 };
   char mqtt_temperature[80] = { 0 };
   char mqtt_humidity[80] = { 0 };
@@ -1077,7 +1079,7 @@ void mqtt_publish_sensor_data(void) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
-#elif (SENSOR_TYPE == RK520_02)
+#elif (CONFIG_SENSOR_RK520_02)
   char mqtt_saturation_ec[80] = { 0 };
   char mqtt_temperature[80] = { 0 };
   char mqtt_humidity[80] = { 0 };
@@ -1117,7 +1119,7 @@ void mqtt_publish_sensor_data(void) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
-#elif (SENSOR_TYPE == RK500_02)
+#elif (CONFIG_SENSOR_RK500_02)
   char mqtt_ph[80] = { 0 };
   snprintf(mqtt_ph, sizeof(mqtt_ph), PH_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, MB_WATER_PH_EVENT, s_ph, sizeof(s_ph));
@@ -1127,7 +1129,7 @@ void mqtt_publish_sensor_data(void) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
-#elif (SENSOR_TYPE == SWSR7500)
+#elif (CONFIG_SENSOR_SWSR7500)
   char mqtt_pyranometer[80] = { 0 };
   snprintf(mqtt_pyranometer, sizeof(mqtt_pyranometer), SOLAR_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, MB_PYRANOMETER_EVENT, s_pyranometer, sizeof(s_pyranometer));
@@ -1137,7 +1139,7 @@ void mqtt_publish_sensor_data(void) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
-#elif (SENSOR_TYPE == ATLAS_PH)
+#elif (CONFIG_SENSOR_ATLAS_PH)
   char mqtt_ph[80] = { 0 };
   snprintf(mqtt_ph, sizeof(mqtt_ph), PH_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, I2C_PH_EVENT, s_ph, sizeof(s_ph));
@@ -1147,7 +1149,7 @@ void mqtt_publish_sensor_data(void) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
-#elif (SENSOR_TYPE == ATLAS_EC)
+#elif (CONFIG_SENSOR_ATLAS_EC)
   char mqtt_ec[80] = { 0 };
   snprintf(mqtt_ec, sizeof(mqtt_ec), EC_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, I2C_EC_EVENT, s_ec, sizeof(s_ec));
@@ -1157,7 +1159,7 @@ void mqtt_publish_sensor_data(void) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
-#elif (SENSOR_TYPE == RK110_02)
+#elif (CONFIG_SENSOR_RK110_02)
   char mqtt_wind_direction[80] = { 0 };
   memset(s_wind_direction, 0x00, sizeof(s_wind_direction));
   snprintf(mqtt_wind_direction, sizeof(mqtt_wind_direction), WIND_DIRECTION_PUB_SUB_TOPIC, device_id);
@@ -1169,7 +1171,7 @@ void mqtt_publish_sensor_data(void) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
-#elif (SENSOR_TYPE == RK100_02)
+#elif (CONFIG_SENSOR_RK100_02)
   char mqtt_wind_speed[80] = { 0 };
   snprintf(mqtt_wind_speed, sizeof(mqtt_wind_speed), WIND_SPEED_PUB_SUB_TOPIC, device_id);
   sysevent_get(SYSEVENT_BASE, MB_WIND_SPEED_EVENT, s_wind_speed, sizeof(s_wind_speed));
@@ -1180,7 +1182,7 @@ void mqtt_publish_sensor_data(void) {
     }
   }
 
-#elif (SENSOR_TYPE == RK500_13)
+#elif (CONFIG_SENSOR_RK500_13)
   char mqtt_ec[80] = { 0 };
   char mqtt_temperature[80] = { 0 };
   snprintf(mqtt_ec, sizeof(mqtt_ec), EC_PUB_SUB_TOPIC, device_id);
@@ -1293,7 +1295,6 @@ void create_mqtt_task(void) {
 
 #endif
 
-  xTaskCreatePinnedToCore(mqtt_task, MQTT_TASK_NAME, SENS_MQTT_TASK_STACK_SIZE, NULL, SENS_MQTT_TASK_PRIORITY,
+  xTaskCreatePinnedToCore(mqtt_task, MQTT_TASK_NAME, 4096, NULL, (tskIDLE_PRIORITY + 5),
                           &mqtt_task_handle, 1);
-  // xTaskCreatePinnedToCore(mqtt_task_restart, "restart", 2048, NULL, 10, NULL, 1);
 }

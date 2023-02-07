@@ -1,10 +1,8 @@
-set(req sysfile)
-
 set(srcs)
 set(includes)
 
-if(CONFIG_SMARTFARM_SYSLOG_FEATURE)
-    list(APPEND srcs "log.c" "syslog.c" "filelog.c")
+if(CONFIG_SYSLOG_PACKAGE)
+    list(APPEND srcs "log.c" "syslog.c")
     list(APPEND includes ".")
 endif()
 

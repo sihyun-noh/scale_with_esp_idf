@@ -116,6 +116,13 @@ int get_router_ipaddr(char *ip_addr, int addr_len);
  */
 int get_ap_info(ap_info_t *ap_info);
 
+/**
+ * @brief Initialize the espnow Wi-fi
+ *
+ * @return int 0 on success, -1 on failure
+ */
+int wifi_espnow_mode();
+
 #ifdef __cplusplus
 }
 #endif

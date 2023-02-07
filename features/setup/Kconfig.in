@@ -1,0 +1,5 @@
+config EASYSETUP_FEATURE
+  bool "EasySetup feature"
+  depends on WIFILIB_PACKAGE
+  help
+    Enable EasySetup feature that supports zero touch setup without user intervention

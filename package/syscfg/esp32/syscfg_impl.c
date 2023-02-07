@@ -13,6 +13,9 @@
  * IMPLIED, OR STATUTORY, INCLUDING THE IMPLIED WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
+
+#include <string.h>
+
 #include "syscfg_impl.h"
 
 #include "freertos/FreeRTOS.h"
@@ -63,6 +66,43 @@ static struct syscfg_context syscfg_ctx[] = {
     .close = _syscfg_close,
   },
 };
+
+typedef struct {
+  nvs_type_t type;
+  const char *str;
+} type_str_pair_t;
+
+static const type_str_pair_t type_str_pair[] = {
+  { NVS_TYPE_I8, "i8" },   { NVS_TYPE_U8, "u8" },     { NVS_TYPE_U16, "u16" }, { NVS_TYPE_I16, "i16" },
+  { NVS_TYPE_U32, "u32" }, { NVS_TYPE_I32, "i32" },   { NVS_TYPE_U64, "u64" }, { NVS_TYPE_I64, "i64" },
+  { NVS_TYPE_STR, "str" }, { NVS_TYPE_BLOB, "blob" }, { NVS_TYPE_ANY, "any" },
+};
+
+static const size_t TYPE_STR_PAIR_SIZE = sizeof(type_str_pair) / sizeof(type_str_pair[0]);
+
+#if 0
+static nvs_type_t str_to_type(const char *type) {
+  for (int i = 0; i < TYPE_STR_PAIR_SIZE; i++) {
+    const type_str_pair_t *p = &type_str_pair[i];
+    if (strcmp(type, p->str) == 0) {
+      return p->type;
+    }
+  }
+
+  return NVS_TYPE_ANY;
+}
+#endif
+
+static const char *type_to_str(nvs_type_t type) {
+  for (int i = 0; i < TYPE_STR_PAIR_SIZE; i++) {
+    const type_str_pair_t *p = &type_str_pair[i];
+    if (p->type == type) {
+      return p->str;
+    }
+  }
+
+  return "Unknown";
+}
 
 static void _get_nvs_partition_name(syscfg_type_t type, char **pp_partition_name, char **pp_nvs_name) {
   if (type >= NO_DATA) {
@@ -362,7 +402,9 @@ _exit:
 int syscfg_show_impl(syscfg_type_t type) {
   char *partition_name = NULL;
   char *nvs_name = NULL;
+#if 0
   char value[256] = { 0 };
+#endif
 
   _get_nvs_partition_name(type, &partition_name, &nvs_name);
   if (NULL == partition_name || NULL == nvs_name) {
@@ -370,9 +412,24 @@ int syscfg_show_impl(syscfg_type_t type) {
     return -1;
   }
 
+#if 0
   int handle = _get_nvs_handle(type);
+#endif
 
-  nvs_iterator_t it = nvs_entry_find(partition_name, nvs_name, NVS_TYPE_ANY);
+  nvs_iterator_t it = NULL;
+
+  esp_err_t result = nvs_entry_find(partition_name, nvs_name, NVS_TYPE_ANY, &it);
+  if (result == ESP_ERR_NVS_NOT_FOUND) {
+    ESP_LOGE(TAG, "No such entry was found");
+    return -1;
+  }
+
+  if (result != ESP_OK) {
+    ESP_LOGE(TAG, "NVS error: %s", esp_err_to_name(result));
+    return 1;
+  }
+
+#if 0
   while (it != NULL) {
     nvs_entry_info_t info;
     nvs_entry_info(it, &info);
@@ -384,7 +441,20 @@ int syscfg_show_impl(syscfg_type_t type) {
       ESP_LOGI(TAG, "key '%s', value '%s'", info.key, value);
     }
   };
+#endif
 
+  do {
+    nvs_entry_info_t info;
+    nvs_entry_info(it, &info);
+    result = nvs_entry_next(&it);
+
+    printf("namespace '%s', key '%s', type '%s' \n", info.namespace_name, info.key, type_to_str(info.type));
+  } while (result == ESP_OK);
+
+  if (result != ESP_ERR_NVS_NOT_FOUND) {  // the last iteration ran into an internal error
+    ESP_LOGE(TAG, "NVS error %s at current iteration, stopping.", esp_err_to_name(result));
+    return -1;
+  }
   // Note : No need to release iterator obtained from nvs_entry_find() function
   // when nvs_entry_find or nvs_entry_next functions returns NULL, indicating no
   // other element for specified critieria was found.

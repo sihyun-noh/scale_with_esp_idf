@@ -22,8 +22,10 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "esp_wifi_types.h"
 #include "esp_event.h"
 #include "esp_event_base.h"
+#include "esp_netif_types.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/portmacro.h"
 #include "freertos/task.h"
@@ -434,7 +436,7 @@ void sysevent_loop_run_task(void *arg) {
   sysevent_ctx_t *ctx = (sysevent_ctx_t *)arg;
 
   while (1) {
-    ret = sysevent_loop_run(ctx, 1000 / portTICK_RATE_MS);
+    ret = sysevent_loop_run(ctx, 1000 / portTICK_PERIOD_MS);
     if (ret != 0) {
       break;
     }

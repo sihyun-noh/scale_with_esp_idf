@@ -1,0 +1,29 @@
+name: Build check actuator
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'product/actuator/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'product/actuator/**'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout actuator
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: esp-idf build
+      uses: espressif/esp-idf-ci-action@main
+      with:
+        esp_idf_version: v5.0
+        target: esp32
+        path: './product/actuator'

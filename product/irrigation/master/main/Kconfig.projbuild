@@ -1,0 +1,32 @@
+menu "Smartfarm Product"
+  config PRODUCT_VENDOR
+    string "Product Vendor"
+    default "FIC"
+
+  config PRODUCT_NAME
+    string "Product Name"
+    default "IRRIGATION_MASTER"
+
+  config PRODUCT_SKU
+    string "Product SKU"
+    default ""
+
+  choice
+    prompt "Platform"
+    help
+      A Platform is a set tools for a particular piece of hardware/board
+      It includes the package, features for making firmware.
+
+    rsource "../../../../config/platform/0001-sensor.inc"
+    rsource "../../../../config/platform/0002-actuator.inc"
+    rsource "../../../../config/platform/0003-datalogger.inc"
+    rsource "../../../../config/platform/0004-irrigation.inc"
+  endchoice
+
+  menu "Smartfarm Package"
+    rsource "../../../../package/*/Kconfig.in"
+  endmenu
+  menu "Smartfarm Features"
+    rsource "../../../../features/*/Kconfig.in"
+  endmenu
+endmenu

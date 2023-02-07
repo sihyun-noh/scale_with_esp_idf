@@ -1,7 +1,11 @@
-#ifndef _SYS_FILE_IMPL_H_
-#define _SYS_FILE_IMPL_H_
+#ifndef _SYSFILE_H_
+#define _SYSFILE_H_
 
+#if defined(CONFIG_SPIFFS_PACKAGE)
 #include "esp32/spiffs_impl.h"
+#elif defined(CONFIG_LITTLEFS_PACKAGE)
+#include "esp32/littlefs_impl.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,7 +16,7 @@ extern "C" {
  *
  * @return int 0 on success, -1 on failure,
  */
-int init_sysfile(void);
+int init_sysfile(const char *partition_name, const char *root_path);
 
 /**
  * @brief Format the SPIFFS partition

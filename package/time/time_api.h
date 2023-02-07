@@ -19,6 +19,7 @@
 #define _TIME_API_H_
 
 #include <stdbool.h>
+#include <time.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,6 +33,19 @@ typedef struct _timezone {
   char name[128];
   char tz[128];
 } timezone_t;
+
+/**
+ * @brief Set local time.
+ *
+ * @param year
+ * @param month
+ * @param day
+ * @param hour
+ * @param min
+ * @param sec
+ *
+ */
+void set_local_time(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec);
 
 /**
  * @brief Set NTP server with gmt and dst offset to get NTP time from the NTP servers.
@@ -71,6 +85,25 @@ bool tm_get_local_time(struct tm* info, uint32_t ms);
 void set_ntp_time(void);
 
 bool get_ntp_time(int tz_offset, int dst_offset);
+
+bool is_elapsed_uptime(uint32_t start_ms, uint32_t uptime_ms);
+
+unsigned long millis(void);
+
+void delay_ms(uint32_t ms);
+
+#if defined(CONFIG_RTC_DS3231_PACKAGE)
+void rtc_time_init(void);
+void rtc_set_time(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min, uint8_t sec);
+void rtc_get_time(struct tm* time);
+#endif
+
+int rtc_set_time_cmd(int argc, char** argv);
+int rtc_get_time_cmd(int argc, char** argv);
+int set_interval_cmd(int argc, char** argv);
+int get_interval_cmd(int argc, char** argv);
+int set_op_time_cmd(int argc, char** argv);
+int get_op_time_cmd(int argc, char** argv);
 
 #ifdef __cplusplus
 }

@@ -3,7 +3,7 @@ set(req esp_wifi freertos log syslog sysevent)
 set(srcs)
 set(includes)
 
-if(CONFIG_SMARTFARM_WIFILIB_FEATURE)
+if(CONFIG_WIFILIB_PACKAGE)
   list(APPEND srcs "wifi_manager.c" "esp32/wifi_manager_impl.c")
   list(APPEND includes ".")
 endif()

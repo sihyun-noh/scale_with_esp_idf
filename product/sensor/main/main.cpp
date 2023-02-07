@@ -1,5 +1,4 @@
 #include "easy_setup.h"
-#include "freertos/projdefs.h"
 #include "nvs_flash.h"
 #include "shell_console.h"
 #include "syscfg.h"
@@ -22,6 +21,7 @@
 #include "esp32/rom/rtc.h"
 
 #include <string.h>
+#include <time.h>
 
 #define DELAY_1SEC 1000
 #define DELAY_5SEC 5000
@@ -41,10 +41,7 @@ extern "C" {
 #endif
 
 void modbus_sensor_test(int mb_sensor);
-
-#if defined(CONFIG_LED_FEATURE)
 void create_led_task(void);
-#endif
 
 extern int start_file_server(uint32_t port);
 
@@ -223,7 +220,7 @@ int system_init(void) {
 
   syslog_init();
 
-  ret = init_sysfile();
+  ret = init_sysfile(PARTITION_NAME, BASE_PATH);
   if (ret)
     return ERR_SPIFFS_INIT;
 
@@ -231,6 +228,8 @@ int system_init(void) {
   generate_syscfg();
 
   check_model();
+
+  battery_init();
 
   create_mqtt_task();
 
@@ -291,9 +290,9 @@ void battery_loop_task(void) {
       } break;
       case NTP_TIME_MODE: {
         if (is_device_onboard()) {
-          struct tm time;
+          struct tm timeinfo = { };
           tm_set_time(3600 * KR_GMT_OFFSET, 3600 * KR_DST_OFFSET, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
-          if (tm_get_local_time(&time, 20000)) {
+          if (tm_get_local_time(&timeinfo, 20000)) {
             set_operation_mode(MQTT_START_MODE);
           }
         } else {
@@ -361,9 +360,9 @@ void plugged_loop_task(void) {
       } break;
       case NTP_TIME_MODE: {
         if (is_device_onboard()) {
-          struct tm time;
+          struct tm timeinfo = { };
           tm_set_time(3600 * KR_GMT_OFFSET, 3600 * KR_DST_OFFSET, "pool.ntp.org", "time.google.com", "1.pool.ntp.org");
-          if (tm_get_local_time(&time, 20000)) {
+          if (tm_get_local_time(&timeinfo, 20000)) {
             g_last_ntp_check_time = xTaskGetTickCount();
             set_operation_mode(MQTT_START_MODE);
           }
@@ -461,9 +460,7 @@ void app_main(void) {
 
   set_device_onboard(0);
 
-#if defined(CONFIG_LED_FEATURE)
   create_led_task();
-#endif
 
   if (is_battery_model()) {
     battery_loop_task();

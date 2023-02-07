@@ -1,0 +1,9 @@
+[submodule "opensource/esp_littlefs"]
+	path = opensource/esp_littlefs
+	url = https://github.com/joltwallet/esp_littlefs.git
+[submodule "opensource/lvgl"]
+	path = opensource/lvgl
+	url = https://github.com/lvgl/lvgl.git
+[submodule "opensource/LovyanGFX"]
+	path = opensource/LovyanGFX
+	url = https://github.com/lovyan03/LovyanGFX.git

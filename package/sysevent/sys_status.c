@@ -16,6 +16,9 @@
 static EventGroupHandle_t hw_status_events;
 static EventGroupHandle_t sw_status_events;
 static EventGroupHandle_t led_status_events;
+static EventGroupHandle_t actuator_status_events;
+static EventGroupHandle_t irrigation_status_events;
+static EventGroupHandle_t data_logger_status_events;
 
 /*----------------------------------------------------------------*/
 /*                      Service Status                            */
@@ -262,29 +265,185 @@ void sys_stat_set_identification(uint8_t status) {
   }
 }
 
+int sys_stat_get_actuator_open(void) {
+  EventBits_t bits = xEventGroupGetBits(actuator_status_events);
+  return ((bits & STATUS_OPEN) == STATUS_OPEN);
+}
+
+void sys_stat_set_actuator_open(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(actuator_status_events, STATUS_OPEN);
+  } else {
+    xEventGroupClearBits(actuator_status_events, STATUS_OPEN);
+  }
+}
+
+int sys_stat_get_actuator_err(void) {
+  EventBits_t bits = xEventGroupGetBits(actuator_status_events);
+  return ((bits & STATUS_ERROR) == STATUS_ERROR);
+}
+
+void sys_stat_set_actuator_err(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(actuator_status_events, STATUS_ERROR);
+  } else {
+    xEventGroupClearBits(actuator_status_events, STATUS_ERROR);
+  }
+}
+
+// ----------------------------------------------------------------
+// Irrigation status event group
+// ----------------------------------------------------------------
+
+int sys_stat_get_time_sync(void) {
+  EventBits_t bits = xEventGroupGetBits(irrigation_status_events);
+  return ((bits & STATUS_TIME_SYNC) == STATUS_TIME_SYNC);
+}
+
+void sys_stat_set_time_sync(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(irrigation_status_events, STATUS_TIME_SYNC);
+  } else {
+    xEventGroupClearBits(irrigation_status_events, STATUS_TIME_SYNC);
+  }
+}
+
+int sys_stat_get_battery_level(void) {
+  EventBits_t bits = xEventGroupGetBits(irrigation_status_events);
+  return ((bits & STATUS_BATTERY_LEVEL) == STATUS_BATTERY_LEVEL);
+}
+
+void sys_stat_set_battery_level(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(irrigation_status_events, STATUS_BATTERY_LEVEL);
+  } else {
+    xEventGroupClearBits(irrigation_status_events, STATUS_BATTERY_LEVEL);
+  }
+}
+
+int sys_stat_get_start_irrigation(void) {
+  EventBits_t bits = xEventGroupGetBits(irrigation_status_events);
+  return ((bits & STATUS_START_IRRIGATION) == STATUS_START_IRRIGATION);
+}
+
+void sys_stat_set_start_irrigation(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(irrigation_status_events, STATUS_START_IRRIGATION);
+  } else {
+    xEventGroupClearBits(irrigation_status_events, STATUS_START_IRRIGATION);
+  }
+}
+
+int sys_stat_get_stop_irrigation(void) {
+  EventBits_t bits = xEventGroupGetBits(irrigation_status_events);
+  return ((bits & STATUS_STOP_IRRIGATION) == STATUS_STOP_IRRIGATION);
+}
+
+void sys_stat_set_stop_irrigation(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(irrigation_status_events, STATUS_STOP_IRRIGATION);
+  } else {
+    xEventGroupClearBits(irrigation_status_events, STATUS_STOP_IRRIGATION);
+  }
+}
+
+/*----------------------------------------------------------------*/
+/*                    Data logger Status                          */
+/*----------------------------------------------------------------*/
+
 int sys_stat_get_sdcard_fail(void) {
-  EventBits_t bits = xEventGroupGetBits(led_status_events);
+  EventBits_t bits = xEventGroupGetBits(data_logger_status_events);
   return ((bits & STATUS_SDCARD_FAIL) == STATUS_SDCARD_FAIL);
 }
 
 void sys_stat_set_sdcard_fail(uint8_t status) {
   if (!!status) {
-    xEventGroupSetBits(led_status_events, STATUS_SDCARD_FAIL);
+    xEventGroupSetBits(data_logger_status_events, STATUS_SDCARD_FAIL);
   } else {
-    xEventGroupClearBits(led_status_events, STATUS_SDCARD_FAIL);
+    xEventGroupClearBits(data_logger_status_events, STATUS_SDCARD_FAIL);
   }
 }
 
 int sys_stat_get_rs485_conn_fail(void) {
-  EventBits_t bits = xEventGroupGetBits(led_status_events);
+  EventBits_t bits = xEventGroupGetBits(data_logger_status_events);
   return ((bits & STATUS_RS485_CONN_FAIL) == STATUS_RS485_CONN_FAIL);
 }
 
 void sys_stat_set_rs485_conn_fail(uint8_t status) {
   if (!!status) {
-    xEventGroupSetBits(led_status_events, STATUS_RS485_CONN_FAIL);
+    xEventGroupSetBits(data_logger_status_events, STATUS_RS485_CONN_FAIL);
   } else {
-    xEventGroupClearBits(led_status_events, STATUS_RS485_CONN_FAIL);
+    xEventGroupClearBits(data_logger_status_events, STATUS_RS485_CONN_FAIL);
+  }
+}
+
+int sys_stat_get_usb_copying(usb_stat_t usb_status) {
+  switch (usb_status) {
+    case USB_COPYING: {
+      EventBits_t bits = xEventGroupGetBits(data_logger_status_events);
+      return ((bits & STATUS_USB_COPYING) == STATUS_USB_COPYING);
+    } break;
+    case USB_COPY_FAIL: {
+      EventBits_t bits = xEventGroupGetBits(data_logger_status_events);
+      return ((bits & STATUS_USB_COPY_FAIL) == STATUS_USB_COPY_FAIL);
+    } break;
+    case USB_COPY_SUCCESS: {
+      EventBits_t bits = xEventGroupGetBits(data_logger_status_events);
+      return ((bits & STATUS_USB_COPY_SUCCESS) == STATUS_USB_COPY_SUCCESS);
+    } break;
+    default: return 0;
+  }
+}
+
+void sys_stat_set_usb_copying(usb_stat_t usb_status, uint8_t status) {
+  switch (usb_status) {
+    case USB_COPYING: {
+      if (!!status) {
+        xEventGroupSetBits(data_logger_status_events, STATUS_USB_COPYING);
+      } else {
+        xEventGroupClearBits(data_logger_status_events, STATUS_USB_COPYING);
+      }
+    } break;
+    case USB_COPY_FAIL: {
+      if (!!status) {
+        xEventGroupSetBits(data_logger_status_events, STATUS_USB_COPY_FAIL);
+      } else {
+        xEventGroupClearBits(data_logger_status_events, STATUS_USB_COPY_FAIL);
+      }
+    } break;
+    case USB_COPY_SUCCESS: {
+      if (!!status) {
+        xEventGroupSetBits(data_logger_status_events, STATUS_USB_COPY_SUCCESS);
+      } else {
+        xEventGroupClearBits(data_logger_status_events, STATUS_USB_COPY_SUCCESS);
+      }
+    } break;
+  }
+}
+
+int sys_stat_get_usb_disconnect_notify(void) {
+  EventBits_t bits = xEventGroupGetBits(data_logger_status_events);
+  return ((bits & STATUS_USB_DISCONN) == STATUS_USB_DISCONN);
+}
+
+void sys_stat_set_usb_disconnect_notify(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(data_logger_status_events, STATUS_USB_DISCONN);
+  } else {
+    xEventGroupClearBits(data_logger_status_events, STATUS_USB_DISCONN);
+  }
+}
+
+int sys_stat_get_file_write_flag(void) {
+  EventBits_t bits = xEventGroupGetBits(data_logger_status_events);
+  return ((bits & STATUS_LOG_FILE_WRITE) == STATUS_LOG_FILE_WRITE);
+}
+
+void sys_stat_set_file_write_flag(uint8_t status) {
+  if (!!status) {
+    xEventGroupSetBits(data_logger_status_events, STATUS_LOG_FILE_WRITE);
+  } else {
+    xEventGroupClearBits(data_logger_status_events, STATUS_LOG_FILE_WRITE);
   }
 }
 
@@ -304,6 +463,24 @@ int sys_stat_init(void) {
   led_status_events = xEventGroupCreate();
   if (led_status_events == NULL) {
     dbge("Failed to create event group for LED status");
+    return -1;
+  }
+
+  actuator_status_events = xEventGroupCreate();
+  if (actuator_status_events == NULL) {
+    dbge("Failed to create event group for actuator status");
+    return -1;
+  }
+
+  irrigation_status_events = xEventGroupCreate();
+  if (irrigation_status_events == NULL) {
+    dbge("Failed to create event group for irrigation status");
+    return -1;
+  }
+
+  data_logger_status_events = xEventGroupCreate();
+  if (data_logger_status_events == NULL) {
+    dbge("Failed to create event group for data logger status");
     return -1;
   }
 

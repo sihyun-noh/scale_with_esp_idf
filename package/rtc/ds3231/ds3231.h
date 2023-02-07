@@ -49,8 +49,6 @@
 extern "C" {
 #endif
 
-#define DS3231_I2C_ADDR 0x68 //!< I2C address
-
 /**
  * Alarms
  */

@@ -1,0 +1,5 @@
+config ESPNOW_PACKAGE
+  bool "ESPNOW package"
+  default "n"
+  help
+    Enable ESPNOW package

@@ -2,7 +2,6 @@
 #define TLS_LWMQTT_H_
 
 #include <lwmqtt.h>
-#include <mbedtls/certs.h>
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/entropy.h>
 #include <mbedtls/error.h>

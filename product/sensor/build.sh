@@ -26,50 +26,13 @@ checkArgVariable() {
   fi
 }
 
-if [ -z ${1} ] || [[ ${1} = "build" ]] || [[ ${1} = "flash" ]]; then
-  echo "Please select target chipset. 1: ESP32, 2: ESP32S3"
-  read CHIPSET_ID
-  if [ ${CHIPSET_ID} = "1" ]; then
-    export IDF_TARGET=esp32
-  elif [ ${CHIPSET_ID} = "2" ]; then
-    export IDF_TARGET=esp32s3
-  fi
+export IDF_TARGET=esp32
 
-  echo "Please select product. 1: Temp & Humi, 2 : CO2 TH, 3 : Soil EC, 4 : Solar Radiation, 5 : Atlas pH, 6 : Atlas EC, 7 : Water PH, 8 : Wind Direction, 9 : Wind Speed, 10 : Water EC"
-  read SELECT_NUM
-
-  if [ ${SELECT_NUM} = "1" ]; then
-    PRODUCT_NAME="SHT3X"
-  elif [ ${SELECT_NUM} = "2" ]; then
-    PRODUCT_NAME="SCD4X"
-  elif [ ${SELECT_NUM} = "3" ]; then
-    PRODUCT_NAME="RK520_02"
-  elif [ ${SELECT_NUM} = "4" ]; then
-    PRODUCT_NAME="SWSR7500"
-  elif [ ${SELECT_NUM} = "5" ]; then
-    PRODUCT_NAME="ATLAS_PH"
-  elif [ ${SELECT_NUM} = "6" ]; then
-    PRODUCT_NAME="ATLAS_EC"
-  elif [ ${SELECT_NUM} = "7" ]; then
-    PRODUCT_NAME="RK500_02"
-  elif [ ${SELECT_NUM} = "8" ]; then
-    PRODUCT_NAME="RK110_02"
-  elif [ ${SELECT_NUM} = "9" ]; then
-    PRODUCT_NAME="RK100_02"
-  elif [ ${SELECT_NUM} = "10" ]; then
-    PRODUCT_NAME="RK500_13"
-  fi
-
-  echo "select ${PRODUCT_NAME}"
-  export CURRENT_PROJECT=${PRODUCT_NAME}
-
-  DEFINED_PROD=$(grep -h '#define SENSOR_TYPE*' main/config.h)
-  COMPILE_PROD="#define SENSOR_TYPE ${PRODUCT_NAME}"
-
-  if [ -n "${DEFINED_PROD}" ]; then
-    perl -pi -e "s/${DEFINED_PROD}/${COMPILE_PROD}/g" main/config.h
-  fi
-fi
+DEFINED_PROD=$(grep -h 'CONFIG_SENSOR_*' sdkconfig | grep -h y)
+DEFINED_PROD=${DEFINED_PROD:14}
+DEFINED_PROD=${DEFINED_PROD%=y}
+echo "select ${DEFINED_PROD}"
+export CURRENT_PROJECT=${DEFINED_PROD}
 
 if [ ${#} -eq 0 ]; then
   echo "start build project"
@@ -86,7 +49,7 @@ PARENT_PATH="${PROD_PATH%/*/*}"
 TOOL_PATH="${PARENT_PATH}/"thirdparty/esp
 
 #esp-idf version
-ESP_IDF_VER="v4.4.1"
+ESP_IDF_VER="v5.0"
 
 # get esp-idf
 downloadSdk() {

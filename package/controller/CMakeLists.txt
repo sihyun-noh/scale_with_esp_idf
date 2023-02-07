@@ -3,7 +3,7 @@ set(req driver freertos hal syslog pal)
 set(srcs)
 set(includes)
 
-if(CONFIG_LED_FEATURE)
+if(CONFIG_LED_PACKAGE)
   list(APPEND srcs
     "led/led.c")
   list(APPEND includes "./led")

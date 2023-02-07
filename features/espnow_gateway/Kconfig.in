@@ -1,0 +1,5 @@
+config ESPNOW_GATEWAY_FEATURE
+  bool "ESPNOW WiFi Gateway feature"
+  default "n"
+  help
+    Enable ESPNOW WiFi Gateway that can access to the internet.

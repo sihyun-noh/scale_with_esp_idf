@@ -1,5 +1,5 @@
 /**
- * @file sysevent_impl.h
+ * @file spiffs_impl.h
  *
  * @brief using SPIFFS is provided in the "storage/spiffs" directory.
  * This is initializes and mounts a SPIFFS partition, then writes and reads data from it using POSIX and C library APIs.
@@ -16,10 +16,11 @@
  * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
 
-#ifndef _SYS_FILE_H_
-#define _SYS_FILE_H_
+#ifndef _SPIFFS_IMPL_H_
+#define _SPIFFS_IMPL_H_
 
 #define BASE_PATH "/spiffs"
+#define PARTITION_NAME ""
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,7 +32,7 @@ extern "C" {
  * @return int 0 on success, -1 on failure,
  */
 
-int init_spiffs_impl(void);
+int init_spiffs_impl(const char *partition_name, const char *root_path);
 
 /**
  * @brief Format the SPIFFS partition
@@ -45,7 +46,7 @@ int format_spiffs_impl(void);
  *
  * @return int 0 on success, -1 on failure,
  */
-int show_file_impl(void);
+int show_file_spiffs_impl(void);
 
 /**
  * @brief write log data to file.
@@ -54,7 +55,7 @@ int show_file_impl(void);
  * @param log_data Log data.
  * @return int 0 on success, -1 on failure,
  */
-int write_log_data_to_file_impl(const char *log_file_name, const char *log_data);
+int write_log_data_to_file_spiffs_impl(const char *log_file_name, const char *log_data);
 
 #ifdef __cplusplus
 }

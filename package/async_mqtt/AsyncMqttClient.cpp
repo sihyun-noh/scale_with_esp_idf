@@ -1,6 +1,12 @@
 #include "log.h"
 #include "AsyncMqttClient.hpp"
 
+#if defined(ESP_IDF_VERSION)
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+#include "esp_mac.h"
+#endif
+#endif
+
 #define TAG "AsyncMQTT"
 
 class ESP32 {
