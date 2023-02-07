@@ -13,6 +13,7 @@
 #include "log.h"
 #include "sysfile.h"
 #include "filelog.h"
+#include "sys_config.h"
 
 ///////////////////// VARIABLES ////////////////////
 lv_obj_t *ui_Main;
@@ -41,16 +42,12 @@ lv_obj_t *ui_ZonePanel6;
 lv_obj_t *ui_ZoneStatus6;
 lv_obj_t *ui_ZoneFlowmeter6;
 lv_obj_t *ui_ZoneNum6;
-void ui_event_StartButton(lv_event_t *e);
 lv_obj_t *ui_StartButton;
 lv_obj_t *ui_StartButtonLabel;
-void ui_event_StopButton(lv_event_t *e);
 lv_obj_t *ui_StopButton;
 lv_obj_t *ui_StopButtonLabel;
-void ui_event_ResetButton(lv_event_t *e);
 lv_obj_t *ui_ResetButton;
 lv_obj_t *ui_ResetButtonLabel;
-void ui_event_SettingButton(lv_event_t *e);
 lv_obj_t *ui_SettingButton;
 lv_obj_t *ui_SettingButtonLabel;
 lv_obj_t *ui_OperationListPanel;
@@ -59,19 +56,13 @@ lv_obj_t *ui_Setting;
 lv_obj_t *ui_SettingPanel;
 lv_obj_t *ui_SettingKeyboard;
 lv_obj_t *ui_SettingTitle;
-void ui_event_FlowRateText(lv_event_t *e);
 lv_obj_t *ui_FlowRateText;
-void ui_event_ZoneAreaText(lv_event_t *e);
 lv_obj_t *ui_ZoneAreaText;
-void ui_event_TimeHourText(lv_event_t *e);
 lv_obj_t *ui_TimeHourText;
 lv_obj_t *ui_TimeSeperate;
-void ui_event_TimeMinuteText(lv_event_t *e);
 lv_obj_t *ui_TimeMinuteText;
-void ui_event_SettingSaveButton(lv_event_t *e);
 lv_obj_t *ui_SettingSaveButton;
 lv_obj_t *ui_SettingSaveButtonLabel;
-void ui_event_SettingCancelButton(lv_event_t *e);
 lv_obj_t *ui_SettingCancelButton;
 lv_obj_t *ui_SettingCancelButtonLabel;
 lv_obj_t *ui_Zone1;
@@ -88,10 +79,8 @@ lv_obj_t *ui_Screen1DateLabel;
 // Setting Select : SS
 lv_obj_t *ui_SS_screen;
 lv_obj_t *ui_SS_MainPanel;
-void ui_event_SS_OpSet_Button(lv_event_t *e);
 lv_obj_t *ui_SS_OpSet_Button;
 lv_obj_t *ui_SS_OpSet_Label;
-void ui_event_SS_Device_mag_Button(lv_event_t *e);
 lv_obj_t *ui_SS_Device_mag_Button;
 lv_obj_t *ui_SS_Device_mag_Label;
 // Device Manager : DM
@@ -101,13 +90,10 @@ lv_obj_t *ui_DM_Roller;
 lv_obj_t *ui_DM_Roller_Label;
 lv_obj_t *ui_DM_Add_Button;
 lv_obj_t *ui_DM_Add_Label;
-void ui_event_DM_Add_Button(lv_event_t *e);
 lv_obj_t *ui_DM_Del_Button;
 lv_obj_t *ui_DM_Del_Label;
-void ui_event_DM_Del_Button(lv_event_t *e);
 lv_obj_t *ui_DM_Exit_Button;
 lv_obj_t *ui_DM_Exit_Label;
-void ui_event_DM_Exit_Button(lv_event_t *e);
 // Device Manager Register : DMR
 lv_obj_t *ui_DM_screen_Dropdown;
 lv_obj_t *ui_DMR_screen;
@@ -116,11 +102,30 @@ lv_obj_t *ui_DMR_Keyboard;
 lv_obj_t *ui_DMR_TextArea;
 lv_obj_t *ui_DMR_Reg_Button;
 lv_obj_t *ui_DMR_Reg_Label;
-void ui_event_DMR_Reg_Button(lv_event_t *e);
 lv_obj_t *ui_DMR_Exit_Button;
 lv_obj_t *ui_DMR_Exit_Label;
-void ui_event_DMR_Exit_Button(lv_event_t *e);
 lv_obj_t *ui_DMR_screen_Dropdown;
+
+extern void ui_event_StartButton(lv_event_t *e);
+extern void ui_event_StopButton(lv_event_t *e);
+extern void ui_event_ResetButton(lv_event_t *e);
+extern void ui_event_SettingButton(lv_event_t *e);
+extern void ui_event_FlowRateText(lv_event_t *e);
+extern void ui_event_ZoneAreaText(lv_event_t *e);
+extern void ui_event_TimeHourText(lv_event_t *e);
+extern void ui_event_TimeMinuteText(lv_event_t *e);
+extern void ui_event_SettingSaveButton(lv_event_t *e);
+extern void ui_event_SettingCancelButton(lv_event_t *e);
+extern void ui_event_SS_OpSet_Button(lv_event_t *e);
+extern void ui_event_SS_Device_mag_Button(lv_event_t *e);
+extern void ui_event_DM_Add_Button(lv_event_t *e);
+extern void ui_event_DM_Del_Button(lv_event_t *e);
+extern void ui_event_DM_Exit_Button(lv_event_t *e);
+extern void ui_event_DM_Roller_Select(lv_event_t *e);
+extern void ui_event_DM_Dropdown_Select(lv_event_t *e);
+extern void ui_event_DMR_Reg_Button(lv_event_t *e);
+extern void ui_event_DMR_Exit_Button(lv_event_t *e);
+extern void ui_event_DMR_Dropdown_Select(lv_event_t *e);
 
 static lv_style_t style_clock;
 char timeString[9];
@@ -228,169 +233,6 @@ static void status_change_cb(void *s, lv_msg_t *m) {
 ///////////////////// ANIMATIONS ////////////////////
 
 ///////////////////// FUNCTIONS ////////////////////
-void ui_event_StartButton(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    OnStartEvent(e);
-  }
-}
-void ui_event_StopButton(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    OnStopEvent(e);
-  }
-}
-void ui_event_ResetButton(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    OnResetEvent(e);
-  }
-}
-void ui_event_SettingButton(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    OnSettingEvent(e);
-    _ui_screen_change(ui_SS_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
-    //_ui_screen_change(ui_Setting, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
-  }
-}
-void ui_event_FlowRateText(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    OnFlowRateEvent(e);
-  }
-}
-void ui_event_TimeHourText(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    OnTimeHourEvent(e);
-  }
-}
-void ui_event_TimeMinuteText(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    OnTimeMinuteEvent(e);
-  }
-}
-void ui_event_SettingSaveButton(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    OnSettingSaveEvent(e);
-    _ui_screen_change(ui_Main, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
-  }
-}
-void ui_event_SettingCancelButton(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    _ui_screen_change(ui_Main, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
-  }
-}
-
-void ui_event_SS_OpSet_Button(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    _ui_screen_change(ui_Setting, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
-  }
-}
-
-void ui_event_SS_Device_mag_Button(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    DeviceManagementEvent("Child", e);
-    _ui_screen_change(ui_DM_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
-  }
-}
-
-void ui_event_DM_Add_Button(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    _ui_screen_change(ui_DMR_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
-  }
-}
-
-void ui_event_DM_Del_Button(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    char mac_addr[32] = { 0 };
-    const char *device_type = lv_label_get_text(ui_DM_Roller_Label);
-    lv_roller_get_selected_str(ui_DM_Roller, mac_addr, sizeof(mac_addr));
-    LOGI(TAG, "device_type = %s", device_type);
-    LOGI(TAG, "mac_addr = %s", mac_addr);
-    delete_mac_address(device_type, mac_addr);
-    if (strncmp(device_type, "Master", strlen("Master")) == 0) {
-      DeviceManagementEvent("Master", e);
-    } else {
-      DeviceManagementEvent("Child", e);
-    }
-    _ui_roller_set_property(ui_DM_Roller, _UI_ROLLER_PROPERTY_SELECTED, 0);
-  }
-}
-
-void ui_event_DM_Exit_Button(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    update_mac_address();
-    _ui_screen_change(ui_Main, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
-  }
-}
-
-void ui_event_DMR_Reg_Button(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {}
-}
-
-void ui_event_DMR_Exit_Button(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    _ui_screen_change(ui_DM_screen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
-  }
-}
-
-void ui_event_DM_Roller_Select(lv_event_t *e) {
-  char mac_addr[32] = { 0 };
-  lv_event_code_t code = lv_event_get_code(e);
-  lv_obj_t *obj = lv_event_get_target(e);
-  if (code == LV_EVENT_VALUE_CHANGED) {
-    lv_roller_get_selected_str(obj, mac_addr, sizeof(mac_addr));
-    LOGI(TAG, "Selected macaddress: %s", mac_addr);
-    DM_roller_event(mac_addr, e);
-  }
-}
-
-void ui_event_DM_Dropdown_Select(lv_event_t *e) {
-  char buf[32] = { 0 };
-  lv_event_code_t code = lv_event_get_code(e);
-  lv_obj_t *obj = lv_event_get_target(e);
-  if (code == LV_EVENT_VALUE_CHANGED) {
-    lv_dropdown_get_selected_str(obj, buf, sizeof(buf));
-    DeviceManagementEvent(buf, e);
-  }
-}
-
-void ui_event_DMR_Dropdown_Select(lv_event_t *e) {
-  char buf[32] = { 0 };
-  lv_event_code_t code = lv_event_get_code(e);
-  lv_obj_t *obj = lv_event_get_target(e);
-  if (code == LV_EVENT_VALUE_CHANGED) {
-    lv_dropdown_get_selected_str(obj, buf, sizeof(buf));
-  }
-}
 
 ///////////////////// SCREENS ////////////////////
 void ui_Main_screen_init(void) {
@@ -1135,6 +977,8 @@ void ui_Setting_screen_init(void) {
   lv_obj_add_event_cb(ui_TimeMinuteText, ui_event_TimeMinuteText, LV_EVENT_ALL, NULL);
   lv_obj_add_event_cb(ui_SettingSaveButton, ui_event_SettingSaveButton, LV_EVENT_ALL, NULL);
   lv_obj_add_event_cb(ui_SettingCancelButton, ui_event_SettingCancelButton, LV_EVENT_ALL, NULL);
+
+  LOGI(TAG, "Call ui_Main_screen_init()!!!");
 }
 
 void ui_SettingSelect_screen_init(void) {
@@ -1334,6 +1178,8 @@ void ui_DeviceManager_screen_init(void) {
 }
 
 void ui_DeviceManagerReg_screen_init(void) {
+  char removed_device_list[80] = { 0 };
+
   ui_DMR_screen = lv_obj_create(NULL);
   lv_obj_clear_flag(ui_DMR_screen, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
   lv_obj_set_style_radius(ui_DMR_screen, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1418,7 +1264,9 @@ void ui_DeviceManagerReg_screen_init(void) {
   lv_obj_set_style_text_opa(ui_DMR_Exit_Label, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
   ui_DMR_screen_Dropdown = lv_dropdown_create(ui_DMR_screen);
-  lv_dropdown_set_options(ui_DMR_screen_Dropdown, "Master\nChild");
+  // Get the removed device list from the syscfg variables
+  get_removed_device_list(removed_device_list, sizeof(removed_device_list));
+  lv_dropdown_set_options(ui_DMR_screen_Dropdown, removed_device_list);
   lv_obj_set_width(ui_DMR_screen_Dropdown, 98);
   lv_obj_set_height(ui_DMR_screen_Dropdown, LV_SIZE_CONTENT);  /// 1
   lv_obj_set_x(ui_DMR_screen_Dropdown, -142);
@@ -1466,8 +1314,13 @@ void ui_init(void) {
   lv_style_init(&style_clock);
   static uint32_t user_data = 10;
   lv_timer_t *time_timer = lv_timer_create(time_timer_cb, 1, &user_data);
+
   // Disable all buttons in Main screen until applying master's time.
-  disable_buttons();
+  // disable_buttons();
+
+  // update the zone status in accordance with registered child devices
+  // if some child devices are removed, they are displayed as disabled mode (light-gray)
+  update_zones();
 
   lv_disp_load_scr(ui_Main);
 }

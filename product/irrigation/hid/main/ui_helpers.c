@@ -353,12 +353,60 @@ void add_operation_list(const char *op_msg) {
   lv_textarea_add_text(ui_OperationList, op_msg);
 }
 
+void enable_zone(ZONE zone) {
+  lv_obj_set_style_bg_color(get_zone_panel_obj(zone), lv_color_hex(0xABABA2), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(get_zone_num_obj(zone), lv_color_hex(0xFF1E1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(get_zone_status_obj(zone), lv_color_hex(0xFF1E1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(get_zone_flow_meter_obj(zone), lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
 void disable_zone(ZONE zone) {
   // modify the state as disable
-  // set bgcolor as 0xe2e2e2 (white gray)
+  // set bgcolor as 0xe2e2e2 (light-gray)
 
   lv_obj_set_style_bg_color(get_zone_panel_obj(zone), lv_color_hex(0xE2E2E2), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(get_zone_num_obj(zone), lv_color_hex(0xE2E2E2), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(get_zone_status_obj(zone), lv_color_hex(0xE2E2E2), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_bg_color(get_zone_flow_meter_obj(zone), lv_color_hex(0xE2E2E2), LV_PART_MAIN | LV_STATE_DEFAULT);
+}
+
+void update_zones(void) {
+  char *cfg_name[6] = { SYSCFG_N_CHILD1_MAC, SYSCFG_N_CHILD2_MAC, SYSCFG_N_CHILD3_MAC,
+                        SYSCFG_N_CHILD4_MAC, SYSCFG_N_CHILD5_MAC, SYSCFG_N_CHILD6_MAC };
+  char mac_addr[13] = { 0 };
+
+  for (int i = 0; i < 6; i++) {
+    memset(mac_addr, 0x00, sizeof(mac_addr));
+    if (syscfg_get(MFG_DATA, cfg_name[i], mac_addr, sizeof(mac_addr)) != 0) {
+      disable_zone((ZONE)i + 1);
+    } else {
+      enable_zone((ZONE)i + 1);
+    }
+  }
+}
+
+void get_removed_device_list(char *device_list, size_t buf_len) {
+  char *cfg_name[7] = { SYSCFG_N_MASTER_MAC, SYSCFG_N_CHILD1_MAC, SYSCFG_N_CHILD2_MAC, SYSCFG_N_CHILD3_MAC,
+                        SYSCFG_N_CHILD4_MAC, SYSCFG_N_CHILD5_MAC, SYSCFG_N_CHILD6_MAC };
+  char mac_addr[13] = { 0 };
+  int pos = 0;
+
+  device_list[0] = '\0';
+
+  for (int i = 0; i < 7; i++) {
+    memset(mac_addr, 0x00, sizeof(mac_addr));
+    if (syscfg_get(MFG_DATA, cfg_name[i], mac_addr, sizeof(mac_addr)) != 0) {
+      switch (i) {
+        case 0: pos += snprintf(device_list + pos, buf_len, "%s\n", "Master"); break;
+        case 1: pos += snprintf(device_list + pos, buf_len, "%s\n", "Child1"); break;
+        case 2: pos += snprintf(device_list + pos, buf_len, "%s\n", "Child2"); break;
+        case 3: pos += snprintf(device_list + pos, buf_len, "%s\n", "Child3"); break;
+        case 4: pos += snprintf(device_list + pos, buf_len, "%s\n", "Child4"); break;
+        case 5: pos += snprintf(device_list + pos, buf_len, "%s\n", "Child5"); break;
+        case 6: pos += snprintf(device_list + pos, buf_len, "%s\n", "Child6"); break;
+        default: break;
+      }
+    }
+  }
+  device_list[pos] = '\0';
 }

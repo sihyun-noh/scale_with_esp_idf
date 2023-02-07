@@ -120,6 +120,8 @@ void add_operation_list(const char *op_msg);
 void syscfg_get_flow_value(ZONE zone, char *flow_value, size_t value_len);
 void syscfg_set_flow_value(ZONE zone, char *flow_value);
 void disable_zone(ZONE zone);
+void update_zones(void);
+void get_removed_device_list(char *device_list, size_t buf_len);
 
 #ifdef __cplusplus
 }

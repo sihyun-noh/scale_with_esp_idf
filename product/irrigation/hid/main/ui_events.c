@@ -20,13 +20,34 @@
 
 static bool updated_main_flag = false;
 static bool updated_child_flag = false;
-static const char* TAG = "UI_EVENT";
+static const char *TAG = "UI_EVENT";
 
-void OnStartEvent(lv_event_t* e) {
+void ui_event_StartButton(lv_event_t *e);
+void ui_event_StopButton(lv_event_t *e);
+void ui_event_ResetButton(lv_event_t *e);
+void ui_event_SettingButton(lv_event_t *e);
+void ui_event_FlowRateText(lv_event_t *e);
+void ui_event_ZoneAreaText(lv_event_t *e);
+void ui_event_TimeHourText(lv_event_t *e);
+void ui_event_TimeMinuteText(lv_event_t *e);
+void ui_event_SettingSaveButton(lv_event_t *e);
+void ui_event_SettingCancelButton(lv_event_t *e);
+void ui_event_SS_OpSet_Button(lv_event_t *e);
+void ui_event_SS_Device_mag_Button(lv_event_t *e);
+void ui_event_DM_Add_Button(lv_event_t *e);
+void ui_event_DM_Del_Button(lv_event_t *e);
+void ui_event_DM_Exit_Button(lv_event_t *e);
+void ui_event_DM_Roller_Select(lv_event_t *e);
+void ui_event_DM_Dropdown_Select(lv_event_t *e);
+void ui_event_DMR_Reg_Button(lv_event_t *e);
+void ui_event_DMR_Exit_Button(lv_event_t *e);
+void ui_event_DMR_Dropdown_Select(lv_event_t *e);
+
+void OnStartEvent(lv_event_t *e) {
   payload_t payload = { 0 };
   stage_t stage = NONE_STAGE;
 
-  config_value_t* config = &payload.config;
+  config_value_t *config = &payload.config;
 
   // Read config value
   if (read_hid_config(config)) {
@@ -67,52 +88,52 @@ void OnStartEvent(lv_event_t* e) {
   }
 }
 
-void OnStopEvent(lv_event_t* e) {
+void OnStopEvent(lv_event_t *e) {
   send_command_data(FORCE_STOP, NONE, NULL, 0);
   set_stop_irrigation(1);
 }
 
-void OnSettingEvent(lv_event_t* e) {
+void OnSettingEvent(lv_event_t *e) {
   reset_settings();
 }
 
-void OnResetEvent(lv_event_t* e) {}
+void OnResetEvent(lv_event_t *e) {}
 
-void OnFlowRateEvent(lv_event_t* e) {
+void OnFlowRateEvent(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_CLICKED) {
     lv_keyboard_set_textarea(ui_SettingKeyboard, ui_FlowRateText);
   }
 }
 
-void OnTimeHourEvent(lv_event_t* e) {
+void OnTimeHourEvent(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_CLICKED) {
     lv_keyboard_set_textarea(ui_SettingKeyboard, ui_TimeHourText);
   }
 }
 
-void OnTimeMinuteEvent(lv_event_t* e) {
+void OnTimeMinuteEvent(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_CLICKED) {
     lv_keyboard_set_textarea(ui_SettingKeyboard, ui_TimeMinuteText);
   }
 }
 
-void OnSettingSaveEvent(lv_event_t* e) {
+void OnSettingSaveEvent(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_CLICKED) {
-    const char* flow = lv_textarea_get_text(ui_FlowRateText);
-    const char* zones = (const char*)get_checked_zones();
-    const char* start_time_hour = lv_textarea_get_text(ui_TimeHourText);
-    const char* start_time_minute = lv_textarea_get_text(ui_TimeMinuteText);
+    const char *flow = lv_textarea_get_text(ui_FlowRateText);
+    const char *zones = (const char *)get_checked_zones();
+    const char *start_time_hour = lv_textarea_get_text(ui_TimeHourText);
+    const char *start_time_minute = lv_textarea_get_text(ui_TimeMinuteText);
     if (save_hid_config(flow, start_time_hour, start_time_minute, zones)) {
       LOGI(TAG, "Success to save the configuration!!!");
     }
   }
 }
 
-void DeviceManagementEvent(char* type, lv_event_t* e) {
+void DeviceManagementEvent(char *type, lv_event_t *e) {
   int k = 0;
   char mac[16] = { 0 };
   char list_buf[200] = { 0 };
@@ -161,7 +182,7 @@ void DeviceManagementEvent(char* type, lv_event_t* e) {
   }
 }
 
-void DM_roller_event(char* mac_addr, lv_event_t* e) {
+void DM_roller_event(char *mac_addr, lv_event_t *e) {
   char mac[16] = { 0 };
   LOGI(TAG, "selected mac address : %s", mac_addr);
 
@@ -222,21 +243,31 @@ void DM_roller_event(char* mac_addr, lv_event_t* e) {
   }
 }
 
+void update_zone_info_disp(int *dev_stat) {
+  for (int i = 1; i <= 6; i++) {
+    if (dev_stat[i] == 0) {
+      disable_zone((ZONE)i);
+    }
+  }
+}
+
 void update_mac_address(void) {
-  char* cfg_name[7] = { SYSCFG_N_MASTER_MAC, SYSCFG_N_CHILD1_MAC, SYSCFG_N_CHILD2_MAC, SYSCFG_N_CHILD3_MAC,
+  char *cfg_name[7] = { SYSCFG_N_MASTER_MAC, SYSCFG_N_CHILD1_MAC, SYSCFG_N_CHILD2_MAC, SYSCFG_N_CHILD3_MAC,
                         SYSCFG_N_CHILD4_MAC, SYSCFG_N_CHILD5_MAC, SYSCFG_N_CHILD6_MAC };
   device_type_t dev_type[7] = { MAIN_DEV, CHILD_1, CHILD_2, CHILD_3, CHILD_4, CHILD_5, CHILD_6 };
   int dev_cnt = 0;
   char mac_addr[13];
+  int dev_status[7] = { 0 };
 
   payload_t payload = { 0 };
-  device_manage_t* dev_manage = (device_manage_t*)&payload.dev_manage;
+  device_manage_t *dev_manage = (device_manage_t *)&payload.dev_manage;
 
   for (int i = 0; i < 7; i++) {
     memset(mac_addr, 0x00, sizeof(mac_addr));
     if (syscfg_get(MFG_DATA, cfg_name[i], mac_addr, sizeof(mac_addr)) == 0) {
       memcpy(&dev_manage->update_dev_addr[dev_cnt].mac_addr, mac_addr, sizeof(mac_addr));
       dev_manage->update_dev_addr[dev_cnt].device_type = dev_type[i];
+      dev_status[i] = 1;
       dev_cnt++;
     }
   }
@@ -250,11 +281,12 @@ void update_mac_address(void) {
   if (updated_child_flag) {
     dev_manage->update_dev_cnt = dev_cnt;
     send_command_data(UPDATE_DEVICE_ADDR, NONE, &payload, sizeof(payload_t));
+    update_zone_info_disp(dev_status);
     updated_child_flag = false;
   }
 }
 
-void delete_mac_address(const char* device_type, char* mac_addr) {
+void delete_mac_address(const char *device_type, char *mac_addr) {
   char mac[16] = { 0 };
   uint8_t dev_addr[MAC_ADDR_LEN] = { 0 };
 
@@ -321,5 +353,242 @@ void delete_mac_address(const char* device_type, char* mac_addr) {
       updated_child_flag = true;
     }
     return;
+  }
+}
+
+// Event Functions
+void ui_event_StartButton(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    OnStartEvent(e);
+  }
+}
+void ui_event_StopButton(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    OnStopEvent(e);
+  }
+}
+void ui_event_ResetButton(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    OnResetEvent(e);
+  }
+}
+void ui_event_SettingButton(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    OnSettingEvent(e);
+    _ui_screen_change(ui_SS_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
+    //_ui_screen_change(ui_Setting, LV_SCR_LOAD_ANIM_MOVE_LEFT, 500, 0);
+  }
+}
+void ui_event_FlowRateText(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    OnFlowRateEvent(e);
+  }
+}
+void ui_event_TimeHourText(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    OnTimeHourEvent(e);
+  }
+}
+void ui_event_TimeMinuteText(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    OnTimeMinuteEvent(e);
+  }
+}
+void ui_event_SettingSaveButton(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    OnSettingSaveEvent(e);
+    _ui_screen_change(ui_Main, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
+  }
+}
+void ui_event_SettingCancelButton(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(ui_Main, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
+  }
+}
+
+void ui_event_SS_OpSet_Button(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(ui_Setting, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
+  }
+}
+
+void ui_event_SS_Device_mag_Button(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    DeviceManagementEvent("Child", e);
+    _ui_screen_change(ui_DM_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
+  }
+}
+
+void ui_event_DM_Add_Button(lv_event_t *e) {
+  char removed_device_list[80] = { 0 };
+
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(ui_DMR_screen, LV_SCR_LOAD_ANIM_MOVE_LEFT, 0, 0);
+    // Get the removed device list from the syscfg variables
+    get_removed_device_list(removed_device_list, sizeof(removed_device_list));
+    lv_dropdown_set_options(ui_DMR_screen_Dropdown, removed_device_list);
+  }
+}
+
+void ui_event_DM_Del_Button(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    char mac_addr[32] = { 0 };
+    const char *device_type = lv_label_get_text(ui_DM_Roller_Label);
+    lv_roller_get_selected_str(ui_DM_Roller, mac_addr, sizeof(mac_addr));
+    LOGI(TAG, "device_type = %s", device_type);
+    LOGI(TAG, "mac_addr = %s", mac_addr);
+    delete_mac_address(device_type, mac_addr);
+    if (strncmp(device_type, "Master", strlen("Master")) == 0) {
+      DeviceManagementEvent("Master", e);
+    } else {
+      DeviceManagementEvent("Child", e);
+    }
+    _ui_roller_set_property(ui_DM_Roller, _UI_ROLLER_PROPERTY_SELECTED, 0);
+  }
+}
+
+void ui_event_DM_Exit_Button(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    //
+    update_mac_address();
+    _ui_screen_change(ui_Main, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
+    // Update Main Screen after adding/removing the child devices, it should be uodated depends on their status
+    update_zones();
+  }
+}
+
+void ui_event_DM_Roller_Select(lv_event_t *e) {
+  char mac_addr[32] = { 0 };
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *obj = lv_event_get_target(e);
+  if (code == LV_EVENT_VALUE_CHANGED) {
+    lv_roller_get_selected_str(obj, mac_addr, sizeof(mac_addr));
+    LOGI(TAG, "Selected macaddress: %s", mac_addr);
+    DM_roller_event(mac_addr, e);
+  }
+}
+
+void ui_event_DM_Dropdown_Select(lv_event_t *e) {
+  char buf[32] = { 0 };
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *obj = lv_event_get_target(e);
+  if (code == LV_EVENT_VALUE_CHANGED) {
+    lv_dropdown_get_selected_str(obj, buf, sizeof(buf));
+    DeviceManagementEvent(buf, e);
+  }
+}
+
+void ui_event_DMR_Reg_Button(lv_event_t *e) {
+  const char *mac_addr;
+  char device_type[12] = { 0 };
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    // Save the mac address of added devices to the syscfg variable.
+    lv_dropdown_get_selected_str(ui_DMR_screen_Dropdown, device_type, sizeof(device_type));
+    LOGI(TAG, "selected device type = %s", device_type);
+    // Get a mac address from the textarea
+    mac_addr = lv_textarea_get_text(ui_DMR_TextArea);
+    LOGI(TAG, "mac address = %s", mac_addr);
+    if (strcmp(device_type, "Child1") == 0) {
+      syscfg_set(MFG_DATA, SYSCFG_N_CHILD1_MAC, mac_addr);
+    } else if (strcmp(device_type, "Child2") == 0) {
+      syscfg_set(MFG_DATA, SYSCFG_N_CHILD2_MAC, mac_addr);
+    } else if (strcmp(device_type, "Child3") == 0) {
+      syscfg_set(MFG_DATA, SYSCFG_N_CHILD3_MAC, mac_addr);
+    } else if (strcmp(device_type, "Child4") == 0) {
+      syscfg_set(MFG_DATA, SYSCFG_N_CHILD4_MAC, mac_addr);
+    } else if (strcmp(device_type, "Child5") == 0) {
+      syscfg_set(MFG_DATA, SYSCFG_N_CHILD5_MAC, mac_addr);
+    } else if (strcmp(device_type, "Child6") == 0) {
+      syscfg_set(MFG_DATA, SYSCFG_N_CHILD6_MAC, mac_addr);
+    }
+    updated_child_flag = true;
+  }
+}
+
+void ui_event_DMR_Exit_Button(lv_event_t *e) {
+  char buf[32] = { 0 };
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(ui_DM_screen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
+    lv_dropdown_get_selected_str(ui_DM_screen_Dropdown, buf, sizeof(buf));
+    DeviceManagementEvent(buf, e);
+  }
+}
+
+void ui_event_DMR_Dropdown_Select(lv_event_t *e) {
+  char buf[32] = { 0 };
+  char mac_addr[13] = { 0 };
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *obj = lv_event_get_target(e);
+  if (code == LV_EVENT_VALUE_CHANGED) {
+    lv_dropdown_get_selected_str(obj, buf, sizeof(buf));
+    if (strcmp(buf, "Child1") == 0) {
+      if (syscfg_get(MFG_DATA, SYSCFG_N_CHILD1_MAC, mac_addr, sizeof(mac_addr)) == 0) {
+        lv_textarea_set_text(ui_DMR_TextArea, mac_addr);
+      } else {
+        lv_textarea_set_text(ui_DMR_TextArea, "");
+      }
+    } else if (strcmp(buf, "Child2") == 0) {
+      if (syscfg_get(MFG_DATA, SYSCFG_N_CHILD2_MAC, mac_addr, sizeof(mac_addr)) == 0) {
+        lv_textarea_set_text(ui_DMR_TextArea, mac_addr);
+      } else {
+        lv_textarea_set_text(ui_DMR_TextArea, "");
+      }
+    } else if (strcmp(buf, "Child3") == 0) {
+      if (syscfg_get(MFG_DATA, SYSCFG_N_CHILD3_MAC, mac_addr, sizeof(mac_addr)) == 0) {
+        lv_textarea_set_text(ui_DMR_TextArea, mac_addr);
+      } else {
+        lv_textarea_set_text(ui_DMR_TextArea, "");
+      }
+    } else if (strcmp(buf, "Child4") == 0) {
+      if (syscfg_get(MFG_DATA, SYSCFG_N_CHILD4_MAC, mac_addr, sizeof(mac_addr)) == 0) {
+        lv_textarea_set_text(ui_DMR_TextArea, mac_addr);
+      } else {
+        lv_textarea_set_text(ui_DMR_TextArea, "");
+      }
+    } else if (strcmp(buf, "Child5") == 0) {
+      if (syscfg_get(MFG_DATA, SYSCFG_N_CHILD5_MAC, mac_addr, sizeof(mac_addr)) == 0) {
+        lv_textarea_set_text(ui_DMR_TextArea, mac_addr);
+      } else {
+        lv_textarea_set_text(ui_DMR_TextArea, "");
+      }
+    } else if (strcmp(buf, "Child6") == 0) {
+      if (syscfg_get(MFG_DATA, SYSCFG_N_CHILD6_MAC, mac_addr, sizeof(mac_addr)) == 0) {
+        lv_textarea_set_text(ui_DMR_TextArea, mac_addr);
+      } else {
+        lv_textarea_set_text(ui_DMR_TextArea, "");
+      }
+    }
   }
 }
