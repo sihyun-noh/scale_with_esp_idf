@@ -1,0 +1,29 @@
+name: Build check gas sensor
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'product/gas_sensor/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'product/gas_sensor/**'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout gas sensor
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: esp-idf build
+      uses: espressif/esp-idf-ci-action@main
+      with:
+        esp_idf_version: v5.0
+        target: esp32s3
+        path: './product/gas_sensor'
