@@ -23,14 +23,22 @@ menu "PAL packages"
       help
         Enable ADC module to get battery level of sensors
   endmenu # ADC package
-  
+
   menu "DAC package"
     config DAC_PACKAGE
       bool "DAC package"
       default "n"
       help
-        Enable DAC module 
+        Enable DAC module
   endmenu # DAC package
+
+  menu "UART package"
+    config UART_PACKAGE
+      bool "UART package"
+      default "y"
+      help
+        Enable UART module to communicate the sensors
+  endmenu # UART package
 
 endmenu
 

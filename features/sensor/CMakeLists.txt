@@ -27,6 +27,12 @@ if(CONFIG_ATLAS_EC_FEATURE)
   list(APPEND includes "./atlas_ec")
 endif()
 
+if(CONFIG_WINSEN_ZE03_FEATURE)
+  list(APPEND srcs
+    "winsen_ze03/winsen_ze03.c")
+  list(APPEND includes "./winsen_ze03")
+endif()
+
 idf_component_register(SRCS "${srcs}"
                     INCLUDE_DIRS ${includes}
                     REQUIRES ${req})

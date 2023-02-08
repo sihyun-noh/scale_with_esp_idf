@@ -1,4 +1,5 @@
 menu "Sensors Features"
+
   config SHT3X_FEATURE
     bool "SHT3x feature"
     default "n"
@@ -22,4 +23,7 @@ menu "Sensors Features"
     default "n"
     help
       Atlas EC Sensor
+
+  rsource "winsen_ze03/Kconfig.in"
+
 endmenu # Sensors
