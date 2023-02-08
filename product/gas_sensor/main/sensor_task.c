@@ -13,7 +13,12 @@
 #if (CONFIG_DATALOGGER_RS_ECTH)
 #include "mb_master_rtu.h"
 #endif
+#if (CONFIG_WINSEN_ZE03_FEATURE)
 #include "winsen_ze03.h"
+#endif
+#if (CONFIG_WINSEN_ZCE04B_FEATURE)
+#include "winsen_zce04b.h"
+#endif
 
 #define MIN_READ_CNT 2
 
@@ -62,8 +67,12 @@ int alive_check_task(void) {
 int sensor_init(void) {
   int res = 0;
 
+#if (CONFIG_WINSEN_ZE03_FEATURE)
   winsen_ze03_init();
-  winsen_ze03_set_active(1);
+#endif
+#if (CONFIG_WINSEN_ZCE04B_FEATURE)
+  winsen_zce04b_init();
+#endif
 #if (CONFIG_DATALOGGER_RS_ECTH)
   mb_characteristic_info_t mb_soil_ec[3] = {
     { 0, "Data_1", "Binary", DATA_BINARY, 6, RENKE_SEC_SLAVE_ID_1, MB_HOLDING_REG, 0x0000, 0x0003 },
@@ -190,7 +199,12 @@ int read_soil_ec_rs_ecth(void) {
 
 int sensor_read(void) {
   int rc = 0;
-  winsen_ze03_read_manual();
+#if (CONFIG_WINSEN_ZE03_FEATURE)
+  rc = winsen_ze03_read_manual();
+#endif
+#if (CONFIG_WINSEN_ZCE04B_FEATURE)
+  rc = winsen_zce04b_read_manual();
+#endif
 #if (CONFIG_GASSENSOR_TEMP_HUM_EC)
   rc = read_soil_ec_rs_ecth();
 #elif (CONFIG_GASSENSOR_GAS)

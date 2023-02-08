@@ -7,6 +7,7 @@
 
 typedef struct uart_hal {
   uint8_t num;
+  int ref_cnt;
   bool has_peek;
   uint8_t peek_byte;
   SemaphoreHandle_t mutex;
@@ -14,9 +15,9 @@ typedef struct uart_hal {
 } uart_hal_t;
 
 static uart_hal_t uart_hal_data[3] = {
-  { 0, false, 0, NULL, NULL },
-  { 1, false, 0, NULL, NULL },
-  { 2, false, 0, NULL, NULL },
+  { 0, 0, false, 0, NULL, NULL },
+  { 1, 0, false, 0, NULL, NULL },
+  { 2, 0, false, 0, NULL, NULL },
 };
 
 static uart_hal_t* get_uart_interface(int dev) {
@@ -47,34 +48,40 @@ int uart_hal_initialize(int dev, uint32_t baudrate, int8_t rxPin, int8_t txPin, 
 
   uart_hal_t* uart = &uart_hal_data[dev];
 
-  if (uart_is_driver_installed(dev)) {
-    uart_hal_free(dev);
-  }
-
-  if (uart->mutex == NULL) {
-    uart->mutex = xSemaphoreCreateMutex();
-    if (uart->mutex == NULL) {
-      return HAL_UART_INIT_ERR;
+  if (uart_hal_data[dev].ref_cnt == 0) {
+    if (uart_is_driver_installed(dev)) {
+      uart_hal_free(dev);
     }
+
+    if (uart->mutex == NULL) {
+      uart->mutex = xSemaphoreCreateMutex();
+      if (uart->mutex == NULL) {
+        return HAL_UART_INIT_ERR;
+      }
+    }
+
+    uart_hal_lock(dev);
+
+    uart_hal_data[dev].ref_cnt++;
+    uart_config_t uart_config;
+    uart_config.baud_rate = baudrate;
+    uart_config.data_bits = UART_DATA_8_BITS;
+    uart_config.parity = UART_PARITY_DISABLE;
+    uart_config.stop_bits = UART_STOP_BITS_1;
+    uart_config.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
+    uart_config.source_clk = UART_SCLK_APB;
+
+    rc = uart_driver_install(dev, rx_buffer_size, tx_buffer_size, 20, &(uart->uart_event_queue), 0);
+    rc = uart_param_config(dev, &uart_config);
+    rc = uart_set_pin(dev, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+
+    uart_hal_unlock(dev);
+
+    uart_hal_flush(dev);
+  } else {
+    uart_hal_data[dev].ref_cnt++;
+    rc = ESP_OK;
   }
-
-  uart_hal_lock(dev);
-
-  uart_config_t uart_config;
-  uart_config.baud_rate = baudrate;
-  uart_config.data_bits = UART_DATA_8_BITS;
-  uart_config.parity = UART_PARITY_DISABLE;
-  uart_config.stop_bits = UART_STOP_BITS_1;
-  uart_config.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
-  uart_config.source_clk = UART_SCLK_APB;
-
-  rc = uart_driver_install(dev, rx_buffer_size, tx_buffer_size, 20, &(uart->uart_event_queue), 0);
-  rc = uart_param_config(dev, &uart_config);
-  rc = uart_set_pin(dev, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-
-  uart_hal_unlock(dev);
-
-  uart_hal_flush(dev);
 
   if (ESP_OK == rc) {
     return HAL_UART_NO_ERR;
@@ -89,9 +96,12 @@ void uart_hal_free(int dev) {
     return;
   }
 
-  uart_hal_lock(dev);
+  if (uart->mutex) {
+    vSemaphoreDelete(uart->mutex);
+    uart->mutex = NULL;
+  }
+
   uart_driver_delete(dev);
-  uart_hal_unlock(dev);
 }
 
 uint32_t uart_available(int dev) {

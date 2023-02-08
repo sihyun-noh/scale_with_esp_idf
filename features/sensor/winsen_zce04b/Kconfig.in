@@ -1,0 +1,60 @@
+  menu "Winsen ZCE04B feature"
+
+    config WINSEN_ZCE04B_FEATURE
+      bool "Winsen ZCE04B feature"
+      default "n"
+      help
+        Winsen ZCE04B NH3 Gas Sensor
+
+    config ZCE04B_UART_MUX_GPIO
+      depends on WINSEN_ZCE04B_FEATURE
+      int "ZCE04B UART mux gpio number"
+      default 11
+      help
+        UART mux gpio number
+
+    config ZCE04B_UART_NUM
+      depends on WINSEN_ZCE04B_FEATURE
+      int "ZCE04B UART port number"
+      range 0 2
+      default 2
+      help
+        UART communication port number for the Winsen ZCE04B
+
+    config ZCE04B_UART_BAUDRATE
+      depends on WINSEN_ZCE04B_FEATURE
+      int "ZCE04B UART communication speed"
+      range 1200 115200
+      default 9600
+      help
+        UART communication speed for the Winsen ZCE04B
+
+    config ZCE04B_UART_RXD
+      depends on WINSEN_ZCE04B_FEATURE
+      int "ZCE04B UART RXD pin number"
+      default 9
+      help
+        GPIO number for UART RX pin
+
+    config ZCE04B_UART_TXD
+      depends on WINSEN_ZCE04B_FEATURE
+      int "ZCE04B UART TXD pin number"
+      default 8
+      help
+        GPIO number for UART TX pin
+
+    config ZCE04B_UART_RXBUF_SIZE
+      depends on WINSEN_ZCE04B_FEATURE
+      int "ZCE04B UART rx buffer size"
+      default 2048
+      help
+        UART rx buffer size for the Winsen ZCE04B
+
+    config ZCE04B_UART_TXBUF_SIZE
+      depends on WINSEN_ZCE04B_FEATURE
+      int "ZCE04B UART tx buffer size"
+      default 0
+      help
+        UART tx buffer size for the Winsen ZCE04B
+
+  endmenu
