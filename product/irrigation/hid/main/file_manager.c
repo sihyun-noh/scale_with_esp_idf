@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/unistd.h>
 #include <errno.h>
@@ -355,7 +356,6 @@ void fm_init(const char *partition_name, const char *root_path) {
 
   init_sysfile(partition_name, root_path);
   fm_file_list(root_path);
-  // sysfile_show_file();
 }
 
 const char *fm_get_rootpath(void) {

@@ -977,8 +977,6 @@ void ui_Setting_screen_init(void) {
   lv_obj_add_event_cb(ui_TimeMinuteText, ui_event_TimeMinuteText, LV_EVENT_ALL, NULL);
   lv_obj_add_event_cb(ui_SettingSaveButton, ui_event_SettingSaveButton, LV_EVENT_ALL, NULL);
   lv_obj_add_event_cb(ui_SettingCancelButton, ui_event_SettingCancelButton, LV_EVENT_ALL, NULL);
-
-  LOGI(TAG, "Call ui_Main_screen_init()!!!");
 }
 
 void ui_SettingSelect_screen_init(void) {

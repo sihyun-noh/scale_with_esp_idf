@@ -17,6 +17,7 @@
 #include "hid_config.h"
 #include "command.h"
 #include "comm_packet.h"
+#include "file_manager.h"
 
 static bool updated_main_flag = false;
 static bool updated_child_flag = false;
@@ -97,7 +98,9 @@ void OnSettingEvent(lv_event_t *e) {
   reset_settings();
 }
 
-void OnResetEvent(lv_event_t *e) {}
+void OnResetEvent(lv_event_t *e) {
+  fm_file_copy("/sdcard/test.log", "/storage/1970-01-01-0340_log.txt");
+}
 
 void OnFlowRateEvent(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
@@ -517,6 +520,11 @@ void ui_event_DMR_Reg_Button(lv_event_t *e) {
     LOGI(TAG, "selected device type = %s", device_type);
     // Get a mac address from the textarea
     mac_addr = lv_textarea_get_text(ui_DMR_TextArea);
+    if (strlen(mac_addr) != 12) {
+      LOGI(TAG, "Mac address length should be 12");
+      warnning_msgbox("Mac address length should be 12, Please check the address length");
+      return;
+    }
     LOGI(TAG, "mac address = %s", mac_addr);
     if (strcmp(device_type, "Child1") == 0) {
       syscfg_set(MFG_DATA, SYSCFG_N_CHILD1_MAC, mac_addr);
