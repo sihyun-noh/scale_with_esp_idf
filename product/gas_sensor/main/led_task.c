@@ -1,52 +1,58 @@
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "driver/rmt.h"
+#include "driver/rmt_tx.h"
+#include "led_strip_encoder.h"
 #include "log.h"
-#include "led_strip.h"
-
 #include "sys_status.h"
 
-#define RMT_TX_GPIO 48
-#define STRIP_LED_NUMBER 1
-#define RMT_TX_CHANNEL RMT_CHANNEL_0
+#define RMT_LED_STRIP_RESOLUTION_HZ 10000000
+#define RMT_LED_STRIP_GPIO_NUM 48
+#define DELAY_1SEC 1000
 
 static const char *TAG = "led_task";
-static TaskHandle_t led_handle = NULL;
 
-led_strip_config_t strip_config;
-led_strip_t *strip;
+static TaskHandle_t led_handle;
 
-typedef enum {
-  RED,
-  GREEN,
-  BLUE,
-  WHITE,
-  CLEAR
-} stat_led_t;
+rmt_channel_handle_t led_chan;
+rmt_tx_channel_config_t tx_chan_config;
+rmt_encoder_handle_t led_encoder;
+led_strip_encoder_config_t encoder_config;
+rmt_transmit_config_t tx_config;
+static uint8_t led_strip_pixels[3];
 
-static void init_led_strip(void) {
-  rmt_config_t config = RMT_DEFAULT_CONFIG_TX(RMT_TX_GPIO, RMT_TX_CHANNEL);
-  config.clk_div = 2;
+typedef enum { RED, GREEN, BLUE, WHITE, CLEAR } stat_led_t;
 
-  ESP_ERROR_CHECK(rmt_config(&config));
-  ESP_ERROR_CHECK(rmt_driver_install(config.channel, 0, 0));
-
-  strip_config.max_leds = STRIP_LED_NUMBER;
-  strip_config.dev = (led_strip_dev_t)config.channel;
-  strip = led_strip_new_rmt_sk68xx(&strip_config);
-
-  if (!strip) {
-    LOGE(TAG, "install SK68xx driver failed");
-  }
-  ESP_ERROR_CHECK(strip->clear(strip, 100));
+static void delay(uint32_t ms) {
+  vTaskDelay(ms / portTICK_PERIOD_MS);
 }
 
-static void set_led_strip(int r, int g, int b) {
-  for (int i = 0; i < STRIP_LED_NUMBER; i++) {
-    ESP_ERROR_CHECK(strip->set_pixel(strip, i, (uint32_t)r, (uint32_t)g, (uint32_t)b));
-  }
-  ESP_ERROR_CHECK(strip->refresh(strip, 100));
+static void init_led_strip(void) {
+  LOGI(TAG, "Create RMT TX channel");
+  tx_chan_config.clk_src = RMT_CLK_SRC_DEFAULT;
+  tx_chan_config.gpio_num = RMT_LED_STRIP_GPIO_NUM;
+  tx_chan_config.mem_block_symbols = 64;
+  tx_chan_config.resolution_hz = RMT_LED_STRIP_RESOLUTION_HZ;
+  tx_chan_config.trans_queue_depth = 4;
+
+  ESP_ERROR_CHECK(rmt_new_tx_channel(&tx_chan_config, &led_chan));
+
+  LOGI(TAG, "Install led strip encoder");
+  encoder_config.resolution = RMT_LED_STRIP_RESOLUTION_HZ;
+
+  ESP_ERROR_CHECK(rmt_new_led_strip_encoder(&encoder_config, &led_encoder));
+
+  LOGI(TAG, "Enable RMT TX channel");
+  ESP_ERROR_CHECK(rmt_enable(led_chan));
+
+  tx_config.loop_count = 0;
+}
+
+static void set_led_strip(int red, int green, int blue) {
+  led_strip_pixels[0] = green;
+  led_strip_pixels[1] = red;
+  led_strip_pixels[2] = blue;
+  ESP_ERROR_CHECK(rmt_transmit(led_chan, led_encoder, led_strip_pixels, sizeof(led_strip_pixels), &tx_config));
 }
 
 static void blink_led(stat_led_t color) {
@@ -76,22 +82,22 @@ void led_task(void) {
   while (1) {
     if (is_usb_copying(USB_COPYING)) {
       blink_led(GREEN);
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      delay(DELAY_1SEC);
     }
     if (is_usb_copying(USB_COPY_FAIL)) {
       blink_led(RED);
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      delay(DELAY_1SEC);
     }
     if (is_usb_copying(USB_COPY_SUCCESS)) {
       blink_led(BLUE);
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      delay(DELAY_1SEC);
     }
     if (is_usb_disconnect_notify()) {
       blink_led(WHITE);
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      delay(DELAY_1SEC);
     }
     blink_led(CLEAR);
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    delay(DELAY_1SEC);
   }
 }
 
