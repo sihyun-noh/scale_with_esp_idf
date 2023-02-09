@@ -22,7 +22,8 @@ typedef enum { CHECK_ADDR = 0, WAIT_STATE, ERROR } condtrol_status_t;
 
 condtrol_status_t controlStatus = CHECK_ADDR;
 
-extern uint8_t masterAddress[6];
+// extern uint8_t masterAddress[6];
+static uint8_t masterAddress[MAC_ADDR_LEN];
 
 int myId;
 
@@ -140,10 +141,17 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
 
       case SET_SLEEP: {
         LOGI(TAG, "Start sleep");
+
         vTaskDelay((1000 * myId) / portTICK_PERIOD_MS);
-        
-        if (!send_esp_data(RESPONSE, SET_SLEEP))
+
+        LOGI(TAG, "Send Sleep Command to Main device");
+
+        if (!send_esp_data(RESPONSE, SET_SLEEP)) {
+          LOGI(TAG, "Failed to send SLEEP RESPONSE to Main Device");
           send_esp_data(RESPONSE, SET_SLEEP);
+        }
+
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
 
         sleep_timer_wakeup(recv_message.payload.remain_time_sleep - myId);
       } break;
@@ -168,6 +176,9 @@ static void control_task(void* pvParameters) {
         } else {
           LOGI(TAG, "Failed to add master addr to peer list");
         }
+
+        memcpy(masterAddress, espnow_get_master_addr(), MAC_ADDR_LEN);
+
         LOG_BUFFER_HEXDUMP(TAG, masterAddress, sizeof(masterAddress), LOG_INFO);
 
         myId = get_address_matching_id();

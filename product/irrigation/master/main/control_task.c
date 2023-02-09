@@ -15,7 +15,7 @@
 #include "comm_packet.h"
 #include "battery_task.h"
 
-#define RESP_THRES 10
+#define RESP_THRES 20
 #define NUMBER_CHILD 6
 #define TOTAL_DEVICES 7
 #define SYNC_TIME_BUFF 5
@@ -58,10 +58,10 @@ int flowOrder[NUMBER_CHILD];         // 관수 순서
 int flowSettingValue[NUMBER_CHILD];  // 관수 설정 값
 int zoneBattery[TOTAL_DEVICES];      // 0: master, 1~6: child 배터리 잔량
 
-int flowDoneCnt;      // zone 변 관수 완료 카운트
-int respChildCnt;     // child response 수신 횟수
-int syncTimeBuffCnt;  // Time sync buffer check count
-int totalNumberChild; // child device number
+int flowDoneCnt;       // zone 변 관수 완료 카운트
+int respChildCnt;      // child response 수신 횟수
+int syncTimeBuffCnt;   // Time sync buffer check count
+int totalNumberChild;  // child device number
 
 uint64_t remainSleepTime;  // sleep 시간
 
@@ -244,19 +244,11 @@ bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
   LOGI(TAG, "============== Message ==================");
   LOG_BUFFER_HEXDUMP(TAG, &send_message, sizeof(irrigation_message_t), LOG_INFO);
 
-  if (sender == SET_SLEEP && id == ALL_DEV) {
-    for (int i = 1; i < TOTAL_DEVICES; i++) {
-      if (get_addr(i, zoneAddr)) {
-        espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(irrigation_message_t));
-      }
-    }
+  if (!espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(irrigation_message_t))) {
+    LOGE(TAG, "Failed to esp send data!!!");
+    espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(irrigation_message_t));
   } else {
-    if (!espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(irrigation_message_t))) {
-      LOGE(TAG, "Failed to esp send data!!!");
-      espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(irrigation_message_t));
-    } else {
-      LOGI(TAG, "Success to esp send data!!!");
-    }
+    LOGI(TAG, "Success to esp send data!!!");
   }
 
   sendCmd = sender;
@@ -281,7 +273,7 @@ void check_response(irrigation_message_t* msg) {
       set_control_status(CHECK_SCEHDULE);
     } break;
 
-    case DEVICE_ERROR: { 
+    case DEVICE_ERROR: {
       set_control_status(ERROR);
     } break;
 
@@ -346,11 +338,12 @@ void check_response(irrigation_message_t* msg) {
       sendCmd = msg->receive_type;
       respChildCnt++;
 
-      LOGI(TAG, "resp CNT Child : %d ", respChildCnt);
+      LOGI(TAG, "resp CNT Child : %d and total : %d for Sleep Command", respChildCnt, totalNumberChild);
 
       respBroadCast[dev_stat->deviceId] = 1;
 
       if (respChildCnt >= totalNumberChild) {
+        LOGI(TAG, "Send Sleep Command to the HID device and entering sleep mode on main");
         memset(&respBroadCast, 0x00, sizeof(respBroadCast));
         remainSleepTime -= TOTAL_DEVICES;
         send_esp_data(SET_SLEEP, SET_SLEEP, HID_DEV);
@@ -582,11 +575,14 @@ void check_schedule(void) {
   } else {
     remainSleepTime = check_sleep_time();
     if (remainSleepTime > 0) {
-      send_esp_data(SET_SLEEP, SET_SLEEP, ALL_DEV);
+      LOGI(TAG, "SEND DEEP SLEEP MSG, SleepTime : %llus ", remainSleepTime);
+      for (int i = 1; i <= 6; i++) {
+        send_esp_data(SET_SLEEP, SET_SLEEP, (device_type_t)i);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+      }
       set_control_status(WAIT_STATE);
-      LOGI(TAG, "SEND DEEP SLEEP MSG, SleepTime : %llus ", remainSleepTime);      
     } else {
-      LOGI(TAG, "WAIT SET CONFIG ");
+      LOGD(TAG, "WAIT SET CONFIG ");
     }
   }
 }
@@ -715,7 +711,7 @@ static void control_task(void* pvParameters) {
           LOGI(TAG, "CHILD -%d is unavailable !!", flowOrder[flowDoneCnt]);
           flowDoneCnt++;
           set_control_status(CHECK_SCEHDULE);
-        }        
+        }
       } break;
 
       case CHILD_VALVE_OFF: {
@@ -738,7 +734,7 @@ static void control_task(void* pvParameters) {
       } break;
 
       case ERROR: {
-        LOGI(TAG, "No Response from sets !!, Fix SET Devices state & RESET System !!");
+        LOGD(TAG, "No Response from sets !!, Fix SET Devices state & RESET System !!");
       } break;
 
       default: break;
