@@ -14,7 +14,4 @@
 #define BATTERY_ADC_CHANNEL  3  // GPIO_4
 #define BATTERY_READ_ON_GPIO 40 // GPIO_40
 
-// esp32s3  datalogger_v2 rs485 power control pin
-#define SENSOR_POWER_CONTROL_PORT 41  // GPIO41
-
 #endif /* _CONFIG_H_ */

@@ -28,6 +28,13 @@
 #include <dirent.h>
 #include <errno.h>
 
+#define ROOT_PATH "/storage"
+#define PART_NAME "storage"
+
+#define DELAY_100MS 100
+#define DELAY_1SEC 1000
+#define DELAY_3SEC 3000
+
 const char* TAG = "main_app";
 
 sc_ctx_t* sc_ctx = NULL;
@@ -47,9 +54,6 @@ extern void create_usb_host_msc_task(void);
 static void check_model(void);
 static operation_mode_t s_curr_mode;
 static int send_interval;
-static int op_time;
-static int op_start_time;
-static int op_end_time;
 
 uint8_t mac[6] = { 0 };
 
@@ -76,81 +80,44 @@ void stop_shell(void) {
   }
 }
 
-int sleep_timer_wakeup(int wakeup_time_sec) {
-  int ret = 0;
-  LOGI(TAG, "Enabling timer wakeup, %ds\n", wakeup_time_sec);
-  ret = esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000);
-  esp_deep_sleep_start();
-  return ret;
+static void delay(uint32_t ms) {
+  vTaskDelay(ms / portTICK_PERIOD_MS);
 }
 
 static void check_model(void) {
   char model_name[10] = { 0 };
   char power_mode[10] = { 0 };
   char s_send_interval[10] = { 0 };
-  char s_op_time[10] = { 0 };
   char mac_address[16] = { 0 };
 
   syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
   syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
   syscfg_get(SYSCFG_I_MACADDRESS, SYSCFG_N_MACADDRESS, mac_address, sizeof(mac_address));
   syscfg_get(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, s_send_interval, sizeof(s_send_interval));
-  syscfg_get(SYSCFG_I_OP_TIME, SYSCFG_N_OP_TIME, s_op_time, sizeof(s_op_time));
   send_interval = atoi(s_send_interval);
-  op_time = atoi(s_op_time);
-
-  op_start_time = op_time / 100;
-  op_end_time = op_time % 100;
 
   LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
   LOGI(TAG, "send_interval : %d", send_interval);
-  LOGI(TAG, "msc_address : %s", mac_address);
+  LOGI(TAG, "mac_address : %s", mac_address);
   LOGI(TAG, "read interval : %d", send_interval);
-  LOGI(TAG, "op_start_time : %d", op_start_time);
-  LOGI(TAG, "op_end_time : %d", op_end_time);
 
-  set_battery_model(1);
-}
-
-void sensor_gpio_init() {
-  gpio_init(SENSOR_POWER_CONTROL_PORT, 2);
-}
-
-static int sensor_power_on() {
-  return gpio_write(SENSOR_POWER_CONTROL_PORT, 1);
-}
-static int sensor_power_off() {
-  return gpio_write(SENSOR_POWER_CONTROL_PORT, 0);
+  set_battery_model(0);
 }
 
 static int mkdir_datalogger() {
   if (mkdir(SEN_DATA_PATH_1, 0777) == -1 && errno != EEXIST) {
-    printf("/storage/Sen1 directory create error: %s\n", strerror(errno));
+    LOGE(TAG, "/storage/Sen1 directory create error: %s", strerror(errno));
     return -1;
   }
   if (mkdir(SEN_DATA_PATH_2, 0777) == -1 && errno != EEXIST) {
-    printf("/storage/Sen2 directory create error: %s\n", strerror(errno));
+    LOGE(TAG, "/storage/Sen2 directory create error: %s", strerror(errno));
     return -1;
   }
   if (mkdir(SEN_DATA_PATH_3, 0777) == -1 && errno != EEXIST) {
-    printf("/storage/Sen3 directory create error: %s\n", strerror(errno));
+    LOGE(TAG, "/storage/Sen3 directory create error: %s", strerror(errno));
     return -1;
   }
   return 0;
-}
-
-bool operating_time() {
-  struct tm time = { };
-  uint8_t curr_time;
-  rtc_get_time(&time);
-  printf("TIME: %04d-%02d-%02d-%02d-%02d-%02d\n", time.tm_year + 1900, time.tm_mon + 1, time.tm_mday, time.tm_hour,
-         time.tm_min, time.tm_sec);
-  curr_time = time.tm_hour;
-  if (curr_time >= op_start_time && curr_time < op_end_time) {
-    return true;
-  } else {
-    return false;
-  }
 }
 
 int system_init(void) {
@@ -187,13 +154,11 @@ int system_init(void) {
 
   rtc_time_init();
 
-  ret = init_sysfile(PARTITION_NAME, BASE_PATH);
+  ret = init_sysfile(PART_NAME, ROOT_PATH);
   if (ret)
-    return ERR_SPIFFS_INIT;
+    return ERR_FILESYSTEM_INIT;
 
   battery_init();
-
-  sensor_gpio_init();
 
   create_usb_host_msc_task();
 
@@ -202,64 +167,44 @@ int system_init(void) {
   return SYSINIT_OK;
 }
 
-void battery_loop_task(void) {
-  int rc = 0;
-  bool op_flag = true;
+void loop_task(void) {
   set_operation_mode(SENSOR_INIT_MODE);
 
   while (1) {
-    op_flag = operating_time();
-    op_flag = 1;
-    if (op_flag) {
-      switch (get_operation_mode()) {
-        case SENSOR_INIT_MODE: {
-          LOGI(TAG, "SENSOR_INIT_MODE");
-          if ((rc = sensor_init()) != SYSINIT_OK) {
-            LOGI(TAG, "Could not initialize sensor");
-            set_operation_mode(SLEEP_MODE);
-          } else {
-            set_operation_mode(SENSOR_READ_MODE);
-          }
-        } break;
-        case SENSOR_READ_MODE: {
-          LOGI(TAG, "SENSOR_READ_MODE");
-          sensor_power_on();
-          // sensor warming up time
-          vTaskDelay(3000 / portTICK_PERIOD_MS);
-          if (read_battery_percentage() != CHECK_OK) {
-            //  Failed to read battery percentage, it will be set 0
-            LOGE(TAG, "not read to battery!");
-            sysevent_set(ADC_BATTERY_EVENT, (char*)"0");
-          }
-          vTaskDelay(100 / portTICK_PERIOD_MS);
-
-          if (is_usb_copying(USB_COPYING)) {  // while copying don't use of FLOG function.
-            LOGE(TAG, "usb copying...");
-          } else {
-            if (sensor_read() == CHECK_OK) {
-              set_operation_mode(SLEEP_MODE);
-            } else {
-              rc = ERR_SENSOR_READ;
-              LOGE(TAG, "sensor read, error = [%d]", rc);
-              set_operation_mode(SLEEP_MODE);
-            }
-          }
-          sensor_power_off();
-        } break;
-        case SENSOR_PUB_MODE: {
+    switch (get_operation_mode()) {
+      case SENSOR_INIT_MODE: {
+        LOGI(TAG, "SENSOR_INIT_MODE");
+        if ((sensor_init()) != SYSINIT_OK) {
+          LOGI(TAG, "Could not initialize sensor");
           set_operation_mode(SLEEP_MODE);
-        } break;
-        case SLEEP_MODE: {
-          LOGI(TAG, "SLEEP_MODE");
-          vTaskDelay(send_interval * 1000 / portTICK_PERIOD_MS);
+        } else {
           set_operation_mode(SENSOR_READ_MODE);
-        } break;
-      }
-      vTaskDelay(10 / portTICK_PERIOD_MS);
-    } else {
-      LOGI(TAG, "Not working");
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
+        }
+      } break;
+      case SENSOR_READ_MODE: {
+        LOGI(TAG, "SENSOR_READ_MODE");
+        if (read_battery_percentage() != CHECK_OK) {
+          LOGE(TAG, "not read to battery!");
+          sysevent_set(ADC_BATTERY_EVENT, (char*)"0");
+        }
+        delay(DELAY_100MS);
+
+        if (is_usb_copying(USB_COPYING)) {
+          LOGE(TAG, "usb copying...");
+        } else {
+          if (sensor_read() != CHECK_OK) {
+            LOGE(TAG, "sensor read error");
+          }
+          set_operation_mode(SLEEP_MODE);
+        }
+      } break;
+      case SLEEP_MODE: {
+        LOGI(TAG, "SLEEP_MODE");
+        delay(send_interval * DELAY_1SEC);
+        set_operation_mode(SENSOR_READ_MODE);
+      } break;
     }
+    delay(DELAY_100MS);
   }
 }
 
@@ -274,21 +219,17 @@ void app_main(void) {
     return;
   }
 
-#if defined(CONFIG_SPIFFS_PACKAGE)
-  const char* file_path = "/spiffs/";
-#elif defined(CONFIG_LITTLEFS_PACKAGE)
-  const char* file_path = "/storage";
+  const char* file_path = ROOT_PATH;
   if ((rc = mkdir_datalogger()) != SYSINIT_OK) {
     LOGE(TAG, "Failed to make directory, error = [%d]", rc);
     return;
   }
-#endif
 
   file_list(file_path);
-  //   Start interactive shell command line
+
   sc_ctx = sc_init();
   if (sc_ctx)
     sc_start(sc_ctx);
 
-  battery_loop_task();
+  loop_task();
 }
