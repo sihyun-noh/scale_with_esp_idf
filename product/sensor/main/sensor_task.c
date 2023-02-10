@@ -24,8 +24,8 @@
 #if (CONFIG_SENSOR_ATLAS_EC)
 #include "atlas_ec_params.h"
 #endif
-#if ((CONFIG_SENSOR_RK520_02) || (CONFIG_SENSOR_SWSR7500) || (CONFIG_SENSOR_RK500_02) || \
-     (CONFIG_SENSOR_RK110_02) || (CONFIG_SENSOR_RK100_02) || (CONFIG_SENSOR_RK500_13))
+#if ((CONFIG_SENSOR_RK520_02) || (CONFIG_SENSOR_SWSR7500) || (CONFIG_SENSOR_RK500_02) || (CONFIG_SENSOR_RK110_02) || \
+     (CONFIG_SENSOR_RK100_02) || (CONFIG_SENSOR_RK500_13) || (CONFIG_SENSOR_RS_ECTH))
 #include "mb_master_rtu.h"
 #endif
 
@@ -34,15 +34,16 @@
 #define SENSOR_TEST 0
 
 typedef enum {
-  RK_TH_SLAVE_ID = 0x01,     // Rika Temperature/Humidity sensor
-  RK_WD_SLAVE_ID = 0x02,     // Rika Wind direction sensor
-  RK_WS_SLAVE_ID = 0x03,     // Rika Wind speed sensor
-  RK_WPH_SLAVE_ID = 0x04,    // Rika Water PH sensor
-  RK_SEC_SLAVE_ID = 0x05,    // Rika Soil EC sensor
-  RK_SPH_SLAVE_ID = 0x06,    // Rika Soil PH sensor
-  RK_WEC_SLAVE_ID = 0x07,    // Rika Water EC sensor
-  KD_SOLAR_SLAVE_ID = 0x1F,  // Korea Digital Solar sensor
-  KD_CO2_SLAVE_ID = 0x1F,    // Korea Digitial Co2 sensor
+  RK_TH_SLAVE_ID = 0x01,      // Rika Temperature/Humidity sensor
+  RK_WD_SLAVE_ID = 0x02,      // Rika Wind direction sensor
+  RK_WS_SLAVE_ID = 0x03,      // Rika Wind speed sensor
+  RK_WPH_SLAVE_ID = 0x04,     // Rika Water PH sensor
+  RK_SEC_SLAVE_ID = 0x05,     // Rika Soil EC sensor
+  RK_SPH_SLAVE_ID = 0x06,     // Rika Soil PH sensor
+  RK_WEC_SLAVE_ID = 0x07,     // Rika Water EC sensor
+  KD_SOLAR_SLAVE_ID = 0x1F,   // Korea Digital Solar sensor
+  KD_CO2_SLAVE_ID = 0x1F,     // Korea Digitial Co2 sensor
+  RENKE_SEC_SLAVE_ID = 0x01,  // EC sensor ranke sensor
 } MB_SLAVE_ADDR;
 
 static const char* TAG = "sensor_task";
@@ -55,8 +56,8 @@ scd4x_dev_t dev;
 atlas_ph_dev_t dev;
 #elif (CONFIG_SENSOR_ATLAS_EC)
 atlas_ec_dev_t dev;
-#elif ((CONFIG_SENSOR_RK520_02) || (CONFIG_SENSOR_SWSR7500) || (CONFIG_SENSOR_RK500_02) || \
-       (CONFIG_SENSOR_RK110_02) || (CONFIG_SENSOR_RK100_02) || (CONFIG_SENSOR_RK500_13))
+#elif ((CONFIG_SENSOR_RK520_02) || (CONFIG_SENSOR_SWSR7500) || (CONFIG_SENSOR_RK500_02) || (CONFIG_SENSOR_RK110_02) || \
+       (CONFIG_SENSOR_RK100_02) || (CONFIG_SENSOR_RK500_13) || (CONFIG_SENSOR_RS_ECTH))
 int num_characteristic = 0;
 mb_characteristic_info_t mb_characteristic[3] = { 0 };
 #endif
@@ -107,8 +108,8 @@ int sensor_init(void) {
     LOGI(TAG, "Could not initialize Atlas EC sensor = %d", res);
     return res;
   }
-#elif ((CONFIG_SENSOR_RK520_02) || (CONFIG_SENSOR_SWSR7500) || (CONFIG_SENSOR_RK500_02) || \
-       (CONFIG_SENSOR_RK110_02) || (CONFIG_SENSOR_RK100_02) || (CONFIG_SENSOR_RK500_13))
+#elif ((CONFIG_SENSOR_RK520_02) || (CONFIG_SENSOR_SWSR7500) || (CONFIG_SENSOR_RK500_02) || (CONFIG_SENSOR_RK110_02) || \
+       (CONFIG_SENSOR_RK100_02) || (CONFIG_SENSOR_RK500_13) || (CONFIG_SENSOR_RS_ECTH))
   // Refer to the modbus function code and register in EC Water RK500-13.pdf
   // << Water EC Sensor >>
   // Slave ID = 0x07, Function Code = 0x03, Start Address = 0x0000, Read Register Len = 0x000A
@@ -139,6 +140,12 @@ int sensor_init(void) {
 
   mb_characteristic_info_t mb_soil_ec[1] = { { 0, "Data", "Binary", DATA_BINARY, 6, RK_SEC_SLAVE_ID, MB_HOLDING_REG,
                                                0x0000, 0x0003 } };
+  memcpy(&mb_characteristic, mb_soil_ec, sizeof(mb_soil_ec));
+  num_characteristic = 1;
+#elif (CONFIG_SENSOR_RS_ECTH)
+  mb_characteristic_info_t mb_soil_ec[1] = {
+    { 0, "Data", "Binary", DATA_BINARY, 6, RENKE_SEC_SLAVE_ID, MB_HOLDING_REG, 0x0000, 0x0003 },
+  };
   memcpy(&mb_characteristic, mb_soil_ec, sizeof(mb_soil_ec));
   num_characteristic = 1;
 #elif (CONFIG_SENSOR_SWSR7500)
@@ -236,7 +243,7 @@ int read_temperature_humidity(void) {
   snprintf(s_humidity, sizeof(s_humidity), "%.2f", sht3x_humidity_i2c);
 
   if (is_battery_model()) {
-    if (!alive_check_task() || sensor_comparison(memory_sensor_buf, sht3x_temperature_i2c, 0.5)) {
+    if (!alive_check_task() || sensor_comparison(memory_sensor_buf, sht3x_temperature_i2c, 0.1)) {
       LOGI(TAG, "temperature : %.2f, m_temperature : %.2f", sht3x_temperature_i2c, memory_sensor_buf);
       memory_sensor_buf = sht3x_temperature_i2c;
     } else {
@@ -292,7 +299,7 @@ int read_co2_temperature_humidity(void) {
 
     if (is_battery_model()) {
       f_co2 = atof(s_co2);
-      if (!alive_check_task() || sensor_comparison(memory_sensor_buf, f_co2, 40)) {
+      if (!alive_check_task() || sensor_comparison(memory_sensor_buf, f_co2, 20)) {
         LOGI(TAG, "co2 : %.2f, m_co2 : %.2f", f_co2, memory_sensor_buf);
         memory_sensor_buf = f_co2;
       } else {
@@ -308,7 +315,7 @@ int read_co2_temperature_humidity(void) {
 }
 #endif
 
-#if (CONFIG_SENSOR_RK520_02)
+#if (CONFIG_SENSOR_RK520_02 || CONFIG_SENSOR_RS_ECTH)
 float convert_bulk_to_saturation_ec(float temp, float mos, float ec) {
   float raw, eb, ep, op, saturation_ec;
 
@@ -353,9 +360,15 @@ int read_soil_ec(void) {
       for (int k = 0; k < data_len; k++) {
         LOGI(TAG, "value[%d] = [0x%x]", k, value[k]);
       }
+#if (CONFIG_SENSOR_RK520_02)
       memcpy(&u_temp, value, 2);
       memcpy(&u_mos, value + 2, 2);
       memcpy(&u_ec, value + 4, 2);
+#elif (CONFIG_SENSOR_RS_ECTH)
+      memcpy(&u_mos, value, 2);
+      memcpy(&u_temp, value + 2, 2);
+      memcpy(&u_ec, value + 4, 2);
+#endif
       f_temp = (float)(u_temp / 10.00);
       f_mos = (float)(u_mos / 10.0);
       f_ec = (float)(u_ec / 1000.00);
@@ -709,7 +722,7 @@ int sensor_read(void) {
   rc = read_temperature_humidity();
 #elif (CONFIG_SENSOR_SCD4X)
   rc = read_co2_temperature_humidity();
-#elif (CONFIG_SENSOR_RK520_02)
+#elif (CONFIG_SENSOR_RK520_02 || CONFIG_SENSOR_RS_ECTH)
   rc = read_soil_ec();
 #elif (CONFIG_SENSOR_RK500_02)
   rc = read_water_ph();

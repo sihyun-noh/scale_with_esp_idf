@@ -64,7 +64,7 @@ char s_humidity[20] = { 0 };
 char s_co2[20] = { 0 };
 char s_temperature[20] = { 0 };
 char s_humidity[20] = { 0 };
-#elif (CONFIG_SENSOR_RK520_02)
+#elif ((CONFIG_SENSOR_RK520_02) || (CONFIG_SENSOR_RS_ECTH))
 char s_bulk_ec[20] = { 0 };
 char s_saturation_ec[20] = { 0 };
 char s_moisture[20] = { 0 };
@@ -281,7 +281,7 @@ static char *gen_sensor_resp(char *resp_type, char *value, char *bat) {
   return json_data;
 }
 
-#if (CONFIG_SENSOR_RK520_02)
+#if ((CONFIG_SENSOR_RK520_02) || (CONFIG_SENSOR_RS_ECTH))
 static char *gen_sensor_bulkec_resp(char *resp_type, char *ec, char *temp, char *mos) {
   /*
   {
@@ -470,7 +470,7 @@ static void update_sensor_data_cmd_handler(cJSON *root) {
   sysevent_set(I2C_CO2_EVENT, s_co2);
   sysevent_set(I2C_HUMIDITY_EVENT, s_humidity);
   sysevent_set(I2C_TEMPERATURE_EVENT, s_temperature);
-#elif (CONFIG_SENSOR_RK520_02)
+#elif ((CONFIG_SENSOR_RK520_02) || (CONFIG_SENSOR_RS_ECTH))
   sysevent_set(MB_SOIL_EC_EVENT, s_saturation_ec);
   sysevent_set(MB_SOIL_BULK_EC_EVENT, s_bulk_ec);
   sysevent_set(MB_MOISTURE_EVENT, s_moisture);
@@ -1079,7 +1079,7 @@ void mqtt_publish_sensor_data(void) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
-#elif (CONFIG_SENSOR_RK520_02)
+#elif ((CONFIG_SENSOR_RK520_02)|| (CONFIG_SENSOR_RS_ECTH))
   char mqtt_saturation_ec[80] = { 0 };
   char mqtt_temperature[80] = { 0 };
   char mqtt_humidity[80] = { 0 };

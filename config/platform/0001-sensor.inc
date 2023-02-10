@@ -83,4 +83,9 @@ config BS_PLATFORM_SENSORS
       help
         Rika Water EC sensor
 
+    config SENSOR_RS_ECTH
+      bool "RS_ECTH"
+      help
+        Renke Soil EC sensor
+
   endchoice

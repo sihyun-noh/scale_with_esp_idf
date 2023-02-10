@@ -57,7 +57,7 @@ static void generate_default_serial(char *serial_no, size_t buff_len) {
   snprintf(prod_code, sizeof(prod_code), "%s", "TH");
 #elif (CONFIG_SENSOR_SCD4X || CONFIG_DATALOGGER_SCD4X)
   snprintf(prod_code, sizeof(prod_code), "%s", "CO");
-#elif (CONFIG_SENSOR_RK520_02 || CONFIG_DATALOGGER_RK520_02 || CONFIG_DATALOGGER_RS_ECTH)
+#elif (CONFIG_SENSOR_RK520_02 || CONFIG_DATALOGGER_RK520_02 || CONFIG_DATALOGGER_RS_ECTH || CONFIG_SENSOR_RS_ECTH)
   snprintf(prod_code, sizeof(prod_code), "%s", "SE");
 #elif (CONFIG_SENSOR_SWSR7500 || CONFIG_DATALOGGER_SWSR7500)
   snprintf(prod_code, sizeof(prod_code), "%s", "SO");
@@ -191,7 +191,7 @@ void generate_syscfg(void) {
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSTH");
 #elif (CONFIG_SENSOR_SCD4X)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSCO");
-#elif (CONFIG_SENSOR_RK520_02)
+#elif (CONFIG_SENSOR_RK520_02 || CONFIG_SENSOR_RS_ECTH)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSSE");
 #elif (CONFIG_SENSOR_SWSR7500)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSSO");

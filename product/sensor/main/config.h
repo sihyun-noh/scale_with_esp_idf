@@ -32,9 +32,16 @@
 #define CTS_UNCHANGED (-1)
 #define UART_PORT_NUM 2
 #define BAUD_RATE 38400
+#elif (CONFIG_SENSOR_RS_ECTH)
+#define MB_RX_PIN 16
+#define MB_TX_PIN 17
+#define RTS_UNCHANGED (-1)
+#define CTS_UNCHANGED (-1)
+#define UART_PORT_NUM 2
+#define BAUD_RATE 4800
 #endif
 
-#define BATTERY_ADC_CHANNEL  6  // GPIO_34
+#define BATTERY_ADC_CHANNEL 6   // GPIO_34
 #define BATTERY_READ_ON_GPIO 5  // GPIO_5
 
 #define LED_RED 33
