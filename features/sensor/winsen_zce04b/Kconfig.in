@@ -17,7 +17,7 @@
       depends on WINSEN_ZCE04B_FEATURE
       int "ZCE04B UART port number"
       range 0 2
-      default 2
+      default 1
       help
         UART communication port number for the Winsen ZCE04B
 
@@ -32,14 +32,14 @@
     config ZCE04B_UART_RXD
       depends on WINSEN_ZCE04B_FEATURE
       int "ZCE04B UART RXD pin number"
-      default 9
+      default 17
       help
         GPIO number for UART RX pin
 
     config ZCE04B_UART_TXD
       depends on WINSEN_ZCE04B_FEATURE
       int "ZCE04B UART TXD pin number"
-      default 8
+      default 18
       help
         GPIO number for UART TX pin
 

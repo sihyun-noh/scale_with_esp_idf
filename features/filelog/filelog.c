@@ -217,15 +217,15 @@ int file_log_write_datalogger(char *path, char *format, ...) {
   vsnprintf(buff, sizeof(buff), format, list);
   va_end(list);
 
-  LOGE(TAG, " file count : %d", file_ctx.file_num);
-  LOGI(TAG, " path : %s", path);
-  LOGI(TAG, " buff : %s", buff);
-  //  ret = file_status_check(BASE_PATH);
   ret = file_status_check(path);
   if (ret != 0) {
     LOGE(TAG, "file status check fail.");
     return -1;
   }
+
+  LOGE(TAG, " file count : %d", file_ctx.file_num);
+  LOGI(TAG, " path : %s", path);
+  LOGI(TAG, " buff : %s", buff);
 
   if (file_ctx.file_num == 0) {
     newfilepath = file_path_name(path);

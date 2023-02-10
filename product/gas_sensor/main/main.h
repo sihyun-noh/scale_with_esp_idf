@@ -21,15 +21,10 @@ typedef enum {
   ERR_BATTERY_READ,
 } err_system_t;
 
-typedef enum {
-  SEN1 = 0,
-  SEN2,
-  SEN3,
-} sen_set_t;
-
-#define SEN_DATA_PATH_1 "/storage/Sen1"
-#define SEN_DATA_PATH_2 "/storage/Sen2"
-#define SEN_DATA_PATH_3 "/storage/Sen3"
+#define ROOT_PATH "/storage"
+#define PART_NAME "storage"
+#define DIR_PATH "/storage/data"
+#define FILE_NAME "/sensor_data"
 
 typedef enum { SENSOR_INIT_MODE = 0, SENSOR_READ_MODE, SLEEP_MODE } operation_mode_t;
 

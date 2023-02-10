@@ -17,7 +17,6 @@
 #include "config.h"
 #include "main.h"
 #include "file_copy.h"
-#include "battery_task.h"
 #include "time_api.h"
 #include "gpio_api.h"
 
@@ -27,9 +26,6 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
-
-#define ROOT_PATH "/storage"
-#define PART_NAME "storage"
 
 #define DELAY_100MS 100
 #define DELAY_1SEC 1000
@@ -105,16 +101,8 @@ static void check_model(void) {
 }
 
 static int mkdir_datalogger() {
-  if (mkdir(SEN_DATA_PATH_1, 0777) == -1 && errno != EEXIST) {
-    LOGE(TAG, "/storage/Sen1 directory create error: %s", strerror(errno));
-    return -1;
-  }
-  if (mkdir(SEN_DATA_PATH_2, 0777) == -1 && errno != EEXIST) {
-    LOGE(TAG, "/storage/Sen2 directory create error: %s", strerror(errno));
-    return -1;
-  }
-  if (mkdir(SEN_DATA_PATH_3, 0777) == -1 && errno != EEXIST) {
-    LOGE(TAG, "/storage/Sen3 directory create error: %s", strerror(errno));
+  if (mkdir(DIR_PATH, 0777) == -1 && errno != EEXIST) {
+    LOGE(TAG, "/storage/data directory create error: %s", strerror(errno));
     return -1;
   }
   return 0;
@@ -158,8 +146,6 @@ int system_init(void) {
   if (ret)
     return ERR_FILESYSTEM_INIT;
 
-  battery_init();
-
   create_usb_host_msc_task();
 
   create_led_task();
@@ -183,12 +169,6 @@ void loop_task(void) {
       } break;
       case SENSOR_READ_MODE: {
         LOGI(TAG, "SENSOR_READ_MODE");
-        if (read_battery_percentage() != CHECK_OK) {
-          LOGE(TAG, "not read to battery!");
-          sysevent_set(ADC_BATTERY_EVENT, (char*)"0");
-        }
-        delay(DELAY_100MS);
-
         if (is_usb_copying(USB_COPYING)) {
           LOGE(TAG, "usb copying...");
         } else {

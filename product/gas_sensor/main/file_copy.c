@@ -343,7 +343,7 @@ void readTest(char *fname) {
 
 int get_file_list_cmd(int argc, char **argv) {
   if (argc != 2) {
-    printf("Usage: root path  <ex:/spiffs/>\n");
+    printf("Usage: root path  <ex:/storage/>\n");
     return -1;
   }
   file_list(argv[1]);
@@ -352,7 +352,7 @@ int get_file_list_cmd(int argc, char **argv) {
 
 int get_file_read_cmd(int argc, char **argv) {
   if (argc != 2) {
-    printf("Usage: file absolute path <ex:/spiffs/test.txt>\n");
+    printf("Usage: file absolute path <ex:/storage/test.txt>\n");
     return -1;
   }
   readTest(argv[1]);

@@ -30,19 +30,16 @@ int winsen_zce04b_init(void) {
   gpio_write(CONFIG_ZCE04B_UART_MUX_GPIO, 1);
   vTaskDelay(200 / portTICK_PERIOD_MS);
   uart_write_data(CONFIG_ZCE04B_UART_NUM, set_config, sizeof(set_config));
-  vTaskDelay(2000 / portTICK_PERIOD_MS);
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
   uart_read_data(CONFIG_ZCE04B_UART_NUM, data, (BUF_SIZE - 1));
   free(data);
 
   return res;
 }
 
-int winsen_zce04b_read_manual(void) {
-  int co = 0;
-  int h2s = 0;
-  int ch4 = 0;;
-  float o2 = 0;
+int winsen_zce04b_read_manual(zce04b_data_t *data) {
   int len = 0;
+  int res = WINSEN_ZCE04B_OK;
   uint8_t check_sum = 0;
   uint8_t petition[9] = { 0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79 };
   uint8_t measure[11] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
@@ -50,34 +47,30 @@ int winsen_zce04b_read_manual(void) {
   gpio_write(CONFIG_ZCE04B_UART_MUX_GPIO, 1);
   vTaskDelay(200 / portTICK_PERIOD_MS);
   uart_write_data(CONFIG_ZCE04B_UART_NUM, petition, sizeof(petition));
-  vTaskDelay(1500 / portTICK_PERIOD_MS);
+  vTaskDelay(500 / portTICK_PERIOD_MS);
 
   len = uart_read_data(CONFIG_ZCE04B_UART_NUM, measure, 11);
 
   LOGI(TAG, "(%d) 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x, 0x%x, 0x%x", len, measure[0], measure[1], measure[2], measure[3],
        measure[4], measure[5], measure[6], measure[7], measure[8], measure[9], measure[10]);
 
-  if (measure[0] == 0xff && measure[1] == 0x86) {
+  if ((measure[0] == 0xff) && (measure[1] == 0x86) && (len != 0)) {
     check_sum = winsen_zce04b_func_check_sum(measure, 11);
     if (check_sum != measure[10]) {
-      LOGI(TAG, "Checksum Fail!!! (recv: 0x%x, calc: 0x%x)", measure[10], check_sum);
-      co = -1;
+      LOGE(TAG, "Checksum Fail!!! (recv: 0x%x, calc: 0x%x)", measure[10], check_sum);
+      res = WINSEN_ZCE04B_ERR_CHECKSUM;
     } else {
-      co = measure[2] * 256 + measure[3];
-      h2s = measure[4] * 256 + measure[5];
-      o2 = (measure[6] * 256 + measure[7]) * 0.1;
-      ch4 = measure[8] * 256 + measure[9];
+      data->co = measure[2] * 256 + measure[3];
+      data->h2s = measure[4] * 256 + measure[5];
+      data->o2 = (measure[6] * 256 + measure[7]) * 0.1;
+      data->ch4 = measure[8] * 256 + measure[9];
     }
   } else {
-    co = -1;
+    LOGE(TAG, "Invalid Data!!! (len: %d, start_byte: 0x%x, command: 0x%x)", len, measure[0], measure[1]);
+    res = WINSEN_ZCE04B_ERR_STATUS;
   }
 
-  LOGI(TAG, "CO : %d (ppm)", co);
-  LOGI(TAG, "H2S: %d (ppm)", h2s);
-  LOGI(TAG, "O2 : %.1f (%%vol)", o2);
-  LOGI(TAG, "CH4: %d (%%LEL)", ch4);
-
-  return co;
+  return res;
 }
 
 uint8_t winsen_zce04b_func_check_sum(uint8_t *i, uint8_t ln) {
