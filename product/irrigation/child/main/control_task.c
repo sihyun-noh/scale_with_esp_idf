@@ -141,19 +141,9 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
 
       case SET_SLEEP: {
         LOGI(TAG, "Start sleep");
-
-        vTaskDelay((1000 * myId) / portTICK_PERIOD_MS);
-
-        LOGI(TAG, "Send Sleep Command to Main device");
-
-        if (!send_esp_data(RESPONSE, SET_SLEEP)) {
-          LOGI(TAG, "Failed to send SLEEP RESPONSE to Main Device");
-          send_esp_data(RESPONSE, SET_SLEEP);
-        }
-
         vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-        sleep_timer_wakeup(recv_message.payload.remain_time_sleep - myId);
+        sleep_timer_wakeup(recv_message.payload.remain_time_sleep);
       } break;
 
       default: break;

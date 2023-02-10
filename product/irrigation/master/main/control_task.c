@@ -332,6 +332,7 @@ void check_response(irrigation_message_t* msg) {
       }
     } break;
 
+/*
     case SET_SLEEP: {
       device_status_t* dev_stat = (device_status_t*)&msg->payload.dev_stat;
       sendMessageFlag = true;
@@ -353,7 +354,7 @@ void check_response(irrigation_message_t* msg) {
         sleep_timer_wakeup(remainSleepTime);
       }
     } break;
-
+*/
     case FORCE_STOP: {
       // Send force stop response to the hid device when master received reposne of force stop from child node.
       send_esp_data(RESPONSE, FORCE_STOP, HID_DEV);
@@ -448,7 +449,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
   irrigation_message_t recv_message = { 0 };
   memcpy(&recv_message, incomingData, sizeof(irrigation_message_t));
 
-  LOGI(TAG, "Receive Data from Other devices(HID and Any Child)");
+  LOGI(TAG, "Receive Data from Other devices(HID and Any Child) : %d", msgFromId);
   LOG_BUFFER_HEXDUMP(TAG, incomingData, len, LOG_INFO);
 
   if (len > 0) {
@@ -577,12 +578,11 @@ void check_schedule(void) {
   } else {
     remainSleepTime = check_sleep_time();
     if (remainSleepTime > 0) {
+      send_esp_data(SET_SLEEP, SET_SLEEP, ALL_DEV);
+
       LOGI(TAG, "SEND DEEP SLEEP MSG, SleepTime : %llus ", remainSleepTime);
-      for (int i = 1; i <= 6; i++) {
-        send_esp_data(SET_SLEEP, SET_SLEEP, (device_type_t)i);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-      }
-      set_control_status(WAIT_STATE);
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      sleep_timer_wakeup(remainSleepTime);
     } else {
       LOGD(TAG, "WAIT SET CONFIG ");
     }
