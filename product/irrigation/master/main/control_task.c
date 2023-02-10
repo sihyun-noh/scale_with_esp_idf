@@ -348,6 +348,8 @@ void check_response(irrigation_message_t* msg) {
         remainSleepTime -= TOTAL_DEVICES;
         send_esp_data(SET_SLEEP, SET_SLEEP, HID_DEV);
         respChildCnt = 0;
+        
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
         sleep_timer_wakeup(remainSleepTime);
       }
     } break;
