@@ -25,7 +25,7 @@ static const char *TAG = "UI_EVENT";
 
 void ui_event_StartButton(lv_event_t *e);
 void ui_event_StopButton(lv_event_t *e);
-void ui_event_ResetButton(lv_event_t *e);
+void ui_event_LogButton(lv_event_t *e);
 void ui_event_SettingButton(lv_event_t *e);
 void ui_event_FlowRateText(lv_event_t *e);
 void ui_event_ZoneAreaText(lv_event_t *e);
@@ -98,7 +98,7 @@ void OnSettingEvent(lv_event_t *e) {
   reset_settings();
 }
 
-void OnResetEvent(lv_event_t *e) {
+void OnLogEvent(lv_event_t *e) {
   fm_file_copy("/sdcard/test.log", "/storage/1970-01-01-0340_log.txt");
 }
 
@@ -374,11 +374,11 @@ void ui_event_StopButton(lv_event_t *e) {
     OnStopEvent(e);
   }
 }
-void ui_event_ResetButton(lv_event_t *e) {
+void ui_event_LogButton(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   if (event_code == LV_EVENT_CLICKED) {
-    OnResetEvent(e);
+    OnLogEvent(e);
   }
 }
 void ui_event_SettingButton(lv_event_t *e) {
