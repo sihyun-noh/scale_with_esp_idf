@@ -103,6 +103,8 @@ int file_operations(void) {
       int res = file_copy(to_file_path, from_file_path);
       if (res != 0) {
         printf("  Error copying file (%d)\n", res);
+        free(copy_data);
+        free(file_data);
         return -1;
       }
 
