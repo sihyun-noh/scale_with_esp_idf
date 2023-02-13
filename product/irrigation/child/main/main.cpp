@@ -174,7 +174,7 @@ void loop_task(void) {
       } break;
       case MONITOR_MODE: {
         if (is_device_onboard()) {
-          LOGI(TAG, "MONITOR_MODE");
+          //LOGI(TAG, "MONITOR_MODE");
           delay_ms = DELAY_1SEC;
         } else {
           set_operation_mode(DEEP_SLEEP_MODE);

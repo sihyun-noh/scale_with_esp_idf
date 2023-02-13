@@ -38,6 +38,7 @@ typedef enum {
   CHILD_VALVE_ON,
   CHILD_VALVE_OFF,
   COMPLETE,
+  SLEEP,
   ERROR
 } condtrol_status_t;
 
@@ -274,6 +275,7 @@ void check_response(irrigation_message_t* msg) {
     } break;
 
     case DEVICE_ERROR: {
+      init_variable();
       set_control_status(ERROR);
     } break;
 
@@ -332,7 +334,6 @@ void check_response(irrigation_message_t* msg) {
       }
     } break;
 
-/*
     case SET_SLEEP: {
       device_status_t* dev_stat = (device_status_t*)&msg->payload.dev_stat;
       sendMessageFlag = true;
@@ -346,15 +347,14 @@ void check_response(irrigation_message_t* msg) {
       if (respChildCnt >= totalNumberChild) {
         LOGI(TAG, "Send Sleep Command to the HID device and entering sleep mode on main");
         memset(&respBroadCast, 0x00, sizeof(respBroadCast));
-        remainSleepTime -= TOTAL_DEVICES;
+        remainSleepTime -= 20;
         send_esp_data(SET_SLEEP, SET_SLEEP, HID_DEV);
         respChildCnt = 0;
         
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        sleep_timer_wakeup(remainSleepTime);
+        set_control_status(SLEEP);
       }
     } break;
-*/
+
     case FORCE_STOP: {
       // Send force stop response to the hid device when master received reposne of force stop from child node.
       send_esp_data(RESPONSE, FORCE_STOP, HID_DEV);
@@ -450,7 +450,7 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
   memcpy(&recv_message, incomingData, sizeof(irrigation_message_t));
 
   LOGI(TAG, "Receive Data from Other devices(HID and Any Child) : %d", msgFromId);
-  LOG_BUFFER_HEXDUMP(TAG, incomingData, len, LOG_INFO);
+  //LOG_BUFFER_HEXDUMP(TAG, incomingData, len, LOG_INFO);
 
   if (len > 0) {
     // master 에서는 아래 세가지 경우만 필요.
@@ -577,12 +577,13 @@ void check_schedule(void) {
     }
   } else {
     remainSleepTime = check_sleep_time();
-    if (remainSleepTime > 0) {
-      send_esp_data(SET_SLEEP, SET_SLEEP, ALL_DEV);
-
+    // response Time 고려 30초 이내일 경우 sleep 안 들어가고 그냥 wating 모드로 ..
+    if (remainSleepTime > 30) {
       LOGI(TAG, "SEND DEEP SLEEP MSG, SleepTime : %llus ", remainSleepTime);
-      vTaskDelay(1000 / portTICK_PERIOD_MS);
-      sleep_timer_wakeup(remainSleepTime);
+      for (int i = 1; i <= 6; i++) {
+        send_esp_data(SET_SLEEP, SET_SLEEP, (device_type_t)i);
+      }
+      set_control_status(WAIT_STATE);
     } else {
       LOGD(TAG, "WAIT SET CONFIG ");
     }
@@ -608,10 +609,7 @@ void check_retry_cmd(void) {
   }
 
   if (childErrorCnt > 0) {
-    send_esp_data(DEVICE_ERROR, DEVICE_ERROR, HID_DEV);
-    memset(&respBroadCast, 0x00, sizeof(respBroadCast));
-    memset(&retryCntMsg, 0x00, sizeof(retryCntMsg));
-    respChildCnt = 0;
+    send_esp_data(DEVICE_ERROR, DEVICE_ERROR, HID_DEV);    
     set_control_status(WAIT_STATE);
   }
 }
@@ -730,9 +728,14 @@ static void control_task(void* pvParameters) {
         // 관수 스케줄대로 모든 관수가 종료된 상태.
         // 추가 관수 여부 확인..--> wait config 모드로
         send_esp_data(ALL_COMPLETE, ALL_COMPLETE, HID_DEV);
-
-        set_control_status(WAIT_STATE);
         LOGI(TAG, "ALL CHILD FLOW COMPLETE!!");
+        set_control_status(WAIT_STATE);
+      } break;
+
+      case SLEEP: {
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        LOGI(TAG, "start master sleep");
+        sleep_timer_wakeup(remainSleepTime);
       } break;
 
       case ERROR: {

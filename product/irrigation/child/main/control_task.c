@@ -18,7 +18,7 @@
 static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;
 
-typedef enum { CHECK_ADDR = 0, WAIT_STATE, ERROR } condtrol_status_t;
+typedef enum { CHECK_ADDR = 0, WAIT_STATE, SLEEP, ERROR } condtrol_status_t;
 
 condtrol_status_t controlStatus = CHECK_ADDR;
 
@@ -26,9 +26,11 @@ condtrol_status_t controlStatus = CHECK_ADDR;
 static uint8_t masterAddress[MAC_ADDR_LEN];
 
 int myId;
+uint64_t sleepTime;  // sleep 시간
 
 void init_variable(void) {
   myId = -1;
+  sleepTime = 0;
   memset(&masterAddress, 0x00, sizeof(masterAddress));
 }
 
@@ -85,7 +87,6 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
     memcpy(&recv_message, incomingData, sizeof(recv_message));
   }
 
-  LOGI(TAG, "Receive Data from Master");
   LOG_BUFFER_HEXDUMP(TAG, incomingData, len, LOG_INFO);
 
   if (len > 0) {
@@ -140,10 +141,19 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
       } break;
 
       case SET_SLEEP: {
-        LOGI(TAG, "Start sleep");
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        LOGI(TAG, "receive sleep");
+        vTaskDelay((1000 * myId + 10000) / portTICK_PERIOD_MS);
 
-        sleep_timer_wakeup(recv_message.payload.remain_time_sleep);
+        sleepTime = recv_message.payload.remain_time_sleep - 20;
+
+        LOGI(TAG, "Send Sleep Response to Main device, SleepTime : %llu s", sleepTime);
+
+        if (!send_esp_data(RESPONSE, recv_message.sender_type)) {
+          LOGI(TAG, "Failed to send SLEEP RESPONSE to Main Device");
+          send_esp_data(RESPONSE, recv_message.sender_type);
+        }
+
+        set_control_status(SLEEP);
       } break;
 
       default: break;
@@ -158,7 +168,7 @@ void on_data_sent_cb(const uint8_t* macAddr, esp_now_send_status_t status) {
 static void control_task(void* pvParameters) {
   for (;;) {
     switch (controlStatus) {
-      case CHECK_ADDR:
+      case CHECK_ADDR: {
         vTaskDelay(3000 / portTICK_PERIOD_MS);
         // 각 master Mac Addr 얻어와서 변수에 저장하는 단계..
         if (espnow_add_peers(CHILD_DEVICE)) {
@@ -183,12 +193,18 @@ static void control_task(void* pvParameters) {
 
         LOGI(TAG, "ADDR CHECK DONE !!");
         vTaskDelay(2000 / portTICK_PERIOD_MS);
-        break;
+      } break;
 
-      case WAIT_STATE:
+      case WAIT_STATE: {
         // ESP Now 를 통해 message 받을 때 까지 대기 상태
         vTaskDelay(1000 / portTICK_PERIOD_MS);
-        break;
+      } break;
+
+      case SLEEP: {
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        LOGI(TAG, "start child sleep");
+        sleep_timer_wakeup(sleepTime);
+      } break;
 
       default: break;
     }
