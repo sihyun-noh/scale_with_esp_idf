@@ -22,6 +22,11 @@
 
 #define DEBUG_TEST 1  // for Test
 
+#define AM_TIME_FLOW_START 5  // AM 5시 
+#define AM_TIME_FLOW_END   9  // AM 9시 
+#define PM_TIME_FLOW_START 17  // PM 5시 
+#define PM_TIME_FLOW_END   21  // PM 9시 
+
 static const char* TAG = "control_task";
 static TaskHandle_t control_handle = NULL;
 
@@ -53,6 +58,8 @@ int retryCntMsg[TOTAL_DEVICES];
 
 bool setConfig;                      // config setting 여부
 bool flowStart;                      // 관수 시작 flag
+bool sendChildSleep;
+
 time_t flowStartTime;                // 관수 시작 설정 시간
 int zoneFlowCnt;                     // 관수 설정된 zone 갯수
 int flowOrder[NUMBER_CHILD];         // 관수 순서
@@ -76,6 +83,7 @@ void init_variable(void) {
 
   setConfig = false;
   flowStart = false;
+  sendChildSleep = false;
   memset(&flowStartTime, 0x00, sizeof(flowStartTime));
   zoneFlowCnt = 0;
   memset(&flowOrder, 0x00, sizeof(flowOrder));
@@ -171,18 +179,18 @@ uint64_t check_sleep_time(void) {
   // 오전 5시 ~ 9시 wake up...
   // 17시 ~ 21시 wake up...
   // 버퍼를 두기 위해 wake up 시간 대비 30분 전까지만 sleep
-  if (timeinfo.tm_hour < 5) {
-    if (timeinfo.tm_hour == 4 && timeinfo.tm_min >= 30) {
+  if (timeinfo.tm_hour < AM_TIME_FLOW_START) {
+    if ((timeinfo.tm_hour == (AM_TIME_FLOW_START - 1)) && timeinfo.tm_min >= 30) {
       return 0;
     }
-    return (uint64_t)(((4 - timeinfo.tm_hour) * 3600) + ((30 - timeinfo.tm_min) * 60));
-  } else if (timeinfo.tm_hour >= 9 && timeinfo.tm_hour < 17) {
-    if (timeinfo.tm_hour == 16 && timeinfo.tm_min >= 30) {
+    return (uint64_t)((((AM_TIME_FLOW_START - 1) - timeinfo.tm_hour) * 3600) + ((30 - timeinfo.tm_min) * 60));
+  } else if (timeinfo.tm_hour >= AM_TIME_FLOW_END && timeinfo.tm_hour < PM_TIME_FLOW_START) {
+    if ((timeinfo.tm_hour == (PM_TIME_FLOW_START - 1)) && timeinfo.tm_min >= 30) {
       return 0;
     }
-    return (uint64_t)(((16 - timeinfo.tm_hour) * 3600) + ((30 - timeinfo.tm_min) * 60));
-  } else if (timeinfo.tm_hour >= 21) {
-    return (uint64_t)(((28 - timeinfo.tm_hour) * 3600) + ((30 - timeinfo.tm_min) * 60));
+    return (uint64_t)(((PM_TIME_FLOW_START - 1 - timeinfo.tm_hour) * 3600) + ((30 - timeinfo.tm_min) * 60));
+  } else if (timeinfo.tm_hour >= PM_TIME_FLOW_END) {
+    return (uint64_t)((((23 + AM_TIME_FLOW_START) - timeinfo.tm_hour) * 3600) + ((30 - timeinfo.tm_min) * 60));
   } else {
     return 0;
   }
@@ -225,7 +233,7 @@ bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
         if (retryCntMsg[i + 1] > 3) {
           payload->dev_stat.child_status[i] = 1;
         }
-      }
+      }      
     } break;
     case SET_SLEEP: {
       payload->remain_time_sleep = remainSleepTime;
@@ -243,7 +251,8 @@ bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
   LOG_BUFFER_HEXDUMP(TAG, zoneAddr, sizeof(zoneAddr), LOG_INFO);
 
   LOGI(TAG, "============== Message ==================");
-  LOG_BUFFER_HEXDUMP(TAG, &send_message, sizeof(irrigation_message_t), LOG_INFO);
+  //LOG_BUFFER_HEXDUMP(TAG, &send_message, sizeof(irrigation_message_t), LOG_INFO);
+  LOGI(TAG, "sender : [%d]", sender);
 
   if (!espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(irrigation_message_t))) {
     LOGE(TAG, "Failed to esp send data!!!");
@@ -275,7 +284,7 @@ void check_response(irrigation_message_t* msg) {
     } break;
 
     case DEVICE_ERROR: {
-      init_variable();
+      respChildCnt = 0;
       set_control_status(ERROR);
     } break;
 
@@ -580,10 +589,19 @@ void check_schedule(void) {
     // response Time 고려 30초 이내일 경우 sleep 안 들어가고 그냥 wating 모드로 ..
     if (remainSleepTime > 30) {
       LOGI(TAG, "SEND DEEP SLEEP MSG, SleepTime : %llus ", remainSleepTime);
-      for (int i = 1; i <= 6; i++) {
-        send_esp_data(SET_SLEEP, SET_SLEEP, (device_type_t)i);
+      if (!sendChildSleep) {
+        memset(&respBroadCast, 0x00, sizeof(respBroadCast));
+        memset(&retryCntMsg, 0x00, sizeof(retryCntMsg));
+        sendChildSleep = true;
+        for (int i = 1; i <= 6; i++) {
+          send_esp_data(SET_SLEEP, SET_SLEEP, (device_type_t)i);
+        }
+        set_control_status(WAIT_STATE);
+      } else {
+        remainSleepTime -= 20;
+        send_esp_data(SET_SLEEP, SET_SLEEP, HID_DEV);
+        set_control_status(SLEEP);
       }
-      set_control_status(WAIT_STATE);
     } else {
       LOGD(TAG, "WAIT SET CONFIG ");
     }
@@ -608,7 +626,7 @@ void check_retry_cmd(void) {
     }
   }
 
-  if (childErrorCnt > 0) {
+  if (childErrorCnt > 0) {    
     send_esp_data(DEVICE_ERROR, DEVICE_ERROR, HID_DEV);    
     set_control_status(WAIT_STATE);
   }
@@ -740,6 +758,7 @@ static void control_task(void* pvParameters) {
 
       case ERROR: {
         LOGD(TAG, "No Response from sets !!, Fix SET Devices state & RESET System !!");
+        set_control_status(CHECK_SCEHDULE);
       } break;
 
       default: break;
