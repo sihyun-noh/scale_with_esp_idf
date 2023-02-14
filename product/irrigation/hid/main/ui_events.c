@@ -18,9 +18,14 @@
 #include "command.h"
 #include "comm_packet.h"
 #include "file_manager.h"
+#include "sdcard.h"
 
 static bool updated_main_flag = false;
 static bool updated_child_flag = false;
+
+static char **g_logfile_list;
+static uint16_t g_logfile_num;
+
 static const char *TAG = "UI_EVENT";
 
 void ui_event_StartButton(lv_event_t *e);
@@ -99,7 +104,31 @@ void OnSettingEvent(lv_event_t *e) {
 }
 
 void OnLogEvent(lv_event_t *e) {
-  fm_file_copy("/sdcard/test.log", "/storage/1970-01-01-0340_log.txt");
+  char dst_file[128] = { 0 };
+  char src_file[128] = { 0 };
+
+  if (sdcard_mount() != 0) {
+    warnning_msgbox("Please insert sdcard or check if sdcard is formatted");
+    return;
+  }
+
+  fm_file_table_create(&g_logfile_list, &g_logfile_num, ".txt");
+
+  LOGI(TAG, "g_logfile_num = %d", g_logfile_num);
+
+  for (size_t i = 0; i < g_logfile_num; i++) {
+    LOGI(TAG, "log file name = %s", g_logfile_list[i]);
+    snprintf(dst_file, sizeof(dst_file), "/sdcard/log_%d.txt", (int)(i + 1));
+    snprintf(src_file, sizeof(src_file), "/storage/%s", g_logfile_list[i]);
+    fm_file_copy(dst_file, src_file);
+  }
+
+  fm_file_table_free(&g_logfile_list, g_logfile_num);
+
+  if (sdcard_unmount() == 0) {
+    LOGI(TAG, "Succcess to unmount sdcard");
+  }
+  warnning_msgbox("Copying log files completed, Please remove the sdcard");
 }
 
 void OnFlowRateEvent(lv_event_t *e) {
@@ -454,6 +483,7 @@ void ui_event_DM_Add_Button(lv_event_t *e) {
     // Get the removed device list from the syscfg variables
     get_removed_device_list(removed_device_list, sizeof(removed_device_list));
     lv_dropdown_set_options(ui_DMR_screen_Dropdown, removed_device_list);
+    lv_textarea_set_text(ui_DMR_TextArea, "");
   }
 }
 
@@ -548,6 +578,7 @@ void ui_event_DMR_Exit_Button(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   if (event_code == LV_EVENT_CLICKED) {
+    // Move from DMR to the Device Management UI (DM_screen)
     _ui_screen_change(ui_DM_screen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 0, 0);
     lv_dropdown_get_selected_str(ui_DM_screen_Dropdown, buf, sizeof(buf));
     DeviceManagementEvent(buf, e);

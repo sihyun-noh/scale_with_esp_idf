@@ -376,6 +376,8 @@ int fm_file_table_create(char ***list_out, uint16_t *files_number, const char *f
   DIR *p_dir = NULL;
   struct dirent *p_dirent = NULL;
 
+  LOGI(TAG, "g_root_path = %s", g_root_path);
+
   p_dir = opendir(g_root_path);
 
   if (p_dir == NULL) {
@@ -390,6 +392,7 @@ int fm_file_table_create(char ***list_out, uint16_t *files_number, const char *f
     }
   }
 
+  LOGI(TAG, "file number = %d", f_num);
   rewinddir(p_dir);
 
   *list_out = calloc(f_num, sizeof(char *));
@@ -441,12 +444,16 @@ int fm_file_copy(const char *to, const char *from) {
 
   fd_from = fopen(from, "rb");
   // fd_from = open(from, O_RDONLY);
-  if (fd_from == NULL)
+  if (fd_from == NULL) {
+    printf("Failed to read from = %s\n", from);
     return -1;
+  }
 
   fd_to = fopen(to, "wb");
-  if (fd_to == NULL)
+  if (fd_to == NULL) {
+    printf("Failed to write for open from = %s\n", to);
     goto out_error;
+  }
 
   while ((nread = fread(buf, 1, sizeof(buf), fd_from)) > 0) {
     char *out_ptr = buf;

@@ -408,5 +408,5 @@ void get_removed_device_list(char *device_list, size_t buf_len) {
       }
     }
   }
-  device_list[pos] = '\0';
+  device_list[pos - 1] = '\0';
 }
