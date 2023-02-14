@@ -38,9 +38,9 @@ bool validation_of_start_irrigation_time(time_t start_time, stage_t *p_stage) {
   // Generate a time of morning/evening irrigation time zone
   time_t curr_time = get_current_time();
   time_t start_time_of_morning = generate_time(5, 00);
-  time_t end_time_of_morning = generate_time(9, 30);
+  time_t end_time_of_morning = generate_time(9, 00);
   time_t start_time_of_evening = generate_time(17, 00);
-  time_t end_time_of_evening = generate_time(20, 30);
+  time_t end_time_of_evening = generate_time(21, 00);
 
   *p_stage = NONE_STAGE;
   if (start_time <= curr_time) {

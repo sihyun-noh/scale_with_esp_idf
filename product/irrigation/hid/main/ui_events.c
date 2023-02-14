@@ -128,7 +128,7 @@ void OnLogEvent(lv_event_t *e) {
   if (sdcard_unmount() == 0) {
     LOGI(TAG, "Succcess to unmount sdcard");
   }
-  warnning_msgbox("Copying log files completed, Please remove the sdcard");
+  warnning_msgbox("Log file copy completed, Please remove the sdcard");
 }
 
 void OnFlowRateEvent(lv_event_t *e) {
