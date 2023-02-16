@@ -36,6 +36,8 @@
 
 static const char *TAG = "FILE_LOG";
 
+int g_file_log_num = FILE_COUNT;
+
 typedef struct filelog {
   uint8_t file_num;
   size_t latest_file_size;
@@ -198,7 +200,7 @@ int file_log_write(char *format, ...) {
     write_log(file_ctx.filepath, buff);
   }
 
-  if (file_ctx.file_num > FILE_COUNT) {
+  if (file_ctx.file_num > g_file_log_num) {
     if (file_delete(file_ctx.oldest_file, BASE_PATH) != 0) {
       LOGE(TAG, "file delete erorr!");
     }
@@ -206,6 +208,7 @@ int file_log_write(char *format, ...) {
 END:
   return 0;
 }
+
 /*The system file log is saved in the file storage device using the "FLOG" macro.*/
 int file_log_write_datalogger(char *path, char *format, ...) {
   char *newfilepath;
@@ -243,7 +246,7 @@ int file_log_write_datalogger(char *path, char *format, ...) {
     write_log(file_ctx.filepath, buff);
   }
 
-  if (file_ctx.file_num > FILE_COUNT) {
+  if (file_ctx.file_num > g_file_log_num) {
     LOGE(TAG, "file delete!");
     if (file_delete(file_ctx.oldest_file, path) != 0) {
       LOGE(TAG, "file delete erorr!");
@@ -251,4 +254,8 @@ int file_log_write_datalogger(char *path, char *format, ...) {
   }
 END:
   return 0;
+}
+
+void set_file_log_number(int file_log_num) {
+  g_file_log_num = file_log_num;
 }

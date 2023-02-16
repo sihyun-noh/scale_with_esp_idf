@@ -18,6 +18,7 @@
 #include "main.h"
 #include "espnow.h"
 #include "control_task.h"
+#include "filelog.h"
 #include "file_manager.h"
 #include "time_api.h"
 #include "command.h"
@@ -142,6 +143,8 @@ int system_init(void) {
   fm_init(PARTITION_NAME, BASE_PATH);
 
   start_ms = millis();
+
+  set_file_log_number(9);
 
   // TODO : Temporary code for testing, the code below will be removed after implementing of espnow_add_peers()
   // Get a main mac address that will be used in espnow

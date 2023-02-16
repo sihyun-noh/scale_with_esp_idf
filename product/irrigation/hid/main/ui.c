@@ -162,8 +162,8 @@ static void status_change_cb(void *s, lv_msg_t *m) {
       irrigation_message_t *msg = (irrigation_message_t *)lv_msg_get_payload(m);
       device_status_t *dev_stat = (device_status_t *)&msg->payload.dev_stat;
       for (int id = 1; id < 7; id++) {
-        FDATA(BASE_PATH, "Zone[%d] : Battery level = %d", id, dev_stat->battery_level[id]);
-        snprintf(op_msg, sizeof(op_msg), "Zone[%d] : Battery level = %d\n", id, dev_stat->battery_level[id]);
+        FDATA(BASE_PATH, "Zone[%d] : Battery level = [%d]", id, dev_stat->battery_level[id]);
+        snprintf(op_msg, sizeof(op_msg), "Zone[%d] : Battery level = [%d]\n", id, dev_stat->battery_level[id]);
         add_operation_list(op_msg);
       }
     } break;
@@ -183,7 +183,8 @@ static void status_change_cb(void *s, lv_msg_t *m) {
           set_zone_number(zone_id, false);
           set_zone_flow_value(zone_id, flow_value);
           enable_start_button();
-          snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
+          snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] with flow[%d] at %s\n", zone_id, flow_value,
+                   get_current_timestamp());
           add_operation_list(op_msg);
           FDATA(BASE_PATH, "%s", op_msg);
         }
@@ -208,7 +209,8 @@ static void status_change_cb(void *s, lv_msg_t *m) {
         set_zone_status(zone_id, false);
         set_zone_number(zone_id, false);
         set_zone_flow_value(zone_id, flow_value);
-        snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
+        snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] with flow[%d] at %s\n", zone_id, flow_value,
+                 get_current_timestamp());
         add_operation_list(op_msg);
         FDATA(BASE_PATH, "%s", op_msg);
       } else if (msg->sender_type == ALL_COMPLETE) {
@@ -1352,7 +1354,7 @@ void ui_init(void) {
   lv_timer_t *time_timer = lv_timer_create(time_timer_cb, 1, &user_data);
 
   // Disable all buttons in Main screen until applying master's time.
-  // disable_buttons();
+  disable_buttons();
 
   // update the zone status in accordance with registered child devices
   // if some child devices are removed, they are displayed as disabled mode (light-gray)

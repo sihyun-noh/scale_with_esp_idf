@@ -15,6 +15,8 @@
 #include "comm_packet.h"
 #include "hid_config.h"
 #include "command.h"
+#include "sysfile.h"
+#include "filelog.h"
 #include "gui.h"
 
 #define CTRL_MSG_QUEUE_LEN 16
@@ -110,6 +112,7 @@ void ctrl_msg_handler(irrigation_message_t *message) {
     } break;
     case SET_SLEEP: {
       uint64_t wakeup_time_sec = message->payload.remain_time_sleep;
+      FDATA(BASE_PATH, "Entering sleep mode with time = %llus", wakeup_time_sec);
       LOGI(TAG, "Entering sleep mode wtih time = %llus", wakeup_time_sec);
       esp_sleep_enable_timer_wakeup(wakeup_time_sec * 1000000);
       esp_deep_sleep_start();

@@ -34,6 +34,8 @@ int file_log_write(char *format, ...);
 
 int file_log_write_datalogger(char *path, char *format, ...);
 
+void set_file_log_number(int file_log_num);
+
 #define FILE_LOG_FORMAT(letter, format) #letter " (%s) %s: " format "\r\n"
 #define FILE_LOG_FORMAT_FOR_DATALOGGER(letter, format) #letter " %s " format "\n"
 
