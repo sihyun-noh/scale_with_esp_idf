@@ -18,13 +18,12 @@ typedef enum {
   CHECK_OK,
   SENSOR_NOT_PUB,
   ERR_SENSOR_READ,
-  ERR_BATTERY_READ,
 } err_system_t;
 
 #define ROOT_PATH "/storage"
 #define PART_NAME "storage"
 #define DIR_PATH "/storage/data"
-#define FILE_NAME "/sensor_data"
+#define FILE_NAME "/sensor"
 
 typedef enum { SENSOR_INIT_MODE = 0, SENSOR_READ_MODE, SLEEP_MODE } operation_mode_t;
 

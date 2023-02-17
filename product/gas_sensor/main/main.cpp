@@ -1,8 +1,6 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "esp_vfs.h"
-#include "freertos/projdefs.h"
 #include "nvs_flash.h"
 #include "shell_console.h"
 #include "syscfg.h"
@@ -10,8 +8,6 @@
 #include "sysevent.h"
 #include "sys_status.h"
 #include "syslog.h"
-#include "esp_sleep.h"
-#include "event_ids.h"
 #include "sysfile.h"
 #include "msc.h"
 #include "config.h"
@@ -21,15 +17,12 @@
 #include "gpio_api.h"
 
 #include <string.h>
-#include <stdlib.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
 
 #define DELAY_100MS 100
 #define DELAY_1SEC 1000
-#define DELAY_3SEC 3000
 
 const char* TAG = "main_app";
 

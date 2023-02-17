@@ -1,7 +1,5 @@
 #include <string.h>
-#include <math.h>
 #include "log.h"
-#include "utils.h"
 #include "syslog.h"
 #include "syscfg.h"
 #include "event_ids.h"
