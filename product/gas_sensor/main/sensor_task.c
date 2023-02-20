@@ -21,7 +21,7 @@ typedef enum {
   TH01_SLAVE_ID = 0x02,       // TH01 Air temperature, humidity sensor
 } MB_SLAVE_ADDR;
 
-static const char* TAG = "sensor_task";
+static const char *TAG = "sensor_task";
 
 int num_characteristic = 2;
 mb_characteristic_info_t mb_characteristic[2] = {
@@ -86,8 +86,7 @@ int read_soil_ec_rs_ecth(void) {
   if (mb_master_read_characteristic(mb_characteristic[0].cid, mb_characteristic[0].name, value, &data_len) == -1) {
     LOGE(TAG, "Failed to read value : %s ", mb_characteristic[0].name);
     res = -1;
-  }
-  else {
+  } else {
     for (int k = 0; k < data_len; k++) {
       LOGI(TAG, "value[%d] = [0x%x]", k, value[k]);
     }
@@ -109,25 +108,35 @@ int read_soil_ec_rs_ecth(void) {
 int read_air_th(void) {
   int res = 0;
   int data_len = 0;
-  uint8_t value[30] = { 0 };
+  uint8_t command[6] = { 0x24, 0x30, 0x31, 0x54, 0x0D, 0x0A };
+  uint8_t value[40] = { 0 };
 
-  uint16_t u_temp = 0;
-  uint16_t u_mos = 0;
+  float buf_t1 = 999;
+  float buf_h = 999;
+
+  if (mb_master_write_characteristic(mb_characteristic[1].cid, mb_characteristic[1].name, command) == -1) {
+    LOGE(TAG, "Failed to write value : %s ", mb_characteristic[1].name);
+    return -1;
+  }
 
   if (mb_master_read_characteristic(mb_characteristic[1].cid, mb_characteristic[1].name, value, &data_len) == -1) {
     LOGE(TAG, "Failed to read value : %s ", mb_characteristic[1].name);
     res = -1;
-  }
-  else {
-    for (int k = 0; k < data_len; k++) {
-      LOGI(TAG, "value[%d] = [0x%x]", k, value[k]);
+  } else {
+    for (int i = 0; i < data_len; i++) {
+      if (value[i] == '=') {
+        if (buf_t1 == 999) {
+          buf_t1 = ((float)atof((char *)&value[i + 1])) * 10;
+          air_temp = buf_t1 / 10.0;
+        } else if (buf_h == 999) {
+          buf_h = ((float)atof((char *)&value[i + 1])) * 10;
+          air_mos = buf_h / 10.0;
+        }
+      }
+      if (value[i] == 0x0a)
+        break;
     }
-    memcpy(&u_mos, value, 2);
-    memcpy(&u_temp, value + 2, 2);
-    air_temp = (float)(u_temp / 10.00);
-    air_mos = (float)(u_mos / 10.0);
-
-    LOGI(TAG, "[TH01] moisture : %.2f, temperature : %.2f", air_mos, air_temp);
+    LOGI(TAG, "[TH01] moisture : %.1f, temperature : %.1f", air_mos, air_temp);
   }
 
   return res;
@@ -158,14 +167,12 @@ int sensor_read(void) {
     return rc;
 
   LOGI(TAG, "NH3,  CO, H2S,   O2, CH4, S_TEMP, S_MOS, S_EC, A_TEMP, A_MOS");
-  LOGI(TAG, "%3d, %3d, %3d, %2.1f, %3d,  %2.2f, %2.2f, %2.2f,  %2.2f, %2.2f",
-             gas_nh3, gas_data.co, gas_data.h2s, gas_data.o2, gas_data.ch4,
-             soil_temp, soil_mos, soil_ec, air_temp, air_mos);
+  LOGI(TAG, "%3d, %3d, %3d, %2.1f, %3d,  %2.2f, %2.2f, %2.2f,  %2.1f, %2.1f", gas_nh3, gas_data.co, gas_data.h2s,
+       gas_data.o2, gas_data.ch4, soil_temp, soil_mos, soil_ec, air_temp, air_mos);
 
   set_log_file_write_flag(1);
-  FDATA(DIR_PATH, "%d, %d, %d, %.1f, %d, %.2f, %.2f, %.2f, %.2f, %.2f",
-             gas_nh3, gas_data.co, gas_data.h2s, gas_data.o2, gas_data.ch4,
-             soil_temp, soil_mos, soil_ec, air_temp, air_mos);
+  FDATA(DIR_PATH, "%d, %d, %d, %.1f, %d, %.2f, %.2f, %.2f, %.1f, %.1f", gas_nh3, gas_data.co, gas_data.h2s, gas_data.o2,
+        gas_data.ch4, soil_temp, soil_mos, soil_ec, air_temp, air_mos);
   set_log_file_write_flag(0);
 
   return rc;
