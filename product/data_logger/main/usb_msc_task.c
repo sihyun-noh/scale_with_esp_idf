@@ -137,8 +137,6 @@ int file_operations(void) {
 }
 
 void usb_host_msc_task(void) {
-  usb_msc_host_init();
-
   do {
     uint8_t device_address = wait_for_msc_device();
 
@@ -176,6 +174,8 @@ void usb_host_msc_task(void) {
 void create_usb_host_msc_task(void) {
   uint16_t stack_size = 8192;
   UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
+
+  usb_msc_host_init();
 
   if (usb_msc_handle) {
     LOGI(TAG, "usb host msc task is alreay created");
