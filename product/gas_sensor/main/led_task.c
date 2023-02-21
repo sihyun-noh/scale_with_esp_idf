@@ -106,7 +106,7 @@ void create_led_task(void) {
   UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
 
   if (led_handle) {
-    LOGI(TAG, "LED task is alreay created");
+    LOGE(TAG, "LED task is alreay created");
     return;
   }
 

@@ -14,8 +14,6 @@
 #include "ffconf.h"
 #include "file_copy.h"
 
-#include "syslog.h"
-
 //static const char* TAG = "file_copy";
 
 // fnmatch defines

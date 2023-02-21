@@ -1,9 +1,7 @@
 #include <string.h>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "log.h"
-#include "syslog.h"
-#include "syscfg.h"
-#include "event_ids.h"
-#include "sysevent.h"
 #include "sys_status.h"
 #include "main.h"
 #include "filelog.h"
@@ -87,9 +85,6 @@ int read_soil_ec_rs_ecth(void) {
     LOGE(TAG, "Failed to read value : %s ", mb_characteristic[0].name);
     res = -1;
   } else {
-    for (int k = 0; k < data_len; k++) {
-      LOGI(TAG, "value[%d] = [0x%x]", k, value[k]);
-    }
     memcpy(&u_mos, value, 2);
     memcpy(&u_temp, value + 2, 2);
     memcpy(&u_ec, value + 4, 2);
@@ -171,7 +166,7 @@ int sensor_read(void) {
        gas_data.o2, gas_data.ch4, soil_temp, soil_mos, soil_ec, air_temp, air_mos);
 
   set_log_file_write_flag(1);
-  FDATA(DIR_PATH, "%d, %d, %d, %.1f, %d, %.2f, %.2f, %.2f, %.1f, %.1f", gas_nh3, gas_data.co, gas_data.h2s, gas_data.o2,
+  FDATA(DIR_PATH, "%d,%d,%d,%.1f,%d,%.2f,%.2f,%.2f,%.1f,%.1f", gas_nh3, gas_data.co, gas_data.h2s, gas_data.o2,
         gas_data.ch4, soil_temp, soil_mos, soil_ec, air_temp, air_mos);
   set_log_file_write_flag(0);
 

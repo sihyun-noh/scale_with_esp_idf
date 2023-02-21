@@ -7,14 +7,12 @@
 #include "sys_config.h"
 #include "sysevent.h"
 #include "sys_status.h"
-#include "syslog.h"
+#include "log.h"
 #include "sysfile.h"
-#include "msc.h"
 #include "config.h"
 #include "main.h"
 #include "file_copy.h"
 #include "time_api.h"
-#include "gpio_api.h"
 
 #include <string.h>
 #include <sys/stat.h>
@@ -86,9 +84,8 @@ static void check_model(void) {
   send_interval = atoi(s_send_interval);
 
   LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
-  LOGI(TAG, "send_interval : %d", send_interval);
   LOGI(TAG, "mac_address : %s", mac_address);
-  LOGI(TAG, "read interval : %d", send_interval);
+  LOGI(TAG, "sensor read interval : %d", send_interval);
 
   set_battery_model(0);
 }
@@ -127,8 +124,6 @@ int system_init(void) {
   if (ret)
     return ERR_SYSEVENT_CREATE;
 
-  syslog_init();
-
   generate_syscfg();
 
   check_model();
@@ -154,7 +149,7 @@ void loop_task(void) {
       case SENSOR_INIT_MODE: {
         LOGI(TAG, "SENSOR_INIT_MODE");
         if ((sensor_init()) != SYSINIT_OK) {
-          LOGI(TAG, "Could not initialize sensor");
+          LOGE(TAG, "Could not initialize sensor");
           set_operation_mode(SLEEP_MODE);
         } else {
           set_operation_mode(SENSOR_READ_MODE);

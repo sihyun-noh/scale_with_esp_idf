@@ -4,19 +4,15 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
-#include "driver/gpio.h"
 #include "msc.h"
-#include "syslog.h"
+#include "log.h"
 #include "main.h"
 #include "sys_status.h"
 #include "file_copy.h"
 #include "syscfg.h"
 #include "sys_config.h"
 
-#include <string.h>
-#include <stdlib.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <dirent.h>
 #include <errno.h>
 
@@ -84,7 +80,7 @@ int file_operations(void) {
     LOGI(TAG, "print file from path : %s", from_file_path);
     int res = file_copy(to_file_path, from_file_path);
     if (res != 0) {
-      printf("  Error copying file (%d)\n", res);
+      LOGE(TAG, "Error copying file (%d)", res);
       free(copy_data);
       free(file_data);
       return -1;
@@ -101,8 +97,8 @@ int file_operations(void) {
       set_usb_copying(USB_COPYING, 0);
       set_usb_copying(USB_COPY_SUCCESS, 1);
     } else {
-      LOGI(TAG, "to file : %lld, from file : %lld", file_data->to_file_size, file_data->from_file_size);
-      LOGI(TAG, "file copy fail!");
+      LOGE(TAG, "to file : %lld, from file : %lld", file_data->to_file_size, file_data->from_file_size);
+      LOGE(TAG, "file copy fail!");
       set_usb_copying(USB_COPYING, 0);
       set_usb_copying(USB_COPY_FAIL, 1);
     }
@@ -155,7 +151,7 @@ void create_usb_host_msc_task(void) {
   usb_msc_host_init();
 
   if (usb_msc_handle) {
-    LOGI(TAG, "usb host msc task is alreay created");
+    LOGE(TAG, "usb host msc task is alreay created");
     return;
   }
 
