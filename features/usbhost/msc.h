@@ -7,8 +7,6 @@
 extern "C" {
 #endif
 
-#define USB_DISCONNECT_PIN GPIO_NUM_10
-
 typedef enum {
   HOST_NO_CLIENT = 0x1,
   HOST_ALL_FREE = 0x2,

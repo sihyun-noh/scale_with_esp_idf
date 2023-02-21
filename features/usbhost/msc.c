@@ -107,16 +107,6 @@ bool wait_for_event(app_event_t event_stat, uint32_t time_ms) {
 }
 
 int usb_msc_host_init(void) {
-  const gpio_config_t input_pin = {
-    .pin_bit_mask = BIT64(USB_DISCONNECT_PIN),
-    .mode = GPIO_MODE_INPUT,
-    .pull_up_en = GPIO_PULLUP_ENABLE,
-  };
-  if (gpio_config(&input_pin) != ESP_OK) {
-    ESP_ERROR_CHECK(gpio_config(&input_pin));
-    return -1;
-  }
-
   usb_flags = xEventGroupCreate();
   assert(usb_flags);
 

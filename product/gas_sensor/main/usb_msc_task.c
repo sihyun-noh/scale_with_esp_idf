@@ -116,9 +116,7 @@ int file_operations(void) {
 }
 
 void usb_host_msc_task(void) {
-  usb_msc_host_init();
-
-  do {
+  while(1) {
     uint8_t device_address = wait_for_msc_device();
 
     if (device_address != 0) {
@@ -145,7 +143,7 @@ void usb_host_msc_task(void) {
       usb_device_uninit();
     }
     vTaskDelay(10 / portTICK_PERIOD_MS);
-  } while (gpio_get_level(USB_DISCONNECT_PIN) != 0);
+  }
 
   usb_msc_host_uninit();
 }
@@ -153,6 +151,8 @@ void usb_host_msc_task(void) {
 void create_usb_host_msc_task(void) {
   uint16_t stack_size = 8192;
   UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
+
+  usb_msc_host_init();
 
   if (usb_msc_handle) {
     LOGI(TAG, "usb host msc task is alreay created");

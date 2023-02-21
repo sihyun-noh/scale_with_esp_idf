@@ -137,7 +137,7 @@ int file_operations(void) {
 }
 
 void usb_host_msc_task(void) {
-  do {
+  while(1) {
     uint8_t device_address = wait_for_msc_device();
 
     if (device_address != 0) {
@@ -166,7 +166,7 @@ void usb_host_msc_task(void) {
       usb_device_uninit();
     }
     vTaskDelay(10 / portTICK_PERIOD_MS);
-  } while (gpio_get_level(USB_DISCONNECT_PIN) != 0);
+  }
 
   usb_msc_host_uninit();
 }
