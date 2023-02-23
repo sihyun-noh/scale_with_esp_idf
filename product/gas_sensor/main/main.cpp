@@ -9,15 +9,9 @@
 #include "sys_status.h"
 #include "log.h"
 #include "sysfile.h"
-#include "config.h"
 #include "main.h"
 #include "file_copy.h"
 #include "time_api.h"
-
-#include <string.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <errno.h>
 
 #define DELAY_100MS 100
 #define DELAY_1SEC 1000
@@ -88,14 +82,6 @@ static void check_model(void) {
   LOGI(TAG, "sensor read interval : %d", send_interval);
 
   set_battery_model(0);
-}
-
-static int mkdir_datalogger() {
-  if (mkdir(DIR_PATH, 0777) == -1 && errno != EEXIST) {
-    LOGE(TAG, "/storage/data directory create error: %s", strerror(errno));
-    return -1;
-  }
-  return 0;
 }
 
 int system_init(void) {
@@ -187,9 +173,9 @@ void app_main(void) {
     return;
   }
 
-  const char* file_path = ROOT_PATH;
-  if ((rc = mkdir_datalogger()) != SYSINIT_OK) {
-    LOGE(TAG, "Failed to make directory, error = [%d]", rc);
+  const char* file_path = DIR_PATH;
+  if ((rc = make_dir(file_path)) != SYSINIT_OK) {
+    LOGE(TAG, "Failed to make directory");
     return;
   }
 

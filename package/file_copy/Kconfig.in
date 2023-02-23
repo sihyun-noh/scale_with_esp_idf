@@ -1,0 +1,5 @@
+config FILECOPY_PACKAGE
+  bool "File copy package"
+  default "n"
+  help
+    Enable File copy package to support file copy

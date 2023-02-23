@@ -1,22 +1,11 @@
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include <string.h>
 #include <sys/time.h>
 #include <errno.h>
-#include <sys/fcntl.h>
-#include <unistd.h>
 #include <ctype.h>
 
 #include "esp_vfs.h"
-#include "esp_log.h"
-#include <esp_vfs_fat.h>
-#include "msc_host_vfs.h"
-#include "ffconf.h"
 #include "file_copy.h"
 
-//static const char* TAG = "file_copy";
-
-// fnmatch defines
 #define FNM_NOMATCH 1         // Match failed.
 #define FNM_NOESCAPE 0x01     // Disable backslash escaping.
 #define FNM_PATHNAME 0x02     // Slash must be matched by slash.
@@ -32,13 +21,6 @@ static const char *rangematch(const char *pattern, char test, int flags) {
   int negate, ok;
   char c, c2;
 
-  /*
-   * A bracket expression starting with an unquoted circumflex
-   * character produces unspecified results (IEEE 1003.2-1992,
-   * 3.13.2).  This implementation treats it like '!', for
-   * consistency with the regular expression syntax.
-   * J.T. Conklin (conklin@ngai.kaleida.com)
-   */
   if ((negate = (*pattern == '!' || *pattern == '^')))
     ++pattern;
 
@@ -170,14 +152,13 @@ static void list(char *path, char *match) {
 
   printf("\nList of Directory [%s]\n", path);
   printf("-----------------------------------\n");
-  // Open directory
+
   dir = opendir(path);
   if (!dir) {
     printf("Error opening directory\n");
     return;
   }
 
-  // Read directory entries
   uint64_t total = 0;
   int nfiles = 0;
   printf("T  Size      Date/Time         Name\n");
@@ -354,5 +335,13 @@ int get_file_read_cmd(int argc, char **argv) {
     return -1;
   }
   readTest(argv[1]);
+  return 0;
+}
+
+int make_dir(const char *path) {
+  if (mkdir(path, 0777) == -1 && errno != EEXIST) {
+    printf("Create dir [%s] failed : %s", path, strerror(errno));
+    return -1;
+  }
   return 0;
 }
