@@ -4,6 +4,9 @@
 #include "command.h"
 #include "espnow.h"
 #include "time_api.h"
+#include "sysfile.h"
+#include "filelog.h"
+#include "comm_packet.h"
 
 static time_t get_current_time(void) {
   time_t now;
@@ -25,6 +28,7 @@ bool send_command_data(message_type_t sender, message_type_t receiver, void *pay
     case SET_CONFIG: {
       if (payload && payload_len) {
         memcpy(&message.payload, payload, payload_len);
+        FDATA(BASE_PATH, "%s", "Send SET_CONFIG command");
       }
     } break;
     case RESPONSE: {
@@ -34,6 +38,9 @@ bool send_command_data(message_type_t sender, message_type_t receiver, void *pay
       if (payload && payload_len) {
         memcpy(&message.payload, payload, payload_len);
       }
+    } break;
+    case REQ_TIME_SYNC: {
+      FDATA(BASE_PATH, "%s", "Send Request Time sync command");
     } break;
     default: break;
   }

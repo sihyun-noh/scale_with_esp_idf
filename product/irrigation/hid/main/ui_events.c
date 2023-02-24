@@ -18,6 +18,8 @@
 #include "command.h"
 #include "comm_packet.h"
 #include "file_manager.h"
+#include "sysfile.h"
+#include "filelog.h"
 #include "sdcard.h"
 
 static bool updated_main_flag = false;
@@ -79,9 +81,19 @@ void OnStartEvent(lv_event_t *e) {
     }
 
     if (stage == CURR_STAGE || stage == NEXT_STAGE) {
+      char op_msg[128] = { 0 };
       // Send configuration data to the main controller via ESP-NOW
-      send_command_data(SET_CONFIG, NONE, &payload, sizeof(payload_t));
-      LOGI(TAG, "Success to send Start command!!!");
+      if (send_command_data(SET_CONFIG, NONE, &payload, sizeof(payload_t))) {
+        LOGI(TAG, "Success to send Start command!!!");
+        FDATA(BASE_PATH, "%s", "Success to send Irrigation Setting to Main");
+        snprintf(op_msg, sizeof(op_msg), "%s: Sucess to send Irrigation Setting to Main\n", get_current_timestamp());
+        add_operation_list(op_msg);
+      } else {
+        LOGI(TAG, "Failed to send Start command!!!");
+        FDATA(BASE_PATH, "%s", "Failed to send Irrigation Setting to Main");
+        snprintf(op_msg, sizeof(op_msg), "%s: Failed to send Irrigation Setting to Main\n", get_current_timestamp());
+        add_operation_list(op_msg);
+      }
       // Reset configuration data that is available in this current time,
       // if conf data will be available in next irrigation time, it should be keep and will send command in next time.
       syscfg_unset(CFG_DATA, "hid_config");

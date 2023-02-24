@@ -18,6 +18,6 @@ typedef enum {
   ERR_BATTERY_READ,
 } err_system_t;
 
-typedef enum { INIT_MODE = 0, CONNECT_MODE, MONITOR_MODE, SLEEP_MODE } operation_mode_t;
+typedef enum { INIT_MODE = 0, CONNECT_MODE, MONITOR_MODE, DEEPSLEEP_MODE } operation_mode_t;
 
 #endif /* _MAIN_H_ */

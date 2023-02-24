@@ -63,6 +63,7 @@ void set_main_time(time_t *curr_time) {
   // set time sync event flag
   set_time_sync(1);
   LOGI(TAG, "main time is synced");
+  FDATA(BASE_PATH, "%s", "Time synchronization is complete");
 }
 
 void ctrl_msg_handler(irrigation_message_t *message) {
@@ -153,6 +154,7 @@ void create_control_task(void) {
     return;
   }
 
+  // create queue
   ctrl_msg_queue = xQueueCreate(CTRL_MSG_QUEUE_LEN, sizeof(irrigation_message_t));
   if (ctrl_msg_queue == NULL) {
     return;

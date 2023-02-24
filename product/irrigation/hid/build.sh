@@ -120,7 +120,7 @@ fi
 
 if  [[ "${*}" =~ "monitor" ]]; then
   checkDeviceConnect
-  idf.py -p ${PORT_PATH} monitor
+  screen ${PORT_PATH} 115200
 fi
 
 clearEnvVariable

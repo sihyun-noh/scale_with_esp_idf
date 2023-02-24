@@ -1,3 +1,4 @@
+#include "freertos/portmacro.h"
 #define LV_TICK_PERIOD_MS 1
 #define LGFX_USE_V1  // LovyanGFX version
 
@@ -15,7 +16,7 @@
 #include "sys_status.h"
 #include "ui_helpers.h"
 
-#define BUFF_SIZE 40
+#define BUFF_SIZE 80
 // #define BUFF_SIZE 10
 // #define LVGL_STATIC_BUFFER
 #define LVGL_DOUBLE_BUFFER
@@ -135,7 +136,7 @@ int lv_display_init(void) {
     return -1;
   }
 
-  int err = xTaskCreatePinnedToCore(gui_task, "gui_task", 1024 * 8, NULL, 3, &g_lvgl_task_handle, 1);
+  int err = xTaskCreatePinnedToCore(gui_task, "gui_task", 1024 * 8, NULL, 5, &g_lvgl_task_handle, 0);
   if (!err) {
     LOGE(tag, "Create task for LVGL failed");
     if (lv_periodic_timer) {
@@ -185,11 +186,12 @@ void touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data) {
   }
 }
 
-void lvgl_acquire(void) {
+bool lvgl_acquire(void) {
   TaskHandle_t task = xTaskGetCurrentTaskHandle();
   if (g_lvgl_task_handle != task) {
-    xSemaphoreTake(xGuiSemaphore, portMAX_DELAY);
+    return (xSemaphoreTake(xGuiSemaphore, 1000) == pdTRUE);
   }
+  return false;
 }
 
 void lvgl_release(void) {

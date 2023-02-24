@@ -141,98 +141,100 @@ const char *MONTH[] = { "January", "February", "March",     "April",   "May",   
 static const char *TAG = "UI";
 
 ///////////////////// TEST LVGL SETTINGS ////////////////////
+/**
 #if LV_COLOR_DEPTH != 16
 #error "LV_COLOR_DEPTH should be 16bit to match SquareLine Studio's settings"
 #endif
 #if LV_COLOR_16_SWAP != 0
 #error "LV_COLOR_16_SWAP should be 0 to match SquareLine Studio's settings"
 #endif
+**/
 
 static void status_change_cb(void *s, lv_msg_t *m) {
   LV_UNUSED(s);
 
-  lvgl_acquire();
+  if (lvgl_acquire()) {
+    unsigned int msg_id = lv_msg_get_id(m);
 
-  unsigned int msg_id = lv_msg_get_id(m);
-
-  switch (msg_id) {
-    case MSG_TIME_SYNCED: enable_buttons(); break;
-    case MSG_BATTERY_STATUS: {
-      char op_msg[128] = { 0 };
-      irrigation_message_t *msg = (irrigation_message_t *)lv_msg_get_payload(m);
-      device_status_t *dev_stat = (device_status_t *)&msg->payload.dev_stat;
-      for (int id = 1; id < 7; id++) {
-        FDATA(BASE_PATH, "Zone[%d] : Battery level = [%d]", id, dev_stat->battery_level[id]);
-        snprintf(op_msg, sizeof(op_msg), "Zone[%d] : Battery level = [%d]\n", id, dev_stat->battery_level[id]);
-        add_operation_list(op_msg);
-      }
-    } break;
-    case MSG_RESPONSE_STATUS: {
-      irrigation_message_t *msg = (irrigation_message_t *)lv_msg_get_payload(m);
-      device_status_t *dev_stat = (device_status_t *)&msg->payload.dev_stat;
-      if (msg->receive_type == SET_CONFIG && msg->resp == SUCCESS) {
-        LOGI(TAG, "Got SetConfig response, Call disable start button()");
-        disable_start_button();
-      } else if (msg->receive_type == FORCE_STOP) {
+    switch (msg_id) {
+      case MSG_TIME_SYNCED: enable_buttons(); break;
+      case MSG_BATTERY_STATUS: {
         char op_msg[128] = { 0 };
-        int zone_id = dev_stat->deviceId;
-        int flow_value = dev_stat->flow_value;
-        LOGI(TAG, "Got Force Stop response from [%d]", zone_id);
-        if (zone_id >= 1 && zone_id <= 6) {
-          set_zone_status(zone_id, false);
-          set_zone_number(zone_id, false);
-          set_zone_flow_value(zone_id, flow_value);
-          enable_start_button();
-          snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] with flow[%d] at %s\n", zone_id, flow_value,
-                   get_current_timestamp());
+        irrigation_message_t *msg = (irrigation_message_t *)lv_msg_get_payload(m);
+        device_status_t *dev_stat = (device_status_t *)&msg->payload.dev_stat;
+        for (int id = 1; id < 7; id++) {
+          FDATA(BASE_PATH, "Zone[%d] : Battery level = [%d]", id, dev_stat->battery_level[id]);
+          snprintf(op_msg, sizeof(op_msg), "Zone[%d] : Battery level = [%d]\n", id, dev_stat->battery_level[id]);
           add_operation_list(op_msg);
-          FDATA(BASE_PATH, "%s", op_msg);
         }
-      }
-    } break;
-    case MSG_IRRIGATION_STATUS: {
-      char op_msg[128] = { 0 };
-      irrigation_message_t *msg = (irrigation_message_t *)lv_msg_get_payload(m);
-      device_status_t *dev_stat = (device_status_t *)&msg->payload.dev_stat;
-      int zone_id = dev_stat->deviceId;
-      if (msg->sender_type == START_FLOW) {
-        LOGI(TAG, "Got Start Flow response");
-        set_zone_status(zone_id, true);
-        set_zone_number(zone_id, true);
-        disable_start_button();
-        snprintf(op_msg, sizeof(op_msg), "Start to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
-        add_operation_list(op_msg);
-        FDATA(BASE_PATH, "%s", op_msg);
-      } else if (msg->sender_type == ZONE_COMPLETE) {
-        LOGI(TAG, "Got Zone Complete response");
-        int flow_value = dev_stat->flow_value;
-        set_zone_status(zone_id, false);
-        set_zone_number(zone_id, false);
-        set_zone_flow_value(zone_id, flow_value);
-        snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] with flow[%d] at %s\n", zone_id, flow_value,
-                 get_current_timestamp());
-        add_operation_list(op_msg);
-        FDATA(BASE_PATH, "%s", op_msg);
-      } else if (msg->sender_type == ALL_COMPLETE) {
-        LOGI(TAG, "Got All Complete response");
-        enable_start_button();
-        FDATA(BASE_PATH, "%s", "All irrigation progress are complete done!!!");
-      } else if (msg->sender_type == DEVICE_ERROR) {
-        // Disable zone area
-        for (int i = 0; i < 6; i++) {
-          if (dev_stat->child_status[i]) {
-            // Display the device status as error
-            snprintf(op_msg, sizeof(op_msg), "Child [%d] has an error\n", i + 1);
+      } break;
+      case MSG_RESPONSE_STATUS: {
+        irrigation_message_t *msg = (irrigation_message_t *)lv_msg_get_payload(m);
+        device_status_t *dev_stat = (device_status_t *)&msg->payload.dev_stat;
+        if (msg->receive_type == SET_CONFIG && msg->resp == SUCCESS) {
+          LOGI(TAG, "Got SetConfig response, Call disable start button()");
+          disable_start_button();
+        } else if (msg->receive_type == FORCE_STOP) {
+          char op_msg[128] = { 0 };
+          int zone_id = dev_stat->deviceId;
+          int flow_value = dev_stat->flow_value;
+          LOGI(TAG, "Got Force Stop response from [%d]", zone_id);
+          enable_start_button();
+          if (zone_id >= 1 && zone_id <= 6) {
+            set_zone_status(zone_id, false);
+            set_zone_number(zone_id, false);
+            set_zone_flow_value(zone_id, flow_value);
+            snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] with flow[%d] at %s\n", zone_id,
+                     flow_value, get_current_timestamp());
             add_operation_list(op_msg);
             FDATA(BASE_PATH, "%s", op_msg);
           }
         }
-      }
-    } break;
-    default: break;
-  }
+      } break;
+      case MSG_IRRIGATION_STATUS: {
+        char op_msg[128] = { 0 };
+        irrigation_message_t *msg = (irrigation_message_t *)lv_msg_get_payload(m);
+        device_status_t *dev_stat = (device_status_t *)&msg->payload.dev_stat;
+        int zone_id = dev_stat->deviceId;
+        if (msg->sender_type == START_FLOW) {
+          LOGI(TAG, "Got Start Flow response");
+          set_zone_status(zone_id, true);
+          set_zone_number(zone_id, true);
+          disable_start_button();
+          snprintf(op_msg, sizeof(op_msg), "Start to irrigation of zone[%d] at %s\n", zone_id, get_current_timestamp());
+          add_operation_list(op_msg);
+          FDATA(BASE_PATH, "%s", op_msg);
+        } else if (msg->sender_type == ZONE_COMPLETE) {
+          LOGI(TAG, "Got Zone Complete response");
+          int flow_value = dev_stat->flow_value;
+          set_zone_status(zone_id, false);
+          set_zone_number(zone_id, false);
+          set_zone_flow_value(zone_id, flow_value);
+          snprintf(op_msg, sizeof(op_msg), "Stop to irrigation of zone[%d] with flow[%d] at %s\n", zone_id, flow_value,
+                   get_current_timestamp());
+          add_operation_list(op_msg);
+          FDATA(BASE_PATH, "%s", op_msg);
+        } else if (msg->sender_type == ALL_COMPLETE) {
+          LOGI(TAG, "Got All Complete response");
+          enable_start_button();
+          FDATA(BASE_PATH, "%s", "All irrigation progress are complete done!!!");
+        } else if (msg->sender_type == DEVICE_ERROR) {
+          // Disable zone area
+          for (int i = 0; i < 6; i++) {
+            if (dev_stat->child_status[i]) {
+              // Display the device status as error
+              snprintf(op_msg, sizeof(op_msg), "Child [%d] has an error\n", i + 1);
+              add_operation_list(op_msg);
+              FDATA(BASE_PATH, "%s", op_msg);
+            }
+          }
+        }
+      } break;
+      default: break;
+    }
 
-  lvgl_release();
+    lvgl_release();
+  }
 }
 
 ///////////////////// ANIMATIONS ////////////////////

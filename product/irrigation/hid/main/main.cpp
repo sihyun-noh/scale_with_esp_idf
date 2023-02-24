@@ -23,6 +23,7 @@
 #include "time_api.h"
 #include "command.h"
 #include "gui.h"
+#include "esp32s3/rom/rtc.h"
 
 static const char *TAG = "main_app";
 
@@ -41,6 +42,80 @@ static void check_model(void);
 
 static operation_mode_t s_curr_mode;
 static int main_sleep_delay = 30;
+
+void get_reset_reason(int cpu_no) {
+  RESET_REASON rc = NO_MEAN;
+  char reset_reason[5] = { 0 };
+
+  rc = rtc_get_reset_reason(cpu_no);
+  snprintf(reset_reason, sizeof(reset_reason), "%d", (int)rc);
+  if (cpu_no == 0) {
+    syscfg_set(SYSCFG_I_CPU0_RESET_REASON, SYSCFG_N_CPU0_RESET_REASON, reset_reason);
+  } else if (cpu_no == 1) {
+    syscfg_set(SYSCFG_I_CPU1_RESET_REASON, SYSCFG_N_CPU1_RESET_REASON, reset_reason);
+  }
+
+  switch (rc) {
+    case POWERON_RESET:
+      LOGI(TAG, "POWERON_RESET"); /**<1, Vbat power on reset*/
+      break;
+    case RTC_SW_SYS_RESET:
+      LOGI(TAG, "RTC_SW_SYS_RESET"); /**<3, Software reset digital core*/
+      break;
+    case DEEPSLEEP_RESET:
+      LOGI(TAG, "DEEPSLEEP_RESET"); /**<5, Deep Sleep reset digital core*/
+      break;
+    case TG0WDT_SYS_RESET:
+      LOGI(TAG, "TG0WDT_SYS_RESET"); /**<7, Timer Group0 Watch dog reset digital core*/
+      break;
+    case TG1WDT_SYS_RESET:
+      LOGI(TAG, "TG1WDT_SYS_RESET"); /**<8, Timer Group1 Watch dog reset digital core*/
+      break;
+    case RTCWDT_SYS_RESET:
+      LOGI(TAG, "RTCWDT_SYS_RESET"); /**<9, RTC Watch dog Reset digital core*/
+      break;
+    case INTRUSION_RESET:
+      LOGI(TAG, "INTRUSION_RESET"); /**<10, Instrusion tested to reset CPU*/
+      break;
+    case TG0WDT_CPU_RESET:
+      LOGI(TAG, "TG0WDT_CPU_RESET"); /**<11, Time Group0 reset CPU*/
+      break;
+    case RTC_SW_CPU_RESET:
+      LOGI(TAG, "RTC_SW_CPU_RESET"); /**<12, Software reset CPU*/
+      break;
+    case RTCWDT_CPU_RESET:
+      LOGI(TAG, "RTCWDT_CPU_RESET"); /**<13, RTC Watch dog Reset CPU*/
+      break;
+    case RTCWDT_BROWN_OUT_RESET:
+      LOGI(TAG, "RTCWDT_BROWN_OUT_RESET"); /**<15, Reset when the vdd voltage is not stable*/
+      break;
+    case RTCWDT_RTC_RESET:
+      LOGI(TAG, "EXT_CPU_RESET"); /**<16, RTC Watch dog reset digital core and rtc module*/
+      break;
+    case TG1WDT_CPU_RESET:
+      LOGI(TAG, "TG1WDT_CPU_RESET"); /**<17, Time Group1 reset CPU*/
+      break;
+    case SUPER_WDT_RESET:
+      LOGI(TAG, "SUPER_WDT_RESET"); /**<18, super watchdog reset digital core and rtc module*/
+      break;
+    case GLITCH_RTC_RESET:
+      LOGI(TAG, "GLITCH_RTC_RESET"); /**<19, glitch reset digital core and rtc module*/
+      break;
+    case EFUSE_RESET:
+      LOGI(TAG, "EFUSE_RESET"); /**<20, efuse reset digital core*/
+      break;
+    case USB_UART_CHIP_RESET:
+      LOGI(TAG, "USB_UART_CHIP_RESET"); /**<21, usb uart reset digital core */
+      break;
+    case USB_JTAG_CHIP_RESET:
+      LOGI(TAG, "USB_JTAG_CHIP_RESET"); /**<22, usb jtag reset digital core */
+      break;
+    case POWER_GLITCH_RESET:
+      LOGI(TAG, "POWER_GLITCH_RESET"); /**<23, power glitch reset digital core and rtc module*/
+      break;
+    case NO_MEAN: LOGI(TAG, "NO_MEAN"); break;
+  }
+}
 
 void set_operation_mode(operation_mode_t mode) {
   s_curr_mode = mode;
@@ -84,7 +159,7 @@ static void check_model(void) {
 static void recv_data_cb(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
   if (memcmp(mac_addr, main_mac_addr, MAC_ADDR_LEN) == 0) {
     LOGI(TAG, "Receive Data from Main device");
-    LOG_BUFFER_HEXDUMP(TAG, data, data_len, LOG_INFO);
+    // LOG_BUFFER_HEXDUMP(TAG, data, data_len, LOG_INFO);
     send_msg_to_ctrl_task((void *)data, data_len);
   }
 }
@@ -112,7 +187,11 @@ int system_init(void) {
   if (ret)
     return ERR_WIFI_INIT;
 
-  ret = wifi_espnow_mode();
+#if (CONFIG_ESPNOW_WIFI_MODE == STATION)
+  ret = wifi_espnow_mode(WIFI_OP_STA);
+#elif (CONFIG_ESPNOW_WIFI_MODE == SOFTAP)
+  ret = wifi_espnow_mode(WIFI_OP_AP);
+#endif
   if (ret)
     return ERR_WIFI_INIT;
 
@@ -149,8 +228,17 @@ int system_init(void) {
   // TODO : Temporary code for testing, the code below will be removed after implementing of espnow_add_peers()
   // Get a main mac address that will be used in espnow
   uint8_t mac[6] = { 0 };
+#if (CONFIG_ESPNOW_WIFI_MODE == STATION)
   esp_read_mac(mac, ESP_MAC_WIFI_STA);
+#elif (CONFIG_ESPNOW_WIFI_MODE == SOFTAP)
+  esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
+#endif
   LOG_BUFFER_HEX(TAG, mac, sizeof(mac));
+
+  LOGI(TAG, "CPU0 reset reason: ");
+  get_reset_reason(0);
+  LOGI(TAG, "CPU1 reset reason: ");
+  get_reset_reason(1);
 
   return SYSINIT_OK;
 }
@@ -172,7 +260,7 @@ void loop_task(void) {
         LOGI(TAG, "INIT_MODE");
         if (espnow_start(recv_data_cb, send_data_cb) == false) {
           LOGE(TAG, "Failed to start espnow!!!");
-          set_operation_mode(SLEEP_MODE);
+          set_operation_mode(DEEPSLEEP_MODE);
         } else {
           set_operation_mode(CONNECT_MODE);
         }
@@ -194,9 +282,9 @@ void loop_task(void) {
           send_command_data(REQ_TIME_SYNC, NONE, NULL, 0);
           LOGI(TAG, "Send Request Time sync command!!!");
         }
-        set_operation_mode(SLEEP_MODE);
+        set_operation_mode(DEEPSLEEP_MODE);
       } break;
-      case SLEEP_MODE: {
+      case DEEPSLEEP_MODE: {
         vTaskDelay(main_sleep_delay * 1000 / portTICK_PERIOD_MS);
         set_operation_mode(MONITOR_MODE);
       } break;
