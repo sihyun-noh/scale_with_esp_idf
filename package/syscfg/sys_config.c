@@ -82,6 +82,9 @@ static void generate_default_serial(char *serial_no, size_t buff_len) {
 #elif (CONFIG_IRRIGATION_CHILD)
   snprintf(prod_code, sizeof(prod_code), "%s", "CH");
 #endif
+#if (CONFIG_BS_PLATFORM_GASSENSOR)
+  snprintf(prod_code, sizeof(prod_code), "%s", "GS");
+#endif
   snprintf(serial_no, buff_len, "%02d%02d%02d%s%05d", supplier_id, year_mfr, week_mfr, prod_code, seq_id);
 }
 
@@ -223,7 +226,7 @@ void generate_syscfg(void) {
 #elif (CONFIG_DATALOGGER_RK520_02 || CONFIG_DATALOGGER_RS_ECTH)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDSE");
 #elif (CONFIG_DATALOGGER_SWSR7500)
-    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLSSO");
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDSO");
 #elif (CONFIG_DATALOGGER_ATLAS_PH || CONFIG_DATALOGGER_RK500_02)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDWP");
 #elif (CONFIG_DATALOGGER_ATLAS_EC || CONFIG_DATALOGGER_RK500_13)
@@ -233,11 +236,14 @@ void generate_syscfg(void) {
 #elif (CONFIG_DATALOGGER_RK100_02)
     syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLDWS");
 #endif
+#if (CONFIG_BS_PLATFORM_GASSENSOR)
+    syscfg_set(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, "GLGAS");
+#endif
     syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
   }
   syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
   if (power_mode[0] == 0) {
-#if (CONFIG_BS_PLATFORM_ACTUATORS)
+#if (CONFIG_BS_PLATFORM_ACTUATORS || CONFIG_BS_PLATFORM_GASSENSOR)
     syscfg_set(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, "P");
 #else
     syscfg_set(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, "B");
