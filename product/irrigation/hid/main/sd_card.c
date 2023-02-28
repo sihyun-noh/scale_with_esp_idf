@@ -20,6 +20,9 @@ const char mount_point[] = MOUNT_POINT;
 void sdcard_init(void) {
   esp_err_t ret;
 
+  esp_vfs_fat_sdmmc_mount_config_t mount_config = { .format_if_mount_failed = false,
+                                                    .max_files = 5,
+                                                    .allocation_unit_size = 16 * 1024 };
   LOGI(TAG, "Initializing SD card");
 
   host = (sdmmc_host_t)SDSPI_HOST_DEFAULT();
@@ -35,9 +38,40 @@ void sdcard_init(void) {
   ret = spi_bus_initialize(host.slot, &bus_cfg, SDCARD_SPI_DMA_CHAN);
   if (ret != ESP_OK) {
     LOGE(TAG, "Failed to initialize bus.");
+    return;
   }
+
+  // This initializes the slot without card detect (CD) and write protect (WP) signals.
+  // Modify slot_config.gpio_cd and slot_config.gpio_wp if your board has these signals.
+  sdspi_device_config_t slot_config = SDSPI_DEVICE_CONFIG_DEFAULT();
+  slot_config.gpio_cs = SD_CS;
+  slot_config.host_id = host.slot;
+
+  LOGI(TAG, "Mounting filesystem");
+  ret = esp_vfs_fat_sdspi_mount(mount_point, &host, &slot_config, &mount_config, &card);
+
+  if (ret != ESP_OK) {
+    if (ret == ESP_FAIL) {
+      LOGE(TAG,
+           "Failed to mount filesystem. "
+           "If you want the card to be formatted, set the EXAMPLE_FORMAT_IF_MOUNT_FAILED menuconfig option.");
+    } else {
+      LOGE(TAG,
+           "Failed to initialize the card (%s). "
+           "Make sure SD card lines have pull-up resistors in place.",
+           esp_err_to_name(ret));
+
+      set_sdcard_fail(1);
+    }
+    return;
+  }
+  LOGI(TAG, "Filesystem mounted");
+
+  // Card has been initialized, print its properties
+  sdmmc_card_print_info(stdout, card);
 }
 
+#if 0
 int sdcard_mount(void) {
   esp_vfs_fat_sdmmc_mount_config_t mount_config = { .format_if_mount_failed = false,
                                                     .max_files = 5,
@@ -86,6 +120,7 @@ int sdcard_get_status(void) {
   }
   return 0;
 }
+#endif
 
 void write_rtc_time(FILE *f) {
   struct tm time = { 0 };
