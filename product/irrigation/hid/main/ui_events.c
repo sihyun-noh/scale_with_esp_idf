@@ -119,10 +119,10 @@ void OnLogEvent(lv_event_t *e) {
   char dst_file[128] = { 0 };
   char src_file[128] = { 0 };
 
-  // if (sdcard_mount() != 0) {
-  //   warnning_msgbox("Please insert sdcard or check if sdcard is formatted");
-  //   return;
-  // }
+  if (sdcard_mount() != 0) {
+    warnning_msgbox("Please insert sdcard or check if sdcard is formatted");
+    return;
+  }
 
   fm_file_table_create(&g_logfile_list, &g_logfile_num, ".txt");
 
@@ -137,9 +137,9 @@ void OnLogEvent(lv_event_t *e) {
 
   fm_file_table_free(&g_logfile_list, g_logfile_num);
 
-  // if (sdcard_unmount() == 0) {
-  //   LOGI(TAG, "Succcess to unmount sdcard");
-  // }
+  if (sdcard_unmount() == 0) {
+    LOGI(TAG, "Succcess to unmount sdcard");
+  }
   warnning_msgbox("Log file copy completed, Please remove the sdcard");
 }
 

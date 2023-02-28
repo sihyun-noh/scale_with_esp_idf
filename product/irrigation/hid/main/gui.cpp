@@ -16,7 +16,7 @@
 #include "sys_status.h"
 #include "ui_helpers.h"
 
-#define BUFF_SIZE 80
+#define BUFF_SIZE 40
 // #define BUFF_SIZE 10
 // #define LVGL_STATIC_BUFFER
 #define LVGL_DOUBLE_BUFFER
