@@ -23,7 +23,8 @@
 #include "atlas_ec_params.h"
 #endif
 #if ((CONFIG_DATALOGGER_RK520_02) || (CONFIG_DATALOGGER_SWSR7500) || (CONFIG_DATALOGGER_RK500_02) || \
-     (CONFIG_DATALOGGER_RK110_02) || (CONFIG_DATALOGGER_RK100_02) || (CONFIG_DATALOGGER_RK500_13) || (CONFIG_DATALOGGER_RS_ECTH))
+     (CONFIG_DATALOGGER_RK110_02) || (CONFIG_DATALOGGER_RK100_02) || (CONFIG_DATALOGGER_RK500_13) || \
+     (CONFIG_DATALOGGER_RS_ECTH))
 #include "mb_master_rtu.h"
 #endif
 
@@ -444,13 +445,13 @@ int read_soil_ec_rs_ecth(void) {
 
       if (i == SEN1) {
         LOGI(TAG, "SEN1 :ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
-        FDATA(SEN_DATA_PATH_1, "%.2f %.2f %.2f %s", f_saturation_ec, f_mos, f_temp, s_bat_volt);
+        FDATA(SEN_DATA_PATH_1, "%.2f,%.2f,%.2f,%s", f_saturation_ec, f_mos, f_temp, s_bat_volt);
       } else if (i == SEN2) {
         LOGI(TAG, "SEN2 :ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
-        FDATA(SEN_DATA_PATH_2, "%.2f %.2f %.2f %s", f_saturation_ec, f_mos, f_temp, s_bat_volt);
+        FDATA(SEN_DATA_PATH_2, "%.2f,%.2f,%.2f,%s", f_saturation_ec, f_mos, f_temp, s_bat_volt);
       } else if (i == SEN3) {
         LOGI(TAG, "SEN3 : ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);
-        FDATA(SEN_DATA_PATH_3, "%.2f %.2f %.2f %s", f_saturation_ec, f_mos, f_temp, s_bat_volt);
+        FDATA(SEN_DATA_PATH_3, "%.2f,%.2f,%.2f,%s", f_saturation_ec, f_mos, f_temp, s_bat_volt);
       } else {
         LOGE(TAG, "log data not saved.");
       }

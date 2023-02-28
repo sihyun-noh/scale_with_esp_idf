@@ -24,7 +24,7 @@ int wifi_user_init(void);
 int wifi_user_deinit(void);
 
 /**
- * @brief Set the Wi-Fi AP operating mode
+ * @brief Set the WiFi AP operating mode
  *
  * @param ssid of ESP32 soft-AP
  * @param password of ESP32 soft-AP
@@ -33,11 +33,18 @@ int wifi_user_deinit(void);
 int wifi_ap_mode(const char *ssid, const char *password);
 
 /**
- * @brief Set the Wi-Fi Station operating mode
+ * @brief Set the WiFi Station operating mode
  *
  * @return int 0 on success, -1 on failure
  */
 int wifi_sta_mode(void);
+
+/**
+ * @brief Set the WiFi AP+STA operating mode
+ *
+ * @return int 0 on success, -1 on failure
+ */
+int wifi_ap_sta_mode(void);
 
 /**
  * @brief Stop WiFi If mode is WIFI_MODE_STA, it stop station and free station control block If mode is WIFI_MODE_AP, it
@@ -49,7 +56,7 @@ int wifi_sta_mode(void);
 int wifi_stop_mode(void);
 
 /**
- * @brief Set the Wi-Fi AP connect operating mode
+ * @brief Set the WiFi AP connect operating mode
  *
  * @param ssid Name of the network to connect to
  * @param password Security passphrase to connect to the network
@@ -121,7 +128,7 @@ int get_ap_info(ap_info_t *ap_info);
  *
  * @return int 0 on success, -1 on failure
  */
-int wifi_espnow_mode();
+int wifi_espnow_mode(wifi_op_mode_t wifi_op_mode);
 
 #ifdef __cplusplus
 }

@@ -19,8 +19,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "comm_packet.h"
 #include "esp_now.h"
+#include "comm_packet.h"
 
 #ifdef __cplusplus
 extern "C" {

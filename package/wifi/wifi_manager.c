@@ -45,6 +45,10 @@ int wifi_sta_mode(void) {
   return wifi_sta_mode_impl(ctx);
 }
 
+int wifi_ap_sta_mode(void) {
+  return wifi_ap_sta_mode_impl(ctx);
+}
+
 int wifi_stop_mode(void) {
   return wifi_stop_mode_impl(ctx);
 }
@@ -101,6 +105,6 @@ int get_ap_info(ap_info_t *ap_info) {
   return get_ap_info_impl(ctx, ap_info);
 }
 
-int wifi_espnow_mode() {
-  return wifi_espnow_mode_impl(ctx);
+int wifi_espnow_mode(wifi_op_mode_t wifi_op_mode) {
+  return wifi_espnow_mode_impl(ctx, wifi_op_mode);
 }

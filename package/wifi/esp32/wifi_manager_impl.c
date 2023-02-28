@@ -238,7 +238,7 @@ static int is_wifi_sta_ready(void) {
   do {
     // if (sysevent_get(WIFI_EVENT, WIFI_EVENT_STA_START, NULL, 0) == 0) {
     esp_wifi_get_mode(&wifi_mode);
-    if (wifi_mode == WIFI_MODE_STA) {
+    if (wifi_mode == WIFI_MODE_STA || wifi_mode == WIFI_MODE_APSTA) {
       wait_count = 0;
       break;
     } else {
@@ -319,6 +319,20 @@ static bool enable_sta_mode(bool enable) {
       return set_wifi_mode((wifi_mode_t)(curr_wifi_mode | WIFI_MODE_STA));
     }
     return set_wifi_mode((wifi_mode_t)(curr_wifi_mode & (~WIFI_MODE_STA)));
+  }
+
+  return true;
+}
+
+static bool enable_ap_sta_mode(bool enable) {
+  wifi_mode_t curr_wifi_mode = get_wifi_mode();
+  bool is_enabled = ((curr_wifi_mode & WIFI_MODE_APSTA) != 0);
+
+  if (is_enabled != enable) {
+    if (enable) {
+      return set_wifi_mode((wifi_mode_t)(curr_wifi_mode | WIFI_MODE_APSTA));
+    }
+    return set_wifi_mode((wifi_mode_t)(curr_wifi_mode & (~WIFI_MODE_APSTA)));
   }
 
   return true;
@@ -414,6 +428,22 @@ int wifi_sta_mode_impl(wifi_context_t *ctx) {
   }
 
   // Disable power saving mode of STA.
+  esp_wifi_set_ps(WIFI_PS_NONE);
+
+  return 0;
+}
+
+int wifi_ap_sta_mode_impl(wifi_context_t *ctx) {
+  if (ctx == NULL) {
+    return -1;
+  }
+
+  if (!enable_ap_sta_mode(true)) {
+    LOGE(TAG, "Enable AP_STA first");
+    return -1;
+  }
+
+  // Disable power saving mode of AP_STA.
   esp_wifi_set_ps(WIFI_PS_NONE);
 
   return 0;
@@ -669,17 +699,25 @@ int get_ap_info_impl(wifi_context_t *ctx, ap_info_t *ap_info) {
   return (rc == ESP_OK) ? 0 : -1;
 }
 
-int wifi_espnow_mode_impl(wifi_context_t *ctx) {
+int wifi_espnow_mode_impl(wifi_context_t *ctx, wifi_op_mode_t wifi_op_mode) {
   if (ctx == NULL) {
     return -1;
   }
 
-  // Set WiFi as WiFi STA mode for esp-now working
-  if (!enable_sta_mode(true)) {
-    LOGE(TAG, "Failed to enable STA mode!!!");
-    return -1;
+  if (wifi_op_mode == WIFI_OP_AP_STA) {
+    // Set WiFi as WiFi AP+STA mode for esp-now working
+    if (!enable_ap_sta_mode(true)) {
+      LOGE(TAG, "Failed to enable AP+STA mode!!!");
+      return -1;
+    }
+  } else if (wifi_op_mode == WIFI_OP_STA) {
+    // Set WiFi as WiFi STA mode for esp-now working
+    if (!enable_sta_mode(true)) {
+      LOGE(TAG, "Failed to enable STA mode!!!");
+      return -1;
+    }
   }
 
-  esp_wifi_set_protocol(WIFI_MODE_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR);
+  esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR);
   return 0;
 }

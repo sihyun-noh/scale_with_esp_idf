@@ -37,7 +37,7 @@ int file_log_write_datalogger(char *path, char *format, ...);
 void set_file_log_number(int file_log_num);
 
 #define FILE_LOG_FORMAT(letter, format) #letter " (%s) %s: " format "\r\n"
-#define FILE_LOG_FORMAT_FOR_DATALOGGER(letter, format) #letter " %s " format "\n"
+#define FILE_LOG_FORMAT_FOR_DATALOGGER(format) "%s," format "\n"
 
 #define FILELOGI(tag, format, ...) FILE_LOG_LEVEL(LOG_INFO, tag, format, ##__VA_ARGS__)
 #define FILELOGW(tag, format, ...) FILE_LOG_LEVEL(LOG_WARN, tag, format, ##__VA_ARGS__)
@@ -69,9 +69,9 @@ void set_file_log_number(int file_log_num);
     FILELOGE(tag, format, ##__VA_ARGS__); \
   } while (0)
 
-#define FDATA(path, format, ...)                                                                                \
-  do {                                                                                                          \
-    file_log_write_datalogger(path, FILE_LOG_FORMAT_FOR_DATALOGGER(I, format), log_timestamp(), ##__VA_ARGS__); \
+#define FDATA(path, format, ...)                                                                             \
+  do {                                                                                                       \
+    file_log_write_datalogger(path, FILE_LOG_FORMAT_FOR_DATALOGGER(format), log_timestamp(), ##__VA_ARGS__); \
   } while (0)
 
 #ifdef __cplusplus

@@ -1356,7 +1356,7 @@ void ui_init(void) {
   lv_timer_t *time_timer = lv_timer_create(time_timer_cb, 1, &user_data);
 
   // Disable all buttons in Main screen until applying master's time.
-  disable_buttons();
+  // disable_buttons();
 
   // update the zone status in accordance with registered child devices
   // if some child devices are removed, they are displayed as disabled mode (light-gray)

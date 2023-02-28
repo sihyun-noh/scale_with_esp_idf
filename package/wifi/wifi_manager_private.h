@@ -15,6 +15,12 @@ typedef struct {
   int rssi;
 } ap_info_t;
 
+typedef enum {
+  WIFI_OP_AP = 1,
+  WIFI_OP_STA,
+  WIFI_OP_AP_STA,
+} wifi_op_mode_t;
+
 #ifdef __cplusplus
 }
 #endif
