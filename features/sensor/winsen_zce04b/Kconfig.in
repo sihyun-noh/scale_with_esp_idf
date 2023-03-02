@@ -6,13 +6,6 @@
       help
         Winsen ZCE04B NH3 Gas Sensor
 
-    config ZCE04B_UART_MUX_GPIO
-      depends on WINSEN_ZCE04B_FEATURE
-      int "ZCE04B UART mux gpio number"
-      default 11
-      help
-        UART mux gpio number
-
     config ZCE04B_UART_NUM
       depends on WINSEN_ZCE04B_FEATURE
       int "ZCE04B UART port number"

@@ -5,10 +5,8 @@
 #include "uart_api.h"
 #include "winsen_ze03.h"
 #include "log.h"
-#include "gpio_api.h"
 
 #define BUF_SIZE 1024
-#define OUTPUT 2
 
 static const char *TAG = "winsen_ze03";
 
@@ -26,9 +24,6 @@ int winsen_ze03_init(void) {
     return WINSEN_ZE03_ERR_UART;
   }
 
-  gpio_init(CONFIG_ZE03_UART_MUX_GPIO, OUTPUT);
-  gpio_write(CONFIG_ZE03_UART_MUX_GPIO, 0);
-  vTaskDelay(200 / portTICK_PERIOD_MS);
   uart_write_data(CONFIG_ZE03_UART_NUM, set_config, sizeof(set_config));
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   uart_read_data(CONFIG_ZE03_UART_NUM, data, (BUF_SIZE - 1));
@@ -44,8 +39,6 @@ int winsen_ze03_read_manual(int *data) {
   uint8_t petition[9] = { 0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79 };
   uint8_t measure[9] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-  gpio_write(CONFIG_ZE03_UART_MUX_GPIO, 0);
-  vTaskDelay(200 / portTICK_PERIOD_MS);
   uart_write_data(CONFIG_ZE03_UART_NUM, petition, sizeof(petition));
   vTaskDelay(500 / portTICK_PERIOD_MS);
 

@@ -1,0 +1,53 @@
+  menu "TH01 feature"
+
+    config TH01_FEATURE
+      bool "TH01 feature"
+      default "n"
+      help
+        TH01 Air temperature and humidity Sensor
+
+    config TH01_UART_NUM
+      depends on TH01_FEATURE
+      int "TH01 UART port number"
+      range 0 2
+      default 1
+      help
+        UART communication port number for the TH01
+
+    config TH01_UART_BAUDRATE
+      depends on TH01_FEATURE
+      int "TH01 UART communication speed"
+      range 1200 115200
+      default 9600
+      help
+        UART communication speed for the TH01
+
+    config TH01_UART_RXD
+      depends on TH01_FEATURE
+      int "TH01 UART RXD pin number"
+      default 17
+      help
+        GPIO number for UART RX pin
+
+    config TH01_UART_TXD
+      depends on TH01_FEATURE
+      int "TH01 UART TXD pin number"
+      default 18
+      help
+        GPIO number for UART TX pin
+
+    config TH01_UART_RXBUF_SIZE
+      depends on TH01_FEATURE
+      int "TH01 UART rx buffer size"
+      default 2048
+      help
+        UART rx buffer size for the TH01
+
+    config TH01_UART_TXBUF_SIZE
+      depends on TH01_FEATURE
+      int "TH01 UART tx buffer size"
+      default 0
+      help
+        UART tx buffer size for the TH01
+
+  endmenu

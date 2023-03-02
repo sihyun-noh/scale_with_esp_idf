@@ -5,10 +5,8 @@
 #include "uart_api.h"
 #include "winsen_zce04b.h"
 #include "log.h"
-#include "gpio_api.h"
 
 #define BUF_SIZE 1024
-#define OUTPUT   2
 
 static const char *TAG = "winsen_zce04b";
 
@@ -26,9 +24,6 @@ int winsen_zce04b_init(void) {
     return WINSEN_ZCE04B_ERR_UART;
   }
 
-  gpio_init(CONFIG_ZCE04B_UART_MUX_GPIO, OUTPUT);
-  gpio_write(CONFIG_ZCE04B_UART_MUX_GPIO, 1);
-  vTaskDelay(200 / portTICK_PERIOD_MS);
   uart_write_data(CONFIG_ZCE04B_UART_NUM, set_config, sizeof(set_config));
   vTaskDelay(1000 / portTICK_PERIOD_MS);
   uart_read_data(CONFIG_ZCE04B_UART_NUM, data, (BUF_SIZE - 1));
@@ -44,8 +39,6 @@ int winsen_zce04b_read_manual(zce04b_data_t *data) {
   uint8_t petition[9] = { 0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79 };
   uint8_t measure[11] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-  gpio_write(CONFIG_ZCE04B_UART_MUX_GPIO, 1);
-  vTaskDelay(200 / portTICK_PERIOD_MS);
   uart_write_data(CONFIG_ZCE04B_UART_NUM, petition, sizeof(petition));
   vTaskDelay(500 / portTICK_PERIOD_MS);
 

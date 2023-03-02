@@ -26,5 +26,6 @@ menu "Sensors Features"
 
   rsource "winsen_ze03/Kconfig.in"
   rsource "winsen_zce04b/Kconfig.in"
+  rsource "th01/Kconfig.in"
 
 endmenu # Sensors

@@ -6,13 +6,6 @@
       help
         Winsen ZE03 NH3 Gas Sensor
 
-    config ZE03_UART_MUX_GPIO
-      depends on WINSEN_ZE03_FEATURE
-      int "ZE03 UART mux gpio number"
-      default 11
-      help
-        UART mux gpio number
-
     config ZE03_UART_NUM
       depends on WINSEN_ZE03_FEATURE
       int "ZE03 UART port number"

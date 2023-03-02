@@ -39,6 +39,12 @@ if(CONFIG_WINSEN_ZCE04B_FEATURE)
   list(APPEND includes "./winsen_zce04b")
 endif()
 
+if(CONFIG_TH01_FEATURE)
+  list(APPEND srcs
+    "th01/th01.c")
+  list(APPEND includes "./th01")
+endif()
+
 idf_component_register(SRCS "${srcs}"
                     INCLUDE_DIRS ${includes}
                     REQUIRES ${req})
