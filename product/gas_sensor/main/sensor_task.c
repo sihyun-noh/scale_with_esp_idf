@@ -7,6 +7,7 @@
 #include "filelog.h"
 #include "config.h"
 #include "mb_master_rtu.h"
+#include "gpio_api.h"
 #if (CONFIG_WINSEN_ZE03_FEATURE)
 #include "winsen_ze03.h"
 #endif
@@ -17,9 +18,17 @@
 #include "th01.h"
 #endif
 
+#define OUTPUT 2
+
 typedef enum {
   RENKE_SEC_SLAVE_ID = 0x01,  // RENKE Soil EC sensor
 } MB_SLAVE_ADDR;
+
+typedef enum {
+  WINSEN_ZE03 = 0x01,
+  WINSEN_ZCE04B = 0x02,
+  TH01 = 0x03,
+} UART_MUX_ADDR;
 
 static const char *TAG = "sensor_task";
 
@@ -32,16 +41,46 @@ float soil_temp = 0.0;
 float soil_mos = 0.0;
 float soil_ec = 0.0;
 
+void uart_mux_init(void) {
+  gpio_init(UART1_MUX_A_GPIO, OUTPUT);
+  gpio_init(UART1_MUX_B_GPIO, OUTPUT);
+  gpio_write(UART1_MUX_A_GPIO, 0);
+  gpio_write(UART1_MUX_B_GPIO, 0);
+}
+
+void uart_mux_set(int type) {
+  switch (type) {
+    case WINSEN_ZE03: {
+      gpio_write(UART1_MUX_A_GPIO, 1);
+      gpio_write(UART1_MUX_B_GPIO, 0);
+    } break;
+    case WINSEN_ZCE04B: {
+      gpio_write(UART1_MUX_A_GPIO, 0);
+      gpio_write(UART1_MUX_B_GPIO, 0);
+    } break;
+    case TH01: {
+      gpio_write(UART1_MUX_A_GPIO, 0);
+      gpio_write(UART1_MUX_B_GPIO, 1);
+    } break;
+    default: break;
+  }
+  vTaskDelay(200 / portTICK_PERIOD_MS);
+}
+
 int sensor_init(void) {
   int res = 0;
 
+  uart_mux_init();
 #if (CONFIG_WINSEN_ZE03_FEATURE)
+  uart_mux_set(WINSEN_ZE03);
   winsen_ze03_init();
 #endif
 #if (CONFIG_WINSEN_ZCE04B_FEATURE)
+  uart_mux_set(WINSEN_ZCE04B);
   winsen_zce04b_init();
 #endif
 #if (CONFIG_TH01_FEATURE)
+  uart_mux_set(TH01);
   th01_init();
 #endif
 
@@ -106,18 +145,21 @@ int sensor_read(void) {
   int rc = 0;
 
 #if (CONFIG_WINSEN_ZE03_FEATURE)
+  uart_mux_set(WINSEN_ZE03);
   int gas_nh3 = 0;
   rc = winsen_ze03_read_manual(&gas_nh3);
   if (rc)
     return rc;
 #endif
 #if (CONFIG_WINSEN_ZCE04B_FEATURE)
+  uart_mux_set(WINSEN_ZCE04B);
   zce04b_data_t gas_data;
   rc = winsen_zce04b_read_manual(&gas_data);
   if (rc)
     return rc;
 #endif
 #if (CONFIG_TH01_FEATURE)
+  uart_mux_set(TH01);
   th01_data_t th01_data;
   rc = th01_read_manual(&th01_data);
   if (rc)
