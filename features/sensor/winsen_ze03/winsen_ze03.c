@@ -37,12 +37,12 @@ int winsen_ze03_read_manual(int *data) {
   int res = WINSEN_ZE03_OK;
   uint8_t check_sum = 0;
   uint8_t petition[9] = { 0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79 };
-  uint8_t measure[9] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+  uint8_t measure[20] = { 0x00 };
 
   uart_write_data(CONFIG_ZE03_UART_NUM, petition, sizeof(petition));
   vTaskDelay(500 / portTICK_PERIOD_MS);
 
-  len = uart_read_data(CONFIG_ZE03_UART_NUM, measure, 9);
+  len = uart_read_data(CONFIG_ZE03_UART_NUM, measure, 20);
 
   LOGI(TAG, "(%d) 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x", len, measure[0], measure[1], measure[2], measure[3],
        measure[4], measure[5], measure[6], measure[7], measure[8]);

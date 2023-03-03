@@ -25,14 +25,14 @@
     config ZE03_UART_RXD
       depends on WINSEN_ZE03_FEATURE
       int "ZE03 UART RXD pin number"
-      default 17
+      default 18
       help
         GPIO number for UART RX pin
 
     config ZE03_UART_TXD
       depends on WINSEN_ZE03_FEATURE
       int "ZE03 UART TXD pin number"
-      default 18
+      default 17
       help
         GPIO number for UART TX pin
 

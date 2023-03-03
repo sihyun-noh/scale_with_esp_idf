@@ -25,14 +25,14 @@
     config TH01_UART_RXD
       depends on TH01_FEATURE
       int "TH01 UART RXD pin number"
-      default 17
+      default 18
       help
         GPIO number for UART RX pin
 
     config TH01_UART_TXD
       depends on TH01_FEATURE
       int "TH01 UART TXD pin number"
-      default 18
+      default 17
       help
         GPIO number for UART TX pin
 
