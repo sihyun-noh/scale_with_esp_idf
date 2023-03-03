@@ -64,7 +64,7 @@ void uart_mux_set(int type) {
     } break;
     default: break;
   }
-  vTaskDelay(200 / portTICK_PERIOD_MS);
+  vTaskDelay(100 / portTICK_PERIOD_MS);
 }
 
 int sensor_init(void) {

@@ -41,7 +41,7 @@ int th01_read_manual(th01_data_t *data) {
   float buf_h = 999;
 
   uart_write_data(CONFIG_TH01_UART_NUM, petition, sizeof(petition));
-  vTaskDelay(500 / portTICK_PERIOD_MS);
+  vTaskDelay(100 / portTICK_PERIOD_MS);
 
   len = uart_read_data(CONFIG_TH01_UART_NUM, measure, 40);
 

@@ -40,7 +40,7 @@ int winsen_ze03_read_manual(int *data) {
   uint8_t measure[20] = { 0x00 };
 
   uart_write_data(CONFIG_ZE03_UART_NUM, petition, sizeof(petition));
-  vTaskDelay(500 / portTICK_PERIOD_MS);
+  vTaskDelay(100 / portTICK_PERIOD_MS);
 
   len = uart_read_data(CONFIG_ZE03_UART_NUM, measure, 20);
 
