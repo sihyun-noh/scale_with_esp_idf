@@ -27,6 +27,7 @@
 #include "filelog.h"
 #include "log.h"
 #include "sysfile.h"
+#include "sdkconfig.h"
 
 #define FILE_LOG_MAX_BUFF_SIZE 1024
 #define FILE_LOG_MAX_MSG_SIZE (FILE_LOG_MAX_BUFF_SIZE)
@@ -232,6 +233,10 @@ int file_log_write_datalogger(char *path, char *format, ...) {
 
   if (file_ctx.file_num == 0) {
     newfilepath = file_path_name(path);
+#if (CONFIG_BS_PLATFORM_GASSENSOR)
+    char index_buf[60] = "TIME,NH3,CO,H2S,O2,CH4,S_TEMP,S_MOS,S_EC,A_TEMP,A_MOS\n";
+    write_log(newfilepath, index_buf);
+#endif
     write_log(newfilepath, buff);
     free(newfilepath);
     goto END;
