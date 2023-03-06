@@ -241,19 +241,8 @@ int file_copy(const char *to, const char *from) {
     goto out_error;
 
   while ((nread = fread(buf, 1, sizeof(buf), fd_from)) > 0) {
-    char *out_ptr = buf;
-    ssize_t nwritten;
-
-    do {
-      nwritten = fwrite(out_ptr, 1, nread, fd_to);
-
-      if (nwritten >= 0) {
-        nread -= nwritten;
-        out_ptr += nwritten;
-      } else if (errno != EINTR) {
+      if (!fwrite(buf, 1, nread, fd_to))
         goto out_error;
-      }
-    } while (nread > 0);
   }
 
   printf("nread1 = %d\n", nread);

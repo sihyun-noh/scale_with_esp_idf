@@ -94,12 +94,10 @@ int file_operations(void) {
 
     if (file_data->to_file_size == file_data->from_file_size) {
       LOGI(TAG, "file copy success! (file_num : %d)", file_data->file_num);
-      set_usb_copying(USB_COPYING, 0);
       set_usb_copying(USB_COPY_SUCCESS, 1);
     } else {
       LOGE(TAG, "to file : %lld, from file : %lld", file_data->to_file_size, file_data->from_file_size);
       LOGE(TAG, "file copy fail!");
-      set_usb_copying(USB_COPYING, 0);
       set_usb_copying(USB_COPY_FAIL, 1);
     }
     free(copy_data->file_name);
@@ -129,6 +127,7 @@ void usb_host_msc_task(void) {
       }
       set_usb_copying(USB_COPYING, 1);
       file_operations();
+      set_usb_copying(USB_COPYING, 0);
 
       while (!wait_for_event(DEVICE_DISCONNECTED, 200)) {}
 
