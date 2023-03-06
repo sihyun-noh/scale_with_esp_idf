@@ -44,9 +44,6 @@ int winsen_zce04b_read_manual(zce04b_data_t *data) {
 
   len = uart_read_data(CONFIG_ZCE04B_UART_NUM, measure, 20);
 
-  LOGI(TAG, "(%d) 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x, 0x%x, 0x%x", len, measure[0], measure[1], measure[2], measure[3],
-       measure[4], measure[5], measure[6], measure[7], measure[8], measure[9], measure[10]);
-
   if ((measure[0] == 0xff) && (measure[1] == 0x86) && (len != 0)) {
     check_sum = winsen_zce04b_func_check_sum(measure, 11);
     if (check_sum != measure[10]) {

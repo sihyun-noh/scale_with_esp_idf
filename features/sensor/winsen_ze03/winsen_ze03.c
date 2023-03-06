@@ -44,9 +44,6 @@ int winsen_ze03_read_manual(int *data) {
 
   len = uart_read_data(CONFIG_ZE03_UART_NUM, measure, 20);
 
-  LOGI(TAG, "(%d) 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x", len, measure[0], measure[1], measure[2], measure[3],
-       measure[4], measure[5], measure[6], measure[7], measure[8]);
-
   if ((measure[0] == 0xff) && (measure[1] == 0x86) && (len != 0)) {
     check_sum = winsen_ze03_func_check_sum(measure, 9);
     if (check_sum != measure[8]) {
