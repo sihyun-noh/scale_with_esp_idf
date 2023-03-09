@@ -332,6 +332,7 @@ CONFIG_LED_PACKAGE=y
 
 CONFIG_ESPNOW_PACKAGE=y
 # CONFIG_ETHERNET_PACKAGE is not set
+# CONFIG_FILECOPY_PACKAGE is not set
 
 #
 # LWMQTT package
@@ -340,7 +341,7 @@ CONFIG_ESPNOW_PACKAGE=y
 # end of LWMQTT package
 
 # CONFIG_MODBUS_PACKAGE is not set
-# CONFIG_MQTTC_PACKAGE is not set
+CONFIG_MQTTC_PACKAGE=y
 
 #
 # PAL packages
@@ -369,6 +370,12 @@ CONFIG_ADC_PACKAGE=y
 #
 # CONFIG_DAC_PACKAGE is not set
 # end of DAC package
+
+#
+# UART package
+#
+CONFIG_UART_PACKAGE=y
+# end of UART package
 # end of PAL packages
 
 CONFIG_PING_PACKAGE=y
@@ -410,6 +417,24 @@ CONFIG_WIFILIB_PACKAGE=y
 # CONFIG_SCD4X_FEATURE is not set
 # CONFIG_ATLAS_PH_FEATURE is not set
 # CONFIG_ATLAS_EC_FEATURE is not set
+
+#
+# Winsen ZE03 feature
+#
+# CONFIG_WINSEN_ZE03_FEATURE is not set
+# end of Winsen ZE03 feature
+
+#
+# Winsen ZCE04B feature
+#
+# CONFIG_WINSEN_ZCE04B_FEATURE is not set
+# end of Winsen ZCE04B feature
+
+#
+# TH01 feature
+#
+# CONFIG_TH01_FEATURE is not set
+# end of TH01 feature
 # end of Sensors Features
 
 # CONFIG_EASYSETUP_FEATURE is not set
