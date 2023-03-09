@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "esp_err.h"
 #include "esp_log.h"
@@ -124,6 +125,25 @@ mqtt_client_t *mqtt_client_init_impl(mqtt_config_t *config) {
   }
 
   client->handle = esp_mqtt_client_init(&client->config);
+
+  /* Register an internal mqtt event handler */
+  esp_mqtt_client_register_event(client->handle, ESP_EVENT_ANY_ID, mqtt_event_handler, client);
+  return client;
+}
+
+mqtt_client_t *mqtt_client_broker_uri_impl(mqtt_config_t *config) {
+  mqtt_client_t *client = (mqtt_client_t *)malloc(sizeof(mqtt_client_t));
+  if (client == NULL) {
+    return NULL;
+  }
+
+  memset(client, 0, sizeof(mqtt_client_t));
+  esp_mqtt_client_config_t mqtt_cfg = { 0 };
+
+  ESP_LOGI(TAG, "broker uri = %s", config->uri);
+
+  mqtt_cfg.broker.address.uri = config->uri;
+  client->handle = esp_mqtt_client_init(&mqtt_cfg);
 
   /* Register an internal mqtt event handler */
   esp_mqtt_client_register_event(client->handle, ESP_EVENT_ANY_ID, mqtt_event_handler, client);

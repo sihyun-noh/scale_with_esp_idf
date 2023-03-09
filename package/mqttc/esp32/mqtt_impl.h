@@ -31,12 +31,20 @@ extern "C" {
 typedef struct mqtt_client mqtt_client_t;
 
 /**
- * @brief Implement to create a new MQTT client
+ * @brief Implement to create a new MQTT client with mqtt broker host ip address
  *
  * @param config Configuration structure for the MQTT client
  * @return mqtt_client_t* returns a pointer to the MQTT client instance on success, NULL on failure
  */
 mqtt_client_t *mqtt_client_init_impl(mqtt_config_t *config);
+
+/**
+ * @brief Implement to create a new MQTT client with mqtt broker uri
+ *
+ * @param config Configuration structure for the MQTT client
+ * @return mqtt_client_t* returns a pointer to the MQTT client instance on success, NULL on failure
+ */
+mqtt_client_t *mqtt_client_broker_uri_impl(mqtt_config_t *config);
 
 /**
  * @brief Implement to destroy an MQTT client

@@ -102,12 +102,20 @@ typedef struct mqtt_event_data {
 } mqtt_event_data_t;
 
 /**
- * @brief Initialize MQTT client
+ * @brief Initialize MQTT client with mqtt broker ip address
  *
  * @param config the configuration of the MQTT client
  * @return mqtt_ctx_t* returns the pointer to the MQTT client context or NULL if failed
  */
 mqtt_ctx_t *mqtt_client_init(mqtt_config_t *config);
+
+/**
+ * @brief Initialize MQTT client with mqtt broker uri
+ *
+ * @param config the configuration of the MQTT client
+ * @return mqtt_ctx_t* returns the pointer to the MQTT client context or NULL if failed
+ */
+mqtt_ctx_t *mqtt_client_broker(mqtt_config_t *config);
 
 /**
  * @brief Deinitialize MQTT client

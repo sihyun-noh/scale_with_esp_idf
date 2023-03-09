@@ -37,6 +37,19 @@ mqtt_ctx_t *mqtt_client_init(mqtt_config_t *config) {
   return ctx;
 }
 
+mqtt_ctx_t *mqtt_client_broker(mqtt_config_t *config) {
+  mqtt_ctx_t *ctx = (mqtt_ctx_t *)malloc(sizeof(mqtt_ctx_t));
+  if (ctx) {
+    mqtt_client_t *client = mqtt_client_broker_uri_impl(config);
+    ctx->client = client;
+    ctx->event_cb_fn = config->event_cb_fn;
+    if (ctx->event_cb_fn) {
+      mqtt_client_register_event_callback_impl(ctx->client, ctx->event_cb_fn, ctx);
+    }
+  }
+  return ctx;
+}
+
 void mqtt_client_deinit(mqtt_ctx_t *ctx) {
   if (ctx) {
     mqtt_client_deinit_impl(ctx->client);
