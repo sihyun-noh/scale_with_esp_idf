@@ -1079,7 +1079,7 @@ void mqtt_publish_sensor_data(void) {
       LOGI(TAG, "mqtt_publish error!");
     }
   }
-#elif ((CONFIG_SENSOR_RK520_02)|| (CONFIG_SENSOR_RS_ECTH))
+#elif ((CONFIG_SENSOR_RK520_02) || (CONFIG_SENSOR_RS_ECTH))
   char mqtt_saturation_ec[80] = { 0 };
   char mqtt_temperature[80] = { 0 };
   char mqtt_humidity[80] = { 0 };
@@ -1295,6 +1295,5 @@ void create_mqtt_task(void) {
 
 #endif
 
-  xTaskCreatePinnedToCore(mqtt_task, MQTT_TASK_NAME, 4096, NULL, (tskIDLE_PRIORITY + 5),
-                          &mqtt_task_handle, 1);
+  xTaskCreatePinnedToCore(mqtt_task, MQTT_TASK_NAME, 4096, NULL, (tskIDLE_PRIORITY + 5), &mqtt_task_handle, 1);
 }

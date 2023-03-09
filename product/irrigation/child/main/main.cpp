@@ -16,6 +16,7 @@
 #include "espnow.h"
 #include "esp_mac.h"
 #include "battery_task.h"
+#include "wifi_manager_private.h"
 
 #include <string.h>
 
@@ -106,7 +107,12 @@ int system_init(void) {
   if (ret)
     return ERR_WIFI_INIT;
 
-  ret = wifi_espnow_mode();
+#if (CONFIG_ESPNOW_WIFI_MODE == STATION)
+  ret = wifi_espnow_mode(WIFI_OP_STA);
+#elif (CONFIG_ESPNOW_WIFI_MODE == SOFTAP)
+  ret = wifi_espnow_mode(WIFI_OP_AP);
+#endif
+
   if (ret)
     return ERR_WIFI_INIT;
 
@@ -174,7 +180,7 @@ void loop_task(void) {
       } break;
       case MONITOR_MODE: {
         if (is_device_onboard()) {
-          //LOGI(TAG, "MONITOR_MODE");
+          // LOGI(TAG, "MONITOR_MODE");
           delay_ms = DELAY_1SEC;
         } else {
           set_operation_mode(DEEP_SLEEP_MODE);

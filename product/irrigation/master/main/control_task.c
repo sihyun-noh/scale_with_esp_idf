@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <string.h>
 
 #include "freertos/FreeRTOS.h"
@@ -6,6 +7,7 @@
 
 #include "config.h"
 #include "log.h"
+#include "mqtt_task.h"
 #include "sys_status.h"
 #include "syscfg.h"
 #include "actuator.h"
@@ -20,15 +22,22 @@
 #define TOTAL_DEVICES 7
 #define SYNC_TIME_BUFF 5
 
+#define CMD_MSG_QUEUE_LEN 16
+
 #define DEBUG_TEST 1  // for Test
 
-#define AM_TIME_FLOW_START 5  // AM 5시 
-#define AM_TIME_FLOW_END   9  // AM 9시 
-#define PM_TIME_FLOW_START 17  // PM 5시 
-#define PM_TIME_FLOW_END   21  // PM 9시 
+#define AM_TIME_FLOW_START 5   // AM 5시
+#define AM_TIME_FLOW_END 9     // AM 9시
+#define PM_TIME_FLOW_START 17  // PM 5시
+#define PM_TIME_FLOW_END 21    // PM 9시
+
+#define IRRIGATION_SIMULATOR 1
 
 static const char* TAG = "control_task";
+
 static TaskHandle_t control_handle = NULL;
+static TaskHandle_t cmd_handle = NULL;
+static QueueHandle_t cmd_msg_queue = NULL;
 
 extern int get_water_flow_liters(void);
 extern void reset_water_flow_liters(void);
@@ -56,8 +65,8 @@ int receivedId;          // received device Id
 int respBroadCast[TOTAL_DEVICES];
 int retryCntMsg[TOTAL_DEVICES];
 
-bool setConfig;                      // config setting 여부
-bool flowStart;                      // 관수 시작 flag
+bool setConfig;  // config setting 여부
+bool flowStart;  // 관수 시작 flag
 bool sendChildSleep;
 
 time_t flowStartTime;                // 관수 시작 설정 시간
@@ -72,6 +81,25 @@ int syncTimeBuffCnt;   // Time sync buffer check count
 int totalNumberChild;  // child device number
 
 uint64_t remainSleepTime;  // sleep 시간
+
+static bool _send_msg_event(irrigation_message_t* msg) {
+  return cmd_msg_queue && (xQueueSend(cmd_msg_queue, msg, portMAX_DELAY) == pdPASS);
+}
+
+static bool _get_msg_event(irrigation_message_t* msg) {
+  return cmd_msg_queue && (xQueueReceive(cmd_msg_queue, msg, portMAX_DELAY) == pdPASS);
+}
+
+void send_msg_to_cmd_task(void* msg, size_t msg_len) {
+  irrigation_message_t message = { 0 };
+
+  if (msg && (msg_len == sizeof(irrigation_message_t))) {
+    memcpy(&message, msg, msg_len);
+    if (!_send_msg_event(&message)) {
+      LOGW(TAG, "Failed to send recv message event!!!");
+    }
+  }
+}
 
 void init_variable(void) {
   sendCmd = NONE;
@@ -233,7 +261,7 @@ bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
         if (retryCntMsg[i + 1] > 3) {
           payload->dev_stat.child_status[i] = 1;
         }
-      }      
+      }
     } break;
     case SET_SLEEP: {
       payload->remain_time_sleep = remainSleepTime;
@@ -251,7 +279,7 @@ bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
   LOG_BUFFER_HEXDUMP(TAG, zoneAddr, sizeof(zoneAddr), LOG_INFO);
 
   LOGI(TAG, "============== Message ==================");
-  //LOG_BUFFER_HEXDUMP(TAG, &send_message, sizeof(irrigation_message_t), LOG_INFO);
+  // LOG_BUFFER_HEXDUMP(TAG, &send_message, sizeof(irrigation_message_t), LOG_INFO);
   LOGI(TAG, "sender : [%d]", sender);
 
   if (!espnow_send_data(zoneAddr, (uint8_t*)&send_message, sizeof(irrigation_message_t))) {
@@ -299,21 +327,37 @@ void check_response(irrigation_message_t* msg) {
 
     case SET_VALVE_ON: {
       if (msg->resp == SUCCESS) {
+        mqtt_response_t mqtt_resp = { 0 };
+
         start_flow();
         // 관수 시작을 HID 에 전달
         send_esp_data(START_FLOW, START_FLOW, HID_DEV);
 
         LOGI(TAG, "RECEIVE VALVE ON RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
+
+        // Publish status data to the mqtt broker.
+        mqtt_resp.resp = RESP_FLOW_START;
+        mqtt_resp.payload.dev_stat.deviceId = flowOrder[flowDoneCnt];
+        send_msg_to_mqtt_task(MQTT_PUB_DATA_ID, &mqtt_resp, sizeof(mqtt_response_t));
+
         set_control_status(WAIT_STATE);
       }
     } break;
 
     case SET_VALVE_OFF: {
       if (msg->resp == SUCCESS) {
+        mqtt_response_t mqtt_resp = { 0 };
+
         // 관수 완료를 HID 에 전달
         send_esp_data(ZONE_COMPLETE, ZONE_COMPLETE, HID_DEV);
 
         LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
+
+        mqtt_resp.resp = RESP_FLOW_DONE;
+        mqtt_resp.payload.dev_stat.deviceId = flowOrder[flowDoneCnt];
+        mqtt_resp.payload.dev_stat.flow_value = get_flow_value();
+        send_msg_to_mqtt_task(MQTT_PUB_DATA_ID, &mqtt_resp, sizeof(mqtt_response_t));
+
         set_control_status(WAIT_STATE);
       }
     } break;
@@ -359,14 +403,18 @@ void check_response(irrigation_message_t* msg) {
         remainSleepTime -= 20;
         send_esp_data(SET_SLEEP, SET_SLEEP, HID_DEV);
         respChildCnt = 0;
-        
+
         set_control_status(SLEEP);
       }
     } break;
 
     case FORCE_STOP: {
+      mqtt_response_t mqtt_resp = { 0 };
       // Send force stop response to the hid device when master received reposne of force stop from child node.
       send_esp_data(RESPONSE, FORCE_STOP, HID_DEV);
+
+      mqtt_resp.resp = RESP_FORCE_STOP;
+      send_msg_to_mqtt_task(MQTT_PUB_DATA_ID, &mqtt_resp, sizeof(mqtt_resp));
 
       init_variable();
       set_control_status(CHECK_SCEHDULE);
@@ -443,6 +491,11 @@ void check_peer_address(void) {
   LOGI(TAG, "ADDR CHECK DONE !!");
 }
 
+/**
+ * ! ESPNOW sending or receiving callback function is called in WiFi task.
+ * ! Users should not do lengthy operations from this task. Instead, post
+ * ! necessary data to a queue and handle it from a lower priority task.
+ */
 void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
   LOGI(TAG, "===== recv mac address ========");
   LOG_BUFFER_HEX(TAG, mac, MAC_ADDR_LEN);
@@ -455,83 +508,9 @@ void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
 
   retryCntMsg[msgFromId] = 0;
 
-  irrigation_message_t recv_message = { 0 };
-  memcpy(&recv_message, incomingData, sizeof(irrigation_message_t));
-
   LOGI(TAG, "Receive Data from Other devices(HID and Any Child) : %d", msgFromId);
-  //LOG_BUFFER_HEXDUMP(TAG, incomingData, len, LOG_INFO);
 
-  if (len > 0) {
-    // master 에서는 아래 세가지 경우만 필요.
-    // HID 로 부터 수신하는 config 설정 값
-    // Child 로 전달한 valve on / off 에 대한 response
-    // Child 의 배터리 잔량 값.
-    switch (recv_message.sender_type) {
-      case SET_CONFIG: {
-        config_value_t* config = (config_value_t*)&recv_message.payload.config;
-        flowStartTime = config->start_time;
-        zoneFlowCnt = config->zone_cnt;
-        memcpy(flowOrder, config->zones, sizeof(flowOrder));
-        memcpy(flowSettingValue, config->flow_rate, sizeof(flowSettingValue));
-        flowDoneCnt = 0;
-        setConfig = true;
-        show_config_debug();
-
-        send_esp_data(RESPONSE, SET_CONFIG, HID_DEV);
-
-        set_control_status(CHECK_SCEHDULE);
-        LOGI(TAG, "RECEIVE & SET CONFIG from HID");
-      } break;
-
-      case RESPONSE: {
-        check_response(&recv_message);
-      } break;
-
-      case FORCE_STOP: {
-        LOGI(TAG, "FORCE STOP !!");
-
-        if (flowStart) {
-          stop_flow();
-          send_esp_data(FORCE_STOP, FORCE_STOP, flowOrder[flowDoneCnt]);
-          set_control_status(WAIT_STATE);
-          flowStart = false;
-        } else {
-          send_esp_data(RESPONSE, FORCE_STOP, HID_DEV);
-          init_variable();
-          set_control_status(CHECK_SCEHDULE);
-        }
-      } break;
-
-      case REQ_TIME_SYNC: {
-        send_esp_data(TIME_SYNC, TIME_SYNC, ALL_DEV);
-
-        LOGI(TAG, "SEND TIME SYNC / REQ_TIME_SYNC!!");
-        set_control_status(WAIT_STATE);
-      } break;
-
-      case UPDATE_DEVICE_ADDR: {
-        send_esp_data(RESPONSE, UPDATE_DEVICE_ADDR, HID_DEV);
-
-        device_manage_t* dev_manage = (device_manage_t*)&recv_message.payload.dev_manage;
-        int cnt = dev_manage->update_dev_cnt;
-        device_addr_t* update_dev_addr = dev_manage->update_dev_addr;
-        LOGI(TAG, "update device addr cnt = %d", cnt);
-        // Remove all peer address from espnow
-        espnow_remove_peers(MASTER_DEVICE);
-        // Save the updated peer address to the syscfg (Only child address should be updated)
-        for (int i = 0; i < cnt; i++) {
-          LOGI(TAG, "device type = %d, mac_addr = %s", update_dev_addr[i].device_type, update_dev_addr[i].mac_addr);
-          if (update_dev_addr[i].device_type != MAIN_DEV) {
-            set_mac_address(update_dev_addr[i].device_type, update_dev_addr[i].mac_addr);
-          }
-        }
-        // Add updated peer address raed from syscfg to the espnow
-        check_peer_address();
-      } break;
-
-      default: break;
-    }
-  }
+  send_msg_to_cmd_task((void*)incomingData, len);
 }
 
 void on_data_sent_cb(const uint8_t* macAddr, esp_now_send_status_t status) {
@@ -626,8 +605,8 @@ void check_retry_cmd(void) {
     }
   }
 
-  if (childErrorCnt > 0) {    
-    send_esp_data(DEVICE_ERROR, DEVICE_ERROR, HID_DEV);    
+  if (childErrorCnt > 0) {
+    send_esp_data(DEVICE_ERROR, DEVICE_ERROR, HID_DEV);
     set_control_status(WAIT_STATE);
   }
 }
@@ -662,6 +641,98 @@ void check_cmd_response(void) {
   } else {
     respTimeCnt = 0;
   }
+}
+
+void cmd_msg_handler(irrigation_message_t* message) {
+  // LOG_BUFFER_HEXDUMP(TAG, incomingData, len, LOG_INFO);
+
+  // master 에서는 아래 세가지 경우만 필요.
+  // HID 로 부터 수신하는 config 설정 값
+  // Child 로 전달한 valve on / off 에 대한 response
+  // Child 의 배터리 잔량 값.
+  switch (message->sender_type) {
+    case SET_CONFIG: {
+      config_value_t* config = (config_value_t*)&message->payload.config;
+      flowStartTime = config->start_time;
+      zoneFlowCnt = config->zone_cnt;
+      memcpy(flowOrder, config->zones, sizeof(flowOrder));
+      memcpy(flowSettingValue, config->flow_rate, sizeof(flowSettingValue));
+      flowDoneCnt = 0;
+      setConfig = true;
+      show_config_debug();
+
+      send_esp_data(RESPONSE, SET_CONFIG, HID_DEV);
+
+      set_control_status(CHECK_SCEHDULE);
+      LOGI(TAG, "RECEIVE & SET CONFIG from HID");
+    } break;
+
+    case RESPONSE: {
+      check_response(message);
+    } break;
+
+    case FORCE_STOP: {
+      LOGI(TAG, "FORCE STOP !!");
+
+      if (flowStart) {
+        stop_flow();
+        send_esp_data(FORCE_STOP, FORCE_STOP, flowOrder[flowDoneCnt]);
+        set_control_status(WAIT_STATE);
+        flowStart = false;
+      } else {
+        send_esp_data(RESPONSE, FORCE_STOP, HID_DEV);
+        init_variable();
+        set_control_status(CHECK_SCEHDULE);
+      }
+    } break;
+
+    case REQ_TIME_SYNC: {
+      send_esp_data(TIME_SYNC, TIME_SYNC, ALL_DEV);
+
+      LOGI(TAG, "SEND TIME SYNC / REQ_TIME_SYNC!!");
+      set_control_status(WAIT_STATE);
+    } break;
+
+    case UPDATE_DEVICE_ADDR: {
+      send_esp_data(RESPONSE, UPDATE_DEVICE_ADDR, HID_DEV);
+
+      device_manage_t* dev_manage = (device_manage_t*)&message->payload.dev_manage;
+      int cnt = dev_manage->update_dev_cnt;
+      device_addr_t* update_dev_addr = dev_manage->update_dev_addr;
+      LOGI(TAG, "update device addr cnt = %d", cnt);
+      // Remove all peer address from espnow
+      espnow_remove_peers(MASTER_DEVICE);
+      // Save the updated peer address to the syscfg (Only child address should be updated)
+      for (int i = 0; i < cnt; i++) {
+        LOGI(TAG, "device type = %d, mac_addr = %s", update_dev_addr[i].device_type, update_dev_addr[i].mac_addr);
+        if (update_dev_addr[i].device_type != MAIN_DEV) {
+          set_mac_address(update_dev_addr[i].device_type, update_dev_addr[i].mac_addr);
+        }
+      }
+      // Add updated peer address raed from syscfg to the espnow
+      check_peer_address();
+    } break;
+
+    default: break;
+  }
+}
+
+static void cmd_task(void* pvParameters) {
+  irrigation_message_t msg;
+
+  for (;;) {
+    memset(&msg, 0x00, sizeof(irrigation_message_t));
+    if (_get_msg_event(&msg)) {
+      cmd_msg_handler(&msg);
+    } else {
+      LOGE(TAG, "Failed to receive message from queue");
+      vTaskDelay(1000);
+      continue;
+    }
+    vTaskDelay(500);
+  }
+  vTaskDelete(NULL);
+  cmd_handle = NULL;
 }
 
 static void control_task(void* pvParameters) {
@@ -739,7 +810,6 @@ static void control_task(void* pvParameters) {
 
         LOGI(TAG, "CHILD - %d VALVE OFF !!", flowOrder[flowDoneCnt]);
         set_control_status(WAIT_STATE);
-
       } break;
 
       case COMPLETE: {
@@ -768,14 +838,26 @@ static void control_task(void* pvParameters) {
 }
 
 void create_control_task(void) {
-  uint16_t stack_size = 8192;
-  UBaseType_t task_priority = tskIDLE_PRIORITY + 5;
+  uint16_t control_stack_size = 8192;
+  uint16_t cmd_stack_size = 4096;
+  UBaseType_t control_task_priority = tskIDLE_PRIORITY + 5;
+  UBaseType_t cmd_task_priority = tskIDLE_PRIORITY + 3;
 
   if (control_handle) {
     LOGI(TAG, "control task is alreay created");
     return;
   }
 
+  // create queue
+  cmd_msg_queue = xQueueCreate(CMD_MSG_QUEUE_LEN, sizeof(irrigation_message_t));
+  if (cmd_msg_queue == NULL) {
+    return;
+  }
+
+  // create control task
   init_variable();
-  xTaskCreate(control_task, "CONTROL", stack_size, NULL, task_priority, &control_handle);
+  xTaskCreate(control_task, "CONTROL", control_stack_size, NULL, control_task_priority, &control_handle);
+
+  // create espnow command handler task
+  xTaskCreate(cmd_task, "COMMAND", cmd_stack_size, NULL, cmd_task_priority, &cmd_handle);
 }

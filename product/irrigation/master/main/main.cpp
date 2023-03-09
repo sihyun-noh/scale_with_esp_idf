@@ -1,13 +1,17 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/event_groups.h"
 #include "freertos/projdefs.h"
 #include "log.h"
 #include "nvs_flash.h"
 #include "esp_sleep.h"
+#include "esp_event.h"
+#include "esp_wifi.h"
 #include "esp_mac.h"
 
 #include "shell_console.h"
 #include "syscfg.h"
+#include "sysevent.h"
 #include "sys_config.h"
 #include "sys_status.h"
 #include "wifi_manager.h"
@@ -15,6 +19,7 @@
 #include "main.h"
 #include "espnow.h"
 #include "time_api.h"
+#include "mqtt_task.h"
 #include "battery_task.h"
 
 #include <string.h>
@@ -22,6 +27,7 @@
 #define DELAY_1SEC 1000
 #define DELAY_5SEC 5000
 #define DELAY_10SEC 10000
+#define DELAY_1MIN (60 * DELAY_1SEC)
 #define DELAY_500MS 500
 
 const char* TAG = "main_app";
@@ -49,6 +55,67 @@ extern void on_data_sent_cb(const uint8_t* macAddr, esp_now_send_status_t status
 static operation_mode_t s_curr_mode;
 static int main_sleep_time = 60;
 
+EventGroupHandle_t s_wifi_event_group;
+
+/* The event group allows multiple bits for each event, but we only care about two events:
+ * - we are connected to the AP with an IP
+ * - we failed to connect after the maximum amount of retries */
+#define WIFI_CONNECTED_BIT BIT0
+#define WIFI_FAIL_BIT BIT1
+
+int connect_handler(void* arg) {
+  LOGI(TAG, "Connected to the router");
+  return 0;
+}
+
+int ipgot_handler(void* arg) {
+  if (s_wifi_event_group) {
+    xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
+  }
+  return 0;
+}
+
+int disconnect_handler(void* arg) {
+  if (s_wifi_event_group) {
+    xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
+  }
+  return 0;
+}
+
+int connect_ap(const char* ssid, const char* password) {
+  int ret = 0;
+
+  if (wifi_connect_ap(ssid, password) == 0) {
+    LOGI(TAG, "Connecting to COMFAST_TEST_IOT router");
+  }
+
+  /* Waiting until either the connection is established (WIFI_CONNECTED_BIT) or connection failed for the maximum
+   * number of re-tries (WIFI_FAIL_BIT). The bits are set by event_handler() (see above) */
+  EventBits_t bits =
+      xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT, pdFALSE, pdFALSE, portMAX_DELAY);
+
+  /* xEventGroupWaitBits() returns the bits before the call returned, hence we can test which event actually
+   * happened. */
+  if (bits & WIFI_CONNECTED_BIT) {
+    LOGI(TAG, "connected to ap SSID:%s password:%s", ssid, password);
+
+    uint8_t sta_mac[6] = { 0 };
+    uint8_t ap_mac[6] = { 0 };
+    esp_wifi_get_mac(WIFI_IF_STA, sta_mac);
+    esp_wifi_get_mac(WIFI_IF_AP, ap_mac);
+
+    LOGI(TAG, "ap_mac:" MACSTR, MAC2STR(ap_mac));
+  } else if (bits & WIFI_FAIL_BIT) {
+    LOGI(TAG, "Failed to connect to SSID:%s, password:%s", ssid, password);
+    ret = -1;
+  } else {
+    LOGE(TAG, "UNEXPECTED EVENT");
+    ret = -1;
+  }
+  vEventGroupDelete(s_wifi_event_group);
+  return ret;
+}
+
 void set_operation_mode(operation_mode_t mode) {
   s_curr_mode = mode;
 }
@@ -60,19 +127,6 @@ operation_mode_t get_operation_mode(void) {
 static void delay(uint32_t ms) {
   vTaskDelay(ms / portTICK_PERIOD_MS);
 }
-
-#if 0
-static void recv_data_cb(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
-  // mac_addr can be the hid and the mac address of any child device.
-  if (memcmp(mac_addr, hid_mac_addr, MAC_ADDR_LEN) == 0) {
-    LOGI(TAG, "Receive Data from HID device");
-    LOG_BUFFER_HEXDUMP(TAG, data, data_len, LOG_INFO);
-    espnow_send_data(mac_addr, (uint8_t *)"OK", 2);
-  }
-}
-
-static void send_data_cb(const uint8_t *mac_addr, esp_now_send_status_t status) {}
-#endif
 
 /**
  * @brief Handler function to stop interactive command shell
@@ -122,10 +176,6 @@ int system_init(void) {
   if (ret)
     return ERR_WIFI_INIT;
 
-  ret = wifi_espnow_mode();
-  if (ret)
-    return ERR_WIFI_INIT;
-
   ret = syscfg_init();
   if (ret)
     return ERR_SYSCFG_INIT;
@@ -137,6 +187,10 @@ int system_init(void) {
   ret = sys_stat_init();
   if (ret)
     return ERR_SYS_STATUS_INIT;
+
+  ret = sysevent_create();
+  if (ret)
+    return ERR_SYSEVENT_CREATE;
 
   // Generate the default manufacturing data if there is no data in mfg partition.
   generate_syscfg();
@@ -153,6 +207,8 @@ int system_init(void) {
 
   create_water_flow_task();
 
+  create_mqtt_task();
+
   // Get a main mac address that will be used in espnow
   uint8_t mac[6] = { 0 };
 #if (CONFIG_ESPNOW_WIFI_MODE == STATION)
@@ -161,6 +217,12 @@ int system_init(void) {
   esp_read_mac(mac, ESP_MAC_WIFI_SOFTAP);
 #endif
   LOG_BUFFER_HEX(TAG, mac, sizeof(mac));
+
+  s_wifi_event_group = xEventGroupCreate();
+
+  sysevent_get_with_handler(WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, connect_handler, NULL);
+  sysevent_get_with_handler(WIFI_EVENT, WIFI_EVENT_STA_DISCONNECTED, disconnect_handler, NULL);
+  sysevent_get_with_handler(IP_EVENT, IP_EVENT_STA_GOT_IP, ipgot_handler, NULL);
 
   return SYSINIT_OK;
 }
@@ -174,6 +236,28 @@ void loop_task(void) {
     delay_ms = DELAY_500MS;
     switch (get_operation_mode()) {
       case START_MODE: {
+        // wifi_sta_mode();
+        // ESPNOW-WIFI Gateway mode
+        int ret = wifi_espnow_mode(WIFI_OP_AP_STA);
+        if (ret) {
+          LOGI(TAG, "Failed to set wifi-espnow for gatway mode");
+        }
+
+        vTaskDelay(1000);
+
+        if (connect_ap("greenlabs_4F", "greenlabs0601!") == 0) {
+          LOGI(TAG, "Success to connect to COMFAST_TEST_IOT router");
+        } else {
+          LOGI(TAG, "Failed to connect to COMFAST_TEST_IOT router");
+        }
+
+        vTaskDelay(1000);
+
+        // connect_mqtt_broker_host("91.121.93.94", 1883);
+        connect_mqtt_broker_uri("mqtt://test.mosquitto.org");
+
+        vTaskDelay(1000);
+
         LOGI(TAG, "ESPNOW_START_MODE");
         if (espnow_start(on_data_recv, on_data_sent_cb) == false) {
           LOGE(TAG, "Failed to start espnow");
@@ -196,7 +280,7 @@ void loop_task(void) {
       case MONITOR_MODE: {
         if (is_device_onboard()) {
           LOGD(TAG, "MONITOR_MODE");
-          delay_ms = DELAY_1SEC;
+          delay_ms = DELAY_1MIN;
         } else {
           set_operation_mode(DEEP_SLEEP_MODE);
         }
