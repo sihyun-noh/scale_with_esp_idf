@@ -1,0 +1,79 @@
+name: Release sensor
+
+on:
+  push:
+    tags:
+    - 'sensor_**'
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout smartfarm-ief repo
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Prepare Build
+      run: |
+           cd product/sensor
+           DEFINED_PROD=$(grep -h 'CONFIG_SENSOR_*' sdkconfig | grep -h y)
+           DEFINED_PROD=${DEFINED_PROD:14}
+           DEFINED_PROD=${DEFINED_PROD%=y}
+           COMPILE_PROD=${GITHUB_REF/refs\/tags\//}
+           COMPILE_PROD=${COMPILE_PROD:7}
+           COMPILE_PROD=${COMPILE_PROD%/*}
+           COMPILE_PROD=$(echo $COMPILE_PROD | tr '[:lower:]' '[:upper:]')
+           echo "SENSOR_TYPE=${COMPILE_PROD}" >> $GITHUB_ENV
+           perl -pi -e "s/${DEFINED_PROD}/${COMPILE_PROD}/g" sdkconfig
+
+    - name: esp-idf build
+      uses: espressif/esp-idf-ci-action@main
+      with:
+        esp_idf_version: v5.0
+        target: esp32
+        path: './product/sensor'
+
+    - name: Get lastest tag name
+      run: echo "TAG=${GITHUB_REF/refs\/tags\/sensor_*\//}" >> $GITHUB_ENV
+
+    - name: Get current date info
+      run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
+    - name: Copy file
+      run: cp ./product/sensor/build/SENS_*.bin SENS_${{ env.SENSOR_TYPE }}_${{ env.TAG }}_${{ env.DATE }}.bin
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: binary_file
+        path: ./*.bin
+
+  release:
+
+    runs-on: ubuntu-latest
+    needs: build
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+    - name: Download a single artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: binary_file
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-region: ap-northeast-2
+        role-to-assume: arn:aws:iam::864553365184:role/assume-role-sf-prod-smartfarm-ief
+        role-duration-seconds: 1800
+        role-skip-session-tagging: true
+
+    - name: Copy files to the production website with the AWS CLI
+      run: |
+        aws s3 cp *.bin s3://gl-smartfarm-prod-ota-se
