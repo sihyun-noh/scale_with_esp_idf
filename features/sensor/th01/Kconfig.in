@@ -18,7 +18,7 @@
       depends on TH01_FEATURE
       int "TH01 UART communication speed"
       range 1200 115200
-      default 9600
+      default 19200
       help
         UART communication speed for the TH01
 
