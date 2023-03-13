@@ -51,11 +51,11 @@ void uart_mux_init(void) {
 void uart_mux_set(int type) {
   switch (type) {
     case WINSEN_ZE03: {
-      gpio_write(UART1_MUX_A_GPIO, 1);
+      gpio_write(UART1_MUX_A_GPIO, 0);
       gpio_write(UART1_MUX_B_GPIO, 0);
     } break;
     case WINSEN_ZCE04B: {
-      gpio_write(UART1_MUX_A_GPIO, 0);
+      gpio_write(UART1_MUX_A_GPIO, 1);
       gpio_write(UART1_MUX_B_GPIO, 0);
     } break;
     case TH01: {
