@@ -29,7 +29,7 @@ endif()
 
 if(CONFIG_UART_PACKAGE)
   list(APPEND srcs
-    "uart/uart_api.c" "uart/esp32/uart_hal.c")
+    "uart/uart_api.c" "uart/esp32/uart_pal.c")
   list(APPEND includes "./uart")
 endif()
 

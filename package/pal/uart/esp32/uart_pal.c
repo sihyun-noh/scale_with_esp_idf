@@ -3,7 +3,26 @@
 
 #include "driver/uart.h"
 #include "hal/uart_ll.h"
-#include "uart_hal.h"
+#include "hal/uart_hal.h"
+#include "uart_pal.h"
+
+#define UART_CONTEX_INIT_DEF(uart_num) {\
+    .hal.dev = UART_LL_GET_HW(uart_num),\
+    .spinlock = portMUX_INITIALIZER_UNLOCKED,\
+    .hw_enabled = false,\
+}
+
+typedef struct {
+    uart_hal_context_t hal;
+    portMUX_TYPE spinlock;
+    bool hw_enabled;
+} uart_context_t;
+
+static uart_context_t uart_context[3] = {
+    UART_CONTEX_INIT_DEF(UART_NUM_0),
+    UART_CONTEX_INIT_DEF(UART_NUM_1),
+    UART_CONTEX_INIT_DEF(UART_NUM_2),
+};
 
 typedef struct uart_hal {
   uint8_t num;
@@ -169,4 +188,19 @@ void uart_hal_flush_tx_only(int dev, bool tx_only) {
     ESP_ERROR_CHECK(uart_flush_input(dev));
   }
   uart_hal_unlock(dev);
+}
+
+int uart_hal_baudrate(int dev, uint32_t baud_rate)
+{
+  uart_sclk_t src_clk;
+  uint32_t sclk_freq;
+
+  uart_hal_get_sclk(&(uart_context[dev].hal), &src_clk);
+  uart_get_sclk_freq(src_clk, &sclk_freq);
+
+  uart_hal_lock(dev);
+  uart_hal_set_baudrate(&(uart_context[dev].hal), baud_rate, sclk_freq);
+  uart_hal_unlock(dev);
+
+  return HAL_UART_NO_ERR;
 }

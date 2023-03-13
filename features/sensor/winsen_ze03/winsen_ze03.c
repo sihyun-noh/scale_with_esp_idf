@@ -39,6 +39,8 @@ int winsen_ze03_read_manual(int *data) {
   uint8_t petition[9] = { 0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79 };
   uint8_t measure[20] = { 0x00 };
 
+  uart_set_baud(CONFIG_ZE03_UART_NUM, CONFIG_ZE03_UART_BAUDRATE);
+  vTaskDelay(100 / portTICK_PERIOD_MS);
   uart_write_data(CONFIG_ZE03_UART_NUM, petition, sizeof(petition));
   vTaskDelay(100 / portTICK_PERIOD_MS);
 

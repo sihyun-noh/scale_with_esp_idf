@@ -40,6 +40,8 @@ int th01_read_manual(th01_data_t *data) {
   float buf_t1 = 999;
   float buf_h = 999;
 
+  uart_set_baud(CONFIG_TH01_UART_NUM, CONFIG_TH01_UART_BAUDRATE);
+  vTaskDelay(100 / portTICK_PERIOD_MS);
   uart_write_data(CONFIG_TH01_UART_NUM, petition, sizeof(petition));
   vTaskDelay(100 / portTICK_PERIOD_MS);
 

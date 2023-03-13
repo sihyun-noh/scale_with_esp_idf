@@ -14,6 +14,8 @@ int uart_read_data(int dev,uint8_t *data, size_t len);
 
 int uart_write_data(int dev, const uint8_t *data, size_t len);
 
+int uart_set_baud(int dev, uint32_t baud_rate);
+
 #ifdef __cplusplus
 }
 #endif

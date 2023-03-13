@@ -38,6 +38,8 @@ void uart_hal_flush(int dev);
 
 void uart_hal_flush_tx_only(int dev, bool tx_only);
 
+int uart_hal_baudrate(int dev, uint32_t baud_rate);
+
 #ifdef __cplusplus
 }
 #endif
