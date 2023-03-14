@@ -286,7 +286,11 @@ void generate_syscfg(void) {
       syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, "60");
 #endif
     } else {
+#if (CONFIG_BS_PLATFORM_GASSENSOR)
+      syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, "300");
+#else
       syscfg_set(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, "30");
+#endif
     }
   }
 
