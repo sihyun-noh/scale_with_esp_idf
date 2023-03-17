@@ -43,7 +43,7 @@ jobs:
       run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
     - name: Copy file
-      run: cp ./product/sensor/build/SENS_*.bin SENS_${{ env.SENSOR_TYPE }}_${{ env.TAG }}_${{ env.DATE }}.bin
+      run: cp ./product/sensor/build/SENSOR.bin SENS_${{ env.SENSOR_TYPE }}_${{ env.TAG }}_${{ env.DATE }}.bin
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v3

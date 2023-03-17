@@ -33,7 +33,7 @@ configure_file(version_config.h.in ${CMAKE_BINARY_DIR}/version_config.h)
 include_directories(${CMAKE_BINARY_DIR})
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(${PROJECT_NAME}_${PROJECT_VERSION_FILE}-${GIT_COMMIT_HASH}-${PROJECT_STAGE})
+project(IRRIGATION_HID)
 
 # Note: you must have a partition named the first argument (here it's "storage")
 # in your partition table csv file.

@@ -30,7 +30,7 @@ jobs:
       run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
     - name: Copy file
-      run: cp product/irrigation/child/build/IRRIGATION_*.bin IRRIGATION_CHILD_${{ env.TAG }}_${{ env.DATE }}.bin
+      run: cp product/irrigation/child/build/IRRIGATION_CHILD.bin IRRIGATION_CHILD_${{ env.TAG }}_${{ env.DATE }}.bin
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v3

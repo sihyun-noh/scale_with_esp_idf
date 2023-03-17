@@ -43,7 +43,7 @@ jobs:
       run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
     - name: Copy file
-      run: cp ./product/actuator/build/ACTUATOR_*.bin ${{ env.ACTUATOR_TYPE }}_${{ env.TAG }}_${{ env.DATE }}.bin
+      run: cp ./product/actuator/build/ACTUATOR.bin ${{ env.ACTUATOR_TYPE }}_${{ env.TAG }}_${{ env.DATE }}.bin
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
