@@ -88,7 +88,7 @@ int sensor_init(void) {
 
   if (mb_master_init(UART_PORT_NUM, BAUD_RATE) == -1) {
     LOGE(TAG, "Failed to initialize modbus master");
-    return -1;
+    return res;
   } else {
     LOGI(TAG, "Success to initialize modbus master");
   }
@@ -149,26 +149,35 @@ int sensor_read(void) {
   int gas_nh3 = 0;
   rc = winsen_ze03_read_manual(&gas_nh3);
   if (rc)
-    return rc;
+    gas_nh3 = 0;
 #endif
 #if (CONFIG_WINSEN_ZCE04B_FEATURE)
   uart_mux_set(WINSEN_ZCE04B);
   zce04b_data_t gas_data;
   rc = winsen_zce04b_read_manual(&gas_data);
-  if (rc)
-    return rc;
+  if (rc) {
+    gas_data.co = 0;
+    gas_data.h2s = 0;
+    gas_data.o2 = 0.0;
+    gas_data.ch4 = 0;
+  }
 #endif
 #if (CONFIG_TH01_FEATURE)
   uart_mux_set(TH01);
   th01_data_t th01_data;
   rc = th01_read_manual(&th01_data);
-  if (rc)
-    return rc;
+  if (rc) {
+    th01_data.temp = 0.0;
+    th01_data.mos = 0.0;
+  }
 #endif
 
   rc = read_soil_ec_rs_ecth();
-  if (rc)
-    return rc;
+  if (rc) {
+    soil_temp = 0.0;
+    soil_mos = 0.0;
+    soil_ec = 0.0;
+  }
 
   LOGI(TAG, "NH3,  CO, H2S,   O2, CH4, S_TEMP, S_MOS, S_EC, A_TEMP, A_MOS");
   LOGI(TAG, "%3d, %3d, %3d, %2.1f, %3d,  %2.2f, %2.2f, %2.2f,  %2.1f, %2.1f", gas_nh3, gas_data.co, gas_data.h2s,
@@ -179,5 +188,5 @@ int sensor_read(void) {
         gas_data.ch4, soil_temp, soil_mos, soil_ec, th01_data.temp, th01_data.mos);
   set_log_file_write_flag(0);
 
-  return rc;
+  return 0;
 }
