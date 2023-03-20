@@ -105,6 +105,12 @@ prodBuild() {
     cd build
     cmake .. -G Ninja
     ninja
+    FW_NAME=$(grep -h 'FW_VERSION' version_config.h)
+    FW_NAME=${FW_NAME:20}
+    FW_NAME=${FW_NAME%\"}
+    mv SENSOR.bin ${FW_NAME}.bin
+    mv SENSOR.elf ${FW_NAME}.elf
+    mv SENSOR.map ${FW_NAME}.map
 }
 
 if [ -z ${1} ]; then
