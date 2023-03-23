@@ -224,6 +224,26 @@ uint64_t check_sleep_time(void) {
   }
 }
 
+void send_mqtt_data(message_type_t sender, message_type_t receiver) {
+  mqtt_response_t mqtt_resp = { 0 };
+
+  if (sender == START_FLOW && receiver == START_FLOW) {
+    // Publish status data to the mqtt broker.
+    mqtt_resp.resp = RESP_FLOW_START;
+    mqtt_resp.payload.dev_stat.deviceId = flowOrder[flowDoneCnt];
+  } else if (sender == ZONE_COMPLETE && receiver == ZONE_COMPLETE) {
+    mqtt_resp.resp = RESP_FLOW_DONE;
+    mqtt_resp.payload.dev_stat.deviceId = flowOrder[flowDoneCnt];
+    mqtt_resp.payload.dev_stat.flow_value = get_flow_value();
+  } else if (sender == RESPONSE && receiver == FORCE_STOP) {
+    mqtt_resp.resp = RESP_FORCE_STOP;
+    mqtt_resp.payload.dev_stat.deviceId = flowOrder[flowDoneCnt];
+    mqtt_resp.payload.dev_stat.flow_value = get_flow_value();
+  }
+
+  send_msg_to_mqtt_task(MQTT_PUB_DATA_ID, &mqtt_resp, sizeof(mqtt_response_t));
+}
+
 bool send_esp_data(message_type_t sender, message_type_t receiver, int id) {
   irrigation_message_t send_message = { 0 };
   uint8_t zoneAddr[MAC_ADDR_LEN] = { 0 };
@@ -327,18 +347,13 @@ void check_response(irrigation_message_t* msg) {
 
     case SET_VALVE_ON: {
       if (msg->resp == SUCCESS) {
-        mqtt_response_t mqtt_resp = { 0 };
-
         start_flow();
         // 관수 시작을 HID 에 전달
         send_esp_data(START_FLOW, START_FLOW, HID_DEV);
 
         LOGI(TAG, "RECEIVE VALVE ON RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
 
-        // Publish status data to the mqtt broker.
-        mqtt_resp.resp = RESP_FLOW_START;
-        mqtt_resp.payload.dev_stat.deviceId = flowOrder[flowDoneCnt];
-        send_msg_to_mqtt_task(MQTT_PUB_DATA_ID, &mqtt_resp, sizeof(mqtt_response_t));
+        send_mqtt_data(START_FLOW, START_FLOW);
 
         set_control_status(WAIT_STATE);
       }
@@ -346,17 +361,12 @@ void check_response(irrigation_message_t* msg) {
 
     case SET_VALVE_OFF: {
       if (msg->resp == SUCCESS) {
-        mqtt_response_t mqtt_resp = { 0 };
-
         // 관수 완료를 HID 에 전달
         send_esp_data(ZONE_COMPLETE, ZONE_COMPLETE, HID_DEV);
 
         LOGI(TAG, "RECEIVE VALVE OFF RESPONSE CHILD-%d", flowOrder[flowDoneCnt]);
 
-        mqtt_resp.resp = RESP_FLOW_DONE;
-        mqtt_resp.payload.dev_stat.deviceId = flowOrder[flowDoneCnt];
-        mqtt_resp.payload.dev_stat.flow_value = get_flow_value();
-        send_msg_to_mqtt_task(MQTT_PUB_DATA_ID, &mqtt_resp, sizeof(mqtt_response_t));
+        send_mqtt_data(ZONE_COMPLETE, ZONE_COMPLETE);
 
         set_control_status(WAIT_STATE);
       }
@@ -409,12 +419,12 @@ void check_response(irrigation_message_t* msg) {
     } break;
 
     case FORCE_STOP: {
-      mqtt_response_t mqtt_resp = { 0 };
       // Send force stop response to the hid device when master received reposne of force stop from child node.
       send_esp_data(RESPONSE, FORCE_STOP, HID_DEV);
 
-      mqtt_resp.resp = RESP_FORCE_STOP;
-      send_msg_to_mqtt_task(MQTT_PUB_DATA_ID, &mqtt_resp, sizeof(mqtt_resp));
+      LOGI(TAG, "Send Force STOP MQTT command!!!");
+
+      send_mqtt_data(RESPONSE, FORCE_STOP);
 
       init_variable();
       set_control_status(CHECK_SCEHDULE);

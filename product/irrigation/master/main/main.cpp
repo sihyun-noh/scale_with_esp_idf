@@ -34,7 +34,7 @@ const char* TAG = "main_app";
 
 sc_ctx_t* sc_ctx = NULL;
 
-uint8_t hid_mac_addr[6] = { 0xf4, 0x12, 0xfa, 0xc0, 0x94, 0x41 };
+char main_mac_address[MAC_ADDR_LEN * 2 + 1];
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,6 +56,16 @@ static operation_mode_t s_curr_mode;
 static int main_sleep_time = 60;
 
 EventGroupHandle_t s_wifi_event_group;
+
+static void hex_to_str(uint8_t* mac, char* mac_addr) {
+  int i = 0;
+
+  while (i < 6) {
+    sprintf(&mac_addr[i * 2], "%02x", mac[i]);
+    i++;
+  }
+  mac_addr[MAC_ADDR_LEN * 2 + 1] = 0x00;
+}
 
 /* The event group allows multiple bits for each event, but we only care about two events:
  * - we are connected to the AP with an IP
@@ -218,6 +228,9 @@ int system_init(void) {
 #endif
   LOG_BUFFER_HEX(TAG, mac, sizeof(mac));
 
+  hex_to_str(mac, main_mac_address);
+  LOGI(TAG, "main mac address = %s", main_mac_address);
+
   s_wifi_event_group = xEventGroupCreate();
 
   sysevent_get_with_handler(WIFI_EVENT, WIFI_EVENT_STA_CONNECTED, connect_handler, NULL);
@@ -245,16 +258,11 @@ void loop_task(void) {
 
         vTaskDelay(1000);
 
-        if (connect_ap("greenlabs_4F", "greenlabs0601!") == 0) {
+        if (connect_ap("COMFAST_TEST_IOT", "admin123") == 0) {
           LOGI(TAG, "Success to connect to COMFAST_TEST_IOT router");
         } else {
           LOGI(TAG, "Failed to connect to COMFAST_TEST_IOT router");
         }
-
-        vTaskDelay(1000);
-
-        // connect_mqtt_broker_host("91.121.93.94", 1883);
-        connect_mqtt_broker_uri("mqtt://test.mosquitto.org");
 
         vTaskDelay(1000);
 
@@ -265,6 +273,12 @@ void loop_task(void) {
         } else {
           set_device_onboard(1);
         }
+
+        vTaskDelay(1000);
+
+        // connect_mqtt_broker_host("91.121.93.94", 1883);
+        connect_mqtt_broker_uri("mqtt://test.mosquitto.org");
+
         set_operation_mode(CONTROL_MODE);
       } break;
       case CONTROL_MODE: {

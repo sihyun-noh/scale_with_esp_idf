@@ -7,6 +7,7 @@
 #include "cJSON.h"
 #include "mqtt.h"
 #include "log.h"
+#include "sys_config.h"
 #include "sys_status.h"
 #include "espnow.h"
 #include "comm_packet.h"
@@ -26,6 +27,8 @@ static const char *TAG = "MQTT";
 static char json_data[1024];
 
 #define MQTT_MSG_QUEUE_LEN 16
+
+extern char main_mac_address[];
 
 extern void send_msg_to_cmd_task(void *msg, size_t msg_len);
 
@@ -76,6 +79,9 @@ void command_handler(cmd_t cmd, cJSON *payload) {
 
   switch (cmd) {
     case GET_DEVICE_LIST: {
+      mqtt_response_t mqtt_resp = { 0 };
+      mqtt_resp.resp = RESP_DEVICE_LIST;
+      send_msg_to_mqtt_task(MQTT_PUB_DATA_ID, &mqtt_resp, sizeof(mqtt_response_t));
     } break;
     case SET_CONFIG_DATA: {
       mqtt_response_t mqtt_resp = { 0 };
@@ -147,6 +153,9 @@ static char *generate_status_payload(response_t resp, void *data) {
    *  }
    *
    */
+  char *key[6] = { SYSCFG_N_CHILD1_MAC, SYSCFG_N_CHILD2_MAC, SYSCFG_N_CHILD3_MAC,
+                   SYSCFG_N_CHILD4_MAC, SYSCFG_N_CHILD5_MAC, SYSCFG_N_CHILD6_MAC };
+
   char *output = NULL;
   payload_t *pd = (payload_t *)data;
 
@@ -154,9 +163,32 @@ static char *generate_status_payload(response_t resp, void *data) {
 
   switch (resp) {
     case RESP_DEVICE_LIST: {
+      LOGI(TAG, "response device list!!!");
+      cJSON_AddStringToObject(payload, PUBSUB_K_STATUS, PUBSUB_V_STATUS_RESPONSE);
+      cJSON_AddStringToObject(payload, PUBSUB_K_PROP, PUBSUB_V_PROP_DEVICES);
+      cJSON *data = cJSON_AddObjectToObject(payload, PUBSUB_K_DATA);
+      cJSON *device_list = cJSON_CreateArray();
+
+      int device_cnt = 0;
+      char mac_addr[13] = { 0 };
+      for (int i = 0; i < 6; i++) {
+        memset(mac_addr, 0x00, sizeof(mac_addr));
+        if (0 == syscfg_get(MFG_DATA, key[i], mac_addr, sizeof(mac_addr))) {
+          LOGI(TAG, "%s = %s", key[i], mac_addr);
+          cJSON *device = cJSON_CreateObject();
+          cJSON_AddNumberToObject(device, PUBSUB_K_DATA_ZONE_ID, i + 1);
+          cJSON_AddStringToObject(device, PUBSUB_K_DATA_MAC_ADDRESS, mac_addr);
+          cJSON_AddItemToArray(device_list, device);
+          device_cnt++;
+        }
+      }
+      cJSON_AddNumberToObject(data, "count", device_cnt);
+      cJSON_AddItemToObject(data, "device_list", device_list);
+
+      output = cJSON_Print(payload);
     } break;
     case RESP_CONFIG_DATA: {
-      cJSON_AddStringToObject(payload, PUBSUB_K_TYPE, PUBSUB_V_TYPE_RESPONSE);
+      cJSON_AddStringToObject(payload, PUBSUB_K_STATUS, PUBSUB_V_STATUS_RESPONSE);
       cJSON_AddStringToObject(payload, PUBSUB_K_PROP, PUBSUB_V_PROP_CONFIG);
       cJSON *data = cJSON_AddObjectToObject(payload, PUBSUB_K_DATA);
       cJSON_AddStringToObject(data, PUBSUB_K_DATA_RESULT, PUBSUB_V_DATA_SUCCESS);
@@ -165,27 +197,31 @@ static char *generate_status_payload(response_t resp, void *data) {
       output = cJSON_Print(payload);
     } break;
     case RESP_FLOW_START: {
-      cJSON_AddStringToObject(payload, PUBSUB_K_TYPE, PUBSUB_V_TYPE_RESPONSE);
+      cJSON_AddStringToObject(payload, PUBSUB_K_STATUS, PUBSUB_V_STATUS_RESPONSE);
       cJSON_AddStringToObject(payload, PUBSUB_K_PROP, PUBSUB_V_PROP_START);
       cJSON *data = cJSON_AddObjectToObject(payload, PUBSUB_K_DATA);
+      cJSON_AddStringToObject(data, PUBSUB_K_DATA_RESULT, PUBSUB_V_DATA_SUCCESS);
       cJSON_AddNumberToObject(data, PUBSUB_K_DATA_ZONE_ID, pd->dev_stat.deviceId);
       cJSON_AddItemToObject(data, PUBSUB_K_DATA_TIMESTAMP, cJSON_CreateString(log_timestamp()));
 
       output = cJSON_Print(payload);
     } break;
     case RESP_FORCE_STOP: {
-      cJSON_AddStringToObject(payload, PUBSUB_K_TYPE, PUBSUB_V_TYPE_RESPONSE);
+      cJSON_AddStringToObject(payload, PUBSUB_K_STATUS, PUBSUB_V_STATUS_RESPONSE);
       cJSON_AddStringToObject(payload, PUBSUB_K_PROP, PUBSUB_V_PROP_STOP);
       cJSON *data = cJSON_AddObjectToObject(payload, PUBSUB_K_DATA);
       cJSON_AddStringToObject(data, PUBSUB_K_DATA_RESULT, PUBSUB_V_DATA_SUCCESS);
+      cJSON_AddNumberToObject(data, PUBSUB_K_DATA_ZONE_ID, pd->dev_stat.deviceId);
+      cJSON_AddNumberToObject(data, PUBSUB_K_DATA_FLOW_RATE, pd->dev_stat.flow_value);
       cJSON_AddItemToObject(data, PUBSUB_K_DATA_TIMESTAMP, cJSON_CreateString(log_timestamp()));
 
       output = cJSON_Print(payload);
     } break;
     case RESP_FLOW_DONE: {
-      cJSON_AddStringToObject(payload, PUBSUB_K_TYPE, PUBSUB_V_TYPE_RESPONSE);
+      cJSON_AddStringToObject(payload, PUBSUB_K_STATUS, PUBSUB_V_STATUS_RESPONSE);
       cJSON_AddStringToObject(payload, PUBSUB_K_PROP, PUBSUB_V_PROP_DONE);
       cJSON *data = cJSON_AddObjectToObject(payload, PUBSUB_K_DATA);
+      cJSON_AddStringToObject(data, PUBSUB_K_DATA_RESULT, PUBSUB_V_DATA_SUCCESS);
       cJSON_AddNumberToObject(data, PUBSUB_K_DATA_ZONE_ID, pd->dev_stat.deviceId);
       cJSON_AddNumberToObject(data, PUBSUB_K_DATA_FLOW_RATE, pd->dev_stat.flow_value);
       cJSON_AddItemToObject(data, PUBSUB_K_DATA_TIMESTAMP, cJSON_CreateString(log_timestamp()));
@@ -404,12 +440,15 @@ static void mqtt_event_callback(void *args, int32_t event_id, void *event_data) 
     case MQTT_EVT_BEFORE_CONNECT: LOGI(TAG, "MQTT Event before connect!!!"); break;
     case MQTT_EVT_CONNECTED: {
       int msg_id = 0;
+      char sub_topic[80] = { 0 };
+      snprintf(sub_topic, sizeof(sub_topic), SUBSCRIBE_TOPIC, main_mac_address);
+      LOGI(TAG, "sub_topic = %s", sub_topic);
       set_mqtt_connected(1);
-      msg_id = mqtt_subscribe(SUBSCRIBE_TOPIC, 0);
+      msg_id = mqtt_subscribe(sub_topic, 0);
       LOGI(TAG, "MQTT_EVT_CONNECTED!!!");
       LOGI(TAG, "mqtt_subscribe: msg_id = [%d]", msg_id);
       if (msg_id < 0) {
-        mqtt_subscribe(SUBSCRIBE_TOPIC, 0);
+        mqtt_subscribe(sub_topic, 0);
       }
     } break;
     case MQTT_EVT_DISCONNECTED: {
@@ -445,7 +484,10 @@ static void mqtt_event_callback(void *args, int32_t event_id, void *event_data) 
 // External Functions
 
 void mqtt_publish_status(mqtt_response_t *p_mqtt_resp) {
-  mqtt_publish(PUBLISH_TOPIC, generate_status_payload(p_mqtt_resp->resp, &p_mqtt_resp->payload), 0, 0);
+  char pub_topic[80] = { 0 };
+  snprintf(pub_topic, sizeof(pub_topic), PUBLISH_TOPIC, main_mac_address);
+  LOGI(TAG, "pub_topic = %s", pub_topic);
+  mqtt_publish(pub_topic, generate_status_payload(p_mqtt_resp->resp, &p_mqtt_resp->payload), 0, 0);
   free(p_mqtt_resp);
 }
 

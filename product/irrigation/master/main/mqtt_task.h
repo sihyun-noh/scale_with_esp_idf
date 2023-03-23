@@ -18,8 +18,8 @@ extern "C" {
 #define RETAIN 1
 
 // topic name
-#define PUBLISH_TOPIC "irrigation/master/status"
-#define SUBSCRIBE_TOPIC "irrigation/master/cmd"
+#define PUBLISH_TOPIC "irrigation/%s/status"
+#define SUBSCRIBE_TOPIC "irrigation/%s/cmd"
 
 #define PUBSUB_K_CMD "cmd"
 #define PUBSUB_V_CMD_SET "set"
@@ -42,11 +42,13 @@ extern "C" {
 #define PUBSUB_K_DATA_MINUTES "minutes"
 #define PUBSUB_K_DATA_ZONES "zones"
 #define PUBSUB_K_DATA_RESULT "result"
+#define PUBSUB_K_DATA_COUNT "count"
+#define PUBSUB_K_DATA_DEVICE_LIST "device_list"
 #define PUBSUB_K_DATA_MAC_ADDRESS "mac_address"
 #define PUBSUB_K_DATA_TIMESTAMP "timestamp"
 
-#define PUBSUB_K_TYPE "type"
-#define PUBSUB_V_TYPE_RESPONSE "reponse"
+#define PUBSUB_K_STATUS "status"
+#define PUBSUB_V_STATUS_RESPONSE "response"
 
 #define PUBSUB_V_DATA_SUCCESS "success"
 #define PUBSUB_V_DATA_FAILURE "failure"
