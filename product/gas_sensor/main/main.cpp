@@ -114,8 +114,6 @@ int system_init(void) {
 
   check_model();
 
-  rtc_time_init();
-
   ret = init_sysfile(PART_NAME, ROOT_PATH);
   if (ret)
     return ERR_FILESYSTEM_INIT;
@@ -123,6 +121,12 @@ int system_init(void) {
   create_usb_host_msc_task();
 
   create_led_task();
+
+  set_usb_copying(USB_COPY_FAIL, 1);
+
+  rtc_time_init();
+
+  set_usb_copying(USB_COPY_FAIL, 0);
 
   return SYSINIT_OK;
 }
