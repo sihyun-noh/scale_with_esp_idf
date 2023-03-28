@@ -483,7 +483,7 @@ CONFIG_ADC_PACKAGE=y
 #
 # UART package
 #
-# CONFIG_UART_PACKAGE is not set
+CONFIG_UART_PACKAGE=y
 # end of UART package
 # end of PAL packages
 

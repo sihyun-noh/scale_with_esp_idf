@@ -433,12 +433,15 @@ CONFIG_SHT3X_FEATURE=y
 #
 # CONFIG_WINSEN_ZCE04B_FEATURE is not set
 # end of Winsen ZCE04B feature
+<<<<<<< Updated upstream
 
 #
 # TH01 feature
 #
 # CONFIG_TH01_FEATURE is not set
 # end of TH01 feature
+=======
+>>>>>>> Stashed changes
 # end of Sensors Features
 
 CONFIG_EASYSETUP_FEATURE=y

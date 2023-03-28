@@ -182,8 +182,10 @@ static char *generate_status_payload(response_t resp, void *data) {
           device_cnt++;
         }
       }
+      cJSON_AddStringToObject(data, PUBSUB_K_DATA_RESULT, PUBSUB_V_DATA_SUCCESS);
       cJSON_AddNumberToObject(data, "count", device_cnt);
       cJSON_AddItemToObject(data, "device_list", device_list);
+      cJSON_AddItemToObject(data, PUBSUB_K_DATA_TIMESTAMP, cJSON_CreateString(log_timestamp()));
 
       output = cJSON_Print(payload);
     } break;
