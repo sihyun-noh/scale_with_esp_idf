@@ -43,7 +43,7 @@ extern "C" {
 #define PUBSUB_K_DATA_ZONES "zones"
 #define PUBSUB_K_DATA_RESULT "result"
 #define PUBSUB_K_DATA_COUNT "count"
-#define PUBSUB_K_DATA_DEVICE_LIST "device_list"
+#define PUBSUB_K_DATA_DEVICES "devices"
 #define PUBSUB_K_DATA_MAC_ADDRESS "mac_address"
 #define PUBSUB_K_DATA_TIMESTAMP "timestamp"
 

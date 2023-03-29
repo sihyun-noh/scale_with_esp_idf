@@ -213,7 +213,7 @@ int espnow_remove_peers(device_t device_mode) {
     } break;
     case MASTER_DEVICE: {
       // Remove only child mac address
-      for (int i = 1; i < 6; i++) {
+      for (int i = 1; i <= 6; i++) {
         memset(mac_addr, 0x00, sizeof(mac_addr));
         memset(peer_addr, 0x00, sizeof(peer_addr));
         if (syscfg_get(MFG_DATA, device_peer_list[i], mac_addr, sizeof(mac_addr)) == 0) {

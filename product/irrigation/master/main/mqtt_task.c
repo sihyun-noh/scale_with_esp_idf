@@ -121,15 +121,17 @@ void command_handler(cmd_t cmd, cJSON *payload) {
       msg.sender_type = UPDATE_DEVICE_ADDR;
       device_manage_t *dev_manage = &msg.payload.dev_manage;
       cJSON *data = cJSON_GetObjectItemCaseSensitive(payload, PUBSUB_K_DATA);
-      if (data && cJSON_IsArray(data)) {
+      cJSON *devices = cJSON_GetObjectItemCaseSensitive(data, PUBSUB_K_DATA_DEVICES);
+      if (data && devices && cJSON_IsArray(devices)) {
         cJSON *zone;
-        cJSON_ArrayForEach(zone, data) {
+        cJSON_ArrayForEach(zone, devices) {
           cJSON *zone_id = cJSON_GetObjectItemCaseSensitive(zone, PUBSUB_K_DATA_ZONE_ID);
           cJSON *mac_address = cJSON_GetObjectItemCaseSensitive(zone, PUBSUB_K_DATA_MAC_ADDRESS);
           if (cJSON_IsNumber(zone_id) && cJSON_IsString(mac_address)) {
             memcpy(&dev_manage->update_dev_addr[id].mac_addr, mac_address->valuestring, (MAC_ADDR_LEN * 2));
             dev_manage->update_dev_addr[id].device_type = (device_type_t)zone_id->valueint;
             id++;
+            LOGI(TAG, "zone_id = %d", (int)zone_id->valueint);
           }
         }
         dev_manage->update_dev_cnt = id;
