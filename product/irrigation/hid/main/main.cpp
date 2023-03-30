@@ -187,11 +187,7 @@ int system_init(void) {
   if (ret)
     return ERR_WIFI_INIT;
 
-#if (CONFIG_ESPNOW_WIFI_MODE == STATION)
-  ret = wifi_espnow_mode(WIFI_OP_STA);
-#elif (CONFIG_ESPNOW_WIFI_MODE == SOFTAP)
-  ret = wifi_espnow_mode(WIFI_OP_AP);
-#endif
+  ret = wifi_espnow_mode(WIFI_OP_AP_STA);
   if (ret)
     return ERR_WIFI_INIT;
 

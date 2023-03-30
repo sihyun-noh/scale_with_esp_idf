@@ -718,6 +718,11 @@ int wifi_espnow_mode_impl(wifi_context_t *ctx, wifi_op_mode_t wifi_op_mode) {
     }
   }
 
+#if (CONFIG_ESPNOW_WIFI_MODE == STATION)
   esp_wifi_set_protocol(WIFI_IF_STA, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR);
+#elif (CONFIFG_ESPNOW_WIFI_MODE == SOFTAP)
+  esp_wifi_set_protocol(WIFI_IF_AP, WIFI_PROTOCOL_11B | WIFI_PROTOCOL_11G | WIFI_PROTOCOL_11N | WIFI_PROTOCOL_LR);
+#endif
+
   return 0;
 }

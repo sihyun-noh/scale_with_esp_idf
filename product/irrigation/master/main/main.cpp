@@ -221,6 +221,9 @@ int system_init(void) {
 
   // Get a main mac address that will be used in espnow
   uint8_t mac[6] = { 0 };
+  // Station mac will be used to identify the mqtt command payload.
+  uint8_t sta_mac[6] = { 0 };
+
 #if (CONFIG_ESPNOW_WIFI_MODE == STATION)
   esp_read_mac(mac, ESP_MAC_WIFI_STA);
 #elif (CONFIG_ESPNOW_WIFI_MODE == SOFTAP)
@@ -228,7 +231,8 @@ int system_init(void) {
 #endif
   LOG_BUFFER_HEX(TAG, mac, sizeof(mac));
 
-  hex_to_str(mac, main_mac_address);
+  esp_read_mac(sta_mac, ESP_MAC_WIFI_STA);
+  hex_to_str(sta_mac, main_mac_address);
   LOGI(TAG, "main mac address = %s", main_mac_address);
 
   s_wifi_event_group = xEventGroupCreate();
