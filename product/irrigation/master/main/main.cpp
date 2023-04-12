@@ -264,8 +264,10 @@ void loop_task(void) {
 
         if (connect_ap("COMFAST_TEST_IOT", "admin123") == 0) {
           LOGI(TAG, "Success to connect to COMFAST_TEST_IOT router");
+          set_device_onboard(1);
         } else {
           LOGI(TAG, "Failed to connect to COMFAST_TEST_IOT router");
+          set_device_onboard(0);
         }
 
         vTaskDelay(1000);
@@ -274,14 +276,14 @@ void loop_task(void) {
         if (espnow_start(on_data_recv, on_data_sent_cb) == false) {
           LOGE(TAG, "Failed to start espnow");
           set_operation_mode(DEEP_SLEEP_MODE);
-        } else {
-          set_device_onboard(1);
         }
 
         vTaskDelay(1000);
 
-        // connect_mqtt_broker_host("91.121.93.94", 1883);
-        connect_mqtt_broker_uri("mqtt://test.mosquitto.org");
+        if (is_device_onboard()) {
+          // connect_mqtt_broker_host("91.121.93.94", 1883);
+          connect_mqtt_broker_uri("mqtt://test.mosquitto.org");
+        }
 
         set_operation_mode(CONTROL_MODE);
       } break;
