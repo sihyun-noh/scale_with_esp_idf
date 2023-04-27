@@ -86,6 +86,10 @@ int ipgot_handler(void* arg) {
 }
 
 int disconnect_handler(void* arg) {
+  LOGI(TAG, "STA disconnects from the Router!!!");
+  set_device_onboard(0);
+  LOGI(TAG, "DEEP_SLEEP_MODE");
+  sleep_timer_wakeup(10);
   if (s_wifi_event_group) {
     xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
   }

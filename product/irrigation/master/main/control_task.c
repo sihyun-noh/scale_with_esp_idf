@@ -54,9 +54,9 @@ typedef enum {
   COMPLETE,
   SLEEP,
   ERROR
-} condtrol_status_t;
+} control_status_t;
 
-condtrol_status_t controlStatus = CHECK_ADDR;
+control_status_t controlStatus = CHECK_ADDR;
 
 message_type_t sendCmd;  // send cmd name
 bool sendMessageFlag;    // cmd send true/false
@@ -124,7 +124,7 @@ void init_variable(void) {
   remainSleepTime = 0;
 }
 
-void set_control_status(condtrol_status_t value) {
+void set_control_status(control_status_t value) {
   controlStatus = value;
   if (value != WAIT_STATE) {
     respTimeCnt = 0;
