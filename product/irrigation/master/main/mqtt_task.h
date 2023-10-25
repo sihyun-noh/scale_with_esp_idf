@@ -45,6 +45,7 @@ extern "C" {
 #define PUBSUB_K_DATA_COUNT "count"
 #define PUBSUB_K_DATA_DEVICES "devices"
 #define PUBSUB_K_DATA_MAC_ADDRESS "mac_address"
+#define PUBSUB_K_DATA_BATTERY "battery"
 #define PUBSUB_K_DATA_TIMESTAMP "timestamp"
 
 #define PUBSUB_K_STATUS "status"

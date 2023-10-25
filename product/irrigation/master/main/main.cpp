@@ -285,8 +285,8 @@ void loop_task(void) {
         vTaskDelay(1000);
 
         if (is_device_onboard()) {
-          // connect_mqtt_broker_host("91.121.93.94", 1883);
-          connect_mqtt_broker_uri("mqtt://test.mosquitto.org");
+          connect_mqtt_broker_host("223.171.134.11", 1883);
+          // connect_mqtt_broker_uri("mqtt://test.mosquitto.org");
         }
 
         set_operation_mode(CONTROL_MODE);

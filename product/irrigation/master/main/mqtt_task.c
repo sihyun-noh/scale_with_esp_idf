@@ -158,6 +158,9 @@ static char *generate_status_payload(response_t resp, void *data) {
   char *key[6] = { SYSCFG_N_CHILD1_MAC, SYSCFG_N_CHILD2_MAC, SYSCFG_N_CHILD3_MAC,
                    SYSCFG_N_CHILD4_MAC, SYSCFG_N_CHILD5_MAC, SYSCFG_N_CHILD6_MAC };
 
+  char *battery_key[6] = { SYSCFG_N_CHILD1_BATTERY, SYSCFG_N_CHILD2_BATTERY, SYSCFG_N_CHILD3_BATTERY,
+                           SYSCFG_N_CHILD4_BATTERY, SYSCFG_N_CHILD5_BATTERY, SYSCFG_N_CHILD6_BATTERY };
+
   char *output = NULL;
   payload_t *pd = (payload_t *)data;
 
@@ -173,13 +176,20 @@ static char *generate_status_payload(response_t resp, void *data) {
 
       int device_cnt = 0;
       char mac_addr[13] = { 0 };
+      char battery[5] = { 0 };
+
       for (int i = 0; i < 6; i++) {
         memset(mac_addr, 0x00, sizeof(mac_addr));
-        if (0 == syscfg_get(MFG_DATA, key[i], mac_addr, sizeof(mac_addr))) {
+        memset(battery, 0x00, sizeof(battery));
+
+        if (0 == syscfg_get(MFG_DATA, key[i], mac_addr, sizeof(mac_addr)) &&
+            0 == syscfg_get(CFG_DATA, battery_key[i], battery, sizeof(battery))) {
           LOGI(TAG, "%s = %s", key[i], mac_addr);
+          LOGI(TAG, "%s = %s", battery_key[i], battery);
           cJSON *device = cJSON_CreateObject();
           cJSON_AddNumberToObject(device, PUBSUB_K_DATA_ZONE_ID, i + 1);
           cJSON_AddStringToObject(device, PUBSUB_K_DATA_MAC_ADDRESS, mac_addr);
+          cJSON_AddStringToObject(device, PUBSUB_K_DATA_BATTERY, battery);
           cJSON_AddItemToArray(device_list, device);
           device_cnt++;
         }

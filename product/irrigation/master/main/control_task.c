@@ -26,10 +26,10 @@
 
 #define DEBUG_TEST 1  // for Test
 
-#define AM_TIME_FLOW_START 5   // AM 5시
-#define AM_TIME_FLOW_END 9     // AM 9시
-#define PM_TIME_FLOW_START 17  // PM 5시
-#define PM_TIME_FLOW_END 21    // PM 9시
+#define AM_TIME_FLOW_START 9   // AM 9시
+#define AM_TIME_FLOW_END 12    // AM 12시
+#define PM_TIME_FLOW_START 14  // PM 14시
+#define PM_TIME_FLOW_END 19    // PM 19시
 
 #define IRRIGATION_SIMULATOR 1
 
@@ -81,6 +81,9 @@ int syncTimeBuffCnt;   // Time sync buffer check count
 int totalNumberChild;  // child device number
 
 uint64_t remainSleepTime;  // sleep 시간
+
+static char* battery_cfg[TOTAL_DEVICES] = { "main_battery",   "child1_battery", "child2_battery", "child3_battery",
+                                            "child4_battery", "child5_battery", "child6_battery" };
 
 static bool _send_msg_event(irrigation_message_t* msg) {
   return cmd_msg_queue && (xQueueSend(cmd_msg_queue, msg, portMAX_DELAY) == pdPASS);
@@ -204,8 +207,8 @@ uint64_t check_sleep_time(void) {
   }
 
   // 시간 sleep time / wake time 비교...
-  // 오전 5시 ~ 9시 wake up...
-  // 17시 ~ 21시 wake up...
+  // 오전 9시 ~ 12시 wake up...
+  // 14시 ~ 19시 wake up...
   // 버퍼를 두기 위해 wake up 시간 대비 30분 전까지만 sleep
   if (timeinfo.tm_hour < AM_TIME_FLOW_START) {
     if ((timeinfo.tm_hour == (AM_TIME_FLOW_START - 1)) && timeinfo.tm_min >= 30) {
@@ -373,9 +376,16 @@ void check_response(irrigation_message_t* msg) {
     } break;
 
     case TIME_SYNC: {
+      char battery[5] = { 0 };
       device_status_t* dev_stat = (device_status_t*)&msg->payload.dev_stat;
       zoneBattery[dev_stat->deviceId] = dev_stat->battery_level[dev_stat->deviceId];
       LOGI(TAG, "ID: %D, Battery level: %d", dev_stat->deviceId, dev_stat->battery_level[dev_stat->deviceId]);
+
+      for (int i = 0; i < TOTAL_DEVICES; i++) {
+        snprintf(battery, sizeof(battery), "%d", zoneBattery[i]);
+        syscfg_set(CFG_DATA, battery_cfg[i], battery);
+      }
+
       respChildCnt++;
       sendMessageFlag = true;
       sendCmd = msg->receive_type;

@@ -141,6 +141,30 @@ extern "C" {
 #define SYSCFG_S_ZONE6_FLOW 12
 #define SYSCFG_I_ZONE6_FLOW CFG_DATA
 
+#define SYSCFG_N_CHILD1_BATTERY "child1_battery"
+#define SYSCFG_S_CHILD1_BATTERY 5
+#define SYSCFG_I_CHILD1_BATTERY GFG_DATA
+
+#define SYSCFG_N_CHILD2_BATTERY "child2_battery"
+#define SYSCFG_S_CHILD2_BATTERY 5
+#define SYSCFG_I_CHILD2_BATTERY GFG_DATA
+
+#define SYSCFG_N_CHILD3_BATTERY "child3_battery"
+#define SYSCFG_S_CHILD3_BATTERY 5
+#define SYSCFG_I_CHILD3_BATTERY GFG_DATA
+
+#define SYSCFG_N_CHILD4_BATTERY "child4_battery"
+#define SYSCFG_S_CHILD4_BATTERY 5
+#define SYSCFG_I_CHILD4_BATTERY GFG_DATA
+
+#define SYSCFG_N_CHILD5_BATTERY "child5_battery"
+#define SYSCFG_S_CHILD5_BATTERY 5
+#define SYSCFG_I_CHILD5_BATTERY GFG_DATA
+
+#define SYSCFG_N_CHILD6_BATTERY "child6_battery"
+#define SYSCFG_S_CHILD6_BATTERY 5
+#define SYSCFG_I_CHILD6_BATTERY GFG_DATA
+
 int get_syscfg_idx(char *name);
 void dump_syscfg(void);
 void generate_syscfg(void);
