@@ -88,11 +88,16 @@ int uart_hal_initialize(int dev, uint32_t baudrate, int8_t rxPin, int8_t txPin, 
     uart_config.parity = UART_PARITY_DISABLE;
     uart_config.stop_bits = UART_STOP_BITS_1;
     uart_config.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
+    //uart_config.flow_ctrl = UART_HW_FLOWCTRL_RTS;
+    uart_config.rx_flow_ctrl_thresh = 122;
     uart_config.source_clk = UART_SCLK_APB;
 
     rc = uart_driver_install(dev, rx_buffer_size, tx_buffer_size, 20, &(uart->uart_event_queue), 0);
     rc = uart_param_config(dev, &uart_config);
-    rc = uart_set_pin(dev, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    //rc = uart_set_pin(dev, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    rc = uart_set_pin(dev, txPin, rxPin, 2, UART_PIN_NO_CHANGE);
+    
+    rc = uart_set_mode(dev, UART_MODE_RS485_HALF_DUPLEX);
 
     uart_hal_unlock(dev);
 
