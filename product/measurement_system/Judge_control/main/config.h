@@ -34,8 +34,9 @@
 typedef struct cas_22byte_format{
   char states[2];
   char measurement_states[2];
+  char lamp_states[1];
   char data[8];
-  uint8_t relay[1];
+  char relay[1];
   char unit[2];
 }cas_22byte_format_t;
 

@@ -26,6 +26,7 @@
 #include "esp32s3/rom/rtc.h"
 
 #include "gpio_api.h"
+#include "i2s_speaker.h"
 
 typedef enum{
   INPUT =0,
@@ -186,18 +187,35 @@ static void send_data_cb(const uint8_t *mac_addr, esp_now_send_status_t status) 
 }
 
 int gpio_init_to_lamp(){
+
   int ret;
+  // 
+  gpio_write(LCD_GPIO_1,1);
+  gpio_write(LCD_GPIO_2,1);
+  gpio_write(LCD_GPIO_3,1);
+  gpio_write(LCD_GPIO_4,1);
   if((ret = gpio_init(LCD_GPIO_1, OUTPUT)) != 0){
     LOGE(TAG, "Could not initialize GPIO %d, error = %d\n", LCD_GPIO_1, ret);
     return ret;
   }
-  // gpio_write(LCD_GPIO_1,0);
-  // vTaskDelay(1000 / portTICK_PERIOD_MS);
-  // gpio_write(LCD_GPIO_1,1);
-  // vTaskDelay(1000 / portTICK_PERIOD_MS);
-  // gpio_write(LCD_GPIO_1,0);
-  // vTaskDelay(1000 / portTICK_PERIOD_MS);
-  // gpio_write(LCD_GPIO_1,1);
+   if((ret = gpio_init(LCD_GPIO_2, OUTPUT)) != 0){
+    LOGE(TAG, "Could not initialize GPIO %d, error = %d\n", LCD_GPIO_2, ret);
+    return ret;
+  }
+   if((ret = gpio_init(LCD_GPIO_3, OUTPUT)) != 0){
+    LOGE(TAG, "Could not initialize GPIO %d, error = %d\n", LCD_GPIO_3, ret);
+    return ret;
+  }
+   if((ret = gpio_init(LCD_GPIO_4, OUTPUT)) != 0){
+    LOGE(TAG, "Could not initialize GPIO %d, error = %d\n", LCD_GPIO_4, ret);
+    return ret;
+  }
+  //All off
+  gpio_write(LCD_GPIO_1,1);
+  gpio_write(LCD_GPIO_2,1);
+  gpio_write(LCD_GPIO_3,1);
+  gpio_write(LCD_GPIO_4,1);
+
   return 0;
 }
 
@@ -252,6 +270,8 @@ int system_init(void) {
   sdcard_init();
 
   gpio_init_to_lamp();
+
+  i2s_speak_init();
 
   fm_init(PARTITION_NAME, BASE_PATH);
 

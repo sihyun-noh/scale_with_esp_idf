@@ -16,10 +16,13 @@ extern "C" {
 #include "components/ui_comp.h"
 #include "components/ui_comp_hook.h"
 #include "ui_events.h"
+
+#include <stdio.h>
+
 // SCREEN: ui_Screen1
 void ui_Screen1_screen_init(void);
 extern lv_obj_t *ui_Screen1;
-extern lv_obj_t *ui_Panel4;
+extern lv_obj_t *ui_Panel1;
 extern lv_obj_t *ui_Label2;
 extern lv_obj_t *ui_Label3;
 extern lv_obj_t *ui_Label4;
@@ -28,6 +31,14 @@ extern lv_obj_t *ui_led2;
 extern lv_obj_t *ui_led3;
 void ui_event_Button1( lv_event_t * e);
 extern lv_obj_t *ui_Button1;
+void ui_event_Button4( lv_event_t * e);
+extern lv_obj_t *ui_Label14;
+extern lv_obj_t *ui_Label15;
+extern lv_obj_t *ui_Label_amount;
+extern lv_obj_t *ui_Label_product_number;
+extern lv_obj_t *ui_Label_upper_value;
+extern lv_obj_t *ui_Label_lower_value;
+
 // SCREEN: ui_Screen2
 void ui_Screen2_screen_init(void);
 extern lv_obj_t *ui_Screen2;
@@ -36,9 +47,19 @@ void ui_event_Button3( lv_event_t * e);
 extern lv_obj_t *ui_Button3;
 extern lv_obj_t *ui____initial_actions0;
 
-void textarea_event_handler(lv_event_t * e);
-void textarea_event_handler1(lv_event_t * e);
-void textarea_event_handler2(lv_event_t * e);
+extern float upper_weight_value;
+extern float lower_weight_value;
+extern float success_weight_value;
+extern float renge_weight_value;
+extern float amount_weight_value;
+
+typedef struct textareas{
+    lv_obj_t * ta1;
+    lv_obj_t * ta2;
+    lv_obj_t * ta3;
+    lv_obj_t * ta4;
+    lv_obj_t * ta5;
+}textareas_t;
 
 LV_FONT_DECLARE( ui_font_Display16);
 LV_FONT_DECLARE( ui_font_Display24);

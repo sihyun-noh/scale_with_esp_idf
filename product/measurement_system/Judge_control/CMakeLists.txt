@@ -16,7 +16,7 @@ set(PROJECT_STAGE "DVT")
 # Set project name
 set(PROJECT_NAME "IRRIGATION_$ENV{CURRENT_PROJECT}")
 message("project name : ${PROJECT_NAME}")
-set(PROJECT_TYPE "IRRIGATION_HID")
+set(PROJECT_TYPE "WEIGHT_MEASUREMENT")
 
 # Get the current commit hash
 execute_process(
@@ -33,7 +33,8 @@ configure_file(version_config.h.in ${CMAKE_BINARY_DIR}/version_config.h)
 include_directories(${CMAKE_BINARY_DIR})
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(IRRIGATION_HID)
+#project(IRRIGATION_HID)
+project(WEIGHT_MEASUREMENT)
 
 # Note: you must have a partition named the first argument (here it's "storage")
 # in your partition table csv file.
