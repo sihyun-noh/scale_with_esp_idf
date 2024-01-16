@@ -5,9 +5,8 @@ AlignTrailingComments: true
 AllowShortBlocksOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: Inline
-AllowShortIfStatementsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
-AllowShortIfStatementsOnASingleLine : false
 AlwaysBreakTemplateDeclarations: true
 AlwaysBreakAfterDefinitionReturnType: false
 BreakBeforeBinaryOperators: None
