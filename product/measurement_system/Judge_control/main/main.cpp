@@ -28,12 +28,7 @@
 #include "gpio_api.h"
 #include "i2s_speaker.h"
 
-typedef enum{
-  INPUT =0,
-  INPUT_PULLUP,
-  OUTPUT
-}gpio_hal_mode_t;
-
+typedef enum { INPUT = 0, INPUT_PULLUP, OUTPUT } gpio_hal_mode_t;
 
 static const char *TAG = "main_app";
 
@@ -48,7 +43,7 @@ extern void sdcard_init(void);
 extern void sdcard_write_data(void);
 extern int sensor_init(void);
 extern int wetght_uart_485_init(void);
-//extern int read_weight(void);
+// extern int read_weight(void);
 }
 
 static void check_model(void);
@@ -186,41 +181,37 @@ static void send_data_cb(const uint8_t *mac_addr, esp_now_send_status_t status) 
   LOG_BUFFER_HEX(TAG, mac_addr, MAC_ADDR_LEN);
 }
 
-int gpio_init_to_lamp(){
-
+int gpio_init_to_lamp() {
   int ret;
-  // 
-  gpio_write(LCD_GPIO_1,1);
-  gpio_write(LCD_GPIO_2,1);
-  gpio_write(LCD_GPIO_3,1);
-  gpio_write(LCD_GPIO_4,1);
-  if((ret = gpio_init(LCD_GPIO_1, OUTPUT)) != 0){
+  //
+  gpio_write(LCD_GPIO_1, 1);
+  gpio_write(LCD_GPIO_2, 1);
+  gpio_write(LCD_GPIO_3, 1);
+  gpio_write(LCD_GPIO_4, 1);
+  if ((ret = gpio_init(LCD_GPIO_1, OUTPUT)) != 0) {
     LOGE(TAG, "Could not initialize GPIO %d, error = %d\n", LCD_GPIO_1, ret);
     return ret;
   }
-   if((ret = gpio_init(LCD_GPIO_2, OUTPUT)) != 0){
+  if ((ret = gpio_init(LCD_GPIO_2, OUTPUT)) != 0) {
     LOGE(TAG, "Could not initialize GPIO %d, error = %d\n", LCD_GPIO_2, ret);
     return ret;
   }
-   if((ret = gpio_init(LCD_GPIO_3, OUTPUT)) != 0){
+  if ((ret = gpio_init(LCD_GPIO_3, OUTPUT)) != 0) {
     LOGE(TAG, "Could not initialize GPIO %d, error = %d\n", LCD_GPIO_3, ret);
     return ret;
   }
-   if((ret = gpio_init(LCD_GPIO_4, OUTPUT)) != 0){
+  if ((ret = gpio_init(LCD_GPIO_4, OUTPUT)) != 0) {
     LOGE(TAG, "Could not initialize GPIO %d, error = %d\n", LCD_GPIO_4, ret);
     return ret;
   }
-  //All off
-  gpio_write(LCD_GPIO_1,1);
-  gpio_write(LCD_GPIO_2,1);
-  gpio_write(LCD_GPIO_3,1);
-  gpio_write(LCD_GPIO_4,1);
+  // All off
+  gpio_write(LCD_GPIO_1, 1);
+  gpio_write(LCD_GPIO_2, 1);
+  gpio_write(LCD_GPIO_3, 1);
+  gpio_write(LCD_GPIO_4, 1);
 
   return 0;
 }
-
-
-
 
 int system_init(void) {
   // Initialize NVS
@@ -256,8 +247,8 @@ int system_init(void) {
   if (ret)
     return ERR_SYSEVENT_CREATE;
 
-  //ret = sensor_init();
-  ret  = wetght_uart_485_init();
+  // ret = sensor_init();
+  ret = wetght_uart_485_init();
   if (ret)
     return 6;
 

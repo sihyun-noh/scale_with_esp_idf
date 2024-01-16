@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-    #include "lvgl/lvgl.h"
+#include "lvgl/lvgl.h"
 
 #include "ui_helpers.h"
 #include "components/ui_comp.h"
@@ -29,9 +29,9 @@ extern lv_obj_t *ui_Label4;
 extern lv_obj_t *ui_led1;
 extern lv_obj_t *ui_led2;
 extern lv_obj_t *ui_led3;
-void ui_event_Button1( lv_event_t * e);
+void ui_event_Button1(lv_event_t *e);
 extern lv_obj_t *ui_Button1;
-void ui_event_Button4( lv_event_t * e);
+void ui_event_Button4(lv_event_t *e);
 extern lv_obj_t *ui_Label14;
 extern lv_obj_t *ui_Label15;
 extern lv_obj_t *ui_Label_amount;
@@ -43,7 +43,7 @@ extern lv_obj_t *ui_Label_lower_value;
 void ui_Screen2_screen_init(void);
 extern lv_obj_t *ui_Screen2;
 extern lv_obj_t *ui_Keyboard1;
-void ui_event_Button3( lv_event_t * e);
+void ui_event_Button3(lv_event_t *e);
 extern lv_obj_t *ui_Button3;
 extern lv_obj_t *ui____initial_actions0;
 
@@ -53,22 +53,22 @@ extern float success_weight_value;
 extern float renge_weight_value;
 extern float amount_weight_value;
 
-typedef struct textareas{
-    lv_obj_t * ta1;
-    lv_obj_t * ta2;
-    lv_obj_t * ta3;
-    lv_obj_t * ta4;
-    lv_obj_t * ta5;
-}textareas_t;
+typedef struct textareas {
+  lv_obj_t *ta1;
+  lv_obj_t *ta2;
+  lv_obj_t *ta3;
+  lv_obj_t *ta4;
+  lv_obj_t *ta5;
+} textareas_t;
 
-LV_FONT_DECLARE( ui_font_Display16);
-LV_FONT_DECLARE( ui_font_Display24);
-LV_FONT_DECLARE( ui_font_Display40);
-LV_FONT_DECLARE( ui_font_Display90);
-LV_FONT_DECLARE( NanumBar16);
-LV_FONT_DECLARE( NanumBar18);
-LV_FONT_DECLARE( NanumBar24);
-LV_FONT_DECLARE( NanumBar32);
+LV_FONT_DECLARE(ui_font_Display16);
+LV_FONT_DECLARE(ui_font_Display24);
+LV_FONT_DECLARE(ui_font_Display40);
+LV_FONT_DECLARE(ui_font_Display90);
+LV_FONT_DECLARE(NanumBar16);
+LV_FONT_DECLARE(NanumBar18);
+LV_FONT_DECLARE(NanumBar24);
+LV_FONT_DECLARE(NanumBar32);
 
 void ui_init(void);
 

@@ -45,7 +45,7 @@ typedef enum {
   RENKE_SEC_SLAVE_ID_1 = 0x01,  // EC sensor ranke sensor
   RENKE_SEC_SLAVE_ID_2 = 0x02,  // EC sensor ranke sensor
   RENKE_SEC_SLAVE_ID_3 = 0x03,  // EC sensor ranke sensor
-  CAS_WEIGHT_SLAVE_ID = 0x01,  // weight indicator rs485 slave id
+  CAS_WEIGHT_SLAVE_ID = 0x01,   // weight indicator rs485 slave id
 } MB_SLAVE_ADDR;
 
 static const char* TAG = "sensor_task";
@@ -189,17 +189,17 @@ int sensor_init(void) {
   num_characteristic = 1;
 
 #elif (CONFIG_MS_RS485_MODBUS)
-  mb_characteristic_info_t mb_weight_maesurement[4] = { 
-   //{ 0, "weight", "kg", DATA_U32, 4, CAS_WEIGHT_SLAVE_ID, MB_HOLDING_REG, 0x0008, 0x0002 }};
+  mb_characteristic_info_t mb_weight_maesurement[4] = {
+    //{ 0, "weight", "kg", DATA_U32, 4, CAS_WEIGHT_SLAVE_ID, MB_HOLDING_REG, 0x0008, 0x0002 }};
     { 0, "weight", "kg", DATA_U32, 4, CAS_WEIGHT_SLAVE_ID, MB_HOLDING_REG, 0x0008, 0x0002 },
     { 1, "status", "kg", DATA_U32, 4, CAS_WEIGHT_SLAVE_ID, MB_HOLDING_REG, 0x0007, 0x0002 },
     { 2, "sp-2", "kg", DATA_U32, 4, CAS_WEIGHT_SLAVE_ID, MB_HOLDING_REG, 0x0019, 0x0002 },
-    { 3, "relay-mode", "kg", DATA_U16, 2, CAS_WEIGHT_SLAVE_ID, MB_HOLDING_REG, 0x0038, 0x0001 }, };
+    { 3, "relay-mode", "kg", DATA_U16, 2, CAS_WEIGHT_SLAVE_ID, MB_HOLDING_REG, 0x0038, 0x0001 },
+  };
   memcpy(&mb_characteristic, mb_weight_maesurement, sizeof(mb_weight_maesurement));
   num_characteristic = 2;
 
 #endif
-
 
   mb_set_uart_config(MB_RX_PIN, MB_TX_PIN, RTS_UNCHANGED, CTS_UNCHANGED);
 
@@ -218,9 +218,8 @@ int sensor_init(void) {
   return res;
 }
 
-
 #if (CONFIG_MS_RS485_MODBUS)
-float *read_weight(void) {
+float* read_weight(void) {
   int res = 0;
   int data_len = 0;
   uint8_t value[30] = { 0 };
@@ -236,40 +235,33 @@ float *read_weight(void) {
       LOGE(TAG, "Failed to read value");
       res = -1;
     } else {
-
       for (int k = 0; k < data_len; k++) {
         LOGI(TAG, "value[%d] = [0x%x]", k, value[k]);
       }
       if (mb_characteristic[i].cid == 0) {
-      memcpy(&u_weight, value, 4);
-            f_weight = (float)(u_weight / 1000.0);
-      LOGI(TAG, "weight = %.3f", f_weight);
+        memcpy(&u_weight, value, 4);
+        f_weight = (float)(u_weight / 1000.0);
+        LOGI(TAG, "weight = %.3f", f_weight);
 
-      }
-      else if (mb_characteristic[i].cid == 1) {
-      memcpy(&u_weight_sp_1, value, 4);
-      LOGI(TAG, "status = %d", u_weight_sp_1);
+      } else if (mb_characteristic[i].cid == 1) {
+        memcpy(&u_weight_sp_1, value, 4);
+        LOGI(TAG, "status = %d", u_weight_sp_1);
 
-      }
-      else if (mb_characteristic[i].cid == 2) {
-      memcpy(&u_weight_sp_2, value, 4);
-      LOGI(TAG, "u_weight_sp_2 = %d", u_weight_sp_2);
+      } else if (mb_characteristic[i].cid == 2) {
+        memcpy(&u_weight_sp_2, value, 4);
+        LOGI(TAG, "u_weight_sp_2 = %d", u_weight_sp_2);
 
-      }
-      else if(mb_characteristic[i].cid == 3) {
-      memcpy(&u_weight_relay_mode, value, 4);
-      LOGI(TAG, "u_weight_relay_mode = %d", u_weight_relay_mode);
-
+      } else if (mb_characteristic[i].cid == 3) {
+        memcpy(&u_weight_relay_mode, value, 4);
+        LOGI(TAG, "u_weight_relay_mode = %d", u_weight_relay_mode);
       }
       snprintf(s_weight, sizeof(s_weight), "%.3f", f_weight);
-      //sysevent_set(MB_WIND_SPEED_EVENT, s_weight);
+      // sysevent_set(MB_WIND_SPEED_EVENT, s_weight);
     }
   }
   return &f_weight;
 }
 #endif
-
-
 
 #if (CONFIG_DATALOGGER_SHT3X)
 int read_temperature_humidity(void) {
