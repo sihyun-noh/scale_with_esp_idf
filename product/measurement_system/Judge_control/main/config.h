@@ -19,6 +19,8 @@
 
 #define SDCARD_SPI_DMA_CHAN SPI_DMA_CH_AUTO
 
+#define PROD_NUM 50
+#define MAX_DATA_LEN 80
 
 #if (CONFIG_MS_RS485_MODBUS)
 #define MB_RX_PIN 1
@@ -30,15 +32,14 @@
 #define UART_RXBUF_SIZE 2048
 #define UART_TXBUF_SIZE 0
 
-
-typedef struct cas_22byte_format{
+typedef struct cas_22byte_format {
   char states[2];
   char measurement_states[2];
   char lamp_states[1];
   char data[8];
   char relay[1];
   char unit[2];
-}cas_22byte_format_t;
+} cas_22byte_format_t;
 
 #endif
 

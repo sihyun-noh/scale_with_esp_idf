@@ -80,8 +80,6 @@ float success_weight_value = 0.0;
 float renge_weight_value = 0.0;
 float amount_weight_value = 0.0;
 
-char *str_event_buff = NULL;
-
 ///////////////////// TEST LVGL SETTINGS ////////////////////
 #if LV_COLOR_DEPTH != 16
 #error "LV_COLOR_DEPTH should be 16bit to match SquareLine Studio's settings"
@@ -97,6 +95,12 @@ char dateString[30];
 bool normal_event_flag = false;
 bool over_event_flag = false;
 bool lack_event_flag = false;
+
+static lv_obj_t *s_btn[PROD_NUM];
+static char saved_data[PROD_NUM][MAX_DATA_LEN] = {
+  0,
+};
+static int btn_num = 30;
 
 ///////////////////// ANIMATIONS ////////////////////
 
@@ -128,12 +132,6 @@ void ui_event_Button4(lv_event_t *e) {
   }
 }
 
-static lv_obj_t *s_btn[50];
-static char saved_data[10][50] = {
-  0,
-};
-static int btn_num = 30;
-
 void ui_event_Screen1_List_Select_Button(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
@@ -141,42 +139,45 @@ void ui_event_Screen1_List_Select_Button(lv_event_t *e) {
   if (event_code == LV_EVENT_CLICKED) {
     _ui_screen_change(&ui_list_select, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, &ui_list_select_screen_init);
     uint32_t i = 0;
-    char key[10] = {
-      0,
-    };
 
     for (i = 0; i < btn_num; i++) {
-      LOGI(TAG, "obj delete");
+      char key[10] = { 0 };
       int freeHeap = xPortGetFreeHeapSize();
-
       LOGI(TAG, "free_mem %d\n", freeHeap);
 
       if (s_btn[i]) {
+        LOGI(TAG, "obj delete = [%p]", s_btn[i]);
         lv_obj_remove_event_cb(s_btn[i], ui_ListPanel_Button_handler);
-        lv_obj_del_delayed(s_btn[i], 1000);  // There is a common delete function for all object types
+        lv_obj_del(s_btn[i]);  // There is a common delete function for all object types
         s_btn[i] = NULL;
       }
 
-      snprintf(key, sizeof(key), "sen%ld", i);
+      memset(&saved_data[i], 0x00, sizeof(saved_data[i]));
+      snprintf(key, sizeof(key), "sen%lu", (unsigned long)i);
       syscfg_get(CFG_DATA, key, saved_data[i], sizeof(saved_data[i]));
 
       s_btn[i] = lv_btn_create(ui_ListPanel);
 
-      LOGI(TAG, "btn[%d] = %p", i, s_btn[i]);
-      LOGI(TAG, "saved_data = %s", saved_data[i]);
+      if (s_btn[i]) {
+        LOGI(TAG, "btn[%d] = %p", i, s_btn[i]);
+        LOGI(TAG, "saved_data = %s", saved_data[i]);
 
-      lv_obj_set_size(s_btn[i], 120, 70);
-      lv_obj_add_event_cb(s_btn[i], ui_ListPanel_Button_handler, LV_EVENT_ALL, saved_data[i]);
+        lv_obj_set_size(s_btn[i], 120, 70);
+        lv_obj_add_event_cb(s_btn[i], ui_ListPanel_Button_handler, LV_EVENT_ALL, saved_data[i]);
 
-      lv_obj_t *label = lv_label_create(s_btn[i]);
-      if (i == 3) {
-        lv_label_set_text_fmt(label, "Panel %" LV_PRIu32 "\nno snap", i);
-        lv_obj_clear_flag(s_btn[i], LV_OBJ_FLAG_SNAPPABLE);
+        lv_obj_t *label = lv_label_create(s_btn[i]);
+
+        if (i == 3) {
+          lv_label_set_text_fmt(label, "Panel %" LV_PRIu32 "\nno snap", i);
+          lv_obj_clear_flag(s_btn[i], LV_OBJ_FLAG_SNAPABLE);
+        } else {
+          lv_label_set_text_fmt(label, "Panel %" LV_PRIu32, i);
+        }
+
+        lv_obj_center(label);
       } else {
-        lv_label_set_text_fmt(label, "Panel %" LV_PRIu32, i);
+        LOGI(TAG, "Failed to create button!!!");
       }
-
-      lv_obj_center(label);
     }
 
     lv_obj_update_snap(ui_ListPanel, LV_ANIM_ON);
@@ -187,7 +188,7 @@ void ui_ListPanel_Button_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   char *value = lv_event_get_user_data(e);
-  char saved_data[80] = { 0 };
+  char data[MAX_DATA_LEN] = { 0 };
 
   if (event_code == LV_EVENT_CLICKED) {
     for (int i = 0; i < btn_num; i++) {
@@ -198,11 +199,10 @@ void ui_ListPanel_Button_handler(lv_event_t *e) {
     }
 
     if (value) {
-      snprintf(saved_data, sizeof(saved_data), "data : %s", value);
+      snprintf(data, sizeof(data), "data : %s", value);
       LOGI(TAG, "selected btn : %s", value);
     }
-    LOGI(TAG, "str_event_buff in handler : %p", str_event_buff);
-    lv_label_set_text(ui_ListDiscPanelLabel, saved_data);
+    lv_label_set_text(ui_ListDiscPanelLabel, data);
   }
 }
 
