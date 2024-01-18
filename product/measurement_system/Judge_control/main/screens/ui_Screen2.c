@@ -6,7 +6,6 @@
 #include "../ui.h"
 #include "log.h"
 
-
 static const char *TAG = "lvgl";
 
 static bool ta1_selected;
@@ -17,337 +16,304 @@ static bool ta5_selected;
 
 static textareas_t use_text_area;
 
-void ui_Button_all_delete_handler(lv_event_t * e){
-    lv_event_code_t event_code = lv_event_get_code(e);
-    lv_obj_t * target = lv_event_get_target(e);
-    textareas_t * ta = lv_event_get_user_data(e);
-    if(event_code == LV_EVENT_CLICKED ){
-        lv_textarea_set_text(ta->ta1,"0");
-        lv_textarea_set_text(ta->ta2,"0");
-        lv_textarea_set_text(ta->ta3,"0");
-        lv_textarea_set_text(ta->ta4,"0");
-        lv_textarea_set_text(ta->ta5,"0");
-    }
+void ui_Button_all_delete_handler(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  textareas_t *ta = lv_event_get_user_data(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    lv_textarea_set_text(ta->ta1, "0");
+    lv_textarea_set_text(ta->ta2, "0");
+    lv_textarea_set_text(ta->ta3, "0");
+    lv_textarea_set_text(ta->ta4, "0");
+    lv_textarea_set_text(ta->ta5, "0");
+  }
 }
 
-void ui_event_Button3( lv_event_t * e) {
-    lv_event_code_t event_code = lv_event_get_code(e);
-    lv_obj_t * target = lv_event_get_target(e);
-    textareas_t * ta = lv_event_get_user_data(e);
-    if ( event_code == LV_EVENT_CLICKED) {
-        _ui_screen_change( &ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen1_screen_init);
-        lv_event_send(ta->ta1,LV_EVENT_READY, NULL);
-        lv_event_send(ta->ta2,LV_EVENT_READY, NULL);
-        lv_event_send(ta->ta3,LV_EVENT_READY, NULL);
-        lv_event_send(ta->ta4,LV_EVENT_READY, NULL);
-        lv_event_send(ta->ta5,LV_EVENT_READY, NULL);
-        lv_event_send(ui_Label_upper_value,LV_EVENT_READY, NULL);
-        lv_event_send(ui_Label_lower_value,LV_EVENT_READY, NULL);
-        lv_event_send(ui_Label_amount,LV_EVENT_READY, NULL);
-    }
+void ui_event_Button3(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  textareas_t *ta = lv_event_get_user_data(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(&ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen1_screen_init);
+    lv_event_send(ta->ta1, LV_EVENT_READY, NULL);
+    lv_event_send(ta->ta2, LV_EVENT_READY, NULL);
+    lv_event_send(ta->ta3, LV_EVENT_READY, NULL);
+    lv_event_send(ta->ta4, LV_EVENT_READY, NULL);
+    lv_event_send(ta->ta5, LV_EVENT_READY, NULL);
+    lv_event_send(ui_Label_upper_value, LV_EVENT_READY, NULL);
+    lv_event_send(ui_Label_lower_value, LV_EVENT_READY, NULL);
+    lv_event_send(ui_Label_amount, LV_EVENT_READY, NULL);
+  }
 }
 
+void textarea_event_handler(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *ta = lv_event_get_target(e);
 
-void textarea_event_handler(lv_event_t * e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t * ta = lv_event_get_target(e);
-
-    if (code == LV_EVENT_FOCUSED) {
-        ta1_selected = true;
-        ta2_selected = false;
-        ta3_selected = false;
-        ta4_selected = false;
-        ta5_selected = false;
-        LOGI(TAG,"event call ta1");
-    }else if(code == LV_EVENT_READY){
-        //upper_weight_value = atoi(lv_textarea_get_text(ta)); 
-        sscanf(lv_textarea_get_text(ta), "%f", &upper_weight_value);
-        LOGI(TAG,"Enter was pressed. The current text is: %f", upper_weight_value);
-    }    
-    /*Todo : */
-    
+  if (code == LV_EVENT_FOCUSED) {
+    ta1_selected = true;
+    ta2_selected = false;
+    ta3_selected = false;
+    ta4_selected = false;
+    ta5_selected = false;
+    LOGI(TAG, "event call ta1");
+  } else if (code == LV_EVENT_READY) {
+    // upper_weight_value = atoi(lv_textarea_get_text(ta));
+    sscanf(lv_textarea_get_text(ta), "%f", &upper_weight_value);
+    LOGI(TAG, "Enter was pressed. The current text is: %f", upper_weight_value);
+  }
+  /*Todo : */
 }
 
-void textarea_event_handler1(lv_event_t * e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t * ta = lv_event_get_target(e);
-    if (code == LV_EVENT_FOCUSED) {
-        ta2_selected = true;
-        ta1_selected = false;
-        ta3_selected = false;
-        ta4_selected = false;
-        ta5_selected = false;
-        LOGI(TAG,"event call ta2");
-    }else if(code == LV_EVENT_READY){
-        //lower_weight_value = atoi(lv_textarea_get_text(ta));
-        sscanf(lv_textarea_get_text(ta), "%f", &lower_weight_value); 
-        LOGI(TAG,"Enter was pressed. The current text is: %f", lower_weight_value);
-    }
-    
+void textarea_event_handler1(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *ta = lv_event_get_target(e);
+  if (code == LV_EVENT_FOCUSED) {
+    ta2_selected = true;
+    ta1_selected = false;
+    ta3_selected = false;
+    ta4_selected = false;
+    ta5_selected = false;
+    LOGI(TAG, "event call ta2");
+  } else if (code == LV_EVENT_READY) {
+    // lower_weight_value = atoi(lv_textarea_get_text(ta));
+    sscanf(lv_textarea_get_text(ta), "%f", &lower_weight_value);
+    LOGI(TAG, "Enter was pressed. The current text is: %f", lower_weight_value);
+  }
 
-    // /*Todo : */
-    
+  // /*Todo : */
 }
 
-void textarea_event_handler2(lv_event_t * e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t * ta = lv_event_get_target(e);
-    if (code == LV_EVENT_FOCUSED) {
-        ta3_selected = true;
-        ta1_selected = false;
-        ta2_selected = false;
-        ta4_selected = false;
-        ta5_selected = false;
-        LOGI(TAG,"event call ta3");
-    }else if(code == LV_EVENT_READY){
-        //success_weight_value = atoi(lv_textarea_get_text(ta)); 
-        sscanf(lv_textarea_get_text(ta), "%f", &success_weight_value);
-        LOGI(TAG,"Enter was pressed. The current text is: %f", success_weight_value);
-    }
-    // /*Todo : */
-    
+void textarea_event_handler2(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *ta = lv_event_get_target(e);
+  if (code == LV_EVENT_FOCUSED) {
+    ta3_selected = true;
+    ta1_selected = false;
+    ta2_selected = false;
+    ta4_selected = false;
+    ta5_selected = false;
+    LOGI(TAG, "event call ta3");
+  } else if (code == LV_EVENT_READY) {
+    // success_weight_value = atoi(lv_textarea_get_text(ta));
+    sscanf(lv_textarea_get_text(ta), "%f", &success_weight_value);
+    LOGI(TAG, "Enter was pressed. The current text is: %f", success_weight_value);
+  }
+  // /*Todo : */
 }
 
-
-void textarea_event_handler3(lv_event_t * e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t * ta = lv_event_get_target(e);
-    if (code == LV_EVENT_FOCUSED) {
-        ta4_selected = true;
-        ta1_selected = false;
-        ta2_selected = false;
-        ta3_selected = false;
-        ta5_selected = false;
-        LOGI(TAG,"event call ta4");
-    }else if(code == LV_EVENT_READY){
-        //success_weight_value = atoi(lv_textarea_get_text(ta)); 
-        sscanf(lv_textarea_get_text(ta), "%f", &renge_weight_value);
-        LOGI(TAG,"Enter was pressed. The current text is: %f", renge_weight_value);
-    }
-    // /*Todo : */
-    
+void textarea_event_handler3(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *ta = lv_event_get_target(e);
+  if (code == LV_EVENT_FOCUSED) {
+    ta4_selected = true;
+    ta1_selected = false;
+    ta2_selected = false;
+    ta3_selected = false;
+    ta5_selected = false;
+    LOGI(TAG, "event call ta4");
+  } else if (code == LV_EVENT_READY) {
+    // success_weight_value = atoi(lv_textarea_get_text(ta));
+    sscanf(lv_textarea_get_text(ta), "%f", &renge_weight_value);
+    LOGI(TAG, "Enter was pressed. The current text is: %f", renge_weight_value);
+  }
+  // /*Todo : */
 }
 
-void textarea_event_handler4(lv_event_t * e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t * ta = lv_event_get_target(e);
-    if (code == LV_EVENT_FOCUSED) {
-        ta5_selected = true;
-        ta1_selected = false;
-        ta2_selected = false;
-        ta3_selected = false;
-        ta4_selected = false;
-        LOGI(TAG,"event call ta5");
-    }else if(code == LV_EVENT_READY){
-        //success_weight_value = atoi(lv_textarea_get_text(ta)); 
-        sscanf(lv_textarea_get_text(ta), "%f", &amount_weight_value);
-        LOGI(TAG,"Enter was pressed. The current text is: %f", amount_weight_value);
-    }
-    // /*Todo : */
-    
+void textarea_event_handler4(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *ta = lv_event_get_target(e);
+  if (code == LV_EVENT_FOCUSED) {
+    ta5_selected = true;
+    ta1_selected = false;
+    ta2_selected = false;
+    ta3_selected = false;
+    ta4_selected = false;
+    LOGI(TAG, "event call ta5");
+  } else if (code == LV_EVENT_READY) {
+    // success_weight_value = atoi(lv_textarea_get_text(ta));
+    sscanf(lv_textarea_get_text(ta), "%f", &amount_weight_value);
+    LOGI(TAG, "Enter was pressed. The current text is: %f", amount_weight_value);
+  }
+  // /*Todo : */
 }
 
+void btnm_event_handler(lv_event_t *e) {
+  lv_obj_t *obj = lv_event_get_target(e);
+  // lv_obj_t * ta = lv_event_get_user_data(e);
+  const char *txt = lv_btnmatrix_get_btn_text(obj, lv_btnmatrix_get_selected_btn(obj));
+  lv_obj_t *ta = use_text_area.ta1;
 
-void btnm_event_handler(lv_event_t * e)
-{
-    lv_obj_t * obj = lv_event_get_target(e);
-    // lv_obj_t * ta = lv_event_get_user_data(e);
-    const char * txt = lv_btnmatrix_get_btn_text(obj, lv_btnmatrix_get_selected_btn(obj));
-    lv_obj_t * ta = use_text_area.ta1;
+  if (ta1_selected) {
+    ta = use_text_area.ta1;
+    LOGI(TAG, "Send data to ta1");
+  } else if (ta2_selected) {
+    ta = use_text_area.ta2;
+    LOGI(TAG, "Send data to ta2");
+  } else if (ta3_selected) {
+    ta = use_text_area.ta3;
+    LOGI(TAG, "Send data to ta3");
+  } else if (ta4_selected) {
+    ta = use_text_area.ta4;
+    LOGI(TAG, "Send data to ta4");
+  } else if (ta5_selected) {
+    ta = use_text_area.ta5;
+    LOGI(TAG, "Send data to ta5");
+  }
 
-    if (ta1_selected) {
-        ta = use_text_area.ta1;
-        LOGI(TAG, "Send data to ta1");
-    }
-    else if (ta2_selected) {
-        ta = use_text_area.ta2;
-        LOGI(TAG, "Send data to ta2");
-    }
-    else if( ta3_selected) {
-        ta = use_text_area.ta3;
-        LOGI(TAG, "Send data to ta3");
-    }
-    else if( ta4_selected) {
-        ta = use_text_area.ta4;
-        LOGI(TAG, "Send data to ta4");
-    }
-    else if( ta5_selected) {
-        ta = use_text_area.ta5;
-        LOGI(TAG, "Send data to ta5");
-    }
-
-    if(strcmp(txt, "C") == 0) lv_textarea_del_char(ta);
-    else if(strcmp(txt, LV_SYMBOL_NEW_LINE) == 0) lv_event_send(ta, LV_EVENT_READY, NULL);
-    else lv_textarea_add_text(ta, txt);
-
+  if (strcmp(txt, "C") == 0)
+    lv_textarea_del_char(ta);
+  else if (strcmp(txt, LV_SYMBOL_NEW_LINE) == 0)
+    lv_event_send(ta, LV_EVENT_READY, NULL);
+  else
+    lv_textarea_add_text(ta, txt);
 }
 
+void ui_Screen2_screen_init(void) {
+  ui_Screen2 = lv_obj_create(NULL);
+  lv_obj_clear_flag(ui_Screen2, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
 
-void ui_Screen2_screen_init(void)
-{
+  ui_Button3 = lv_btn_create(ui_Screen2);
+  lv_obj_set_width(ui_Button3, 70);
+  lv_obj_set_height(ui_Button3, 50);
+  lv_obj_set_x(ui_Button3, -190);
+  lv_obj_set_y(ui_Button3, 125);
+  lv_obj_set_align(ui_Button3, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_Button3, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_Button3, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_bg_color(ui_Button3, lv_color_hex(0x0079ff), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-ui_Screen2 = lv_obj_create(NULL);
-lv_obj_clear_flag( ui_Screen2, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+  lv_obj_add_event_cb(ui_Button3, ui_event_Button3, LV_EVENT_ALL, &use_text_area);
 
-ui_Button3 = lv_btn_create(ui_Screen2);
-lv_obj_set_width( ui_Button3, 70);
-lv_obj_set_height( ui_Button3, 50);
-lv_obj_set_x( ui_Button3, -190 );
-lv_obj_set_y( ui_Button3, 125 );
-lv_obj_set_align( ui_Button3, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_Button3, LV_OBJ_FLAG_SCROLL_ON_FOCUS );   /// Flags
-lv_obj_clear_flag( ui_Button3, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Button3, lv_color_hex(0x0079ff), LV_PART_MAIN | LV_STATE_DEFAULT );
+  lv_obj_t *Label_2_1 = lv_label_create(ui_Button3);
+  lv_obj_set_width(Label_2_1, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(Label_2_1, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(Label_2_1, -3);
+  lv_obj_set_y(Label_2_1, 1);
+  lv_label_set_text(Label_2_1, "완 료");
+  lv_obj_set_style_text_font(Label_2_1, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-lv_obj_add_event_cb(ui_Button3, ui_event_Button3, LV_EVENT_ALL, &use_text_area);
+  lv_obj_t *ui_Button_all_delete = lv_btn_create(ui_Screen2);
+  lv_obj_set_width(ui_Button_all_delete, 70);
+  lv_obj_set_height(ui_Button_all_delete, 50);
+  lv_obj_set_x(ui_Button_all_delete, -110);
+  lv_obj_set_y(ui_Button_all_delete, 125);
+  lv_obj_set_align(ui_Button_all_delete, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_Button_all_delete, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_Button_all_delete, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_bg_color(ui_Button_all_delete, lv_color_hex(0xff0060), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-lv_obj_t *Label_2_1 = lv_label_create(ui_Button3);
-lv_obj_set_width( Label_2_1, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( Label_2_1, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( Label_2_1, -3 );
-lv_obj_set_y( Label_2_1, 1 );
-lv_label_set_text(Label_2_1,"완 료");
-lv_obj_set_style_text_font(Label_2_1, &NanumBar24, LV_PART_MAIN| LV_STATE_DEFAULT);
+  lv_obj_add_event_cb(ui_Button_all_delete, ui_Button_all_delete_handler, LV_EVENT_ALL, &use_text_area);
 
-lv_obj_t *ui_Button_all_delete = lv_btn_create(ui_Screen2);
-lv_obj_set_width( ui_Button_all_delete, 70);
-lv_obj_set_height( ui_Button_all_delete, 50);
-lv_obj_set_x( ui_Button_all_delete, -110 );
-lv_obj_set_y( ui_Button_all_delete, 125 );
-lv_obj_set_align( ui_Button_all_delete, LV_ALIGN_CENTER );
-lv_obj_add_flag( ui_Button_all_delete, LV_OBJ_FLAG_SCROLL_ON_FOCUS );   /// Flags
-lv_obj_clear_flag( ui_Button_all_delete, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_Button_all_delete, lv_color_hex(0xff0060), LV_PART_MAIN | LV_STATE_DEFAULT );
+  lv_obj_t *ui_Label_all_dalete = lv_label_create(ui_Button_all_delete);
+  lv_obj_set_width(ui_Label_all_dalete, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Label_all_dalete, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Label_all_dalete, -3);
+  lv_obj_set_y(ui_Label_all_dalete, 1);
+  lv_label_set_text(ui_Label_all_dalete, "삭 제");
+  lv_obj_set_style_text_font(ui_Label_all_dalete, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+  use_text_area.ta1 = lv_textarea_create(ui_Screen2);
+  lv_textarea_set_one_line(use_text_area.ta1, true);
+  lv_obj_set_width(use_text_area.ta1, 125);  /// 1
+  lv_obj_set_height(use_text_area.ta1, 40);  /// 1
+  lv_obj_align(use_text_area.ta1, LV_ALIGN_TOP_MID, -130, 10);
+  lv_obj_add_event_cb(use_text_area.ta1, textarea_event_handler, LV_EVENT_READY, NULL);
+  lv_obj_add_event_cb(use_text_area.ta1, textarea_event_handler, LV_EVENT_FOCUSED, NULL);
+  lv_obj_add_state(use_text_area.ta1, LV_STATE_DEFAULT); /*To be sure the cursor is visible*/
 
-lv_obj_add_event_cb(ui_Button_all_delete, ui_Button_all_delete_handler, LV_EVENT_ALL, &use_text_area);
+  use_text_area.ta2 = lv_textarea_create(ui_Screen2);
+  lv_textarea_set_one_line(use_text_area.ta2, true);
+  lv_obj_set_width(use_text_area.ta2, 125);  /// 1
+  lv_obj_set_height(use_text_area.ta2, 40);  /// 1
+  lv_obj_align(use_text_area.ta2, LV_ALIGN_TOP_MID, -130, 60);
+  lv_obj_add_event_cb(use_text_area.ta2, textarea_event_handler1, LV_EVENT_READY, NULL);
+  lv_obj_add_event_cb(use_text_area.ta2, textarea_event_handler1, LV_EVENT_FOCUSED, NULL);
+  lv_obj_add_state(use_text_area.ta2, LV_STATE_DEFAULT); /*To be sure the cursor is visible*/
 
-lv_obj_t *ui_Label_all_dalete = lv_label_create(ui_Button_all_delete);
-lv_obj_set_width( ui_Label_all_dalete, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label_all_dalete, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Label_all_dalete, -3 );
-lv_obj_set_y( ui_Label_all_dalete, 1 );
-lv_label_set_text(ui_Label_all_dalete,"삭 제");
-lv_obj_set_style_text_font(ui_Label_all_dalete, &NanumBar24, LV_PART_MAIN| LV_STATE_DEFAULT);
+  use_text_area.ta3 = lv_textarea_create(ui_Screen2);
+  lv_textarea_set_one_line(use_text_area.ta3, true);
+  lv_obj_set_width(use_text_area.ta3, 125);  /// 1
+  lv_obj_set_height(use_text_area.ta3, 40);  /// 1
+  lv_obj_align(use_text_area.ta3, LV_ALIGN_TOP_MID, -130, 110);
+  lv_obj_add_event_cb(use_text_area.ta3, textarea_event_handler2, LV_EVENT_READY, NULL);
+  lv_obj_add_event_cb(use_text_area.ta3, textarea_event_handler2, LV_EVENT_FOCUSED, NULL);
+  lv_obj_add_state(use_text_area.ta3, LV_STATE_DEFAULT); /*To be sure the cursor is visible*/
 
+  use_text_area.ta4 = lv_textarea_create(ui_Screen2);
+  lv_textarea_set_one_line(use_text_area.ta4, true);
+  lv_obj_set_width(use_text_area.ta4, 125);  /// 1
+  lv_obj_set_height(use_text_area.ta4, 40);  /// 1
+  lv_obj_align(use_text_area.ta4, LV_ALIGN_TOP_MID, -130, 160);
+  lv_obj_add_event_cb(use_text_area.ta4, textarea_event_handler3, LV_EVENT_READY, NULL);
+  lv_obj_add_event_cb(use_text_area.ta4, textarea_event_handler3, LV_EVENT_FOCUSED, NULL);
+  lv_obj_add_state(use_text_area.ta4, LV_STATE_DEFAULT); /*To be sure the cursor is visible*/
 
-use_text_area.ta1 = lv_textarea_create(ui_Screen2);
-lv_textarea_set_one_line(use_text_area.ta1, true);
-lv_obj_set_width( use_text_area.ta1, 125);  /// 1
-lv_obj_set_height( use_text_area.ta1, 40);   /// 1
-lv_obj_align(use_text_area.ta1, LV_ALIGN_TOP_MID, -130, 10);
-lv_obj_add_event_cb(use_text_area.ta1, textarea_event_handler, LV_EVENT_READY, NULL);
-lv_obj_add_event_cb(use_text_area.ta1, textarea_event_handler, LV_EVENT_FOCUSED, NULL);
-lv_obj_add_state(use_text_area.ta1, LV_STATE_DEFAULT); /*To be sure the cursor is visible*/
+  use_text_area.ta5 = lv_textarea_create(ui_Screen2);
+  lv_textarea_set_one_line(use_text_area.ta5, true);
+  lv_obj_set_width(use_text_area.ta5, 125);  /// 1
+  lv_obj_set_height(use_text_area.ta5, 40);  /// 1
+  lv_obj_align(use_text_area.ta5, LV_ALIGN_TOP_MID, -130, 210);
+  lv_obj_add_event_cb(use_text_area.ta5, textarea_event_handler4, LV_EVENT_READY, NULL);
+  lv_obj_add_event_cb(use_text_area.ta5, textarea_event_handler4, LV_EVENT_FOCUSED, NULL);
+  lv_obj_add_state(use_text_area.ta5, LV_STATE_DEFAULT); /*To be sure the cursor is visible*/
 
-use_text_area.ta2 = lv_textarea_create(ui_Screen2);
-lv_textarea_set_one_line(use_text_area.ta2, true);
-lv_obj_set_width( use_text_area.ta2, 125);  /// 1
-lv_obj_set_height( use_text_area.ta2, 40);   /// 1
-lv_obj_align(use_text_area.ta2, LV_ALIGN_TOP_MID, -130, 60);
-lv_obj_add_event_cb(use_text_area.ta2, textarea_event_handler1, LV_EVENT_READY, NULL);
-lv_obj_add_event_cb(use_text_area.ta2, textarea_event_handler1, LV_EVENT_FOCUSED, NULL);
-lv_obj_add_state(use_text_area.ta2, LV_STATE_DEFAULT); /*To be sure the cursor is visible*/
+  //   static const char *btnm_map[] = { "1", "2", "3", "\n", "4", "5", "6", "\n", "7", "8", "9", "\n",
+  //   LV_SYMBOL_BACKSPACE,
+  //                                     "0", ".", "" };
 
-use_text_area.ta3 = lv_textarea_create(ui_Screen2);
-lv_textarea_set_one_line(use_text_area.ta3, true);
-lv_obj_set_width( use_text_area.ta3, 125);  /// 1
-lv_obj_set_height( use_text_area.ta3, 40);   /// 1
-lv_obj_align(use_text_area.ta3, LV_ALIGN_TOP_MID, -130, 110);
-lv_obj_add_event_cb(use_text_area.ta3, textarea_event_handler2, LV_EVENT_READY, NULL);
-lv_obj_add_event_cb(use_text_area.ta3, textarea_event_handler2, LV_EVENT_FOCUSED, NULL);
-lv_obj_add_state(use_text_area.ta3, LV_STATE_DEFAULT); /*To be sure the cursor is visible*/
+  static const char *btnm_map[] = { "1", "2", "3", "\n", "4", "5", "6", "\n", "7", "8", "9", "\n", "C", "0", ".", "" };
 
-use_text_area.ta4 = lv_textarea_create(ui_Screen2);
-lv_textarea_set_one_line(use_text_area.ta4, true);
-lv_obj_set_width( use_text_area.ta4, 125);  /// 1
-lv_obj_set_height( use_text_area.ta4, 40);   /// 1
-lv_obj_align(use_text_area.ta4, LV_ALIGN_TOP_MID, -130, 160);
-lv_obj_add_event_cb(use_text_area.ta4, textarea_event_handler3, LV_EVENT_READY, NULL);
-lv_obj_add_event_cb(use_text_area.ta4, textarea_event_handler3, LV_EVENT_FOCUSED, NULL);
-lv_obj_add_state(use_text_area.ta4, LV_STATE_DEFAULT); /*To be sure the cursor is visible*/
+  lv_obj_t *btnm = lv_btnmatrix_create(ui_Screen2);
+  lv_obj_set_size(btnm, 300, 320);
+  lv_obj_align(btnm, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
+  lv_obj_set_style_text_font(btnm, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_add_event_cb(btnm, btnm_event_handler, LV_EVENT_VALUE_CHANGED, NULL);
+  lv_obj_clear_flag(btnm, LV_OBJ_FLAG_CLICK_FOCUSABLE); /*To keep the text area focused on button clicks*/
+  lv_btnmatrix_set_map(btnm, btnm_map);
 
-use_text_area.ta5 = lv_textarea_create(ui_Screen2);
-lv_textarea_set_one_line(use_text_area.ta5, true);
-lv_obj_set_width( use_text_area.ta5, 125);  /// 1
-lv_obj_set_height( use_text_area.ta5, 40);   /// 1
-lv_obj_align(use_text_area.ta5, LV_ALIGN_TOP_MID, -130, 210);
-lv_obj_add_event_cb(use_text_area.ta5, textarea_event_handler4, LV_EVENT_READY, NULL);
-lv_obj_add_event_cb(use_text_area.ta5, textarea_event_handler4, LV_EVENT_FOCUSED, NULL);
-lv_obj_add_state(use_text_area.ta5, LV_STATE_DEFAULT); /*To be sure the cursor is visible*/
+  lv_obj_t *ui_Label8 = lv_label_create(ui_Screen2);
+  lv_obj_set_width(ui_Label8, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Label8, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Label8, -215);
+  lv_obj_set_y(ui_Label8, 20);
+  lv_obj_set_align(ui_Label8, LV_ALIGN_TOP_MID);
+  lv_label_set_text(ui_Label8, "초 과");
+  lv_obj_set_style_text_font(ui_Label8, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+  lv_obj_t *ui_Label9 = lv_label_create(ui_Screen2);
+  lv_obj_set_width(ui_Label9, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Label9, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Label9, -215);
+  lv_obj_set_y(ui_Label9, 70);
+  lv_obj_set_align(ui_Label9, LV_ALIGN_TOP_MID);
+  lv_label_set_text(ui_Label9, "부 족");
+  lv_obj_set_style_text_font(ui_Label9, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+  lv_obj_t *ui_Label10 = lv_label_create(ui_Screen2);
+  lv_obj_set_width(ui_Label10, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Label10, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Label10, -215);
+  lv_obj_set_y(ui_Label10, 120);
+  lv_obj_set_align(ui_Label10, LV_ALIGN_TOP_MID);
+  lv_label_set_text(ui_Label10, "정 상");
+  lv_obj_set_style_text_font(ui_Label10, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+  lv_obj_t *ui_Label11 = lv_label_create(ui_Screen2);
+  lv_obj_set_width(ui_Label11, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Label11, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Label11, -215);
+  lv_obj_set_y(ui_Label11, 170);
+  lv_obj_set_align(ui_Label11, LV_ALIGN_TOP_MID);
+  lv_label_set_text(ui_Label11, "범 위");
+  lv_obj_set_style_text_font(ui_Label11, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-// static const char * btnm_map[] = {"1", "2", "3", "\n",
-//                                     "4", "5", "6", "\n",
-//                                     "7", "8", "9", "\n",
-//                                     LV_SYMBOL_BACKSPACE, "0", ".", ""
-//                                     };
-
-static const char * btnm_map[] = {"1", "2", "3", "\n",
-                                    "4", "5", "6", "\n",
-                                    "7", "8", "9", "\n",
-                                    "C", "0", ".", ""
-                                    };
-
-lv_obj_t * btnm = lv_btnmatrix_create(ui_Screen2);
-lv_obj_set_size(btnm, 300, 320);
-lv_obj_align(btnm, LV_ALIGN_BOTTOM_RIGHT, 0, 0);
-lv_obj_set_style_text_font(btnm, &NanumBar24, LV_PART_MAIN| LV_STATE_DEFAULT);
-lv_obj_add_event_cb(btnm, btnm_event_handler, LV_EVENT_VALUE_CHANGED, NULL);
-lv_obj_clear_flag(btnm, LV_OBJ_FLAG_CLICK_FOCUSABLE); /*To keep the text area focused on button clicks*/
-lv_btnmatrix_set_map(btnm, btnm_map);
-
-
-lv_obj_t * ui_Label8 = lv_label_create(ui_Screen2);
-lv_obj_set_width( ui_Label8, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label8, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Label8, -215 );
-lv_obj_set_y( ui_Label8, 20 );
-lv_obj_set_align( ui_Label8, LV_ALIGN_TOP_MID );
-lv_label_set_text(ui_Label8,"초 과");
-lv_obj_set_style_text_font(ui_Label8, &NanumBar18, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-lv_obj_t * ui_Label9 = lv_label_create(ui_Screen2);
-lv_obj_set_width( ui_Label9, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label9, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Label9, -215 );
-lv_obj_set_y( ui_Label9, 70 );
-lv_obj_set_align( ui_Label9, LV_ALIGN_TOP_MID );
-lv_label_set_text(ui_Label9,"부 족");
-lv_obj_set_style_text_font(ui_Label9, &NanumBar18, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-lv_obj_t * ui_Label10 = lv_label_create(ui_Screen2);
-lv_obj_set_width( ui_Label10, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label10, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Label10, -215 );
-lv_obj_set_y( ui_Label10, 120 );
-lv_obj_set_align( ui_Label10, LV_ALIGN_TOP_MID );
-lv_label_set_text(ui_Label10,"정 상");
-lv_obj_set_style_text_font(ui_Label10, &NanumBar18, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-lv_obj_t * ui_Label11 = lv_label_create(ui_Screen2);
-lv_obj_set_width( ui_Label11, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label11, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Label11, -215 );
-lv_obj_set_y( ui_Label11, 170 );
-lv_obj_set_align( ui_Label11, LV_ALIGN_TOP_MID );
-lv_label_set_text(ui_Label11,"범 위");
-lv_obj_set_style_text_font(ui_Label11, &NanumBar18, LV_PART_MAIN| LV_STATE_DEFAULT);
-
-lv_obj_t * ui_Label18 = lv_label_create(ui_Screen2);
-lv_obj_set_width( ui_Label18, LV_SIZE_CONTENT);  /// 1
-lv_obj_set_height( ui_Label18, LV_SIZE_CONTENT);   /// 1
-lv_obj_set_x( ui_Label18, -215 );
-lv_obj_set_y( ui_Label18, 220 );
-lv_obj_set_align( ui_Label18, LV_ALIGN_TOP_MID );
-lv_label_set_text(ui_Label18,"단 위");
-lv_obj_set_style_text_font(ui_Label18, &NanumBar18, LV_PART_MAIN| LV_STATE_DEFAULT);
-
+  lv_obj_t *ui_Label18 = lv_label_create(ui_Screen2);
+  lv_obj_set_width(ui_Label18, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Label18, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Label18, -215);
+  lv_obj_set_y(ui_Label18, 220);
+  lv_obj_set_align(ui_Label18, LV_ALIGN_TOP_MID);
+  lv_label_set_text(ui_Label18, "단 위");
+  lv_obj_set_style_text_font(ui_Label18, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 }

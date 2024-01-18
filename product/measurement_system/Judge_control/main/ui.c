@@ -3,12 +3,15 @@
 // LVGL version: 8.3.6
 // Project name: ms_type
 
+#include "freertos/FreeRTOS.h"
 #include "ui.h"
 #include <stdio.h>
 #include "ui_helpers.h"
 #include "config.h"
 #include "log.h"
 #include "i2s_speaker.h"
+#include "syscfg.h"
+#include "sys_config.h"
 
 static const char *TAG = "UI_LVGL";
 
@@ -17,6 +20,16 @@ extern cas_22byte_format_t *read_weight_value(void);
 extern int cas_zero_command(void);
 
 ///////////////////// VARIABLES ////////////////////
+
+// SCREEN: ui_main_Screen
+void ui_main_screen_init(void);
+lv_obj_t *ui_Main_Screen;
+lv_obj_t *ui_MainScreenPanel;
+void ui_event_MainScreenBtn1(lv_event_t *e);
+lv_obj_t *ui_MainScreenBtn1;
+lv_obj_t *ui_MainScreenBtn1Label;
+lv_obj_t *ui_MainScreenBtn2;
+lv_obj_t *ui_MainScreenBtn1Label2;
 
 // SCREEN: ui_Screen1
 void ui_Screen1_screen_init(void);
@@ -37,6 +50,7 @@ lv_obj_t *ui_Label_amount;
 lv_obj_t *ui_Label_product_number;
 lv_obj_t *ui_Label_upper_value;
 lv_obj_t *ui_Label_lower_value;
+void ui_event_Screen1_List_Select_Button(lv_event_t *e);
 
 // SCREEN: ui_Screen2
 void ui_Screen2_screen_init(void);
@@ -47,11 +61,26 @@ lv_obj_t *ui_Button3;
 lv_obj_t *ui____initial_actions0;
 void textarea_event_handler(lv_event_t *e);
 
+// SCREEN: ui_list_select
+void ui_list_select_screen_init(void);
+lv_obj_t *ui_list_select;
+lv_obj_t *ui_ListPanel;
+lv_obj_t *ui_ListDiscPanel;
+lv_obj_t *ui_ListDiscPanelLabel;
+lv_obj_t *ui_LisPordNumPanel;
+lv_obj_t *ui_LisPordNumPanelLabel;
+void ui_event_ListPanelBtn(lv_event_t *e);
+lv_obj_t *ui_ListPanelBtn;
+lv_obj_t *ui_ListPanelBtnLabel;
+void ui_ListPanel_Button_handler(lv_event_t *e);
+
 float upper_weight_value = 0.0;
 float lower_weight_value = 0.0;
 float success_weight_value = 0.0;
 float renge_weight_value = 0.0;
 float amount_weight_value = 0.0;
+
+char *str_event_buff = NULL;
 
 ///////////////////// TEST LVGL SETTINGS ////////////////////
 #if LV_COLOR_DEPTH != 16
@@ -72,6 +101,16 @@ bool lack_event_flag = false;
 ///////////////////// ANIMATIONS ////////////////////
 
 ///////////////////// FUNCTIONS ////////////////////
+
+///////////////////// FUNCTIONS ////////////////////
+void ui_event_MainScreenBtn1(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(&ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen1_screen_init);
+  }
+}
+
 void ui_event_Button1(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
@@ -86,6 +125,92 @@ void ui_event_Button4(lv_event_t *e) {
   int res = 0;
   if (event_code == LV_EVENT_CLICKED) {
     res = cas_zero_command();
+  }
+}
+
+static lv_obj_t *s_btn[50];
+static char saved_data[10][50] = {
+  0,
+};
+static int btn_num = 30;
+
+void ui_event_Screen1_List_Select_Button(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(&ui_list_select, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, &ui_list_select_screen_init);
+    uint32_t i = 0;
+    char key[10] = {
+      0,
+    };
+
+    for (i = 0; i < btn_num; i++) {
+      LOGI(TAG, "obj delete");
+      int freeHeap = xPortGetFreeHeapSize();
+
+      LOGI(TAG, "free_mem %d\n", freeHeap);
+
+      if (s_btn[i]) {
+        lv_obj_remove_event_cb(s_btn[i], ui_ListPanel_Button_handler);
+        lv_obj_del_delayed(s_btn[i], 1000);  // There is a common delete function for all object types
+        s_btn[i] = NULL;
+      }
+
+      snprintf(key, sizeof(key), "sen%ld", i);
+      syscfg_get(CFG_DATA, key, saved_data[i], sizeof(saved_data[i]));
+
+      s_btn[i] = lv_btn_create(ui_ListPanel);
+
+      LOGI(TAG, "btn[%d] = %p", i, s_btn[i]);
+      LOGI(TAG, "saved_data = %s", saved_data[i]);
+
+      lv_obj_set_size(s_btn[i], 120, 70);
+      lv_obj_add_event_cb(s_btn[i], ui_ListPanel_Button_handler, LV_EVENT_ALL, saved_data[i]);
+
+      lv_obj_t *label = lv_label_create(s_btn[i]);
+      if (i == 3) {
+        lv_label_set_text_fmt(label, "Panel %" LV_PRIu32 "\nno snap", i);
+        lv_obj_clear_flag(s_btn[i], LV_OBJ_FLAG_SNAPPABLE);
+      } else {
+        lv_label_set_text_fmt(label, "Panel %" LV_PRIu32, i);
+      }
+
+      lv_obj_center(label);
+    }
+
+    lv_obj_update_snap(ui_ListPanel, LV_ANIM_ON);
+  }
+}
+
+void ui_ListPanel_Button_handler(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  char *value = lv_event_get_user_data(e);
+  char saved_data[80] = { 0 };
+
+  if (event_code == LV_EVENT_CLICKED) {
+    for (int i = 0; i < btn_num; i++) {
+      if (s_btn[i] == target) {
+        LOGI(TAG, "btn[%d] = %p, target = %p", i, s_btn[i], target);
+        break;
+      }
+    }
+
+    if (value) {
+      snprintf(saved_data, sizeof(saved_data), "data : %s", value);
+      LOGI(TAG, "selected btn : %s", value);
+    }
+    LOGI(TAG, "str_event_buff in handler : %p", str_event_buff);
+    lv_label_set_text(ui_ListDiscPanelLabel, saved_data);
+  }
+}
+
+void ui_event_ListPanelBtn(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(&ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen1_screen_init);
   }
 }
 
@@ -144,14 +269,6 @@ void time_timer_cb(lv_timer_t *timer) {
       lv_led_off(ui_led3);
     }
   }
-  // else {
-  //   lv_led_off(ui_led2);
-  //   lv_led_off(ui_led3);
-  //   lack_event_flag = false;
-  //   normal_event_flag = false;
-  //   // reset normal flag and led
-  //   // reset lower flag and led
-  // }
 
   // lower weight check
   if (lower_weight_value > weight && !lack_event_flag && weight > 0) {
@@ -163,14 +280,6 @@ void time_timer_cb(lv_timer_t *timer) {
       lv_led_off(ui_led2);
     }
   }
-  // else {
-  //   over_event_flag=false;
-  //   normal_event_flag=false;
-  //   lv_led_off(ui_led1);
-  //   lv_led_off(ui_led2);
-  //   // reset noraml flag and led
-  //   // reset upper  flag and led
-  // }
 
   // // success weight check
   if (trash_fileter_flag) {
@@ -226,6 +335,7 @@ void ui_init(void) {
   lv_theme_t *theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED),
                                             false, LV_FONT_DEFAULT);
   lv_disp_set_theme(dispp, theme);
+  ui_main_screen_init();
   ui_Screen1_screen_init();
   ui_Screen2_screen_init();
   ui____initial_actions0 = lv_obj_create(NULL);
@@ -233,5 +343,7 @@ void ui_init(void) {
   lv_style_init(&style_clock);
   static uint32_t user_data = 10;
   lv_timer_t *time_timer = lv_timer_create(time_timer_cb, 1, &user_data);
-  lv_disp_load_scr(ui_Screen1);
+
+  // lv_disp_load_scr(ui_Screen1);
+  lv_disp_load_scr(ui_Main_Screen);
 }

@@ -19,6 +19,14 @@ extern "C" {
 
 #include <stdio.h>
 
+void ui_main_screen_init(void);
+extern lv_obj_t *ui_Main_Screen;
+extern lv_obj_t *ui_MainScreenPanel;
+void ui_event_MainScreenBtn1(lv_event_t *e);
+extern lv_obj_t *ui_MainScreenBtn1;
+extern lv_obj_t *ui_MainScreenBtn1Label;
+extern lv_obj_t *ui_MainScreenBtn2;
+extern lv_obj_t *ui_MainScreenBtn1Label2;
 // SCREEN: ui_Screen1
 void ui_Screen1_screen_init(void);
 extern lv_obj_t *ui_Screen1;
@@ -38,6 +46,7 @@ extern lv_obj_t *ui_Label_amount;
 extern lv_obj_t *ui_Label_product_number;
 extern lv_obj_t *ui_Label_upper_value;
 extern lv_obj_t *ui_Label_lower_value;
+void ui_event_Screen1_List_Select_Button(lv_event_t *e);
 
 // SCREEN: ui_Screen2
 void ui_Screen2_screen_init(void);
@@ -46,6 +55,18 @@ extern lv_obj_t *ui_Keyboard1;
 void ui_event_Button3(lv_event_t *e);
 extern lv_obj_t *ui_Button3;
 extern lv_obj_t *ui____initial_actions0;
+
+// SCREEN: ui_list_select
+void ui_list_select_screen_init(void);
+extern lv_obj_t *ui_list_select;
+extern lv_obj_t *ui_ListPanel;
+extern lv_obj_t *ui_ListDiscPanel;
+extern lv_obj_t *ui_ListDiscPanelLabel;
+extern lv_obj_t *ui_LisPordNumPanel;
+extern lv_obj_t *ui_LisPordNumPanelLabel;
+void ui_event_ListPanelBtn(lv_event_t *e);
+extern lv_obj_t *ui_ListPanelBtn;
+extern lv_obj_t *ui_ListPanelBtnLabel;
 
 extern float upper_weight_value;
 extern float lower_weight_value;
