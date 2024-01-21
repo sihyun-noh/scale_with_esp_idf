@@ -43,34 +43,33 @@ void ui_event_Button4(lv_event_t *e);
 extern lv_obj_t *ui_Label14;
 extern lv_obj_t *ui_Label15;
 extern lv_obj_t *ui_Label_amount;
-extern lv_obj_t *ui_Label_product_number;
-extern lv_obj_t *ui_Label_upper_value;
-extern lv_obj_t *ui_Label_lower_value;
+extern lv_obj_t *ui_Screen1_Prod_Num_Label;
+extern lv_obj_t *ui_Screen1_Upper_Value_Label;
+extern lv_obj_t *ui_Screen1_Lower_Value_Label;
 void ui_event_Screen1_List_Select_Button(lv_event_t *e);
 
 // SCREEN: ui_Screen2
 void ui_Screen2_screen_init(void);
 extern lv_obj_t *ui_Screen2;
 extern lv_obj_t *ui_Keyboard1;
-void ui_event_Button3(lv_event_t *e);
-extern lv_obj_t *ui_Button3;
 extern lv_obj_t *ui____initial_actions0;
 
 // SCREEN: ui_list_select
 void ui_list_select_screen_init(void);
 extern lv_obj_t *ui_list_select;
-extern lv_obj_t *ui_ListPanel;
-extern lv_obj_t *ui_ListDiscPanel;
-extern lv_obj_t *ui_ListDiscPanelLabel;
-extern lv_obj_t *ui_LisPordNumPanel;
-extern lv_obj_t *ui_LisPordNumPanelLabel;
-void ui_event_ListPanelBtn(lv_event_t *e);
-extern lv_obj_t *ui_ListPanelBtn;
-extern lv_obj_t *ui_ListPanelBtnLabel;
+extern lv_obj_t *ui_ListSelectScreen_List_Panel;
+extern lv_obj_t *ui_ListSelectScreen_Comfirm_Panel;
+extern lv_obj_t *ui_ListSelectScreen_Comfirm_Label;
+extern lv_obj_t *ui_ListSelectScreen_Comfirm_Btn;
+extern lv_obj_t *ui_ListSelectScreen_Comfirm_Btn_Label;
+void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e);
+extern lv_obj_t *ui_ListSelectScreen_Delete_Btn;
+extern lv_obj_t *ui_ListSelectScreen_Delete_Btn_Label;
+void ui_ListSelectScreen_Delete_Btn_e_handler(lv_event_t *e);
 
 extern float upper_weight_value;
 extern float lower_weight_value;
-extern float success_weight_value;
+extern int prod_num_value;
 extern float renge_weight_value;
 extern float amount_weight_value;
 
@@ -78,9 +77,31 @@ typedef struct textareas {
   lv_obj_t *ta1;
   lv_obj_t *ta2;
   lv_obj_t *ta3;
-  lv_obj_t *ta4;
-  lv_obj_t *ta5;
+  // lv_obj_t *ta4;
+  // lv_obj_t *ta5;
 } textareas_t;
+
+typedef enum {
+  PROD_NUM_1 = 0x01,
+  PROD_NUM_2,
+  PROD_NUM_3,
+  PROD_NUM_4,
+  PROD_NUM_5,
+  PROD_NUM_6,
+  PROD_NUM_7,
+  PROD_NUM_8,
+  PROD_NUM_9,
+  PROD_NUM_10,
+  PROD_NUM_11,
+  PROD_NUM_12,
+  PROD_NUM_13,
+  PROD_NUM_14,
+  PROD_NUM_15,
+  PROD_NUM_16,
+  PROD_NUM_17,
+  PROD_NUM_18,
+  PROD_NUM_19,
+} prod_num_t;
 
 LV_FONT_DECLARE(ui_font_Display16);
 LV_FONT_DECLARE(ui_font_Display24);

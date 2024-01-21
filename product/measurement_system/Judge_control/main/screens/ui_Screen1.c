@@ -7,6 +7,18 @@
 #include "log.h"
 
 static const char *TAG = "screen";
+// namiing is ui_ListSelectScreen_Delete_Btn_e_handler
+
+void ui_Screen1_Prod_Num_Label_e_handler(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *ta = lv_event_get_target(e);
+  char s_buff[20] = { 0 };
+  if (code == LV_EVENT_READY) {
+    snprintf(s_buff, sizeof(s_buff), "품번 %02d", prod_num_value);
+    lv_label_set_text(ta, s_buff);
+  }
+  /*Todo : */
+}
 
 void ui_Label_upper_value_handler(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
@@ -115,14 +127,16 @@ void ui_Screen1_screen_init(void) {
   lv_label_set_text(ui_Label_total_amount, "총수량");
   lv_obj_set_style_text_font(ui_Label_total_amount, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  ui_Label_product_number = lv_label_create(ui_Panel1);         // 총수량
-  lv_obj_set_width(ui_Label_product_number, LV_SIZE_CONTENT);   /// 1
-  lv_obj_set_height(ui_Label_product_number, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_Label_product_number, -170);
-  lv_obj_set_y(ui_Label_product_number, 0);
-  lv_obj_set_align(ui_Label_product_number, LV_ALIGN_TOP_RIGHT);
-  lv_label_set_text(ui_Label_product_number, "품번 1");
-  lv_obj_set_style_text_font(ui_Label_product_number, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
+  ui_Screen1_Prod_Num_Label = lv_label_create(ui_Panel1);         // 총수량
+  lv_obj_set_width(ui_Screen1_Prod_Num_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Screen1_Prod_Num_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Screen1_Prod_Num_Label, -170);
+  lv_obj_set_y(ui_Screen1_Prod_Num_Label, 0);
+  lv_obj_set_align(ui_Screen1_Prod_Num_Label, LV_ALIGN_TOP_RIGHT);
+  lv_label_set_text(ui_Screen1_Prod_Num_Label, "품번");
+  lv_obj_set_style_text_font(ui_Screen1_Prod_Num_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_add_event_cb(ui_Screen1_Prod_Num_Label, ui_Screen1_Prod_Num_Label_e_handler, LV_EVENT_ALL, NULL);
 
   ui_Label_amount = lv_label_create(ui_Panel1);         // 단위
   lv_obj_set_width(ui_Label_amount, LV_SIZE_CONTENT);   /// 1
@@ -135,27 +149,27 @@ void ui_Screen1_screen_init(void) {
 
   lv_obj_add_event_cb(ui_Label_amount, ui_Label_amount_handler, LV_EVENT_ALL, NULL);
 
-  ui_Label_upper_value = lv_label_create(ui_Panel1);         // 상한값 표시
-  lv_obj_set_width(ui_Label_upper_value, LV_SIZE_CONTENT);   /// 1
-  lv_obj_set_height(ui_Label_upper_value, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_Label_upper_value, 5);
-  lv_obj_set_y(ui_Label_upper_value, 5);
-  lv_obj_set_align(ui_Label_upper_value, LV_ALIGN_BOTTOM_LEFT);
-  lv_label_set_text(ui_Label_upper_value, "상한");
-  lv_obj_set_style_text_font(ui_Label_upper_value, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
+  ui_Screen1_Upper_Value_Label = lv_label_create(ui_Panel1);         // 상한값 표시
+  lv_obj_set_width(ui_Screen1_Upper_Value_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Screen1_Upper_Value_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Screen1_Upper_Value_Label, 5);
+  lv_obj_set_y(ui_Screen1_Upper_Value_Label, 5);
+  lv_obj_set_align(ui_Screen1_Upper_Value_Label, LV_ALIGN_BOTTOM_LEFT);
+  lv_label_set_text(ui_Screen1_Upper_Value_Label, "상한");
+  lv_obj_set_style_text_font(ui_Screen1_Upper_Value_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_add_event_cb(ui_Label_upper_value, ui_Label_upper_value_handler, LV_EVENT_ALL, NULL);
+  lv_obj_add_event_cb(ui_Screen1_Upper_Value_Label, ui_Label_upper_value_handler, LV_EVENT_ALL, NULL);
 
-  ui_Label_lower_value = lv_label_create(ui_Panel1);         // 하한값 표시
-  lv_obj_set_width(ui_Label_lower_value, LV_SIZE_CONTENT);   /// 1
-  lv_obj_set_height(ui_Label_lower_value, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_Label_lower_value, 115);
-  lv_obj_set_y(ui_Label_lower_value, 5);
-  lv_obj_set_align(ui_Label_lower_value, LV_ALIGN_BOTTOM_LEFT);
-  lv_label_set_text(ui_Label_lower_value, "하한");
-  lv_obj_set_style_text_font(ui_Label_lower_value, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
+  ui_Screen1_Lower_Value_Label = lv_label_create(ui_Panel1);         // 하한값 표시
+  lv_obj_set_width(ui_Screen1_Lower_Value_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Screen1_Lower_Value_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Screen1_Lower_Value_Label, 115);
+  lv_obj_set_y(ui_Screen1_Lower_Value_Label, 5);
+  lv_obj_set_align(ui_Screen1_Lower_Value_Label, LV_ALIGN_BOTTOM_LEFT);
+  lv_label_set_text(ui_Screen1_Lower_Value_Label, "하한");
+  lv_obj_set_style_text_font(ui_Screen1_Lower_Value_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_add_event_cb(ui_Label_lower_value, ui_Label_lower_value_handler, LV_EVENT_ALL, NULL);
+  lv_obj_add_event_cb(ui_Screen1_Lower_Value_Label, ui_Label_lower_value_handler, LV_EVENT_ALL, NULL);
 
   ui_Button1 = lv_btn_create(ui_Screen1);  // setting button
   lv_obj_set_width(ui_Button1, 100);
@@ -172,8 +186,8 @@ void ui_Screen1_screen_init(void) {
   ui_Label4 = lv_label_create(ui_Button1);
   lv_obj_set_width(ui_Label4, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_Label4, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_Label4, 10);
-  lv_obj_set_y(ui_Label4, 0);
+  lv_obj_set_x(ui_Label4, 15);
+  lv_obj_set_y(ui_Label4, 2);
   lv_label_set_text(ui_Label4, "설 정");
   lv_obj_set_style_text_font(ui_Label4, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -239,8 +253,8 @@ void ui_Screen1_screen_init(void) {
   lv_obj_t *ui_Screen1_List_Select_Button_Label = lv_label_create(ui_Screen1_List_Select_Button);
   lv_obj_set_width(ui_Screen1_List_Select_Button_Label, LV_SIZE_CONTENT);
   lv_obj_set_height(ui_Screen1_List_Select_Button_Label, LV_SIZE_CONTENT);
-  lv_obj_set_x(ui_Screen1_List_Select_Button_Label, -5);
-  lv_obj_set_y(ui_Screen1_List_Select_Button_Label, 5);
+  lv_obj_set_x(ui_Screen1_List_Select_Button_Label, 15);
+  lv_obj_set_y(ui_Screen1_List_Select_Button_Label, 2);
   lv_label_set_text(ui_Screen1_List_Select_Button_Label, "품번");
   lv_obj_set_style_text_font(ui_Screen1_List_Select_Button_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 }

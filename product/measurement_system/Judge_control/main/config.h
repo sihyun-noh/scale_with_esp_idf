@@ -19,7 +19,7 @@
 
 #define SDCARD_SPI_DMA_CHAN SPI_DMA_CH_AUTO
 
-#define PROD_NUM 50
+#define PROD_NUM 30
 #define MAX_DATA_LEN 80
 
 #if (CONFIG_MS_RS485_MODBUS)

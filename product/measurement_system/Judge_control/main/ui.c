@@ -47,36 +47,36 @@ void ui_event_Button4(lv_event_t *e);
 lv_obj_t *ui_Label14;
 lv_obj_t *ui_Label15;
 lv_obj_t *ui_Label_amount;
-lv_obj_t *ui_Label_product_number;
-lv_obj_t *ui_Label_upper_value;
-lv_obj_t *ui_Label_lower_value;
+lv_obj_t *ui_Screen1_Prod_Num_Label;
+lv_obj_t *ui_Screen1_Upper_Value_Label;
+lv_obj_t *ui_Screen1_Lower_Value_Label;
 void ui_event_Screen1_List_Select_Button(lv_event_t *e);
 
 // SCREEN: ui_Screen2
 void ui_Screen2_screen_init(void);
 lv_obj_t *ui_Screen2;
 lv_obj_t *ui_Keyboard1;
-void ui_event_Button3(lv_event_t *e);
-lv_obj_t *ui_Button3;
 lv_obj_t *ui____initial_actions0;
 void textarea_event_handler(lv_event_t *e);
 
 // SCREEN: ui_list_select
 void ui_list_select_screen_init(void);
 lv_obj_t *ui_list_select;
-lv_obj_t *ui_ListPanel;
-lv_obj_t *ui_ListDiscPanel;
-lv_obj_t *ui_ListDiscPanelLabel;
-lv_obj_t *ui_LisPordNumPanel;
-lv_obj_t *ui_LisPordNumPanelLabel;
-void ui_event_ListPanelBtn(lv_event_t *e);
-lv_obj_t *ui_ListPanelBtn;
-lv_obj_t *ui_ListPanelBtnLabel;
-void ui_ListPanel_Button_handler(lv_event_t *e);
+lv_obj_t *ui_ListSelectScreen_List_Panel;
+lv_obj_t *ui_ListSelectScreen_Comfirm_Panel;
+lv_obj_t *ui_ListSelectScreen_Comfirm_Label;
+lv_obj_t *ui_ListSelectScreen_Comfirm_Btn;
+lv_obj_t *ui_ListSelectScreen_Comfirm_Btn_Label;
+void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e);
+lv_obj_t *ui_ListSelectScreen_Delete_Btn;
+lv_obj_t *ui_ListSelectScreen_Delete_Btn_Label;
+void ui_ListSelectScreen_Delete_Btn_e_handler(lv_event_t *e);
+
+void ui_ListSelectScreen_List_Panel_Btn_e_handler(lv_event_t *e);
 
 float upper_weight_value = 0.0;
 float lower_weight_value = 0.0;
-float success_weight_value = 0.0;
+int prod_num_value = 0;
 float renge_weight_value = 0.0;
 float amount_weight_value = 0.0;
 
@@ -100,7 +100,8 @@ static lv_obj_t *s_btn[PROD_NUM];
 static char saved_data[PROD_NUM][MAX_DATA_LEN] = {
   0,
 };
-static int btn_num = 30;
+static int btn_num = PROD_NUM;
+static char string_empty[100];
 
 ///////////////////// ANIMATIONS ////////////////////
 
@@ -132,85 +133,148 @@ void ui_event_Button4(lv_event_t *e) {
   }
 }
 
+static void ui_ListSelectScreen_List_Panel_PageBuilder() {
+  uint32_t i = 0;
+  for (i = 0; i < btn_num; i++) {
+    char key[10] = { 0 };
+
+    if (s_btn[i]) {
+      LOGI(TAG, "obj delete = [%p]", s_btn[i]);
+      lv_obj_remove_event_cb(s_btn[i], ui_ListSelectScreen_List_Panel_Btn_e_handler);
+      lv_obj_del(s_btn[i]);  // There is a common delete function for all object types
+      s_btn[i] = NULL;
+    }
+
+    memset(&saved_data[i], 0x00, sizeof(saved_data[i]));
+    snprintf(key, sizeof(key), "sen%02ld", i);
+    syscfg_get(CFG_DATA, key, saved_data[i], sizeof(saved_data[i]));
+
+    s_btn[i] = lv_btn_create(ui_ListSelectScreen_List_Panel);
+
+    if (s_btn[i]) {
+      LOGI(TAG, "btn[%d] = %p", i, s_btn[i]);
+      LOGI(TAG, "saved_data = %s", saved_data[i]);
+
+      lv_obj_set_size(s_btn[i], 120, 70);
+      lv_obj_set_style_bg_color(s_btn[i], lv_color_hex(0x232D3F), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+      lv_obj_add_event_cb(s_btn[i], ui_ListSelectScreen_List_Panel_Btn_e_handler, LV_EVENT_ALL, saved_data[i]);
+      lv_obj_t *label = lv_label_create(s_btn[i]);
+
+      if (strlen(saved_data[i])) {  // Check registered values.
+        // data format : 01.upper:10.000,lower:10.000
+        char *ptr = saved_data[i];
+        if (i == 3) {
+          lv_label_set_text_fmt(label, "품번 %.2s\n상한:%.6s\n하한:%.6s", ptr, ptr + 9, ptr + 22);
+          lv_obj_set_style_text_font(label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
+          lv_obj_clear_flag(s_btn[i], LV_OBJ_FLAG_SNAPABLE);
+        } else {
+          lv_label_set_text_fmt(label, "품번 %.2s\n상한:%.6s\n하한:%.6s", ptr, ptr + 9, ptr + 22);
+          lv_obj_set_style_text_font(label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        lv_obj_center(label);
+      } else {
+        lv_label_set_text_fmt(label, " ");
+      }
+    } else {
+      LOGI(TAG, "Failed to create button!!!");
+    }
+  }
+  lv_obj_update_snap(ui_ListSelectScreen_List_Panel, LV_ANIM_ON);
+}
+
 void ui_event_Screen1_List_Select_Button(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
 
   if (event_code == LV_EVENT_CLICKED) {
     _ui_screen_change(&ui_list_select, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, &ui_list_select_screen_init);
-    uint32_t i = 0;
-
-    for (i = 0; i < btn_num; i++) {
-      char key[10] = { 0 };
-      int freeHeap = xPortGetFreeHeapSize();
-      LOGI(TAG, "free_mem %d\n", freeHeap);
-
-      if (s_btn[i]) {
-        LOGI(TAG, "obj delete = [%p]", s_btn[i]);
-        lv_obj_remove_event_cb(s_btn[i], ui_ListPanel_Button_handler);
-        lv_obj_del(s_btn[i]);  // There is a common delete function for all object types
-        s_btn[i] = NULL;
-      }
-
-      memset(&saved_data[i], 0x00, sizeof(saved_data[i]));
-      snprintf(key, sizeof(key), "sen%lu", (unsigned long)i);
-      syscfg_get(CFG_DATA, key, saved_data[i], sizeof(saved_data[i]));
-
-      s_btn[i] = lv_btn_create(ui_ListPanel);
-
-      if (s_btn[i]) {
-        LOGI(TAG, "btn[%d] = %p", i, s_btn[i]);
-        LOGI(TAG, "saved_data = %s", saved_data[i]);
-
-        lv_obj_set_size(s_btn[i], 120, 70);
-        lv_obj_add_event_cb(s_btn[i], ui_ListPanel_Button_handler, LV_EVENT_ALL, saved_data[i]);
-
-        lv_obj_t *label = lv_label_create(s_btn[i]);
-
-        if (i == 3) {
-          lv_label_set_text_fmt(label, "Panel %" LV_PRIu32 "\nno snap", i);
-          lv_obj_clear_flag(s_btn[i], LV_OBJ_FLAG_SNAPABLE);
-        } else {
-          lv_label_set_text_fmt(label, "Panel %" LV_PRIu32, i);
-        }
-
-        lv_obj_center(label);
-      } else {
-        LOGI(TAG, "Failed to create button!!!");
-      }
-    }
-
-    lv_obj_update_snap(ui_ListPanel, LV_ANIM_ON);
+    ui_ListSelectScreen_List_Panel_PageBuilder();
   }
 }
 
-void ui_ListPanel_Button_handler(lv_event_t *e) {
+void ui_ListSelectScreen_List_Panel_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   char *value = lv_event_get_user_data(e);
   char data[MAX_DATA_LEN] = { 0 };
-
+  char s_empty[80] = { 0 };
   if (event_code == LV_EVENT_CLICKED) {
     for (int i = 0; i < btn_num; i++) {
       if (s_btn[i] == target) {
         LOGI(TAG, "btn[%d] = %p, target = %p", i, s_btn[i], target);
-        break;
+        lv_obj_set_style_bg_color(target, lv_palette_main(LV_PALETTE_RED), 0);  // color change of selected btn
+        // break;
+      } else {
+        lv_obj_set_style_bg_color(s_btn[i], lv_color_hex(0x232D3F), 0);
       }
     }
-
     if (value) {
-      snprintf(data, sizeof(data), "data : %s", value);
+      snprintf(data, sizeof(data), "%s", value);
       LOGI(TAG, "selected btn : %s", value);
     }
-    lv_label_set_text(ui_ListDiscPanelLabel, data);
+    if (strlen(data)) {
+      snprintf(s_empty, sizeof(s_empty), "품번:%.2s, 상한:%.6s, 하한:%.6s", &data[0], &data[9], &data[22]);
+    }
+    lv_label_set_text(ui_ListSelectScreen_Comfirm_Label, s_empty);
+    lv_obj_set_style_text_font(ui_ListSelectScreen_Comfirm_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    memset(string_empty, 0x00, sizeof(string_empty));
+    memcpy(string_empty, data, strlen(value));
+    LOGI(TAG, "Comfirm_Label_data : %s", data);
   }
 }
 
-void ui_event_ListPanelBtn(lv_event_t *e) {
+void ui_ListSelectScreen_Delete_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
+  // char *value = lv_event_get_user_data(e);
+  char s_key[10] = { 0 };
   if (event_code == LV_EVENT_CLICKED) {
-    _ui_screen_change(&ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen1_screen_init);
+    LOGI(TAG, "Delete value : %s", string_empty);
+    if (strlen(string_empty)) {
+      snprintf(s_key, sizeof(s_key), "sen%.2s", string_empty);
+      syscfg_unset(CFG_DATA, s_key);
+      memset(string_empty, 0x00, sizeof(string_empty));
+    }
+    _ui_screen_change(&ui_list_select, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, &ui_list_select_screen_init);
+    ui_ListSelectScreen_List_Panel_PageBuilder();
+  }
+}
+
+void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  char s_upper_weight_value[10] = { 0 };
+  char s_lower_weight_value[10] = { 0 };
+  char s_prod_num_value[10] = { 0 };
+  if (event_code == LV_EVENT_CLICKED) {
+    /*Todo*/
+    // set to selected value loop
+    LOGI(TAG, "Set value : %s", string_empty);
+    if (strlen(string_empty)) {
+      // data format : 01.upper:10.000,lower:10.000
+      snprintf(s_upper_weight_value, sizeof(s_upper_weight_value), "%.6s", string_empty + 9);
+      snprintf(s_lower_weight_value, sizeof(s_lower_weight_value), "%.6s", string_empty + 22);
+      snprintf(s_prod_num_value, sizeof(s_prod_num_value), "%.2s", string_empty);
+      LOGI(TAG, "s_upper_weight_value : %s", s_upper_weight_value);
+      LOGI(TAG, "s_lower_weight_value : %s", s_lower_weight_value);
+      LOGI(TAG, "s_prod_num_value : %s", s_prod_num_value);
+
+      memset(string_empty, 0x00, sizeof(string_empty));
+
+      sscanf(s_upper_weight_value, "%f", &upper_weight_value);
+      sscanf(s_lower_weight_value, "%f", &lower_weight_value);
+      prod_num_value = atoi(s_prod_num_value);
+
+      lv_event_send(ui_Screen1_Upper_Value_Label, LV_EVENT_READY, NULL);
+      lv_event_send(ui_Screen1_Lower_Value_Label, LV_EVENT_READY, NULL);
+      lv_event_send(ui_Screen1_Prod_Num_Label, LV_EVENT_READY, NULL);
+
+      _ui_screen_change(&ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen1_screen_init);
+    } else {
+      _ui_screen_change(&ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen1_screen_init);
+    }
   }
 }
 
@@ -284,8 +348,7 @@ void time_timer_cb(lv_timer_t *timer) {
   // // success weight check
   if (trash_fileter_flag) {
     LOGI(TAG, "normal");
-    if ((success_weight_value - renge_weight_value) <= weight && (success_weight_value + renge_weight_value) > weight &&
-        !normal_event_flag) {
+    if (lower_weight_value <= weight && upper_weight_value > weight && !normal_event_flag) {
       LOGI(TAG, "normal_1");
       if (strncmp(weight_raw->states, "ST", 2) == 0) {
         lv_led_on(ui_led2);
