@@ -42,5 +42,14 @@ typedef struct cas_22byte_format {
 } cas_22byte_format_t;
 
 #endif
+#if (CONFIG_LITTLEFS_PACKAGE)
+#define SEN_DATA_PATH_1 "/storage/Sen1"
+#define SEN_DATA_PATH_2 "/storage/Sen2"
+#define SEN_DATA_PATH_3 "/storage/Sen3"
+#else
+#define SEN_DATA_PATH_1 "/spiffs/Sen1"
+#define SEN_DATA_PATH_2 "/spiffs/Sen2"
+#define SEN_DATA_PATH_3 "/spiffs/Sen3"
+#endif
 
 #endif /* _CONFIG_H_ */

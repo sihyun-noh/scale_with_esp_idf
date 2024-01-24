@@ -122,3 +122,25 @@ int cas_zero_command() {
     return -1;
   }
 }
+
+int cas_tare_command() {
+  uint8_t set_config[6] = { 0x30, 0x31, 0x4D, 0x54, 0x0D, 0x0A };
+  uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
+  char buff[2];
+
+  uart_write_data(UART_PORT_NUM, set_config, sizeof(set_config));
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  uart_read_data(UART_PORT_NUM, data, (BUF_SIZE - 1));
+
+  LOGI(TAG, "uart 485 read data = %s", data);
+
+  memset(&buff, 0x00, sizeof(buff));
+  memcpy(buff, data + 2, 2);
+  if (strncmp(buff, "MT", 2) == 0) {
+    LOGI(TAG, "tare set success!!");
+    return 0;
+  } else {
+    LOGI(TAG, "tare set fail!!");
+    return -1;
+  }
+}

@@ -18,67 +18,62 @@ static const char *TAG = "UI_LVGL";
 extern float *read_weight(void);
 extern cas_22byte_format_t *read_weight_value(void);
 extern int cas_zero_command(void);
+extern int cas_tare_command(void);
 
 ///////////////////// VARIABLES ////////////////////
 
 // SCREEN: ui_main_Screen
-void ui_main_screen_init(void);
+
 lv_obj_t *ui_Main_Screen;
 lv_obj_t *ui_MainScreenPanel;
-void ui_event_MainScreenBtn1(lv_event_t *e);
 lv_obj_t *ui_MainScreenBtn1;
 lv_obj_t *ui_MainScreenBtn1Label;
 lv_obj_t *ui_MainScreenBtn2;
 lv_obj_t *ui_MainScreenBtn1Label2;
 
 // SCREEN: ui_Screen1
-void ui_Screen1_screen_init(void);
+
 lv_obj_t *ui_Screen1;
 lv_obj_t *ui_Panel1;
-lv_obj_t *ui_Label2;
-lv_obj_t *ui_Label3;
-lv_obj_t *ui_Label4;
+lv_obj_t *ui_Screen1_Panel1_Current_Weight_Label;
+lv_obj_t *ui_Screen1_Panel1_Current_Count_Label;
+lv_obj_t *ui_Screen1_Setting_Btn_Label;
 lv_obj_t *ui_led1;
 lv_obj_t *ui_led2;
 lv_obj_t *ui_led3;
-void ui_event_Button1(lv_event_t *e);
-lv_obj_t *ui_Button1;
-void ui_event_Button4(lv_event_t *e);
-lv_obj_t *ui_Label14;
-lv_obj_t *ui_Label15;
-lv_obj_t *ui_Label_amount;
+lv_obj_t *ui_Screen1_Setting_Btn;
+lv_obj_t *ui_Screen1_Panel1_Zero_Point_Label;
+lv_obj_t *ui_Screen1_Panel1_Stable_Point_Label;
+lv_obj_t *ui_Screen1_Panel1_Tare_Point_Label;
+lv_obj_t *ui_Screen1_Amount_Value_Label;
 lv_obj_t *ui_Screen1_Prod_Num_Label;
 lv_obj_t *ui_Screen1_Upper_Value_Label;
 lv_obj_t *ui_Screen1_Lower_Value_Label;
-void ui_event_Screen1_List_Select_Button(lv_event_t *e);
 
 // SCREEN: ui_Screen2
-void ui_Screen2_screen_init(void);
 lv_obj_t *ui_Screen2;
-lv_obj_t *ui_Keyboard1;
-lv_obj_t *ui____initial_actions0;
-void textarea_event_handler(lv_event_t *e);
 
 // SCREEN: ui_list_select
-void ui_list_select_screen_init(void);
+
 lv_obj_t *ui_list_select;
 lv_obj_t *ui_ListSelectScreen_List_Panel;
 lv_obj_t *ui_ListSelectScreen_Comfirm_Panel;
 lv_obj_t *ui_ListSelectScreen_Comfirm_Label;
 lv_obj_t *ui_ListSelectScreen_Comfirm_Btn;
 lv_obj_t *ui_ListSelectScreen_Comfirm_Btn_Label;
-void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e);
 lv_obj_t *ui_ListSelectScreen_Delete_Btn;
 lv_obj_t *ui_ListSelectScreen_Delete_Btn_Label;
-void ui_ListSelectScreen_Delete_Btn_e_handler(lv_event_t *e);
-
-void ui_ListSelectScreen_List_Panel_Btn_e_handler(lv_event_t *e);
 
 float upper_weight_value = 0.0;
 float lower_weight_value = 0.0;
 int prod_num_value = 0;
 float renge_weight_value = 0.0;
 float amount_weight_value = 0.0;
+
+int judge_total_count = 0;
+screen_mode_t curr_mode;
+ui_event_ids_t ui_event;
+ui_internal_data_ctx_t ui_data_ctx;
 
 ///////////////////// TEST LVGL SETTINGS ////////////////////
 #if LV_COLOR_DEPTH != 16
@@ -108,15 +103,7 @@ static char string_empty[100];
 ///////////////////// FUNCTIONS ////////////////////
 
 ///////////////////// FUNCTIONS ////////////////////
-void ui_event_MainScreenBtn1(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    _ui_screen_change(&ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen1_screen_init);
-  }
-}
-
-void ui_event_Button1(lv_event_t *e) {
+void ui_Screen1_Setting_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   if (event_code == LV_EVENT_CLICKED) {
@@ -124,12 +111,30 @@ void ui_event_Button1(lv_event_t *e) {
   }
 }
 
-void ui_event_Button4(lv_event_t *e) {
+void ui_Screen1_Zero_Point_Set_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   int res = 0;
   if (event_code == LV_EVENT_CLICKED) {
     res = cas_zero_command();
+  }
+}
+
+void ui_Screen1_Tare_Point_Set_Btn_e_handler(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  int res = 0;
+  if (event_code == LV_EVENT_CLICKED) {
+    res = cas_tare_command();
+  }
+}
+
+void ui_Screen1_Mode_Set_Btn_e_handler(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  int res = 0;
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(&ui_Main_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_main_screen_init);
   }
 }
 
@@ -146,7 +151,7 @@ static void ui_ListSelectScreen_List_Panel_PageBuilder() {
     }
 
     memset(&saved_data[i], 0x00, sizeof(saved_data[i]));
-    snprintf(key, sizeof(key), "sen%02ld", i);
+    snprintf(key, sizeof(key), "Prod%02ld", i);
     syscfg_get(CFG_DATA, key, saved_data[i], sizeof(saved_data[i]));
 
     s_btn[i] = lv_btn_create(ui_ListSelectScreen_List_Panel);
@@ -233,7 +238,7 @@ void ui_ListSelectScreen_Delete_Btn_e_handler(lv_event_t *e) {
   if (event_code == LV_EVENT_CLICKED) {
     LOGI(TAG, "Delete value : %s", string_empty);
     if (strlen(string_empty)) {
-      snprintf(s_key, sizeof(s_key), "sen%.2s", string_empty);
+      snprintf(s_key, sizeof(s_key), "Prod%.2s", string_empty);
       syscfg_unset(CFG_DATA, s_key);
       memset(string_empty, 0x00, sizeof(string_empty));
     }
@@ -282,16 +287,19 @@ void time_timer_cb(lv_timer_t *timer) {
   //   time_t t = time(NULL);
   //   struct tm *local = localtime(&t);
   cas_22byte_format_t *weight_raw = read_weight_value();
-  char s_weight[10] = { 0 };
-  char amount[10] = { 0 };
-  float weight;
+  char s_weight[20] = { 0 };
+  char s_amount_count[20] = { 0 };
+  char s_judge_total_count[20] = { 0 };
+
+  float weight = 0.0;
   bool trash_fileter_flag = false;
   // taking float value using %f format specifier for
   // float
   sscanf(weight_raw->data, "%f", &weight);
 
   snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
-  snprintf(amount, sizeof(amount), "%03d", (int)(weight / amount_weight_value));
+  snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+  snprintf(s_judge_total_count, sizeof(s_judge_total_count), "%03d", judge_total_count);
 
   //   sprintf(timeString, "%02d:%02d:%02d", local->tm_hour, local->tm_min, local->tm_sec);
   //   sprintf(dateString, "%04d-%02d-%02d", local->tm_year + 1900, local->tm_mon + 1, local->tm_mday);
@@ -311,82 +319,128 @@ void time_timer_cb(lv_timer_t *timer) {
 
   // 0 이하 표시하지 않음
 
-  if (weight_raw->data[0] == '-') {
-    lv_label_set_text(ui_Label2, "UNKNOWN");
-    lv_label_set_text(ui_Label3, "   ");
-  } else {
-    lv_label_set_text(ui_Label2, s_weight);
-    if (amount_weight_value == 0.0) {
-      lv_label_set_text(ui_Label3, "000");
-    } else {
-      lv_label_set_text(ui_Label3, amount);
-    }
-  }
-  // upper weight check
-  if (upper_weight_value < weight && !over_event_flag) {
-    if (strncmp(weight_raw->states, "ST", 2) == 0) {
-      lv_led_on(ui_led1);
-      over_volume();
-      over_event_flag = true;
-      LOGI(TAG, "led1 on");
-      lv_led_off(ui_led2);
-      lv_led_off(ui_led3);
-    }
-  }
-
-  // lower weight check
-  if (lower_weight_value > weight && !lack_event_flag && weight > 0) {
-    if (strncmp(weight_raw->states, "ST", 2) == 0) {
-      lv_led_on(ui_led3);
-      lack_volume();
-      lack_event_flag = true;
-      lv_led_off(ui_led1);
-      lv_led_off(ui_led2);
-    }
-  }
-
-  // // success weight check
-  if (trash_fileter_flag) {
-    LOGI(TAG, "normal");
-    if (lower_weight_value <= weight && upper_weight_value > weight && !normal_event_flag) {
-      LOGI(TAG, "normal_1");
-      if (strncmp(weight_raw->states, "ST", 2) == 0) {
-        lv_led_on(ui_led2);
-        normal_volume();
-        normal_event_flag = true;
-        // reset upper and lower flag and leds
-        // over_event_flag = false;
-        // lack_event_flag = false;
-        lv_led_off(ui_led1);
-        lv_led_off(ui_led3);
+  switch (ui_data_ctx.curr_mode) {
+    case MODE_1:
+      // MODE 1
+      // upper weight check
+      // LOGI(TAG, "s_judge_total_count %s:", s_judge_total_count);
+      // LOGI(TAG, "judge_total_count %d:", judge_total_count);
+      if (weight_raw->data[0] == '-') {  // ascii '-', hex 0x2d
+        lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, "UNKNOWN");
+        lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, "   ");
+      } else {
+        lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, s_weight);
+        lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, s_judge_total_count);
       }
-    }
 
-    if (strncmp(weight_raw->states, "ST", 2) == 0) {
-      /*to do*/
-      // success weight check
-      // lv_obj_set_style_text_color(ui_Label15, lv_color_hex(0x282828), LV_PART_MAIN | LV_STATE_DEFAULT );
-      lv_obj_set_style_text_color(ui_Label15, lv_color_hex(0x0d00ff), LV_PART_MAIN | LV_STATE_DEFAULT);
-    } else {
-      lv_obj_set_style_text_color(ui_Label15, lv_color_hex(0xe9e9e9), LV_PART_MAIN | LV_STATE_DEFAULT);
-    }
+      // upper weight check
+      if (upper_weight_value < weight && !over_event_flag) {
+        if (strncmp(weight_raw->states, "ST", 2) == 0) {
+          judge_total_count++;
+          lv_led_on(ui_led1);
+          over_volume();
+          over_event_flag = true;
+          LOGI(TAG, "led1 on");
+          lv_led_off(ui_led2);
+          lv_led_off(ui_led3);
+        }
+      }
 
-    /*zero state set display */
-    if (*weight_raw->lamp_states & 0x01) {
-      // LOGI("TAG","zero state %02x", *weight_raw->lamp_states&0xff);
-      lv_obj_set_style_text_color(ui_Label14, lv_color_hex(0xc70039), LV_PART_MAIN | LV_STATE_DEFAULT);
-      // reset all flags and leds
-      over_event_flag = false;
-      lack_event_flag = false;
-      normal_event_flag = false;
-      lv_led_off(ui_led1);
-      lv_led_off(ui_led2);
-      lv_led_off(ui_led3);
+      // lower weight check
+      if (lower_weight_value > weight && !lack_event_flag && weight > 0) {
+        if (strncmp(weight_raw->states, "ST", 2) == 0) {
+          judge_total_count++;
+          lv_led_on(ui_led3);
+          lack_volume();
+          lack_event_flag = true;
+          lv_led_off(ui_led1);
+          lv_led_off(ui_led2);
+        }
+      }
 
-    } else {
-      // LOGI("TAG","no zero stat %02x", *weight_raw->lamp_states&0xff);
-      lv_obj_set_style_text_color(ui_Label14, lv_color_hex(0xe9e9e9), LV_PART_MAIN | LV_STATE_DEFAULT);
-    }
+      // // success weight check
+      if (trash_fileter_flag) {
+        if (lower_weight_value <= weight && upper_weight_value > weight && !normal_event_flag) {
+          if (strncmp(weight_raw->states, "ST", 2) == 0) {
+            judge_total_count++;
+            lv_led_on(ui_led2);
+            normal_volume();
+            normal_event_flag = true;
+            // reset upper and lower flag and leds
+            // over_event_flag = false;
+            // lack_event_flag = false;
+            lv_led_off(ui_led1);
+            lv_led_off(ui_led3);
+          }
+        }
+
+        if (strncmp(weight_raw->states, "ST", 2) == 0) {
+          /*to do*/
+          // success weight check
+          // lv_obj_set_style_text_color(ui_Label15, lv_color_hex(0x282828), LV_PART_MAIN | LV_STATE_DEFAULT );
+          lv_obj_set_style_text_color(ui_Screen1_Panel1_Stable_Point_Label, lv_color_hex(0x0d00ff),
+                                      LV_PART_MAIN | LV_STATE_DEFAULT);
+        } else {
+          lv_obj_set_style_text_color(ui_Screen1_Panel1_Stable_Point_Label, lv_color_hex(0xe9e9e9),
+                                      LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+
+        // Lamp status in CAS data format
+        // | bit7 | bit6 | bit5 | bit4 | bit3 | bit2 | bit1 | bit0 |
+        //    1    stabel    1    hold  print    NET   tare   zero
+
+        /*zero state set display */
+        if (*weight_raw->lamp_states & 0x01) {
+          // LOGI("TAG","zero state %02x", *weight_raw->lamp_states&0xff);
+          lv_obj_set_style_text_color(ui_Screen1_Panel1_Zero_Point_Label, lv_color_hex(0xc70039),
+                                      LV_PART_MAIN | LV_STATE_DEFAULT);
+          // reset all flags and leds
+          over_event_flag = false;
+          lack_event_flag = false;
+          normal_event_flag = false;
+          lv_led_off(ui_led1);
+          lv_led_off(ui_led2);
+          lv_led_off(ui_led3);
+
+        } else {
+          // LOGI("TAG","no zero stat %02x", *weight_raw->lamp_states&0xff);
+          lv_obj_set_style_text_color(ui_Screen1_Panel1_Zero_Point_Label, lv_color_hex(0xe9e9e9),
+                                      LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+
+        /*tare state set display */
+        if (*weight_raw->lamp_states & 0x02) {
+          lv_obj_set_style_text_color(ui_Screen1_Panel1_Tare_Point_Label, lv_color_hex(0x000000),
+                                      LV_PART_MAIN | LV_STATE_DEFAULT);
+
+        } else {
+          lv_obj_set_style_text_color(ui_Screen1_Panel1_Tare_Point_Label, lv_color_hex(0xe9e9e9),
+                                      LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+      }  // trash_fileter_flag
+      break;
+    case MODE_2:
+      // LOGI(TAG, "current mode %d:", ui_data_ctx.curr_mode);
+
+      if (ui_data_ctx.ids == AMOUNT_VAL_E) {
+        ui_data_ctx.ids = NONE_E;
+        amount_weight_value = weight;
+        lv_event_send(ui_data_ctx.obj, LV_EVENT_READY, NULL);
+      }
+
+      if (weight_raw->data[0] == '-') {
+        lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, "UNKNOWN");
+        lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, "   ");
+      } else {
+        lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, s_weight);
+        if (amount_weight_value == 0.0) {
+          lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, "000");
+        } else {
+          lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, s_amount_count);
+        }
+      }
+      break;
+    default: break;
   }
 }
 ///////////////////// SCREENS ////////////////////
@@ -401,10 +455,11 @@ void ui_init(void) {
   ui_main_screen_init();
   ui_Screen1_screen_init();
   ui_Screen2_screen_init();
-  ui____initial_actions0 = lv_obj_create(NULL);
+  ui_list_select_screen_init();
 
   lv_style_init(&style_clock);
   static uint32_t user_data = 10;
+  ui_data_ctx.ptr = &judge_total_count;
   lv_timer_t *time_timer = lv_timer_create(time_timer_cb, 1, &user_data);
 
   // lv_disp_load_scr(ui_Screen1);

@@ -19,53 +19,87 @@ extern "C" {
 
 #include <stdio.h>
 
+typedef enum {
+  NONE_E = 0x00,
+  AMOUNT_VAL_E = 0x01,
+  JUDGE_COMFIRM_E,
+} ui_event_ids_t;
+
+typedef enum {
+  PROD_NUM_1 = 0x01,
+  PROD_NUM_2,
+  PROD_NUM_3,
+  PROD_NUM_4,
+} prod_num_t;
+
+typedef enum {
+  MODE_1 = 0x01,
+  MODE_2,
+} mode_select_t;
+
+typedef struct screen_mode {
+  mode_t mode;
+  mode_t curr_mode;
+} screen_mode_t;
+
+typedef struct internal_data_trans {
+  mode_select_t curr_mode;
+  ui_event_ids_t ids;
+  int *ptr;
+  void (*fp)(lv_event_t *e);
+  lv_obj_t *obj;
+} ui_internal_data_ctx_t;
+
 void ui_main_screen_init(void);
 extern lv_obj_t *ui_Main_Screen;
 extern lv_obj_t *ui_MainScreenPanel;
-void ui_event_MainScreenBtn1(lv_event_t *e);
+// void ui_event_MainScreenBtn1(lv_event_t *e);
 extern lv_obj_t *ui_MainScreenBtn1;
 extern lv_obj_t *ui_MainScreenBtn1Label;
 extern lv_obj_t *ui_MainScreenBtn2;
 extern lv_obj_t *ui_MainScreenBtn1Label2;
+
 // SCREEN: ui_Screen1
 void ui_Screen1_screen_init(void);
+void ui_Screen1_Setting_Btn_e_handler(lv_event_t *e);
+void ui_Screen1_Zero_Point_Set_Btn_e_handler(lv_event_t *e);
+void ui_Screen1_Tare_Point_Set_Btn_e_handler(lv_event_t *e);
+void ui_Screen1_Mode_Set_Btn_e_handler(lv_event_t *e);
+void ui_event_Screen1_List_Select_Button(lv_event_t *e);
+void ui_ListSelectScreen_List_Panel_Btn_e_handler(lv_event_t *e);
 extern lv_obj_t *ui_Screen1;
 extern lv_obj_t *ui_Panel1;
-extern lv_obj_t *ui_Label2;
-extern lv_obj_t *ui_Label3;
-extern lv_obj_t *ui_Label4;
+extern lv_obj_t *ui_Screen1_Panel1_Current_Weight_Label;
+extern lv_obj_t *ui_Screen1_Panel1_Current_Count_Label;
+extern lv_obj_t *ui_Screen1_Setting_Btn_Label;
 extern lv_obj_t *ui_led1;
 extern lv_obj_t *ui_led2;
 extern lv_obj_t *ui_led3;
-void ui_event_Button1(lv_event_t *e);
-extern lv_obj_t *ui_Button1;
-void ui_event_Button4(lv_event_t *e);
-extern lv_obj_t *ui_Label14;
-extern lv_obj_t *ui_Label15;
-extern lv_obj_t *ui_Label_amount;
+extern lv_obj_t *ui_Screen1_Setting_Btn;
+extern lv_obj_t *ui_Screen1_Panel1_Zero_Point_Label;
+extern lv_obj_t *ui_Screen1_Panel1_Stable_Point_Label;
+extern lv_obj_t *ui_Screen1_Panel1_Tare_Point_Label;
+extern lv_obj_t *ui_Screen1_Amount_Value_Label;
 extern lv_obj_t *ui_Screen1_Prod_Num_Label;
 extern lv_obj_t *ui_Screen1_Upper_Value_Label;
 extern lv_obj_t *ui_Screen1_Lower_Value_Label;
-void ui_event_Screen1_List_Select_Button(lv_event_t *e);
 
 // SCREEN: ui_Screen2
 void ui_Screen2_screen_init(void);
 extern lv_obj_t *ui_Screen2;
-extern lv_obj_t *ui_Keyboard1;
-extern lv_obj_t *ui____initial_actions0;
 
 // SCREEN: ui_list_select
 void ui_list_select_screen_init(void);
+void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e);
+void ui_ListSelectScreen_Delete_Btn_e_handler(lv_event_t *e);
 extern lv_obj_t *ui_list_select;
 extern lv_obj_t *ui_ListSelectScreen_List_Panel;
 extern lv_obj_t *ui_ListSelectScreen_Comfirm_Panel;
 extern lv_obj_t *ui_ListSelectScreen_Comfirm_Label;
 extern lv_obj_t *ui_ListSelectScreen_Comfirm_Btn;
 extern lv_obj_t *ui_ListSelectScreen_Comfirm_Btn_Label;
-void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e);
 extern lv_obj_t *ui_ListSelectScreen_Delete_Btn;
 extern lv_obj_t *ui_ListSelectScreen_Delete_Btn_Label;
-void ui_ListSelectScreen_Delete_Btn_e_handler(lv_event_t *e);
 
 extern float upper_weight_value;
 extern float lower_weight_value;
@@ -73,6 +107,9 @@ extern int prod_num_value;
 extern float renge_weight_value;
 extern float amount_weight_value;
 
+extern screen_mode_t curr_mode;
+extern ui_event_ids_t ui_event;
+extern ui_internal_data_ctx_t ui_data_ctx;
 typedef struct textareas {
   lv_obj_t *ta1;
   lv_obj_t *ta2;
@@ -80,28 +117,6 @@ typedef struct textareas {
   // lv_obj_t *ta4;
   // lv_obj_t *ta5;
 } textareas_t;
-
-typedef enum {
-  PROD_NUM_1 = 0x01,
-  PROD_NUM_2,
-  PROD_NUM_3,
-  PROD_NUM_4,
-  PROD_NUM_5,
-  PROD_NUM_6,
-  PROD_NUM_7,
-  PROD_NUM_8,
-  PROD_NUM_9,
-  PROD_NUM_10,
-  PROD_NUM_11,
-  PROD_NUM_12,
-  PROD_NUM_13,
-  PROD_NUM_14,
-  PROD_NUM_15,
-  PROD_NUM_16,
-  PROD_NUM_17,
-  PROD_NUM_18,
-  PROD_NUM_19,
-} prod_num_t;
 
 LV_FONT_DECLARE(ui_font_Display16);
 LV_FONT_DECLARE(ui_font_Display24);

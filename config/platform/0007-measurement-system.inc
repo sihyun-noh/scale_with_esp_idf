@@ -14,6 +14,9 @@ config BS_PLATFORM_MEASUREMENT_SYSTEM
   select UTILS_PACKAGE
   select WIFILIB_PACKAGE
   select MODBUS_PACKAGE
+  select FILECOPY_PACKAGE
+  select FILELOG_FEATURE
+  select USB_HOST_FEATURE
 
   help
     measurement system controls the gross weight judge device.

@@ -433,7 +433,7 @@ CONFIG_LED_PACKAGE=y
 
 CONFIG_ESPNOW_PACKAGE=y
 # CONFIG_ETHERNET_PACKAGE is not set
-# CONFIG_FILECOPY_PACKAGE is not set
+CONFIG_FILECOPY_PACKAGE=y
 
 #
 # LWMQTT package
@@ -535,7 +535,7 @@ CONFIG_FILELOG_FEATURE=y
 # end of Sensors Features
 
 # CONFIG_EASYSETUP_FEATURE is not set
-# CONFIG_USB_HOST_FEATURE is not set
+CONFIG_USB_HOST_FEATURE=y
 # end of Smartfarm Features
 # end of Smartfarm Product
 

@@ -18,20 +18,20 @@ static bool ta3_selected;
 
 static textareas_t use_text_area;
 
-void ui_Button_all_delete_handler(lv_event_t *e) {
+void ui_all_delete_btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   textareas_t *ta = lv_event_get_user_data(e);
   if (event_code == LV_EVENT_CLICKED) {
-    lv_textarea_set_text(ta->ta1, "0");
-    lv_textarea_set_text(ta->ta2, "0");
-    lv_textarea_set_text(ta->ta3, "0");
+    lv_textarea_set_text(ta->ta1, "\0");
+    lv_textarea_set_text(ta->ta2, "\0");
+    lv_textarea_set_text(ta->ta3, "\0");
     // lv_textarea_set_text(ta->ta4, "0");
     // lv_textarea_set_text(ta->ta5, "0");
   }
 }
 
-void ui_event_comfirm_btn_hendler(lv_event_t *e) {
+void ui_comfirm_btn_e_hendler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   textareas_t *ta = lv_event_get_user_data(e);
@@ -176,7 +176,7 @@ static void event_cb(lv_event_t *e) {
   }
 }
 
-void ui_event_pord_num_btn_hendler(lv_event_t *e) {
+void ui_register_pord_num_btn_e_hendler(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   textareas_t *ta = lv_event_get_user_data(e);
@@ -190,10 +190,10 @@ void ui_event_pord_num_btn_hendler(lv_event_t *e) {
     lv_event_send(ta->ta1, LV_EVENT_READY, NULL);
     lv_event_send(ta->ta2, LV_EVENT_READY, NULL);
     lv_event_send(ta->ta3, LV_EVENT_READY, NULL);
-    /*start num 1, and Make sure enter it starts from number 1.*/
 
+    /*start num 0, and Make sure enter it starts from number 0.*/
     memset(get_str, 0x00, sizeof(get_str));
-    snprintf(s_key, sizeof(s_key), "sen%02d", prod_num_value);
+    snprintf(s_key, sizeof(s_key), "Prod%02d", prod_num_value);
     LOGI(TAG, "key:%s", s_key);
     syscfg_get(CFG_DATA, s_key, get_str, sizeof(get_str));
     LOGI(TAG, "value:%s", get_str);
@@ -205,17 +205,23 @@ void ui_event_pord_num_btn_hendler(lv_event_t *e) {
       lv_obj_t *mbox1 = lv_msgbox_create(NULL, "Oops!", "It's already registered.", btns, true);
       lv_obj_add_event_cb(mbox1, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
       lv_obj_center(mbox1);
-    } else if (prod_num_value > PROD_NUM) {  // erroe when entering product number over 50
-      char s_message[100] = { 0 };
+    } else if (prod_num_value > PROD_NUM) {  // erroe when entering product number over PROD_NUM value
+      char s_message[30] = { 0 };
       static const char *btns[] = { "Close", "" };
       snprintf(s_message, sizeof(s_message), "Available from 0 to %d", PROD_NUM);
       lv_obj_t *mbox2 = lv_msgbox_create(NULL, "Oops!", s_message, btns, true);
       lv_obj_add_event_cb(mbox2, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
       lv_obj_center(mbox2);
+    } else if (lower_weight_value >= upper_weight_value) {
+      static const char *btns[] = { "Close", "" };
+      lv_obj_t *mbox3 = lv_msgbox_create(
+          NULL, "Oops!", "Invalid values.\nThe lower input is equal or more than the upper input value.", btns, true);
+      lv_obj_add_event_cb(mbox3, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+      lv_obj_center(mbox3);
     } else {
       if (strlen(get_str) == 0) {
         LOGI(TAG, "Set register ");
-        int upper_int_part = (int)upper_weight_value;
+        int upper_int_part = (int)lower_weight_value;
         int lower_int_part = (int)lower_weight_value;
         float upper_decimal_part = upper_weight_value - upper_int_part;
         float lower_decimal_part = lower_weight_value - lower_int_part;
@@ -249,7 +255,7 @@ void ui_Screen2_screen_init(void) {
   lv_obj_clear_flag(ui_prod_num_register_btn, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
   lv_obj_set_style_bg_color(ui_prod_num_register_btn, lv_color_hex(0x0079ff), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_add_event_cb(ui_prod_num_register_btn, ui_event_pord_num_btn_hendler, LV_EVENT_ALL, &use_text_area);
+  lv_obj_add_event_cb(ui_prod_num_register_btn, ui_register_pord_num_btn_e_hendler, LV_EVENT_ALL, &use_text_area);
 
   lv_obj_t *Screen2_prod_num_register_btn_label = lv_label_create(ui_prod_num_register_btn);
   lv_obj_set_width(Screen2_prod_num_register_btn_label, LV_SIZE_CONTENT);   /// 1
@@ -269,7 +275,7 @@ void ui_Screen2_screen_init(void) {
   lv_obj_clear_flag(ui_comfirm_btn, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
   lv_obj_set_style_bg_color(ui_comfirm_btn, lv_color_hex(0x0079ff), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_add_event_cb(ui_comfirm_btn, ui_event_comfirm_btn_hendler, LV_EVENT_ALL, &use_text_area);
+  lv_obj_add_event_cb(ui_comfirm_btn, ui_comfirm_btn_e_hendler, LV_EVENT_ALL, &use_text_area);
 
   lv_obj_t *Label_2_1 = lv_label_create(ui_comfirm_btn);
   lv_obj_set_width(Label_2_1, LV_SIZE_CONTENT);   /// 1
@@ -289,7 +295,7 @@ void ui_Screen2_screen_init(void) {
   lv_obj_clear_flag(ui_Button_all_delete, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
   lv_obj_set_style_bg_color(ui_Button_all_delete, lv_color_hex(0xff0060), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_add_event_cb(ui_Button_all_delete, ui_Button_all_delete_handler, LV_EVENT_ALL, &use_text_area);
+  lv_obj_add_event_cb(ui_Button_all_delete, ui_all_delete_btn_e_handler, LV_EVENT_ALL, &use_text_area);
 
   lv_obj_t *ui_Label_all_dalete = lv_label_create(ui_Button_all_delete);
   lv_obj_set_width(ui_Label_all_dalete, LV_SIZE_CONTENT);   /// 1

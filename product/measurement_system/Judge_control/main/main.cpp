@@ -27,6 +27,8 @@
 
 #include "gpio_api.h"
 #include "i2s_speaker.h"
+#include "msc.h"
+#include "file_copy.h"
 
 typedef enum { INPUT = 0, INPUT_PULLUP, OUTPUT } gpio_hal_mode_t;
 
@@ -43,6 +45,7 @@ extern void sdcard_init(void);
 extern void sdcard_write_data(void);
 extern int sensor_init(void);
 extern int wetght_uart_485_init(void);
+extern void create_usb_host_msc_task(void);
 // extern int read_weight(void);
 }
 
@@ -265,6 +268,8 @@ int system_init(void) {
   i2s_speak_init();
 
   fm_init(PARTITION_NAME, BASE_PATH);
+
+  create_usb_host_msc_task();
 
   start_ms = millis();
 
