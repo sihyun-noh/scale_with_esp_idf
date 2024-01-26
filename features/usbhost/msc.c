@@ -64,6 +64,22 @@ static void print_device_info(msc_host_device_info_t *info) {
 
 // Handles common USB host library events
 static void handle_usb_events(void *args) {
+  const usb_host_config_t host_config = { .intr_flags = ESP_INTR_FLAG_LEVEL1 };
+  if ((usb_host_install(&host_config)) != ESP_OK) {
+    ESP_ERROR_CHECK(usb_host_install(&host_config));
+    // return -1;
+  }
+
+  const msc_host_driver_config_t msc_config = {
+    .create_backround_task = true,
+    .task_priority = 5,
+    .stack_size = 4096,
+    .callback = msc_event_cb,
+  };
+  if ((msc_host_install(&msc_config)) != ESP_OK) {
+    ESP_ERROR_CHECK(msc_host_install(&msc_config));
+    // return -1;
+  }
   while (1) {
     uint32_t event_flags;
     usb_host_lib_handle_events(portMAX_DELAY, &event_flags);
@@ -110,25 +126,25 @@ int usb_msc_host_init(void) {
   usb_flags = xEventGroupCreate();
   assert(usb_flags);
 
-  const usb_host_config_t host_config = { .intr_flags = ESP_INTR_FLAG_LEVEL1 };
-  if ((usb_host_install(&host_config)) != ESP_OK) {
-    ESP_ERROR_CHECK(usb_host_install(&host_config));
-    return -1;
-  }
-  task_created = xTaskCreate(handle_usb_events, "usb_events", 4095, NULL, 2, NULL);
+  // const usb_host_config_t host_config = { .intr_flags = ESP_INTR_FLAG_LEVEL1 };
+  // if ((usb_host_install(&host_config)) != ESP_OK) {
+  //   ESP_ERROR_CHECK(usb_host_install(&host_config));
+  //   return -1;
+  // }
+  task_created = xTaskCreate(handle_usb_events, "usb_events", 4096, NULL, 2, NULL);
 
   assert(task_created);
 
-  const msc_host_driver_config_t msc_config = {
-    .create_backround_task = true,
-    .task_priority = 5,
-    .stack_size = 4096,
-    .callback = msc_event_cb,
-  };
-  if ((msc_host_install(&msc_config)) != ESP_OK) {
-    ESP_ERROR_CHECK(msc_host_install(&msc_config));
-    return -1;
-  }
+  // const msc_host_driver_config_t msc_config = {
+  //   .create_backround_task = true,
+  //   .task_priority = 5,
+  //   .stack_size = 4096,
+  //   .callback = msc_event_cb,
+  // };
+  // if ((msc_host_install(&msc_config)) != ESP_OK) {
+  //   ESP_ERROR_CHECK(msc_host_install(&msc_config));
+  //   return -1;
+  // }
 
   return 0;
 }
@@ -184,4 +200,3 @@ int usb_device_uninit(void) {
   }
   return 0;
 }
-
