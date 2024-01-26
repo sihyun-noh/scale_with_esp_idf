@@ -1,7 +1,9 @@
 SET(SOURCES components/ui_comp_screen2_keyboard1.c
     components/ui_comp.c
+    screens/ui_device_id_reg_Screen.c
     screens/ui_list_select_Screen.c
     screens/ui_main_Screen.c
+    screens/ui_mode_2_Screen.c
     screens/ui_Screen1.c
     screens/ui_Screen2.c
     ui.c

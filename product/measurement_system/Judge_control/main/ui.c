@@ -17,9 +17,7 @@ static const char *TAG = "UI_LVGL";
 
 extern float *read_weight(void);
 extern cas_22byte_format_t *read_weight_value(void);
-extern int cas_zero_command(void);
-extern int cas_tare_command(void);
-
+static void ui_ListSelectScreen_List_Panel_PageBuilder();
 ///////////////////// VARIABLES ////////////////////
 
 // SCREEN: ui_main_Screen
@@ -30,6 +28,20 @@ lv_obj_t *ui_MainScreenBtn1;
 lv_obj_t *ui_MainScreenBtn1Label;
 lv_obj_t *ui_MainScreenBtn2;
 lv_obj_t *ui_MainScreenBtn1Label2;
+lv_obj_t *ui_main_scr_Device_Id_Area_Label;
+
+// SCREEN : ui_device_id_reg_screen
+lv_obj_t *ui_device_id_reg_screen;
+
+// SCREEN: ui_mode_2_Screen
+lv_obj_t *ui_mode_2_scr;
+lv_obj_t *ui_mode_2_scr_Panel1;
+lv_obj_t *ui_mode_2_scr_Panel1_Current_Weight_Label;
+lv_obj_t *ui_mode_2_scr_Panel1_Current_Count_Label;
+lv_obj_t *ui_mode_2_scr_Panel1_Zero_Point_Label;
+lv_obj_t *ui_mode_2_scr_Panel1_Stable_Point_Label;
+lv_obj_t *ui_mode_2_scr_Panel1_Tare_Point_Label;
+lv_obj_t *ui_mode_2_scr_Panel1_Amount_Value_Label;
 
 // SCREEN: ui_Screen1
 
@@ -41,6 +53,9 @@ lv_obj_t *ui_Screen1_Setting_Btn_Label;
 lv_obj_t *ui_led1;
 lv_obj_t *ui_led2;
 lv_obj_t *ui_led3;
+lv_obj_t *ui_Screen1_over_Label;
+lv_obj_t *ui_Screen1_normal_Label;
+lv_obj_t *ui_Screen1_lack_Label;
 lv_obj_t *ui_Screen1_Setting_Btn;
 lv_obj_t *ui_Screen1_Panel1_Zero_Point_Label;
 lv_obj_t *ui_Screen1_Panel1_Stable_Point_Label;
@@ -54,7 +69,6 @@ lv_obj_t *ui_Screen1_Lower_Value_Label;
 lv_obj_t *ui_Screen2;
 
 // SCREEN: ui_list_select
-
 lv_obj_t *ui_list_select;
 lv_obj_t *ui_ListSelectScreen_List_Panel;
 lv_obj_t *ui_ListSelectScreen_Comfirm_Panel;
@@ -71,6 +85,9 @@ float renge_weight_value = 0.0;
 float amount_weight_value = 0.0;
 
 int judge_total_count = 0;
+int judge_over_count = 0;
+int judge_normal_count = 0;
+int judge_lack_count = 0;
 screen_mode_t curr_mode;
 ui_event_ids_t ui_event;
 ui_internal_data_ctx_t ui_data_ctx;
@@ -87,9 +104,14 @@ static lv_style_t style_clock;
 char timeString[9];
 char dateString[30];
 
+char s_tare_set_value[10] = { 0 };
+
 bool normal_event_flag = false;
 bool over_event_flag = false;
 bool lack_event_flag = false;
+bool copying_flag = true;
+bool usb_copy_success_flag = true;
+bool weight_tare_flag = false;
 
 static lv_obj_t *s_btn[PROD_NUM];
 static char saved_data[PROD_NUM][MAX_DATA_LEN] = {
@@ -103,38 +125,13 @@ static char string_empty[100];
 ///////////////////// FUNCTIONS ////////////////////
 
 ///////////////////// FUNCTIONS ////////////////////
-void ui_Screen1_Setting_Btn_e_handler(lv_event_t *e) {
+void ui_event_Screen1_List_Select_Button(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
-  if (event_code == LV_EVENT_CLICKED) {
-    _ui_screen_change(&ui_Screen2, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen2_screen_init);
-  }
-}
 
-void ui_Screen1_Zero_Point_Set_Btn_e_handler(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  int res = 0;
   if (event_code == LV_EVENT_CLICKED) {
-    res = cas_zero_command();
-  }
-}
-
-void ui_Screen1_Tare_Point_Set_Btn_e_handler(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  int res = 0;
-  if (event_code == LV_EVENT_CLICKED) {
-    res = cas_tare_command();
-  }
-}
-
-void ui_Screen1_Mode_Set_Btn_e_handler(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  int res = 0;
-  if (event_code == LV_EVENT_CLICKED) {
-    _ui_screen_change(&ui_Main_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_main_screen_init);
+    _ui_screen_change(&ui_list_select, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_list_select_screen_init);
+    ui_ListSelectScreen_List_Panel_PageBuilder();
   }
 }
 
@@ -186,16 +183,6 @@ static void ui_ListSelectScreen_List_Panel_PageBuilder() {
     }
   }
   lv_obj_update_snap(ui_ListSelectScreen_List_Panel, LV_ANIM_ON);
-}
-
-void ui_event_Screen1_List_Select_Button(lv_event_t *e) {
-  lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-
-  if (event_code == LV_EVENT_CLICKED) {
-    _ui_screen_change(&ui_list_select, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, &ui_list_select_screen_init);
-    ui_ListSelectScreen_List_Panel_PageBuilder();
-  }
 }
 
 void ui_ListSelectScreen_List_Panel_Btn_e_handler(lv_event_t *e) {
@@ -283,33 +270,51 @@ void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e) {
   }
 }
 
+static void usb_event_cb(lv_event_t *e) {
+  lv_obj_t *obj = lv_event_get_current_target(e);
+  LOGI(TAG, "Button %s clicked", lv_msgbox_get_active_btn_text(obj));
+  if (strcmp(lv_msgbox_get_active_btn_text(obj), "Close") == 0) {
+    lv_msgbox_close(obj);
+  }
+}
+
 void time_timer_cb(lv_timer_t *timer) {
-  //   time_t t = time(NULL);
-  //   struct tm *local = localtime(&t);
-  cas_22byte_format_t *weight_raw = read_weight_value();
   char s_weight[20] = { 0 };
   char s_amount_count[20] = { 0 };
   char s_judge_total_count[20] = { 0 };
+  cas_22byte_format_t *weight_raw = read_weight_value();
 
   float weight = 0.0;
+  float tare_weight = 0.0;
   bool trash_fileter_flag = false;
   // taking float value using %f format specifier for
-  // float
   sscanf(weight_raw->data, "%f", &weight);
-
+  // LOGI(TAG, "aaaweight float value : %f", weight);
   snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
   snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
   snprintf(s_judge_total_count, sizeof(s_judge_total_count), "%03d", judge_total_count);
 
-  //   sprintf(timeString, "%02d:%02d:%02d", local->tm_hour, local->tm_min, local->tm_sec);
-  //   sprintf(dateString, "%04d-%02d-%02d", local->tm_year + 1900, local->tm_mon + 1, local->tm_mday);
+  // USB connecting..
+  // if (is_usb_copying(USB_COPYING) && copying_flag) {
+  //   copying_flag = false;
+  //   static const char *btns[] = { "Close", "" };
+  //   lv_obj_t *mbox5 = lv_msgbox_create(NULL, "USB_COPY!", "Wait...", btns, true);
+  //   lv_obj_add_event_cb(mbox5, usb_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+  //   lv_obj_center(mbox5);
+  // }
+  if (is_usb_copying(USB_COPY_SUCCESS) && usb_copy_success_flag) {
+    usb_copy_success_flag = false;
+    static const char *btns[] = { "Close", "" };
+    lv_obj_t *mbox6 = lv_msgbox_create(NULL, "USB_COPY!", "success!", btns, true);
+    lv_obj_add_event_cb(mbox6, usb_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+    lv_obj_center(mbox6);
+  }
+  if (!is_usb_disconnect_notify()) {
+    // usb_copy_success_flag = true;
+    usb_copy_success_flag = true;
+  }
 
-  //   lv_label_set_text(ui_Screen1TimeLabel, timeString);
-  //   lv_label_set_text(ui_Screen1DateLabel, dateString);
-
-  //   lv_label_set_text(ui_SettingTimeLabel, timeString);
-  //   lv_label_set_text(ui_SettingDateLabel, dateString);
-
+  // checking the trash data from 485 receive data format
   if (strncmp(weight_raw->states, "ST", 2) == 0 || strncmp(weight_raw->states, "US", 2) == 0 ||
       strncmp(weight_raw->states, "OL", 2) == 0) {
     trash_fileter_flag = true;
@@ -317,126 +322,171 @@ void time_timer_cb(lv_timer_t *timer) {
     trash_fileter_flag = false;
   }
 
-  // 0 이하 표시하지 않음
+  // Lamp status in CAS data format
+  // | bit7 | bit6 | bit5 | bit4 | bit3 | bit2 | bit1 | bit0 |
+  //    1    stabel    1    hold  print    NET   tare   zero
 
+  // display to weight status
+  if (trash_fileter_flag) {
+    if (strncmp(weight_raw->states, "ST", 2) == 0) {
+      lv_obj_set_style_text_color(ui_Screen1_Panel1_Stable_Point_Label, lv_color_hex(0x0d00ff),
+                                  LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_text_color(ui_mode_2_scr_Panel1_Stable_Point_Label, lv_color_hex(0x0d00ff),
+                                  LV_PART_MAIN | LV_STATE_DEFAULT);
+    } else {
+      lv_obj_set_style_text_color(ui_Screen1_Panel1_Stable_Point_Label, lv_color_hex(0xe9e9e9),
+                                  LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_text_color(ui_mode_2_scr_Panel1_Stable_Point_Label, lv_color_hex(0xe9e9e9),
+                                  LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+
+    /*zero state set display */
+    if (*weight_raw->lamp_states & 0x01) {
+      lv_obj_set_style_text_color(ui_Screen1_Panel1_Zero_Point_Label, lv_color_hex(0xc70039),
+                                  LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_text_color(ui_mode_2_scr_Panel1_Zero_Point_Label, lv_color_hex(0xc70039),
+                                  LV_PART_MAIN | LV_STATE_DEFAULT);
+    } else {
+      lv_obj_set_style_text_color(ui_Screen1_Panel1_Zero_Point_Label, lv_color_hex(0xe9e9e9),
+                                  LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_text_color(ui_mode_2_scr_Panel1_Zero_Point_Label, lv_color_hex(0xe9e9e9),
+                                  LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+    /*tare state set display */
+    if (*weight_raw->lamp_states & 0x02) {
+      weight_tare_flag = true;
+      sscanf(s_tare_set_value, "%f", &tare_weight);
+      tare_weight *= -1;
+      LOGI(TAG, "tare string value : %s", s_tare_set_value);
+      // LOGI(TAG, "tare float value : %f", tare_weight);
+      // LOGI(TAG, "weight float value : %f", weight);
+      lv_obj_set_style_text_color(ui_Screen1_Panel1_Tare_Point_Label, lv_color_hex(0x000000),
+                                  LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_text_color(ui_mode_2_scr_Panel1_Tare_Point_Label, lv_color_hex(0x000000),
+                                  LV_PART_MAIN | LV_STATE_DEFAULT);
+    } else {
+      weight_tare_flag = false;
+      lv_obj_set_style_text_color(ui_Screen1_Panel1_Tare_Point_Label, lv_color_hex(0xe9e9e9),
+                                  LV_PART_MAIN | LV_STATE_DEFAULT);
+      lv_obj_set_style_text_color(ui_mode_2_scr_Panel1_Tare_Point_Label, lv_color_hex(0xe9e9e9),
+                                  LV_PART_MAIN | LV_STATE_DEFAULT);
+    }
+  }
   switch (ui_data_ctx.curr_mode) {
     case MODE_1:
-      // MODE 1
-      // upper weight check
-      // LOGI(TAG, "s_judge_total_count %s:", s_judge_total_count);
-      // LOGI(TAG, "judge_total_count %d:", judge_total_count);
-      if (weight_raw->data[0] == '-') {  // ascii '-', hex 0x2d
-        lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, "UNKNOWN");
-        lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, "   ");
-      } else {
-        lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, s_weight);
-        lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, s_judge_total_count);
-      }
-
-      // upper weight check
-      if (upper_weight_value < weight && !over_event_flag) {
-        if (strncmp(weight_raw->states, "ST", 2) == 0) {
-          judge_total_count++;
-          lv_led_on(ui_led1);
-          over_volume();
-          over_event_flag = true;
-          LOGI(TAG, "led1 on");
-          lv_led_off(ui_led2);
-          lv_led_off(ui_led3);
-        }
-      }
-
-      // lower weight check
-      if (lower_weight_value > weight && !lack_event_flag && weight > 0) {
-        if (strncmp(weight_raw->states, "ST", 2) == 0) {
-          judge_total_count++;
-          lv_led_on(ui_led3);
-          lack_volume();
-          lack_event_flag = true;
-          lv_led_off(ui_led1);
-          lv_led_off(ui_led2);
-        }
-      }
-
-      // // success weight check
+      // no show to under zero and over 100kg
       if (trash_fileter_flag) {
-        if (lower_weight_value <= weight && upper_weight_value > weight && !normal_event_flag) {
-          if (strncmp(weight_raw->states, "ST", 2) == 0) {
-            judge_total_count++;
-            lv_led_on(ui_led2);
-            normal_volume();
-            normal_event_flag = true;
-            // reset upper and lower flag and leds
-            // over_event_flag = false;
-            // lack_event_flag = false;
+        if (weight_raw->data[0] == '-') {  // ascii '-', hex 0x2d
+          lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, "UNKNOWN");
+          lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, "\0");
+          // processed when in state tare
+          if (weight_tare_flag && tare_weight == weight) {
+            over_event_flag = false;
+            lack_event_flag = false;
+            normal_event_flag = false;
             lv_led_off(ui_led1);
+            lv_led_off(ui_led2);
             lv_led_off(ui_led3);
           }
-        }
-
-        if (strncmp(weight_raw->states, "ST", 2) == 0) {
-          /*to do*/
-          // success weight check
-          // lv_obj_set_style_text_color(ui_Label15, lv_color_hex(0x282828), LV_PART_MAIN | LV_STATE_DEFAULT );
-          lv_obj_set_style_text_color(ui_Screen1_Panel1_Stable_Point_Label, lv_color_hex(0x0d00ff),
-                                      LV_PART_MAIN | LV_STATE_DEFAULT);
+        } else if (weight >= (float)100.0) {
+          lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, "OVERLOAD");
+          lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, "\0");
         } else {
-          lv_obj_set_style_text_color(ui_Screen1_Panel1_Stable_Point_Label, lv_color_hex(0xe9e9e9),
-                                      LV_PART_MAIN | LV_STATE_DEFAULT);
+          lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, s_weight);
+          lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, s_judge_total_count);
         }
 
-        // Lamp status in CAS data format
-        // | bit7 | bit6 | bit5 | bit4 | bit3 | bit2 | bit1 | bit0 |
-        //    1    stabel    1    hold  print    NET   tare   zero
-
-        /*zero state set display */
-        if (*weight_raw->lamp_states & 0x01) {
-          // LOGI("TAG","zero state %02x", *weight_raw->lamp_states&0xff);
-          lv_obj_set_style_text_color(ui_Screen1_Panel1_Zero_Point_Label, lv_color_hex(0xc70039),
-                                      LV_PART_MAIN | LV_STATE_DEFAULT);
-          // reset all flags and leds
-          over_event_flag = false;
-          lack_event_flag = false;
-          normal_event_flag = false;
-          lv_led_off(ui_led1);
-          lv_led_off(ui_led2);
-          lv_led_off(ui_led3);
-
+        // upper weight check
+        // pord_num 0 is a special method that does not determine whether it works or not.
+        if ((float)0.0 == upper_weight_value || (float)0.0 == lower_weight_value || 0 == prod_num_value) {
         } else {
-          // LOGI("TAG","no zero stat %02x", *weight_raw->lamp_states&0xff);
-          lv_obj_set_style_text_color(ui_Screen1_Panel1_Zero_Point_Label, lv_color_hex(0xe9e9e9),
-                                      LV_PART_MAIN | LV_STATE_DEFAULT);
-        }
+          if (upper_weight_value < weight && !over_event_flag) {
+            if (strncmp(weight_raw->states, "ST", 2) == 0) {
+              judge_total_count++;
+              judge_over_count++;
+              lv_label_set_text_fmt(ui_Screen1_over_Label, "초과 %d", judge_over_count);
+              lv_led_on(ui_led1);
+              over_volume();
+              // Clear all judgments
+              over_event_flag = true;
+              lack_event_flag = true;
+              normal_event_flag = true;
+              LOGI(TAG, "led1 on");
+              lv_led_off(ui_led2);
+              lv_led_off(ui_led3);
+            }
+          }
 
-        /*tare state set display */
-        if (*weight_raw->lamp_states & 0x02) {
-          lv_obj_set_style_text_color(ui_Screen1_Panel1_Tare_Point_Label, lv_color_hex(0x000000),
-                                      LV_PART_MAIN | LV_STATE_DEFAULT);
+          // lower weight check
+          // minmum 100g
+          if ((float)0.1 < weight && lower_weight_value > weight && !lack_event_flag && weight > 0) {
+            if (strncmp(weight_raw->states, "ST", 2) == 0) {
+              judge_total_count++;
+              judge_lack_count++;
+              lv_label_set_text_fmt(ui_Screen1_lack_Label, "부족 %d", judge_lack_count);
+              lv_led_on(ui_led3);
+              lack_volume();
+              // Clear all judgments
+              over_event_flag = true;
+              lack_event_flag = true;
+              normal_event_flag = true;
+              lv_led_off(ui_led1);
+              lv_led_off(ui_led2);
+            }
+          }
 
-        } else {
-          lv_obj_set_style_text_color(ui_Screen1_Panel1_Tare_Point_Label, lv_color_hex(0xe9e9e9),
-                                      LV_PART_MAIN | LV_STATE_DEFAULT);
-        }
-      }  // trash_fileter_flag
+          // // success weight check
+          if (lower_weight_value <= weight && upper_weight_value > weight && !normal_event_flag) {
+            if (strncmp(weight_raw->states, "ST", 2) == 0) {
+              judge_total_count++;
+              judge_normal_count++;
+              lv_label_set_text_fmt(ui_Screen1_normal_Label, "정상 %d", judge_normal_count);
+              lv_led_on(ui_led2);
+              normal_volume();
+              // Clear all judgments
+              over_event_flag = true;
+              lack_event_flag = true;
+              normal_event_flag = true;
+              lv_led_off(ui_led1);
+              lv_led_off(ui_led3);
+            }
+          }
+          /*zero state set display */
+          if (*weight_raw->lamp_states & 0x01) {
+            // reset all flags and leds
+            over_event_flag = false;
+            lack_event_flag = false;
+            normal_event_flag = false;
+            lv_led_off(ui_led1);
+            lv_led_off(ui_led2);
+            lv_led_off(ui_led3);
+          }
+
+        }  // if the set value is 0, it is not counted.
+      }    // trash_fileter_flag.
       break;
     case MODE_2:
       // LOGI(TAG, "current mode %d:", ui_data_ctx.curr_mode);
+      if (trash_fileter_flag) {
+        if (ui_data_ctx.ids == AMOUNT_VAL_E) {
+          ui_data_ctx.ids = NONE_E;
+          amount_weight_value = weight;
+          lv_event_send(ui_data_ctx.obj, LV_EVENT_READY, NULL);
+        }
 
-      if (ui_data_ctx.ids == AMOUNT_VAL_E) {
-        ui_data_ctx.ids = NONE_E;
-        amount_weight_value = weight;
-        lv_event_send(ui_data_ctx.obj, LV_EVENT_READY, NULL);
-      }
-
-      if (weight_raw->data[0] == '-') {
-        lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, "UNKNOWN");
-        lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, "   ");
-      } else {
-        lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, s_weight);
-        if (amount_weight_value == 0.0) {
-          lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, "000");
+        if (weight_raw->data[0] == '-') {
+          lv_label_set_text(ui_mode_2_scr_Panel1_Current_Weight_Label, "UNKNOWN");
+          lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "\0");
+        } else if (weight >= (float)100.0) {
+          lv_label_set_text(ui_mode_2_scr_Panel1_Current_Weight_Label, "OVERLOAD");
+          lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "\0");
         } else {
-          lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, s_amount_count);
+          lv_label_set_text(ui_mode_2_scr_Panel1_Current_Weight_Label, s_weight);
+          if (amount_weight_value == 0.0) {
+            lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "000");
+          } else {
+            lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, s_amount_count);
+          }
         }
       }
       break;
@@ -453,13 +503,20 @@ void ui_init(void) {
                                             false, LV_FONT_DEFAULT);
   lv_disp_set_theme(dispp, theme);
   ui_main_screen_init();
+  ui_device_id_reg_screen_init();
+  ui_mode_2_screen_init();
   ui_Screen1_screen_init();
   ui_Screen2_screen_init();
   ui_list_select_screen_init();
 
   lv_style_init(&style_clock);
   static uint32_t user_data = 10;
-  ui_data_ctx.ptr = &judge_total_count;
+  ui_data_ctx.ptr[0] = &prod_num_value;
+  ui_data_ctx.ptr[1] = &judge_total_count;
+  ui_data_ctx.ptr[2] = &judge_over_count;
+  ui_data_ctx.ptr[3] = &judge_normal_count;
+  ui_data_ctx.ptr[4] = &judge_lack_count;
+
   lv_timer_t *time_timer = lv_timer_create(time_timer_cb, 1, &user_data);
 
   // lv_disp_load_scr(ui_Screen1);

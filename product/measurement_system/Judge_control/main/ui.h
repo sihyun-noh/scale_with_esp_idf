@@ -18,6 +18,14 @@ extern "C" {
 #include "ui_events.h"
 
 #include <stdio.h>
+#include "sysfile.h"
+#include "filelog.h"
+#include "sys_status.h"
+#include "syscfg.h"
+#include "config.h"
+
+extern int cas_zero_command(void);
+extern int cas_tare_command(char *s_data);
 
 typedef enum {
   NONE_E = 0x00,
@@ -45,11 +53,12 @@ typedef struct screen_mode {
 typedef struct internal_data_trans {
   mode_select_t curr_mode;
   ui_event_ids_t ids;
-  int *ptr;
+  int *ptr[10];
   void (*fp)(lv_event_t *e);
   lv_obj_t *obj;
 } ui_internal_data_ctx_t;
 
+// SCREEN: ui_main_Srceen
 void ui_main_screen_init(void);
 extern lv_obj_t *ui_Main_Screen;
 extern lv_obj_t *ui_MainScreenPanel;
@@ -58,13 +67,29 @@ extern lv_obj_t *ui_MainScreenBtn1;
 extern lv_obj_t *ui_MainScreenBtn1Label;
 extern lv_obj_t *ui_MainScreenBtn2;
 extern lv_obj_t *ui_MainScreenBtn1Label2;
+extern lv_obj_t *ui_main_scr_Device_Id_Area_Label;
+
+// SCREEN : ui_device_id_reg_screen
+void ui_device_id_reg_screen_init(void);
+extern lv_obj_t *ui_device_id_reg_screen;
+
+// SCREEN: ui_mode_2_Srceen
+void ui_mode_2_screen_init(void);
+extern lv_obj_t *ui_mode_2_scr;
+extern lv_obj_t *ui_mode_2_scr_Panel1;
+extern lv_obj_t *ui_mode_2_scr_Panel1_Current_Weight_Label;
+extern lv_obj_t *ui_mode_2_scr_Panel1_Current_Count_Label;
+extern lv_obj_t *ui_mode_2_scr_Panel1_Zero_Point_Label;
+extern lv_obj_t *ui_mode_2_scr_Panel1_Stable_Point_Label;
+extern lv_obj_t *ui_mode_2_scr_Panel1_Tare_Point_Label;
+extern lv_obj_t *ui_mode_2_scr_Panel1_Amount_Value_Label;
 
 // SCREEN: ui_Screen1
 void ui_Screen1_screen_init(void);
-void ui_Screen1_Setting_Btn_e_handler(lv_event_t *e);
-void ui_Screen1_Zero_Point_Set_Btn_e_handler(lv_event_t *e);
-void ui_Screen1_Tare_Point_Set_Btn_e_handler(lv_event_t *e);
-void ui_Screen1_Mode_Set_Btn_e_handler(lv_event_t *e);
+// void ui_Screen1_Setting_Btn_e_handler(lv_event_t *e);
+// void ui_Screen1_Zero_Point_Set_Btn_e_handler(lv_event_t *e);
+// void ui_Screen1_Tare_Point_Set_Btn_e_handler(lv_event_t *e);
+// void ui_Screen1_Mode_Set_Btn_e_handler(lv_event_t *e);
 void ui_event_Screen1_List_Select_Button(lv_event_t *e);
 void ui_ListSelectScreen_List_Panel_Btn_e_handler(lv_event_t *e);
 extern lv_obj_t *ui_Screen1;
@@ -75,6 +100,9 @@ extern lv_obj_t *ui_Screen1_Setting_Btn_Label;
 extern lv_obj_t *ui_led1;
 extern lv_obj_t *ui_led2;
 extern lv_obj_t *ui_led3;
+extern lv_obj_t *ui_Screen1_over_Label;
+extern lv_obj_t *ui_Screen1_normal_Label;
+extern lv_obj_t *ui_Screen1_lack_Label;
 extern lv_obj_t *ui_Screen1_Setting_Btn;
 extern lv_obj_t *ui_Screen1_Panel1_Zero_Point_Label;
 extern lv_obj_t *ui_Screen1_Panel1_Stable_Point_Label;
@@ -100,6 +128,8 @@ extern lv_obj_t *ui_ListSelectScreen_Comfirm_Btn;
 extern lv_obj_t *ui_ListSelectScreen_Comfirm_Btn_Label;
 extern lv_obj_t *ui_ListSelectScreen_Delete_Btn;
 extern lv_obj_t *ui_ListSelectScreen_Delete_Btn_Label;
+
+extern char s_tare_set_value[10];
 
 extern float upper_weight_value;
 extern float lower_weight_value;

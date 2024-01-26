@@ -29,7 +29,7 @@ static TaskHandle_t usb_msc_handle = NULL;
 #define CREATE_FILE_NAME_1 "/sen1"
 #define CREATE_FILE_NAME_2 "/sen2"
 #define CREATE_FILE_NAME_3 "/sen3"
-#define SENSOR_COUNT 3
+#define SENSOR_COUNT 1
 enum { SENSOR_1 = 0, SENSOR_2, SENSOR_3 };
 
 typedef struct {
@@ -48,11 +48,11 @@ typedef struct node {
 } copy_ctx_t;
 
 int file_operations(void) {
-  char empty[10] = { 0 };
-  char directory[30] = { 0 };
+  char empty[20] = { 0 };
+  char directory[50] = { 0 };
   char to_file_path[150] = { 0 };
   char from_file_path[150] = { 0 };
-  char mac_address[16] = { 0 };
+  char s_device_id[20] = { 0 };
 
   file_ctx_t *file_data = (file_ctx_t *)malloc(sizeof(file_ctx_t));
   memset(file_data, 0, sizeof(file_ctx_t));
@@ -60,9 +60,10 @@ int file_operations(void) {
   copy_ctx_t *copy_data = (copy_ctx_t *)malloc(sizeof(copy_ctx_t));
   memset(copy_data, 0, sizeof(copy_ctx_t));
 
-  syscfg_get(SYSCFG_I_MACADDRESS, SYSCFG_N_MACADDRESS, mac_address, sizeof(mac_address));
-  strncpy(empty, mac_address + 4, sizeof(empty) - 2);
-  snprintf(directory, sizeof(directory), "%s/%s", USBROOT, empty);
+  syscfg_get(CFG_DATA, "DEVICE_ID", s_device_id, sizeof(s_device_id));
+  strncpy(empty, s_device_id, sizeof(empty));
+  // 8-character name
+  snprintf(directory, sizeof(directory), "%s/ID_%s", USBROOT, empty);
   LOGE(TAG, "dir__: %s", directory);
 
   bool directory_exists = stat((const char *)directory, &file_data->sb) == 0;
@@ -140,7 +141,7 @@ int file_operations(void) {
 
 static void file_operations_measurement_data(void) {
   const char *directory = "/usb/DATA";
-  const char *file_path = "/usb/DATA/data.txt";
+  const char *file_path = "/usb/DATA/data.cvs";
 
   // Create /usb/esp directory
   struct stat s = { 0 };
@@ -199,8 +200,8 @@ void usb_host_msc_task(void) {
         vTaskDelay(500 / portTICK_PERIOD_MS);
       }
       set_usb_copying(USB_COPYING, 1);
-      // file_operations();
-      file_operations_measurement_data();
+      file_operations();
+      // file_operations_measurement_data();
       set_usb_disconnect_notify(1);
 
       while (!wait_for_event(DEVICE_DISCONNECTED, 200)) {}

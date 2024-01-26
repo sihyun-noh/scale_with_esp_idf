@@ -5,10 +5,8 @@
 
 #include "../ui.h"
 #include "log.h"
-#include "syscfg.h"
-#include "config.h"
 
-static const char *TAG = "lvgl";
+static const char *TAG = "ui_Screen2";
 
 static bool ta1_selected;
 static bool ta2_selected;
@@ -26,8 +24,6 @@ void ui_all_delete_btn_e_handler(lv_event_t *e) {
     lv_textarea_set_text(ta->ta1, "\0");
     lv_textarea_set_text(ta->ta2, "\0");
     lv_textarea_set_text(ta->ta3, "\0");
-    // lv_textarea_set_text(ta->ta4, "0");
-    // lv_textarea_set_text(ta->ta5, "0");
   }
 }
 
@@ -40,8 +36,6 @@ void ui_comfirm_btn_e_hendler(lv_event_t *e) {
     lv_event_send(ta->ta1, LV_EVENT_READY, NULL);
     lv_event_send(ta->ta2, LV_EVENT_READY, NULL);
     lv_event_send(ta->ta3, LV_EVENT_READY, NULL);
-    // lv_event_send(ta->ta4, LV_EVENT_READY, NULL);
-    // lv_event_send(ta->ta5, LV_EVENT_READY, NULL);
   }
 }
 
@@ -99,43 +93,6 @@ void textarea_event_handler2(lv_event_t *e) {
   }
   // /*Todo : */
 }
-
-// void textarea_event_handler3(lv_event_t *e) {
-//   lv_event_code_t code = lv_event_get_code(e);
-//   lv_obj_t *ta = lv_event_get_target(e);
-//   if (code == LV_EVENT_FOCUSED) {
-//     //  ta4_selected = true;
-//     ta1_selected = false;
-//     ta2_selected = false;
-//     ta3_selected = false;
-//     //  ta5_selected = false;
-//     LOGI(TAG, "event call ta4");
-//   } else if (code == LV_EVENT_READY) {
-//     // success_weight_value = atoi(lv_textarea_get_text(ta));
-//     sscanf(lv_textarea_get_text(ta), "%f", &renge_weight_value);
-//     LOGI(TAG, "Enter was pressed. The current text is: %f", renge_weight_value);
-//   }
-//   // /*Todo : */
-// }
-
-// void textarea_event_handler4(lv_event_t *e) {
-//   lv_event_code_t code = lv_event_get_code(e);
-//   lv_obj_t *ta = lv_event_get_target(e);
-//   if (code == LV_EVENT_FOCUSED) {
-//     //  ta5_selected = true;
-//     ta1_selected = false;
-//     ta2_selected = false;
-//     ta3_selected = false;
-//     //  ta4_selected = false;
-//     LOGI(TAG, "event call ta5");
-//   } else if (code == LV_EVENT_READY) {
-//     // success_weight_value = atoi(lv_textarea_get_text(ta));
-//     sscanf(lv_textarea_get_text(ta), "%f", &amount_weight_value);
-//     LOGI(TAG, "Enter was pressed. The current text is: %f", amount_weight_value);
-//   }
-//   // /*Todo : */
-// }
-
 void btnm_event_handler(lv_event_t *e) {
   lv_obj_t *obj = lv_event_get_target(e);
   // lv_obj_t * ta = lv_event_get_user_data(e);
@@ -152,13 +109,6 @@ void btnm_event_handler(lv_event_t *e) {
     ta = use_text_area.ta3;
     LOGI(TAG, "Send data to ta3");
   }
-  // else if (ta4_selected) {
-  //   ta = use_text_area.ta4;
-  //   LOGI(TAG, "Send data to ta4");
-  // } else if (ta5_selected) {
-  //   ta = use_text_area.ta5;
-  //   LOGI(TAG, "Send data to ta5");
-  // }
 
   if (strcmp(txt, "C") == 0)
     lv_textarea_del_char(ta);
@@ -205,14 +155,16 @@ void ui_register_pord_num_btn_e_hendler(lv_event_t *e) {
       lv_obj_t *mbox1 = lv_msgbox_create(NULL, "Oops!", "It's already registered.", btns, true);
       lv_obj_add_event_cb(mbox1, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
       lv_obj_center(mbox1);
-    } else if (prod_num_value > PROD_NUM) {  // erroe when entering product number over PROD_NUM value
+    } else if (prod_num_value > PROD_NUM) {
+      // erroe when entering product number over PROD_NUM value
       char s_message[30] = { 0 };
       static const char *btns[] = { "Close", "" };
       snprintf(s_message, sizeof(s_message), "Available from 0 to %d", PROD_NUM);
       lv_obj_t *mbox2 = lv_msgbox_create(NULL, "Oops!", s_message, btns, true);
       lv_obj_add_event_cb(mbox2, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
       lv_obj_center(mbox2);
-    } else if (lower_weight_value >= upper_weight_value) {
+    } else if (lower_weight_value >= upper_weight_value && prod_num_value != 0) {
+      // pord_num 0 is a special method that does not determine whether it works or not.
       static const char *btns[] = { "Close", "" };
       lv_obj_t *mbox3 = lv_msgbox_create(
           NULL, "Oops!", "Invalid values.\nThe lower input is equal or more than the upper input value.", btns, true);
@@ -221,7 +173,7 @@ void ui_register_pord_num_btn_e_hendler(lv_event_t *e) {
     } else {
       if (strlen(get_str) == 0) {
         LOGI(TAG, "Set register ");
-        int upper_int_part = (int)lower_weight_value;
+        int upper_int_part = (int)upper_weight_value;
         int lower_int_part = (int)lower_weight_value;
         float upper_decimal_part = upper_weight_value - upper_int_part;
         float lower_decimal_part = lower_weight_value - lower_int_part;
@@ -230,12 +182,13 @@ void ui_register_pord_num_btn_e_hendler(lv_event_t *e) {
 
         snprintf(set_str, sizeof(set_str), "%02d,upper:%02d.%03d,lower:%02d.%03d", prod_num_value, upper_int_part,
                  upper_dacimal_to_int_part, lower_int_part, lower_decimal_to_int_part);
+        LOGI(TAG, "syscfg_data : %s", set_str);
         syscfg_set(CFG_DATA, s_key, set_str);
 
         static const char *btns[] = { "Close", "" };
-        lv_obj_t *mbox3 = lv_msgbox_create(NULL, "OK!", "Registered", btns, true);
-        lv_obj_add_event_cb(mbox3, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-        lv_obj_center(mbox3);
+        lv_obj_t *mbox4 = lv_msgbox_create(NULL, "OK!", "Registered", btns, true);
+        lv_obj_add_event_cb(mbox4, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+        lv_obj_center(mbox4);
       }
     }
   }

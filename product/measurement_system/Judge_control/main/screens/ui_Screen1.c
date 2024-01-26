@@ -8,6 +8,22 @@
 
 static const char *TAG = "  ui_Screen1";
 
+static lv_anim_t animation_template;
+static lv_style_t label_style;
+
+void ui_Screen1_Setting_Btn_e_handler(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(&ui_Screen2, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen2_screen_init);
+  }
+}
+void ui_Screen1_Mode_Set_Btn_e_handler(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  int res = 0;
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(&ui_Main_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_main_screen_init);
+  }
+}
 void ui_Screen1_Prod_Num_Label_e_handler(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
@@ -16,7 +32,6 @@ void ui_Screen1_Prod_Num_Label_e_handler(lv_event_t *e) {
     snprintf(s_buff, sizeof(s_buff), "품번 %02d", prod_num_value);
     lv_label_set_text(target, s_buff);
   }
-  /*Todo : */
 }
 
 void ui_Screen1_Upper_Value_Label_e_handler(lv_event_t *e) {
@@ -24,10 +39,14 @@ void ui_Screen1_Upper_Value_Label_e_handler(lv_event_t *e) {
   lv_obj_t *target = lv_event_get_target(e);
   char s_buff[30] = { 0 };
   if (code == LV_EVENT_READY) {
-    snprintf(s_buff, sizeof(s_buff), "상한 %.3f", upper_weight_value);
-    lv_label_set_text(target, s_buff);
+    if (prod_num_value == 0) {
+      snprintf(s_buff, sizeof(s_buff), "판정하지않습니다.");
+      lv_label_set_text(target, s_buff);
+    } else {
+      snprintf(s_buff, sizeof(s_buff), "상한 %.3f", upper_weight_value);
+      lv_label_set_text(target, s_buff);
+    }
   }
-  /*Todo : */
 }
 
 void ui_Screen1_Lower_Value_Label_e_handler(lv_event_t *e) {
@@ -35,10 +54,13 @@ void ui_Screen1_Lower_Value_Label_e_handler(lv_event_t *e) {
   lv_obj_t *target = lv_event_get_target(e);
   char s_buff[30] = { 0 };
   if (code == LV_EVENT_READY) {
-    snprintf(s_buff, sizeof(s_buff), "하한 %.3f", lower_weight_value);
-    lv_label_set_text(target, s_buff);
+    if (prod_num_value == 0) {
+      lv_label_set_text(target, s_buff);
+    } else {
+      snprintf(s_buff, sizeof(s_buff), "하한 %.3f", lower_weight_value);
+      lv_label_set_text(target, s_buff);
+    }
   }
-  /*Todo : */
 }
 
 void ui_Screen1_Amount_Value_Label_e_handler(lv_event_t *e) {
@@ -46,29 +68,83 @@ void ui_Screen1_Amount_Value_Label_e_handler(lv_event_t *e) {
   lv_obj_t *target = lv_event_get_target(e);
   char s_buff[30] = { 0 };
   if (code == LV_EVENT_READY) {
-    snprintf(s_buff, sizeof(s_buff), "단위 %.3f kg", amount_weight_value);
-    lv_label_set_text(target, s_buff);
+    snprintf(s_buff, sizeof(s_buff), "min:100g");
+    // lv_label_set_text(target, s_buff);
   }
   /*Todo : */
 }
 
-void ui_Screen1_Amount_Set_Btn_e_handler(lv_event_t *e) {
-  lv_event_code_t code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-  if (code == LV_EVENT_CLICKED) {
-    // ui_event = AMOUNT_VAL_E;
-    ui_data_ctx.obj = ui_Screen1_Amount_Value_Label;
-    ui_data_ctx.ids = AMOUNT_VAL_E;
+static void Judge_Comfirm_Btn_mbox_event_cb(lv_event_t *e) {
+  lv_obj_t *obj = lv_event_get_current_target(e);
+  LOGI(TAG, "Button %s clicked", lv_msgbox_get_active_btn_text(obj));
+  if (strcmp(lv_msgbox_get_active_btn_text(obj), "Yes") == 0) {
+    FDATA(BASE_PATH, "품번:%d,총수량:%d,초과:%d,정상:%d,부족:%d", *ui_data_ctx.ptr[0], *ui_data_ctx.ptr[1],
+          *ui_data_ctx.ptr[2], *ui_data_ctx.ptr[3], *ui_data_ctx.ptr[3]);
+    *ui_data_ctx.ptr[1] = 0;  // judge_total_count initialize.
+    *ui_data_ctx.ptr[2] = 0;  // judge_over_count initialize.
+    *ui_data_ctx.ptr[3] = 0;  // judge_normal_countinitialize.
+    *ui_data_ctx.ptr[4] = 0;  // judge_lack_count initialize.
+    lv_label_set_text(ui_Screen1_over_Label, "초 과");
+    lv_label_set_text(ui_Screen1_normal_Label, "정 상");
+    lv_label_set_text(ui_Screen1_lack_Label, "부 족");
+    ui_data_ctx.ids = JUDGE_COMFIRM_E;
+    lv_msgbox_close(obj);
+  } else {
+    lv_msgbox_close(obj);
   }
 }
 
 void ui_Screen1_Judge_Comfirm_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
   if (code == LV_EVENT_CLICKED) {
-    // ui_event = AMOUNT_VAL_E;
-    *ui_data_ctx.ptr = 0;  // init.
-    ui_data_ctx.ids = JUDGE_COMFIRM_E;
+    static const char *btns[] = { "Yes", "No", "" };
+    lv_obj_t *mbox = lv_msgbox_create(NULL, "wait!", "Complete it?", btns, true);
+    lv_obj_add_event_cb(mbox, Judge_Comfirm_Btn_mbox_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+    lv_obj_center(mbox);
+  }
+}
+
+static void Judge_Cancel_Btn_mbox_event_cb(lv_event_t *e) {
+  lv_obj_t *obj = lv_event_get_current_target(e);
+  LOGI(TAG, "Button %s clicked", lv_msgbox_get_active_btn_text(obj));
+  if (strcmp(lv_msgbox_get_active_btn_text(obj), "Yes") == 0) {
+    *ui_data_ctx.ptr[1] = 0;  // judge_total_count initialize.
+    *ui_data_ctx.ptr[2] = 0;  // judge_over_count initialize.
+    *ui_data_ctx.ptr[3] = 0;  // judge_normal_countinitialize.
+    *ui_data_ctx.ptr[4] = 0;  // judge_lack_count initialize.
+    lv_label_set_text(ui_Screen1_over_Label, "초 과");
+    lv_label_set_text(ui_Screen1_normal_Label, "정 상");
+    lv_label_set_text(ui_Screen1_lack_Label, "부 족");
+    lv_msgbox_close(obj);
+  } else {
+    lv_msgbox_close(obj);
+  }
+}
+
+void uui_Screen1_Judge_Cancel_Btn_e_handler(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  if (code == LV_EVENT_CLICKED) {
+    static const char *btns[] = { "Yes", "No", "" };
+    lv_obj_t *mbox = lv_msgbox_create(NULL, "wait!", "Are you sure you want to cancel?\n It is not saved.", btns, true);
+    lv_obj_add_event_cb(mbox, Judge_Cancel_Btn_mbox_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+    lv_obj_center(mbox);
+  }
+}
+
+void ui_Screen1_Zero_Point_Set_Btn_e_handler(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  int ret = 0;
+  if (event_code == LV_EVENT_CLICKED) {
+    ret = cas_zero_command();
+  }
+}
+
+void ui_Screen1_Tare_Point_Set_Btn_e_handler(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  int ret = 0;
+  if (event_code == LV_EVENT_CLICKED) {
+    memset(s_tare_set_value, 0x00, sizeof(s_tare_set_value));
+    ret = cas_tare_command(s_tare_set_value);
   }
 }
 
@@ -78,45 +154,49 @@ void ui_Screen1_screen_init(void) {
 
   /* screen1 leds*/
   ui_led1 = lv_led_create(ui_Screen1);
-  lv_obj_align(ui_led1, LV_ALIGN_TOP_LEFT, 30, 40);
-  lv_led_set_color(ui_led1, lv_palette_main(LV_PALETTE_LIGHT_GREEN));
+  lv_obj_align(ui_led1, LV_ALIGN_TOP_LEFT, 30, 35);
+  lv_led_set_brightness(ui_led1, LV_LED_BRIGHT_MAX);
+  lv_led_set_color(ui_led1, lv_palette_main(LV_PALETTE_RED));
   lv_led_off(ui_led1);
 
   ui_led2 = lv_led_create(ui_Screen1);
-  lv_obj_align(ui_led2, LV_ALIGN_TOP_LEFT, 95, 40);
-  lv_led_set_brightness(ui_led2, 150);
-  lv_led_set_color(ui_led2, lv_palette_main(LV_PALETTE_RED));
+  lv_obj_align(ui_led2, LV_ALIGN_TOP_LEFT, 95, 35);
+  lv_led_set_brightness(ui_led2, LV_LED_BRIGHT_MAX);
+  lv_led_set_color(ui_led2, lv_palette_main(LV_PALETTE_LIGHT_GREEN));
+  lv_led_off(ui_led2);
 
   ui_led3 = lv_led_create(ui_Screen1);
-  lv_obj_align(ui_led3, LV_ALIGN_TOP_LEFT, 160, 40);
-  lv_led_on(ui_led3);
+  lv_obj_align(ui_led3, LV_ALIGN_TOP_LEFT, 160, 35);
+  lv_led_set_brightness(ui_led3, LV_LED_BRIGHT_MAX);
+  lv_led_set_color(ui_led3, lv_palette_main(LV_PALETTE_LIGHT_BLUE));
+  lv_led_off(ui_led3);
 
-  lv_obj_t *ui_Label5 = lv_label_create(ui_Screen1);
-  lv_obj_set_width(ui_Label5, LV_SIZE_CONTENT);   /// 1
-  lv_obj_set_height(ui_Label5, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_Label5, 29);
-  lv_obj_set_y(ui_Label5, 10);
-  lv_obj_set_align(ui_Label5, LV_ALIGN_TOP_LEFT);
-  lv_label_set_text(ui_Label5, "초 과");
-  lv_obj_set_style_text_font(ui_Label5, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
+  ui_Screen1_over_Label = lv_label_create(ui_Screen1);
+  lv_obj_set_width(ui_Screen1_over_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Screen1_over_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Screen1_over_Label, 29);
+  lv_obj_set_y(ui_Screen1_over_Label, 10);
+  lv_obj_set_align(ui_Screen1_over_Label, LV_ALIGN_TOP_LEFT);
+  lv_label_set_text(ui_Screen1_over_Label, "초 과");
+  lv_obj_set_style_text_font(ui_Screen1_over_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_t *ui_Label6 = lv_label_create(ui_Screen1);
-  lv_obj_set_width(ui_Label6, LV_SIZE_CONTENT);   /// 1
-  lv_obj_set_height(ui_Label6, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_Label6, 96);
-  lv_obj_set_y(ui_Label6, 10);
-  lv_obj_set_align(ui_Label6, LV_ALIGN_TOP_LEFT);
-  lv_label_set_text(ui_Label6, "정 상");
-  lv_obj_set_style_text_font(ui_Label6, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
+  ui_Screen1_normal_Label = lv_label_create(ui_Screen1);
+  lv_obj_set_width(ui_Screen1_normal_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Screen1_normal_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Screen1_normal_Label, 95);
+  lv_obj_set_y(ui_Screen1_normal_Label, 10);
+  lv_obj_set_align(ui_Screen1_normal_Label, LV_ALIGN_TOP_LEFT);
+  lv_label_set_text(ui_Screen1_normal_Label, "정 상");
+  lv_obj_set_style_text_font(ui_Screen1_normal_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_t *ui_Label7 = lv_label_create(ui_Screen1);
-  lv_obj_set_width(ui_Label7, LV_SIZE_CONTENT);   /// 1
-  lv_obj_set_height(ui_Label7, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_Label7, 159);
-  lv_obj_set_y(ui_Label7, 10);
-  lv_obj_set_align(ui_Label7, LV_ALIGN_TOP_LEFT);
-  lv_label_set_text(ui_Label7, "부 족");
-  lv_obj_set_style_text_font(ui_Label7, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
+  ui_Screen1_lack_Label = lv_label_create(ui_Screen1);
+  lv_obj_set_width(ui_Screen1_lack_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Screen1_lack_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Screen1_lack_Label, 159);
+  lv_obj_set_y(ui_Screen1_lack_Label, 10);
+  lv_obj_set_align(ui_Screen1_lack_Label, LV_ALIGN_TOP_LEFT);
+  lv_label_set_text(ui_Screen1_lack_Label, "부 족");
+  lv_obj_set_style_text_font(ui_Screen1_lack_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
   /* Screen1 main panel*/
   ui_Panel1 = lv_obj_create(ui_Screen1);
@@ -218,22 +298,36 @@ void ui_Screen1_screen_init(void) {
   lv_obj_set_style_text_font(ui_Screen1_Lower_Value_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_add_event_cb(ui_Screen1_Lower_Value_Label, ui_Screen1_Lower_Value_Label_e_handler, LV_EVENT_ALL, NULL);
 
-  ui_Screen1_Amount_Value_Label = lv_label_create(ui_Panel1);         // 단위 표시
-  lv_obj_set_width(ui_Screen1_Amount_Value_Label, LV_SIZE_CONTENT);   /// 1
-  lv_obj_set_height(ui_Screen1_Amount_Value_Label, LV_SIZE_CONTENT);  /// 1
+  /* added animation */
+  lv_anim_init(&animation_template);
+  lv_anim_set_delay(&animation_template, 1000); /*Wait 1 second to start the first scroll*/
+  lv_anim_set_repeat_delay(&animation_template,
+                           3000); /*Repeat the scroll 3 seconds after the label scrolls back to the initial position*/
+
+  /*Initialize the label style with the animation template*/
+  lv_style_init(&label_style);
+  lv_style_set_anim(&label_style, &animation_template);
+
+  ui_Screen1_Amount_Value_Label = lv_label_create(ui_Panel1);  // 단위 표시
+  lv_label_set_long_mode(ui_Screen1_Amount_Value_Label, LV_LABEL_LONG_SCROLL_CIRCULAR);
+  lv_obj_set_width(ui_Screen1_Amount_Value_Label, 100);  /// 1
+  lv_obj_set_height(ui_Screen1_Amount_Value_Label, 50);  /// 1
   lv_obj_set_x(ui_Screen1_Amount_Value_Label, 0);
-  lv_obj_set_y(ui_Screen1_Amount_Value_Label, 5);
+  lv_obj_set_y(ui_Screen1_Amount_Value_Label, 28);
   lv_obj_set_align(ui_Screen1_Amount_Value_Label, LV_ALIGN_BOTTOM_RIGHT);
-  lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위");
+  lv_label_set_recolor(ui_Screen1_Amount_Value_Label, true);
+  lv_label_set_text(ui_Screen1_Amount_Value_Label, "#0000ff Max:100kg# #ff0000 Min:100g#");
   lv_obj_set_style_text_font(ui_Screen1_Amount_Value_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_add_style(ui_Screen1_Amount_Value_Label, &label_style, LV_STATE_DEFAULT); /*Add the style to the label*/
   lv_obj_add_event_cb(ui_Screen1_Amount_Value_Label, ui_Screen1_Amount_Value_Label_e_handler, LV_EVENT_ALL, NULL);
+  /* added animation */
 
   /*Screen1 button */
 
   ui_Screen1_Setting_Btn = lv_btn_create(ui_Screen1);  // setting button
   lv_obj_set_width(ui_Screen1_Setting_Btn, 100);
   lv_obj_set_height(ui_Screen1_Setting_Btn, 50);
-  lv_obj_set_x(ui_Screen1_Setting_Btn, 150);
+  lv_obj_set_x(ui_Screen1_Setting_Btn, 160);
   lv_obj_set_y(ui_Screen1_Setting_Btn, -120);
   lv_obj_set_align(ui_Screen1_Setting_Btn, LV_ALIGN_CENTER);
   lv_obj_add_flag(ui_Screen1_Setting_Btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
@@ -250,10 +344,10 @@ void ui_Screen1_screen_init(void) {
   lv_label_set_text(ui_Screen1_Setting_Btn_Label, "설 정");
   lv_obj_set_style_text_font(ui_Screen1_Setting_Btn_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_t *ui_Screen1_Prod_Num_Btn = lv_btn_create(ui_Screen1);  // zero set button
+  lv_obj_t *ui_Screen1_Prod_Num_Btn = lv_btn_create(ui_Screen1);
   lv_obj_set_width(ui_Screen1_Prod_Num_Btn, 100);
   lv_obj_set_height(ui_Screen1_Prod_Num_Btn, 50);
-  lv_obj_set_x(ui_Screen1_Prod_Num_Btn, 40);
+  lv_obj_set_x(ui_Screen1_Prod_Num_Btn, 50);
   lv_obj_set_y(ui_Screen1_Prod_Num_Btn, -120);
   lv_obj_set_align(ui_Screen1_Prod_Num_Btn, LV_ALIGN_CENTER);
   lv_obj_add_flag(ui_Screen1_Prod_Num_Btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
@@ -270,7 +364,7 @@ void ui_Screen1_screen_init(void) {
   lv_label_set_text(ui_Screen1_List_Select_Btn_Label, "품 번");
   lv_obj_set_style_text_font(ui_Screen1_List_Select_Btn_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_t *ui_Screen1_Zero_Point_Set_Btn = lv_btn_create(ui_Screen1);  // zero set button
+  lv_obj_t *ui_Screen1_Zero_Point_Set_Btn = lv_btn_create(ui_Screen1);
   lv_obj_set_width(ui_Screen1_Zero_Point_Set_Btn, 50);
   lv_obj_set_height(ui_Screen1_Zero_Point_Set_Btn, 50);
   lv_obj_set_x(ui_Screen1_Zero_Point_Set_Btn, -180);
@@ -290,7 +384,7 @@ void ui_Screen1_screen_init(void) {
   lv_label_set_text(ui_Screen1_Zero_Point_Set_Btn_Label, "영점");
   lv_obj_set_style_text_font(ui_Screen1_Zero_Point_Set_Btn_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_t *ui_Screen1_Tare_Point_Set_Btn = lv_btn_create(ui_Screen1);  // zero set button
+  lv_obj_t *ui_Screen1_Tare_Point_Set_Btn = lv_btn_create(ui_Screen1);
   lv_obj_set_width(ui_Screen1_Tare_Point_Set_Btn, 50);
   lv_obj_set_height(ui_Screen1_Tare_Point_Set_Btn, 50);
   lv_obj_set_x(ui_Screen1_Tare_Point_Set_Btn, -120);
@@ -310,7 +404,7 @@ void ui_Screen1_screen_init(void) {
   lv_label_set_text(ui_Screen1_Tare_Point_Set_Btn_Label, "용기");
   lv_obj_set_style_text_font(ui_Screen1_Tare_Point_Set_Btn_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_t *ui_Screen1_Mode_Set_Btn = lv_btn_create(ui_Screen1);  // zero set button
+  lv_obj_t *ui_Screen1_Mode_Set_Btn = lv_btn_create(ui_Screen1);
   lv_obj_set_width(ui_Screen1_Mode_Set_Btn, 50);
   lv_obj_set_height(ui_Screen1_Mode_Set_Btn, 50);
   lv_obj_set_x(ui_Screen1_Mode_Set_Btn, 180);
@@ -330,30 +424,30 @@ void ui_Screen1_screen_init(void) {
   lv_label_set_text(ui_Screen1_Mode_Set_Btn_Label, "모드");
   lv_obj_set_style_text_font(ui_Screen1_Mode_Set_Btn_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_t *ui_Screen1_Amount_Set_Btn = lv_btn_create(ui_Screen1);  // zero set button
-  lv_obj_set_width(ui_Screen1_Amount_Set_Btn, 50);
-  lv_obj_set_height(ui_Screen1_Amount_Set_Btn, 50);
-  lv_obj_set_x(ui_Screen1_Amount_Set_Btn, 120);
-  lv_obj_set_y(ui_Screen1_Amount_Set_Btn, -10);
-  lv_obj_set_align(ui_Screen1_Amount_Set_Btn, LV_ALIGN_BOTTOM_MID);
-  lv_obj_add_flag(ui_Screen1_Amount_Set_Btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
-  lv_obj_clear_flag(ui_Screen1_Amount_Set_Btn, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
-  lv_obj_set_style_bg_color(ui_Screen1_Amount_Set_Btn, lv_color_hex(0xff0060), LV_PART_MAIN | LV_STATE_DEFAULT);
+  // lv_obj_t *ui_Screen1_Amount_Set_Btn = lv_btn_create(ui_Screen1);
+  // lv_obj_set_width(ui_Screen1_Amount_Set_Btn, 50);
+  // lv_obj_set_height(ui_Screen1_Amount_Set_Btn, 50);
+  // lv_obj_set_x(ui_Screen1_Amount_Set_Btn, 120);
+  // lv_obj_set_y(ui_Screen1_Amount_Set_Btn, -10);
+  // lv_obj_set_align(ui_Screen1_Amount_Set_Btn, LV_ALIGN_BOTTOM_MID);
+  // lv_obj_add_flag(ui_Screen1_Amount_Set_Btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  // lv_obj_clear_flag(ui_Screen1_Amount_Set_Btn, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  // lv_obj_set_style_bg_color(ui_Screen1_Amount_Set_Btn, lv_color_hex(0xff0060), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_add_event_cb(ui_Screen1_Amount_Set_Btn, ui_Screen1_Amount_Set_Btn_e_handler, LV_EVENT_ALL, NULL);
+  // lv_obj_add_event_cb(ui_Screen1_Amount_Set_Btn, ui_Screen1_Amount_Set_Btn_e_handler, LV_EVENT_ALL, NULL);
 
-  lv_obj_t *ui_Screen1_Amount_Set_Btn_Label = lv_label_create(ui_Screen1_Amount_Set_Btn);
-  lv_obj_set_width(ui_Screen1_Amount_Set_Btn_Label, LV_SIZE_CONTENT);   /// 1
-  lv_obj_set_height(ui_Screen1_Amount_Set_Btn_Label, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_Screen1_Amount_Set_Btn_Label, -5);
-  lv_obj_set_y(ui_Screen1_Amount_Set_Btn_Label, 5);
-  lv_label_set_text(ui_Screen1_Amount_Set_Btn_Label, "단위");
-  lv_obj_set_style_text_font(ui_Screen1_Amount_Set_Btn_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
+  // lv_obj_t *ui_Screen1_Amount_Set_Btn_Label = lv_label_create(ui_Screen1_Amount_Set_Btn);
+  // lv_obj_set_width(ui_Screen1_Amount_Set_Btn_Label, LV_SIZE_CONTENT);   /// 1
+  // lv_obj_set_height(ui_Screen1_Amount_Set_Btn_Label, LV_SIZE_CONTENT);  /// 1
+  // lv_obj_set_x(ui_Screen1_Amount_Set_Btn_Label, -5);
+  // lv_obj_set_y(ui_Screen1_Amount_Set_Btn_Label, 5);
+  // lv_label_set_text(ui_Screen1_Amount_Set_Btn_Label, "단위");
+  // lv_obj_set_style_text_font(ui_Screen1_Amount_Set_Btn_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_t *ui_Screen1_Judge_Comfirm_Btn = lv_btn_create(ui_Screen1);  // zero set button
+  lv_obj_t *ui_Screen1_Judge_Comfirm_Btn = lv_btn_create(ui_Screen1);
   lv_obj_set_width(ui_Screen1_Judge_Comfirm_Btn, 50);
   lv_obj_set_height(ui_Screen1_Judge_Comfirm_Btn, 50);
-  lv_obj_set_x(ui_Screen1_Judge_Comfirm_Btn, 60);
+  lv_obj_set_x(ui_Screen1_Judge_Comfirm_Btn, 120);
   lv_obj_set_y(ui_Screen1_Judge_Comfirm_Btn, -10);
   lv_obj_set_align(ui_Screen1_Judge_Comfirm_Btn, LV_ALIGN_BOTTOM_MID);
   lv_obj_add_flag(ui_Screen1_Judge_Comfirm_Btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
@@ -362,11 +456,31 @@ void ui_Screen1_screen_init(void) {
 
   lv_obj_add_event_cb(ui_Screen1_Judge_Comfirm_Btn, ui_Screen1_Judge_Comfirm_Btn_e_handler, LV_EVENT_ALL, NULL);
 
-  lv_obj_t *ui_Screen1_Judge_Comfirm_BtnLabel = lv_label_create(ui_Screen1_Judge_Comfirm_Btn);
-  lv_obj_set_width(ui_Screen1_Judge_Comfirm_BtnLabel, LV_SIZE_CONTENT);   /// 1
-  lv_obj_set_height(ui_Screen1_Judge_Comfirm_BtnLabel, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_Screen1_Judge_Comfirm_BtnLabel, -5);
-  lv_obj_set_y(ui_Screen1_Judge_Comfirm_BtnLabel, 5);
-  lv_label_set_text(ui_Screen1_Judge_Comfirm_BtnLabel, "완료");
-  lv_obj_set_style_text_font(ui_Screen1_Judge_Comfirm_BtnLabel, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_t *ui_Screen1_Judge_Comfirm_Btn_Label = lv_label_create(ui_Screen1_Judge_Comfirm_Btn);
+  lv_obj_set_width(ui_Screen1_Judge_Comfirm_Btn_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Screen1_Judge_Comfirm_Btn_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Screen1_Judge_Comfirm_Btn_Label, -5);
+  lv_obj_set_y(ui_Screen1_Judge_Comfirm_Btn_Label, 5);
+  lv_label_set_text(ui_Screen1_Judge_Comfirm_Btn_Label, "완료");
+  lv_obj_set_style_text_font(ui_Screen1_Judge_Comfirm_Btn_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_t *ui_Screen1_Judge_Cancel_Btn = lv_btn_create(ui_Screen1);
+  lv_obj_set_width(ui_Screen1_Judge_Cancel_Btn, 50);
+  lv_obj_set_height(ui_Screen1_Judge_Cancel_Btn, 50);
+  lv_obj_set_x(ui_Screen1_Judge_Cancel_Btn, 60);
+  lv_obj_set_y(ui_Screen1_Judge_Cancel_Btn, -10);
+  lv_obj_set_align(ui_Screen1_Judge_Cancel_Btn, LV_ALIGN_BOTTOM_MID);
+  lv_obj_add_flag(ui_Screen1_Judge_Cancel_Btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_Screen1_Judge_Cancel_Btn, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_bg_color(ui_Screen1_Judge_Cancel_Btn, lv_color_hex(0xff0060), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_add_event_cb(ui_Screen1_Judge_Cancel_Btn, uui_Screen1_Judge_Cancel_Btn_e_handler, LV_EVENT_ALL, NULL);
+
+  lv_obj_t *ui_Screen1_Judge_Cancel_Btn_Label = lv_label_create(ui_Screen1_Judge_Cancel_Btn);
+  lv_obj_set_width(ui_Screen1_Judge_Cancel_Btn_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Screen1_Judge_Cancel_Btn_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Screen1_Judge_Cancel_Btn_Label, -5);
+  lv_obj_set_y(ui_Screen1_Judge_Cancel_Btn_Label, 5);
+  lv_label_set_text(ui_Screen1_Judge_Cancel_Btn_Label, "취소");
+  lv_obj_set_style_text_font(ui_Screen1_Judge_Cancel_Btn_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
