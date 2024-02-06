@@ -136,28 +136,28 @@ void set_local_time(uint16_t year, uint8_t month, uint8_t day, uint8_t hour, uin
 
 void tm_set_time(long gmt_offset_sec, int dst_offset_sec, const char* server1, const char* server2,
                  const char* server3) {
-  if (sntp_enabled()) {
-    sntp_stop();
+  if (esp_sntp_enabled()) {
+    esp_sntp_stop();
   }
-  sntp_setoperatingmode(SNTP_OPMODE_POLL);
-  sntp_setservername(0, (char*)server1);
-  sntp_setservername(1, (char*)server2);
-  sntp_setservername(2, (char*)server3);
+  esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+  esp_sntp_setservername(0, (char*)server1);
+  esp_sntp_setservername(1, (char*)server2);
+  esp_sntp_setservername(2, (char*)server3);
   // sntp_set_sync_interval(60 * 60 * 1000);  // Update time every hour
-  sntp_init();
+  esp_sntp_init();
   set_time_zone(-gmt_offset_sec, dst_offset_sec);
 }
 
 void tm_set_tztime(const char* tz, const char* server1, const char* server2, const char* server3) {
-  if (sntp_enabled()) {
-    sntp_stop();
+  if (esp_sntp_enabled()) {
+    esp_sntp_stop();
   }
-  sntp_setoperatingmode(SNTP_OPMODE_POLL);
-  sntp_setservername(0, (char*)server1);
-  sntp_setservername(1, (char*)server2);
-  sntp_setservername(2, (char*)server3);
+  esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
+  esp_sntp_setservername(0, (char*)server1);
+  esp_sntp_setservername(1, (char*)server2);
+  esp_sntp_setservername(2, (char*)server3);
   // sntp_set_sync_interval(60 * 60 * 1000);  // Update time every hour
-  sntp_init();
+  esp_sntp_init();
   setenv("TZ", tz, 1);
   tzset();
 }

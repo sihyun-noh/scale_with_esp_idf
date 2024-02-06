@@ -516,11 +516,11 @@ void check_peer_address(void) {
  * ! Users should not do lengthy operations from this task. Instead, post
  * ! necessary data to a queue and handle it from a lower priority task.
  */
-void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
+void on_data_recv(const esp_now_recv_info_t* recvInfo, const uint8_t* incomingData, int len) {
   LOGI(TAG, "===== recv mac address ========");
-  LOG_BUFFER_HEX(TAG, mac, MAC_ADDR_LEN);
+  LOG_BUFFER_HEX(TAG, recvInfo, sizeof(esp_now_recv_info_t));
 
-  int msgFromId = check_address_matching_current_set(mac);
+  int msgFromId = check_address_matching_current_set(recvInfo->src_addr);
   if (msgFromId == (-1)) {
     LOGI(TAG, "Receive data from other SET");
     return;

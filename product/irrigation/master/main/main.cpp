@@ -1,3 +1,4 @@
+#include "esp_now.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/event_groups.h"
@@ -45,7 +46,7 @@ void create_control_task(void);
 void create_water_flow_task(void);
 void create_led_task(void);
 
-extern void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len);
+extern void on_data_recv(const esp_now_recv_info_t* recvInfo, const uint8_t* incomingData, int len);
 extern void on_data_sent_cb(const uint8_t* macAddr, esp_now_send_status_t status);
 
 #ifdef __cplusplus

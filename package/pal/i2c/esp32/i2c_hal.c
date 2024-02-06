@@ -52,7 +52,7 @@ static i2c_hal_t *get_i2c_interface(int dev) {
   return &i2c_hal_data[dev];
 }
 
-int i2c_hal_init(int dev, int sda, int scl) {
+int i2c_hal_init_mode(int dev, int sda, int scl) {
   esp_err_t rc = ESP_FAIL;
   int bus = dev;
 

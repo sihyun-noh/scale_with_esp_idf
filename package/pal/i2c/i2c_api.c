@@ -19,7 +19,7 @@
 #include "esp32/i2c_hal.h"
 
 int i2c_init(int dev, int sda, int scl) {
-  return i2c_hal_init(dev, sda, scl);
+  return i2c_hal_init_mode(dev, sda, scl);
 }
 
 void i2c_lock(int dev) {

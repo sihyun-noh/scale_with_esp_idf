@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include "esp_now.h"
 #include "nvs_flash.h"
 #include "esp_sleep.h"
 #include "esp_mac.h"
@@ -156,8 +157,8 @@ static void check_model(void) {
   set_battery_model(1);
 }
 
-static void recv_data_cb(const uint8_t *mac_addr, const uint8_t *data, int data_len) {
-  if (memcmp(mac_addr, main_mac_addr, MAC_ADDR_LEN) == 0) {
+static void recv_data_cb(const esp_now_recv_info_t *recvInfo, const uint8_t *data, int data_len) {
+  if (memcmp(recvInfo->src_addr, main_mac_addr, MAC_ADDR_LEN) == 0) {
     LOGI(TAG, "Receive Data from Main device");
     // LOG_BUFFER_HEXDUMP(TAG, data, data_len, LOG_INFO);
     send_msg_to_ctrl_task((void *)data, data_len);

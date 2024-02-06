@@ -364,7 +364,7 @@ static char *gen_devinfo_resp(void) {
   esp_netif_get_ip_info(esp_netif_get_handle_from_ifkey("WIFI_STA_DEF"), &ip_info);
   esp_ip4addr_ntoa(&ip_info.ip, ip_addr, sizeof(ip_addr));
 
-  snprintf(free_mem, sizeof(free_mem), "%ld", xPortGetFreeHeapSize());
+  snprintf(free_mem, sizeof(free_mem), "%d", (int)xPortGetFreeHeapSize());
   syscfg_get(SYSCFG_I_FWVERSION, SYSCFG_N_FWVERSION, fw_version, sizeof(fw_version));
   syscfg_get(SYSCFG_I_RECONNECT, SYSCFG_N_RECONNECT, reconnect, sizeof(reconnect));
   syscfg_get(SYSCFG_I_SEND_INTERVAL, SYSCFG_N_SEND_INTERVAL, s_send_interval, sizeof(s_send_interval));

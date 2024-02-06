@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include "esp_now.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -75,8 +76,8 @@ bool send_esp_data(message_type_t sender, message_type_t receiver) {
   return espnow_send_data(masterAddress, (uint8_t*)&send_message, sizeof(send_message));
 }
 
-void on_data_recv(const uint8_t* mac, const uint8_t* incomingData, int len) {
-  if (!check_address_matching_master(mac)) {
+void on_data_recv(const esp_now_recv_info_t* recvInfo, const uint8_t* incomingData, int len) {
+  if (!check_address_matching_master(recvInfo->src_addr)) {
     LOGI(TAG, "Receive data from other SET");
     return;
   }
