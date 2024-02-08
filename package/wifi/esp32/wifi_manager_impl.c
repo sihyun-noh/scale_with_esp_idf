@@ -496,8 +496,8 @@ int wifi_connect_ap_impl(wifi_context_t *ctx, const char *ssid, const char *pass
     .sta = { .ssid = "", .password = "", .threshold.authmode = WIFI_AUTH_WPA2_PSK },
   };
 
-  snprintf((char *)wifi_config.sta.ssid, sizeof(wifi_config.sta.ssid), "%s", ssid);
-  snprintf((char *)wifi_config.sta.password, sizeof(wifi_config.sta.password), "%s", password);
+  strncpy((char *)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
+  strncpy((char *)wifi_config.sta.password, password, sizeof(wifi_config.sta.password));
 
   LOGI(TAG, "wifi_connect_ap: ssid:%s password:%s", ssid, password);
 

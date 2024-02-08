@@ -67,7 +67,8 @@ static void handle_usb_events(void *args) {
   const usb_host_config_t host_config = { .intr_flags = ESP_INTR_FLAG_LEVEL1 };
   if ((usb_host_install(&host_config)) != ESP_OK) {
     ESP_ERROR_CHECK(usb_host_install(&host_config));
-    // return -1;
+    printf("usb host install error!\n");
+    //  return -1;
   }
 
   const msc_host_driver_config_t msc_config = {
@@ -131,7 +132,7 @@ int usb_msc_host_init(void) {
   //   ESP_ERROR_CHECK(usb_host_install(&host_config));
   //   return -1;
   // }
-  task_created = xTaskCreate(handle_usb_events, "usb_events", 4096, NULL, 2, NULL);
+  task_created = xTaskCreatePinnedToCore(handle_usb_events, "usb_events", 4096, NULL, 2, NULL, 1);
 
   assert(task_created);
 
