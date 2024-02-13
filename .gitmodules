@@ -7,3 +7,12 @@
 [submodule "opensource/LovyanGFX"]
 	path = opensource/LovyanGFX
 	url = https://github.com/lovyan03/LovyanGFX.git
+[submodule "arduino_platform/arduino-esp32"]
+	path = arduino_platform/arduino-esp32
+	url = https://github.com/espressif/arduino-esp32.git
+[submodule "arduino_platform/lib/RTClib"]
+	path = arduino_platform/lib/RTClib
+	url = https://github.com/adafruit/RTClib.git
+[submodule "arduino_platform/lib/Adafruit_BusIO"]
+	path = arduino_platform/lib/Adafruit_BusIO
+	url = https://github.com/adafruit/Adafruit_BusIO.git
