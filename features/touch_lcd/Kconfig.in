@@ -1,0 +1,7 @@
+config LCD_RGB_16BIT_GT911_FEATURE
+  bool "LCD panel with RGB 16bit and touch GT911 feature"
+  depends on IDF_TARGET_ESP32S3
+  default "n"
+  help
+    This setup is a 4.3-inch LCD using RGB16bit interface and GT911 touch interface.
+    

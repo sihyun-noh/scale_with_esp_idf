@@ -1,0 +1,4 @@
+
+#define EXAMPLE_LCD_H_RES 800
+#define EXAMPLE_LCD_V_RES 480
+
