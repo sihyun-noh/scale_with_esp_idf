@@ -28,6 +28,7 @@ extern int cas_zero_command(void);
 extern int cas_tare_command(char *s_data);
 
 extern int (*weight_zero_command)(void);
+extern char const log_table_index[];
 
 typedef enum {
   NONE_E = 0x00,

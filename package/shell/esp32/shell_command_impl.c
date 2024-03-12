@@ -50,6 +50,7 @@ extern int atlas_ec_probe_cmd(int argc, char **argv);
 #if (CONFIG_FILECOPY_PACKAGE)
 extern int get_file_list_cmd(int argc, char **argv);
 extern int get_file_read_cmd(int argc, char **argv);
+extern int file_delete_cmd(int argc, char **argv);
 #endif
 
 typedef int (*sc_cmd_func_t)(int argc, char **argv);
@@ -327,6 +328,12 @@ static sc_cmd_t commands[] = {
       .help = "Get file read",
       .func = get_file_read_cmd,
   },
+  {
+      .name = "file_delete",
+      .help = "file delete",
+      .func = file_delete_cmd,
+  },
+
 #endif
 };
 

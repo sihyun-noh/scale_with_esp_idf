@@ -78,8 +78,8 @@ static void Judge_Comfirm_Btn_mbox_event_cb(lv_event_t *e) {
   lv_obj_t *obj = lv_event_get_current_target(e);
   LOGI(TAG, "Button %s clicked", lv_msgbox_get_active_btn_text(obj));
   if (strcmp(lv_msgbox_get_active_btn_text(obj), "Yes") == 0) {
-    FDATA(BASE_PATH, "품번:%d,총수량:%d,초과:%d,정상:%d,부족:%d", *ui_data_ctx.ptr[0], *ui_data_ctx.ptr[1],
-          *ui_data_ctx.ptr[2], *ui_data_ctx.ptr[3], *ui_data_ctx.ptr[3]);
+    FDATA_TABLE_INDEX(log_table_index, BASE_PATH, "%d,%d,%d,%d,%d", *ui_data_ctx.ptr[0], *ui_data_ctx.ptr[1],
+                      *ui_data_ctx.ptr[2], *ui_data_ctx.ptr[3], *ui_data_ctx.ptr[4]);
     *ui_data_ctx.ptr[1] = 0;  // judge_total_count initialize.
     *ui_data_ctx.ptr[2] = 0;  // judge_over_count initialize.
     *ui_data_ctx.ptr[3] = 0;  // judge_normal_countinitialize.

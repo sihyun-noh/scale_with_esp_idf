@@ -135,10 +135,13 @@ static char saved_data[PROD_NUM][MAX_DATA_LEN] = {
 static int btn_num = PROD_NUM;
 static char string_empty[100];
 
-char indicator_model_buf[20] = { 0 };
+static char indicator_model_buf[20] = { 0 };
 indicator_model_t indicator_model;
 
-int (*weight_zero_command)() = NULL;
+int (*weight_zero_command)();
+
+const char log_table_index[] = { "TIME,PID,TOTAL,OVER,NORMAL,UNDER\n" };
+
 ///////////////////// ANIMATIONS ////////////////////
 
 ///////////////////// FUNCTIONS ////////////////////

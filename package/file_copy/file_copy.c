@@ -2,6 +2,7 @@
 #include <sys/time.h>
 #include <errno.h>
 #include <ctype.h>
+#include <unistd.h>
 
 #include "esp_vfs.h"
 #include "file_copy.h"
@@ -333,4 +334,13 @@ int make_dir(const char *path) {
     return -1;
   }
   return 0;
+}
+
+int file_delete_cmd(int argc, char **argv){
+    printf("input data :%s\n", argv[1]);
+if (argc != 2) {
+    printf("Usage: file absolute path <ex:/storage/test.txt>\n");
+    return -1;
+  }
+  return unlink(argv[1]);
 }

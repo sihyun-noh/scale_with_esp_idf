@@ -34,6 +34,8 @@ int file_log_write(char *format, ...);
 
 int file_log_write_datalogger(char *path, char *format, ...);
 
+int new_file_log_write_datalogger(const char *table_index, char *path, char *format, ...);
+
 void set_file_log_number(int file_log_num);
 
 #define FILE_LOG_FORMAT(letter, format) #letter " (%s) %s: " format "\r\n"
@@ -73,6 +75,13 @@ void set_file_log_number(int file_log_num);
   do {                                                                                                       \
     file_log_write_datalogger(path, FILE_LOG_FORMAT_FOR_DATALOGGER(format), log_timestamp(), ##__VA_ARGS__); \
   } while (0)
+
+#define FDATA_TABLE_INDEX(table_index, path, format, ...)                                                                             \
+  do {                                                                                                       \
+    new_file_log_write_datalogger(table_index, path, FILE_LOG_FORMAT_FOR_DATALOGGER(format), log_timestamp(), ##__VA_ARGS__); \
+  } while (0)
+
+
 
 #ifdef __cplusplus
 }
