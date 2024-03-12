@@ -16,6 +16,8 @@
 #define LCD_GPIO_2 GPIO_NUM_11
 #define LCD_GPIO_3 GPIO_NUM_12
 #define LCD_GPIO_4 GPIO_NUM_13
+#define LCD_GPIO_5 GPIO_NUM_14
+#define LCD_GPIO_6 GPIO_NUM_21
 
 #define SDCARD_SPI_DMA_CHAN SPI_DMA_CH_AUTO
 
@@ -28,20 +30,14 @@
 #define RTS_UNCHANGED 2
 #define CTS_UNCHANGED (-1)
 #define UART_PORT_NUM 2
-#define BAUD_RATE 115200
+#define BAUD_RATE 9600
 #define UART_RXBUF_SIZE 2048
 #define UART_TXBUF_SIZE 0
 
-typedef struct cas_22byte_format {
-  char states[2];
-  char measurement_states[2];
-  char lamp_states[1];
-  char data[8];
-  char relay[1];
-  char unit[2];
-} cas_22byte_format_t;
-
+#define CAS_INDICATOR_MODEL 1
+#define BAYKON_INDICATOR_BX11 0
 #endif
+
 #if (CONFIG_LITTLEFS_PACKAGE)
 #define SEN_DATA_PATH_1 "/storage"
 #define SEN_DATA_PATH_2 "/storage/Sen2"

@@ -6,7 +6,7 @@
 #include "../ui.h"
 #include "log.h"
 
-static const char *TAG = "  ui_Screen1";
+static const char *TAG = "  ui_mode_1_main_Screen";
 
 static lv_anim_t animation_template;
 static lv_style_t label_style;
@@ -98,7 +98,7 @@ void ui_Screen1_Judge_Comfirm_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_CLICKED) {
     static const char *btns[] = { "Yes", "No", "" };
-    lv_obj_t *mbox = lv_msgbox_create(NULL, "wait!", "Complete it?", btns, true);
+    lv_obj_t *mbox = lv_msgbox_create(NULL, "Wait!", "Do you complete it?", btns, true);
     lv_obj_add_event_cb(mbox, Judge_Comfirm_Btn_mbox_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_center(mbox);
   }
@@ -125,7 +125,7 @@ void uui_Screen1_Judge_Cancel_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_CLICKED) {
     static const char *btns[] = { "Yes", "No", "" };
-    lv_obj_t *mbox = lv_msgbox_create(NULL, "wait!", "Are you sure you want to cancel?\n It is not saved.", btns, true);
+    lv_obj_t *mbox = lv_msgbox_create(NULL, "Wait!", "Are you sure you want to cancel?\n It's not saved.", btns, true);
     lv_obj_add_event_cb(mbox, Judge_Cancel_Btn_mbox_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_center(mbox);
   }
@@ -135,7 +135,7 @@ void ui_Screen1_Zero_Point_Set_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   int ret = 0;
   if (event_code == LV_EVENT_CLICKED) {
-    ret = cas_zero_command();
+    ret = weight_zero_command();
   }
 }
 
@@ -444,7 +444,7 @@ void ui_Screen1_screen_init(void) {
   // lv_label_set_text(ui_Screen1_Amount_Set_Btn_Label, "단위");
   // lv_obj_set_style_text_font(ui_Screen1_Amount_Set_Btn_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_t *ui_Screen1_Judge_Comfirm_Btn = lv_btn_create(ui_Screen1);
+  ui_Screen1_Judge_Comfirm_Btn = lv_btn_create(ui_Screen1);
   lv_obj_set_width(ui_Screen1_Judge_Comfirm_Btn, 50);
   lv_obj_set_height(ui_Screen1_Judge_Comfirm_Btn, 50);
   lv_obj_set_x(ui_Screen1_Judge_Comfirm_Btn, 120);

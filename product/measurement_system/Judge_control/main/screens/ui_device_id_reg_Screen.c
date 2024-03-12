@@ -9,12 +9,14 @@
 static const char *TAG = "ui_device_id_reg_Screen";
 static int device_id = 0;
 extern bool device_id_check_flag;
-void ui_device_id_Delete_Btn_e_handler(lv_event_t *e);
-void ui_device_id_Comfirm_Btn_e_hendler(lv_event_t *e);
-void ui_device_id_Register_Btn_e_hendler(lv_event_t *e);
-void ui_device_id_Taxtarea_e_handler(lv_event_t *e);
-void ui_device_id_btnm_event_handler(lv_event_t *e);
-static void mbox_device_id_err_event_cb(lv_event_t *e);
+
+static void mbox_device_id_err_event_cb(lv_event_t *e) {
+  lv_obj_t *obj = lv_event_get_current_target(e);
+  LOGI(TAG, "Button %s clicked", lv_msgbox_get_active_btn_text(obj));
+  if (strcmp(lv_msgbox_get_active_btn_text(obj), "Close") == 0) {
+    lv_msgbox_close(obj);
+  }
+}
 
 void ui_device_id_Delete_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
@@ -92,14 +94,6 @@ void ui_device_id_btnm_event_handler(lv_event_t *e) {
     lv_event_send(ta, LV_EVENT_READY, NULL);
   else
     lv_textarea_add_text(ta, txt);
-}
-
-static void mbox_device_id_err_event_cb(lv_event_t *e) {
-  lv_obj_t *obj = lv_event_get_current_target(e);
-  LOGI(TAG, "Button %s clicked", lv_msgbox_get_active_btn_text(obj));
-  if (strcmp(lv_msgbox_get_active_btn_text(obj), "Close") == 0) {
-    lv_msgbox_close(obj);
-  }
 }
 
 void ui_device_id_reg_screen_init(void) {

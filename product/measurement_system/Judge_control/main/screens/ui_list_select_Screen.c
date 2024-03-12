@@ -37,21 +37,6 @@ void ui_list_select_screen_init(void) {
   lv_label_set_long_mode(ui_ListSelectScreen_Comfirm_Label, LV_LABEL_LONG_SCROLL);
   lv_label_set_text(ui_ListSelectScreen_Comfirm_Label, " ");
 
-  // ui_LisPordNumPanel = lv_obj_create(ui_list_select);
-  // lv_obj_set_width(ui_LisPordNumPanel, 90);
-  // lv_obj_set_height(ui_LisPordNumPanel, 40);
-  // lv_obj_set_x(ui_LisPordNumPanel, -179);
-  // lv_obj_set_y(ui_LisPordNumPanel, -122);
-  // lv_obj_set_align(ui_LisPordNumPanel, LV_ALIGN_CENTER);
-  // lv_obj_clear_flag(ui_LisPordNumPanel, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
-
-  // ui_LisPordNumPanelLabel = lv_label_create(ui_LisPordNumPanel);
-  // lv_obj_set_width(ui_LisPordNumPanelLabel, LV_SIZE_CONTENT);   /// 1
-  // lv_obj_set_height(ui_LisPordNumPanelLabel, LV_SIZE_CONTENT);  /// 1
-  // lv_obj_set_align(ui_LisPordNumPanelLabel, LV_ALIGN_LEFT_MID);
-  // lv_label_set_long_mode(ui_LisPordNumPanelLabel, LV_LABEL_LONG_SCROLL);
-  // lv_label_set_text(ui_LisPordNumPanelLabel, "12");
-
   ui_ListSelectScreen_Comfirm_Btn = lv_btn_create(ui_list_select);
   lv_obj_set_width(ui_ListSelectScreen_Comfirm_Btn, 80);
   lv_obj_set_height(ui_ListSelectScreen_Comfirm_Btn, 40);

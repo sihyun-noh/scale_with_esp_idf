@@ -2196,12 +2196,6 @@ CONFIG_LV_USE_MSG=y
 # end of LVGL configuration
 
 #
-# ESP-ASIO
-#
-# CONFIG_ASIO_SSL_SUPPORT is not set
-# end of ESP-ASIO
-
-#
 # Modbus configuration
 #
 CONFIG_FMB_COMM_MODE_TCP_EN=y
@@ -2235,13 +2229,6 @@ CONFIG_FMB_EVENT_QUEUE_TIMEOUT=20
 # end of Modbus configuration
 
 #
-# ESP LCD TOUCH
-#
-CONFIG_ESP_LCD_TOUCH_MAX_POINTS=5
-CONFIG_ESP_LCD_TOUCH_MAX_BUTTONS=1
-# end of ESP LCD TOUCH
-
-#
 # mDNS
 #
 CONFIG_MDNS_MAX_INTERFACES=3
@@ -2269,6 +2256,19 @@ CONFIG_MDNS_PREDEF_NETIF_AP=y
 CONFIG_MDNS_PREDEF_NETIF_ETH=y
 # end of MDNS Predefined interfaces
 # end of mDNS
+
+#
+# ESP LCD TOUCH
+#
+CONFIG_ESP_LCD_TOUCH_MAX_POINTS=5
+CONFIG_ESP_LCD_TOUCH_MAX_BUTTONS=1
+# end of ESP LCD TOUCH
+
+#
+# ESP-ASIO
+#
+# CONFIG_ASIO_SSL_SUPPORT is not set
+# end of ESP-ASIO
 # end of Component config
 
 # CONFIG_IDF_EXPERIMENTAL_FEATURES is not set

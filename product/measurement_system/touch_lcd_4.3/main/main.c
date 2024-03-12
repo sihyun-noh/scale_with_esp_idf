@@ -18,6 +18,7 @@
 static const char *TAG = "main_app";
 
 extern void example_lvgl_demo_ui(lv_disp_t *disp);
+void lv_example_anim_2(lv_disp_t *disp);
 
 const TickType_t xDelay = 500 / portTICK_PERIOD_MS;
 static SemaphoreHandle_t xGuiSemaphore = NULL;
@@ -64,7 +65,8 @@ void app_main(void) {
 
   xTaskCreatePinnedToCore(lv_tick_task, "lv_tick_task", 4096, NULL, 1, &g_lvgl_task_handle, 0);
 
-  example_lvgl_demo_ui(disp);
+  // example_lvgl_demo_ui(disp);
+  lv_example_anim_2(disp);
 
   while (1) {
     vTaskDelay(xDelay);

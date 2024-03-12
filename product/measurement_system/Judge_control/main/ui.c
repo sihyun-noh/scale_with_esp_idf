@@ -7,21 +7,32 @@
 #include "ui.h"
 #include <stdio.h>
 #include "ui_helpers.h"
-#include "config.h"
+#include "scale_read_485.h"
 #include "log.h"
 #include "i2s_speaker.h"
 #include "syscfg.h"
 #include "sys_config.h"
+#include "config.h"
+#include "time.h"
 
 static const char *TAG = "UI_LVGL";
 
-extern float *read_weight(void);
-extern cas_22byte_format_t *read_weight_value(void);
 static void ui_ListSelectScreen_List_Panel_PageBuilder();
 ///////////////////// VARIABLES ////////////////////
+// SCREEN: ui_indicator_model_select_screen
+lv_obj_t *ui_Indicator_Model_Select_Screen;
+lv_obj_t *indicator_list;
+
+// SCREEN: ui_time_set_screen
+lv_obj_t *ui_Time_Date_Set_Screen;
+lv_obj_t *ui_Time_Date_Set_Screen_Time_Label;
+lv_obj_t *ui_Time_Date_Set_Screen_Date_Label;
 
 // SCREEN: ui_main_Screen
+lv_obj_t *ui_judge_color_Screen;
+lv_obj_t *ui_judge_color_ScreenPanel;
 
+// SCREEN: ui_main_Screen
 lv_obj_t *ui_Main_Screen;
 lv_obj_t *ui_MainScreenPanel;
 lv_obj_t *ui_MainScreenBtn1;
@@ -29,6 +40,8 @@ lv_obj_t *ui_MainScreenBtn1Label;
 lv_obj_t *ui_MainScreenBtn2;
 lv_obj_t *ui_MainScreenBtn1Label2;
 lv_obj_t *ui_main_scr_Device_Id_Area_Label;
+lv_obj_t *ui_main_scr_Indicator_Model_Label;
+lv_obj_t *ui_main_scr_Time_Date_Label;
 
 // SCREEN : ui_device_id_reg_screen
 lv_obj_t *ui_device_id_reg_screen;
@@ -64,6 +77,7 @@ lv_obj_t *ui_Screen1_Amount_Value_Label;
 lv_obj_t *ui_Screen1_Prod_Num_Label;
 lv_obj_t *ui_Screen1_Upper_Value_Label;
 lv_obj_t *ui_Screen1_Lower_Value_Label;
+lv_obj_t *ui_Screen1_Judge_Comfirm_Btn;
 
 // SCREEN: ui_Screen2
 lv_obj_t *ui_Screen2;
@@ -101,14 +115,15 @@ ui_internal_data_ctx_t ui_data_ctx;
 #endif
 
 static lv_style_t style_clock;
-char timeString[9];
-char dateString[30];
+char timeString[9] = { 0 };
+char dateString[30] = { 0 };
+static char time_date_string[50] = { 0 };
 
 char s_tare_set_value[10] = { 0 };
 
 bool normal_event_flag = false;
 bool over_event_flag = false;
-bool lack_event_flag = false;
+bool nuder_event_flag = false;
 bool copying_flag = true;
 bool usb_copy_success_flag = true;
 bool weight_tare_flag = false;
@@ -120,11 +135,20 @@ static char saved_data[PROD_NUM][MAX_DATA_LEN] = {
 static int btn_num = PROD_NUM;
 static char string_empty[100];
 
+char indicator_model_buf[20] = { 0 };
+indicator_model_t indicator_model;
+
+int (*weight_zero_command)() = NULL;
 ///////////////////// ANIMATIONS ////////////////////
 
 ///////////////////// FUNCTIONS ////////////////////
 
 ///////////////////// FUNCTIONS ////////////////////
+
+inline void OBJ_TEXT_SET_LABEL(lv_obj_t *e, const char *txt) {
+  lv_label_set_text(e, txt);
+}
+
 void ui_event_Screen1_List_Select_Button(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
@@ -278,30 +302,92 @@ static void usb_event_cb(lv_event_t *e) {
   }
 }
 
-void time_timer_cb(lv_timer_t *timer) {
+void logic_timer_cb(lv_timer_t *timer) {
   char s_weight[20] = { 0 };
   char s_amount_count[20] = { 0 };
   char s_judge_total_count[20] = { 0 };
-  cas_22byte_format_t *weight_raw = read_weight_value();
 
-  float weight = 0.0;
+  float weight = 0;
+  int weight_float = 0;
   float tare_weight = 0.0;
   bool trash_fileter_flag = false;
-  // taking float value using %f format specifier for
-  sscanf(weight_raw->data, "%f", &weight);
-  // LOGI(TAG, "aaaweight float value : %f", weight);
-  snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
-  snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+  Common_data_t indicator_data = { 0 };
+
+  switch (indicator_model) {
+    case MODEL_NONE: LOGE(TAG, "No target indicator model!"); break;
+
+    case MODEL_CAD_WTM500:
+      memset(&indicator_data, 0x00, sizeof(indicator_data));
+      indicator_WTM_500_data(&indicator_data);
+      // LOGE(TAG, "indicator data : %d", atoi(indicator_data.weight_data));
+      //  taking float value using %f format specifier for
+      sscanf(indicator_data.weight_data, "%f", &weight);
+      snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
+      break;
+    case MODEL_BAYKON_BX11:
+      memset(&indicator_data, 0x00, sizeof(indicator_data));
+      indicator_BX11_data(&indicator_data);
+      // LOGE(TAG, "indicator data : %d", atoi(indicator_data.weight_data));
+      // LOGI(TAG, "heap size : %d", esp_get_free_heap_size());
+      // LOGI(TAG, "heap size of internal %d", esp_get_free_internal_heap_size());
+
+      switch (indicator_data.DP) {
+        case DP_100:
+          weight = (float)(atoi(indicator_data.weight_data) * 100);
+          snprintf(s_weight, sizeof(s_weight), "%d", (int)weight);
+          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+          break;
+        case DP_10:
+          weight = (float)(atoi(indicator_data.weight_data) * 10);
+          snprintf(s_weight, sizeof(s_weight), "%d", (int)weight);
+          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+          break;
+        case DP_1:
+          weight = (float)(atoi(indicator_data.weight_data) * 1);
+          snprintf(s_weight, sizeof(s_weight), "%d", (int)weight);
+          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+          break;
+        case DP_0_1:
+          weight = (float)(atoi(indicator_data.weight_data) * 0.1);
+          snprintf(s_weight, sizeof(s_weight), "%.1f", weight);
+          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+          break;
+        case DP_0_01:
+          weight = (float)(atoi(indicator_data.weight_data) * 0.01);
+          snprintf(s_weight, sizeof(s_weight), "%.2f", weight);
+          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+          break;
+        case DP_0_001:
+          weight = (float)(atoi(indicator_data.weight_data) * 0.001);
+          snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
+          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+          break;
+        case DP_0_0001:
+          weight = (float)(atoi(indicator_data.weight_data) * 0.0001);
+          snprintf(s_weight, sizeof(s_weight), "%.4f", weight);
+          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+          break;
+        case DP_0_00001:
+          weight = (float)(atoi(indicator_data.weight_data) * 0.00001);
+          snprintf(s_weight, sizeof(s_weight), "%.5f", weight);
+          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+          break;
+        default: break;
+      }
+    default: break;
+  }
+
   snprintf(s_judge_total_count, sizeof(s_judge_total_count), "%03d", judge_total_count);
 
-  // USB connecting..
-  // if (is_usb_copying(USB_COPYING) && copying_flag) {
-  //   copying_flag = false;
-  //   static const char *btns[] = { "Close", "" };
-  //   lv_obj_t *mbox5 = lv_msgbox_create(NULL, "USB_COPY!", "Wait...", btns, true);
-  //   lv_obj_add_event_cb(mbox5, usb_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-  //   lv_obj_center(mbox5);
-  // }
+  /* This is a function that changes the color of the notification button to green
+     so that you can save the data completed so far by pressing the green “Complete” button.
+  */
+  if (judge_total_count > 0) {
+    lv_obj_set_style_bg_color(ui_Screen1_Judge_Comfirm_Btn, lv_palette_main(LV_PALETTE_LIGHT_GREEN), LV_PART_MAIN);
+  } else {
+    lv_obj_set_style_bg_color(ui_Screen1_Judge_Comfirm_Btn, lv_color_hex(0xff0060), LV_PART_MAIN | LV_STATE_DEFAULT);
+  }
+
   if (is_usb_copying(USB_COPY_SUCCESS) && usb_copy_success_flag) {
     usb_copy_success_flag = false;
     static const char *btns[] = { "Close", "" };
@@ -315,20 +401,17 @@ void time_timer_cb(lv_timer_t *timer) {
   }
 
   // checking the trash data from 485 receive data format
-  if (strncmp(weight_raw->states, "ST", 2) == 0 || strncmp(weight_raw->states, "US", 2) == 0 ||
-      strncmp(weight_raw->states, "OL", 2) == 0) {
+  if (indicator_data.event[STATE_TRASH_CHECK_EVENT] == STATE_TRASH_CHECK_EVENT) {
     trash_fileter_flag = true;
   } else {
-    trash_fileter_flag = false;
+    trash_fileter_flag = true;
   }
 
-  // Lamp status in CAS data format
-  // | bit7 | bit6 | bit5 | bit4 | bit3 | bit2 | bit1 | bit0 |
-  //    1    stabel    1    hold  print    NET   tare   zero
-
   // display to weight status
+
+  /*stable state set display */
   if (trash_fileter_flag) {
-    if (strncmp(weight_raw->states, "ST", 2) == 0) {
+    if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
       lv_obj_set_style_text_color(ui_Screen1_Panel1_Stable_Point_Label, lv_color_hex(0x0d00ff),
                                   LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_text_color(ui_mode_2_scr_Panel1_Stable_Point_Label, lv_color_hex(0x0d00ff),
@@ -340,8 +423,7 @@ void time_timer_cb(lv_timer_t *timer) {
                                   LV_PART_MAIN | LV_STATE_DEFAULT);
     }
 
-    /*zero state set display */
-    if (*weight_raw->lamp_states & 0x01) {
+    if (indicator_data.event[STATE_ZERO_EVENT] == STATE_ZERO_EVENT) {
       lv_obj_set_style_text_color(ui_Screen1_Panel1_Zero_Point_Label, lv_color_hex(0xc70039),
                                   LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_text_color(ui_mode_2_scr_Panel1_Zero_Point_Label, lv_color_hex(0xc70039),
@@ -352,8 +434,8 @@ void time_timer_cb(lv_timer_t *timer) {
       lv_obj_set_style_text_color(ui_mode_2_scr_Panel1_Zero_Point_Label, lv_color_hex(0xe9e9e9),
                                   LV_PART_MAIN | LV_STATE_DEFAULT);
     }
-    /*tare state set display */
-    if (*weight_raw->lamp_states & 0x02) {
+
+    if (indicator_data.event[STATE_TARE_EVENT] == STATE_TARE_EVENT) {
       weight_tare_flag = true;
       sscanf(s_tare_set_value, "%f", &tare_weight);
       tare_weight *= -1;
@@ -372,17 +454,18 @@ void time_timer_cb(lv_timer_t *timer) {
                                   LV_PART_MAIN | LV_STATE_DEFAULT);
     }
   }
+
   switch (ui_data_ctx.curr_mode) {
     case MODE_1:
       // no show to under zero and over 100kg
       if (trash_fileter_flag) {
-        if (weight_raw->data[0] == '-') {  // ascii '-', hex 0x2d
+        if (indicator_data.event[STATE_SIGN_EVENT] == STATE_SIGN_EVENT) {
           lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, "UNKNOWN");
           lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, "\0");
           // processed when in state tare
           if (weight_tare_flag && tare_weight == weight) {
             over_event_flag = false;
-            lack_event_flag = false;
+            nuder_event_flag = false;
             normal_event_flag = false;
             lv_led_off(ui_led1);
             lv_led_off(ui_led2);
@@ -401,34 +484,40 @@ void time_timer_cb(lv_timer_t *timer) {
         if ((float)0.0 == upper_weight_value || (float)0.0 == lower_weight_value || 0 == prod_num_value) {
         } else {
           if (upper_weight_value < weight && !over_event_flag) {
-            if (strncmp(weight_raw->states, "ST", 2) == 0) {
+            if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
               judge_total_count++;
               judge_over_count++;
               lv_label_set_text_fmt(ui_Screen1_over_Label, "초과 %d", judge_over_count);
               lv_led_on(ui_led1);
+              lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_YELLOW), LV_PART_MAIN);
+              _ui_screen_change(&ui_judge_color_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0,
+                                &ui_judge_color_screen_init);  //
               over_volume();
               // Clear all judgments
               over_event_flag = true;
-              lack_event_flag = true;
+              nuder_event_flag = true;
               normal_event_flag = true;
-              LOGI(TAG, "led1 on");
+              // LOGI(TAG, "led1 on");
               lv_led_off(ui_led2);
               lv_led_off(ui_led3);
             }
           }
 
-          // lower weight check
-          // minmum 100g
-          if ((float)0.1 < weight && lower_weight_value > weight && !lack_event_flag && weight > 0) {
-            if (strncmp(weight_raw->states, "ST", 2) == 0) {
+          // nuder weight check
+          // Judgment minimum weight 100g
+          if ((float)0.1 < weight && lower_weight_value > weight && !nuder_event_flag && weight > 0) {
+            if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
               judge_total_count++;
               judge_lack_count++;
               lv_label_set_text_fmt(ui_Screen1_lack_Label, "부족 %d", judge_lack_count);
               lv_led_on(ui_led3);
+              lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_RED), LV_PART_MAIN);
+              _ui_screen_change(&ui_judge_color_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0,
+                                &ui_judge_color_screen_init);  //
               lack_volume();
               // Clear all judgments
               over_event_flag = true;
-              lack_event_flag = true;
+              nuder_event_flag = true;
               normal_event_flag = true;
               lv_led_off(ui_led1);
               lv_led_off(ui_led2);
@@ -437,29 +526,36 @@ void time_timer_cb(lv_timer_t *timer) {
 
           // // success weight check
           if (lower_weight_value <= weight && upper_weight_value > weight && !normal_event_flag) {
-            if (strncmp(weight_raw->states, "ST", 2) == 0) {
+            if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
               judge_total_count++;
               judge_normal_count++;
               lv_label_set_text_fmt(ui_Screen1_normal_Label, "정상 %d", judge_normal_count);
               lv_led_on(ui_led2);
+              lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_LIGHT_GREEN),
+                                        LV_PART_MAIN);
+              _ui_screen_change(&ui_judge_color_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0,
+                                &ui_judge_color_screen_init);  //
               normal_volume();
               // Clear all judgments
               over_event_flag = true;
-              lack_event_flag = true;
+              nuder_event_flag = true;
               normal_event_flag = true;
               lv_led_off(ui_led1);
               lv_led_off(ui_led3);
             }
           }
           /*zero state set display */
-          if (*weight_raw->lamp_states & 0x01) {
-            // reset all flags and leds
-            over_event_flag = false;
-            lack_event_flag = false;
-            normal_event_flag = false;
-            lv_led_off(ui_led1);
-            lv_led_off(ui_led2);
-            lv_led_off(ui_led3);
+
+          if (indicator_data.event[STATE_ZERO_EVENT] == STATE_ZERO_EVENT) {
+            if (over_event_flag && nuder_event_flag && normal_event_flag) {
+              over_event_flag = false;
+              nuder_event_flag = false;
+              normal_event_flag = false;
+              lv_led_off(ui_led1);
+              lv_led_off(ui_led2);
+              lv_led_off(ui_led3);
+              lv_event_send(ui_judge_color_ScreenPanel, LV_EVENT_CANCEL, NULL);
+            }
           }
 
         }  // if the set value is 0, it is not counted.
@@ -473,8 +569,7 @@ void time_timer_cb(lv_timer_t *timer) {
           amount_weight_value = weight;
           lv_event_send(ui_data_ctx.obj, LV_EVENT_READY, NULL);
         }
-
-        if (weight_raw->data[0] == '-') {
+        if (indicator_data.event[STATE_SIGN_EVENT] == STATE_SIGN_EVENT) {
           lv_label_set_text(ui_mode_2_scr_Panel1_Current_Weight_Label, "UNKNOWN");
           lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "\0");
         } else if (weight >= (float)100.0) {
@@ -495,6 +590,21 @@ void time_timer_cb(lv_timer_t *timer) {
 }
 ///////////////////// SCREENS ////////////////////
 
+void time_timer_cb(lv_timer_t *timer) {
+  time_t t = time(NULL);
+  struct tm *local = localtime(&t);
+
+  sprintf(timeString, "%02d:%02d:%02d", local->tm_hour, local->tm_min, local->tm_sec);
+  sprintf(dateString, "%04d-%02d-%02d", local->tm_year + 1900, local->tm_mon + 1, local->tm_mday);
+
+  sprintf(time_date_string, "날짜 : %04d-%02d-%02d %02d:%02d:%02d", local->tm_year + 1900, local->tm_mon + 1,
+          local->tm_mday, local->tm_hour, local->tm_min, local->tm_sec);
+
+  OBJ_TEXT_SET_LABEL(ui_Time_Date_Set_Screen_Time_Label, timeString);
+  OBJ_TEXT_SET_LABEL(ui_Time_Date_Set_Screen_Date_Label, dateString);
+  OBJ_TEXT_SET_LABEL(ui_main_scr_Time_Date_Label, time_date_string);
+}
+
 void ui_init(void) {
   LV_EVENT_GET_COMP_CHILD = lv_event_register_id();
 
@@ -508,16 +618,36 @@ void ui_init(void) {
   ui_Screen1_screen_init();
   ui_Screen2_screen_init();
   ui_list_select_screen_init();
+  ui_judge_color_screen_init();
+  ui_time_set_screen_init();
+  ui_indicator_model_select_screen_init();
 
-  lv_style_init(&style_clock);
-  static uint32_t user_data = 10;
+  syscfg_get(CFG_DATA, "INDICATOR_MODEL", indicator_model_buf, sizeof(indicator_model_buf));
+  if (strncmp(indicator_model_buf, "BX11", 4) == 0) {
+    // zero command set
+    weight_zero_command = baykon_bx11_zero_command;
+    indicator_model = MODEL_BAYKON_BX11;
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : BX11");
+  } else if (strncmp(indicator_model_buf, "WTM-500", 7) == 0) {
+    weight_zero_command = cas_zero_command;
+    indicator_model = MODEL_CAD_WTM500;
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : WTM-500");
+  } else if (strncmp(indicator_model_buf, "none", 4) == 0) {
+    indicator_model = MODEL_NONE;
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : NONE");
+  } else {
+  }
+
   ui_data_ctx.ptr[0] = &prod_num_value;
   ui_data_ctx.ptr[1] = &judge_total_count;
   ui_data_ctx.ptr[2] = &judge_over_count;
   ui_data_ctx.ptr[3] = &judge_normal_count;
   ui_data_ctx.ptr[4] = &judge_lack_count;
 
-  lv_timer_t *time_timer = lv_timer_create(time_timer_cb, 1, &user_data);
+  lv_style_init(&style_clock);
+  static uint32_t user_data = 10;
+  lv_timer_t *logic_timer = lv_timer_create(logic_timer_cb, 10, &user_data);
+  lv_timer_t *time_timer = lv_timer_create(time_timer_cb, 1, user_data);
 
   // lv_disp_load_scr(ui_Screen1);
   lv_disp_load_scr(ui_Main_Screen);

@@ -6,7 +6,7 @@
 #include "../ui.h"
 #include "log.h"
 
-static const char *TAG = "ui_Screen2";
+static const char *TAG = "ui_mode_1_main_set_reg_Screen";
 
 static bool ta1_selected;
 static bool ta2_selected;
@@ -36,6 +36,7 @@ void ui_comfirm_btn_e_hendler(lv_event_t *e) {
     lv_event_send(ta->ta1, LV_EVENT_READY, NULL);
     lv_event_send(ta->ta2, LV_EVENT_READY, NULL);
     lv_event_send(ta->ta3, LV_EVENT_READY, NULL);
+    // lv_obj_clean(ui_Screen2);
   }
 }
 
@@ -285,28 +286,6 @@ void ui_Screen2_screen_init(void) {
   lv_obj_add_event_cb(use_text_area.ta3, textarea_event_handler2, LV_EVENT_FOCUSED, NULL);
   lv_obj_add_state(use_text_area.ta3, LV_STATE_DEFAULT); /*To be sure the cursor is visible*/
 
-  // use_text_area.ta4 = lv_textarea_create(ui_Screen2);  // 범위 text
-  // lv_textarea_set_one_line(use_text_area.ta4, true);
-  // lv_obj_set_width(use_text_area.ta4, 125);  /// 1
-  // lv_obj_set_height(use_text_area.ta4, 40);  /// 1
-  // lv_obj_align(use_text_area.ta4, LV_ALIGN_TOP_MID, -130, 110);
-  // lv_obj_add_event_cb(use_text_area.ta4, textarea_event_handler3, LV_EVENT_READY, NULL);
-  // lv_obj_add_event_cb(use_text_area.ta4, textarea_event_handler3, LV_EVENT_FOCUSED, NULL);
-  // lv_obj_add_state(use_text_area.ta4, LV_STATE_DEFAULT); /*To be sure the cursor is visible*/
-
-  // use_text_area.ta5 = lv_textarea_create(ui_Screen2);
-  // lv_textarea_set_one_line(use_text_area.ta5, true);
-  // lv_obj_set_width(use_text_area.ta5, 125);  /// 1
-  // lv_obj_set_height(use_text_area.ta5, 40);  /// 1
-  // lv_obj_align(use_text_area.ta5, LV_ALIGN_TOP_MID, -130, 160);
-  // lv_obj_add_event_cb(use_text_area.ta5, textarea_event_handler4, LV_EVENT_READY, NULL);
-  // lv_obj_add_event_cb(use_text_area.ta5, textarea_event_handler4, LV_EVENT_FOCUSED, NULL);
-  // lv_obj_add_state(use_text_area.ta5, LV_STATE_DEFAULT); /*To be sure the cursor is visible*/
-
-  //   static const char *btnm_map[] = { "1", "2", "3", "\n", "4", "5", "6", "\n", "7", "8", "9", "\n",
-  //   LV_SYMBOL_BACKSPACE,
-  //                                     "0", ".", "" };
-
   static const char *btnm_map[] = { "1", "2", "3", "\n", "4", "5", "6", "\n", "7", "8", "9", "\n", "C", "0", ".", "" };
 
   lv_obj_t *btnm = lv_btnmatrix_create(ui_Screen2);
@@ -343,22 +322,4 @@ void ui_Screen2_screen_init(void) {
   lv_obj_set_align(ui_Label10, LV_ALIGN_TOP_MID);
   lv_label_set_text(ui_Label10, "품 번");
   lv_obj_set_style_text_font(ui_Label10, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-  // lv_obj_t *ui_Label11 = lv_label_create(ui_Screen2);
-  // lv_obj_set_width(ui_Label11, LV_SIZE_CONTENT);   /// 1
-  // lv_obj_set_height(ui_Label11, LV_SIZE_CONTENT);  /// 1
-  // lv_obj_set_x(ui_Label11, -215);
-  // lv_obj_set_y(ui_Label11, 120);
-  // lv_obj_set_align(ui_Label11, LV_ALIGN_TOP_MID);
-  // lv_label_set_text(ui_Label11, "범 위");
-  // lv_obj_set_style_text_font(ui_Label11, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
-
-  // lv_obj_t *ui_Label18 = lv_label_create(ui_Screen2);
-  // lv_obj_set_width(ui_Label18, LV_SIZE_CONTENT);   /// 1
-  // lv_obj_set_height(ui_Label18, LV_SIZE_CONTENT);  /// 1
-  // lv_obj_set_x(ui_Label18, -215);
-  // lv_obj_set_y(ui_Label18, 170);
-  // lv_obj_set_align(ui_Label18, LV_ALIGN_TOP_MID);
-  // lv_label_set_text(ui_Label18, "단 위");
-  // lv_obj_set_style_text_font(ui_Label18, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 }

@@ -27,6 +27,8 @@ extern "C" {
 extern int cas_zero_command(void);
 extern int cas_tare_command(char *s_data);
 
+extern int (*weight_zero_command)(void);
+
 typedef enum {
   NONE_E = 0x00,
   AMOUNT_VAL_E = 0x01,
@@ -58,16 +60,33 @@ typedef struct internal_data_trans {
   lv_obj_t *obj;
 } ui_internal_data_ctx_t;
 
+// SCREEN : ui_indicator_model_select_screen
+void ui_indicator_model_select_screen_init(void);
+extern lv_obj_t *ui_Indicator_Model_Select_Screen;
+extern lv_obj_t *indicator_list;
+
+// SCREEN: ui_time_set_screen
+void ui_time_set_screen_init(void);
+extern lv_obj_t *ui_Time_Date_Set_Screen;
+extern lv_obj_t *ui_Time_Date_Set_Screen_Time_Label;
+extern lv_obj_t *ui_Time_Date_Set_Screen_Date_Label;
+
+// SCREEN: ui_judge_color_Screen
+void ui_judge_color_screen_init(void);
+extern lv_obj_t *ui_judge_color_Screen;
+extern lv_obj_t *ui_judge_color_ScreenPanel;
+
 // SCREEN: ui_main_Srceen
 void ui_main_screen_init(void);
 extern lv_obj_t *ui_Main_Screen;
 extern lv_obj_t *ui_MainScreenPanel;
-// void ui_event_MainScreenBtn1(lv_event_t *e);
 extern lv_obj_t *ui_MainScreenBtn1;
 extern lv_obj_t *ui_MainScreenBtn1Label;
 extern lv_obj_t *ui_MainScreenBtn2;
 extern lv_obj_t *ui_MainScreenBtn1Label2;
 extern lv_obj_t *ui_main_scr_Device_Id_Area_Label;
+extern lv_obj_t *ui_main_scr_Indicator_Model_Label;
+extern lv_obj_t *ui_main_scr_Time_Date_Label;
 
 // SCREEN : ui_device_id_reg_screen
 void ui_device_id_reg_screen_init(void);
@@ -111,6 +130,7 @@ extern lv_obj_t *ui_Screen1_Amount_Value_Label;
 extern lv_obj_t *ui_Screen1_Prod_Num_Label;
 extern lv_obj_t *ui_Screen1_Upper_Value_Label;
 extern lv_obj_t *ui_Screen1_Lower_Value_Label;
+extern lv_obj_t *ui_Screen1_Judge_Comfirm_Btn;
 
 // SCREEN: ui_Screen2
 void ui_Screen2_screen_init(void);

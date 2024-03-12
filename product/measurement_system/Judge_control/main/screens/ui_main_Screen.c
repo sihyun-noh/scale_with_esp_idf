@@ -55,6 +55,23 @@ void ui_main_scr_Device_Id_Register_Btn_e_hendler(lv_event_t *e) {
   }
 }
 
+void ui_main_scr_Time_Date_Set_Btn_e_hendler(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *target = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    _ui_screen_change(&ui_Time_Date_Set_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 500, &ui_time_set_screen_init);
+  }
+}
+void ui_main_scr_Indicate_Vender_Set_Btn_e_hendler(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  lv_obj_t *teaget = lv_event_get_target(e);
+  if (event_code == LV_EVENT_CLICKED) {
+    ui_indicator_model_select_screen_init();  // Draw before calling
+    _ui_screen_change(&ui_Indicator_Model_Select_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 100,
+                      &ui_indicator_model_select_screen_init);
+  }
+}
+
 void ui_main_screen_init(void) {
   char *s_device_id[50] = { 0 };
   int ret;
@@ -69,8 +86,8 @@ void ui_main_screen_init(void) {
   lv_obj_clear_flag(ui_Main_Screen, LV_OBJ_FLAG_SCROLLABLE);  /// Flags
 
   ui_MainScreenPanel = lv_obj_create(ui_Main_Screen);
-  lv_obj_set_width(ui_MainScreenPanel, 350);
-  lv_obj_set_height(ui_MainScreenPanel, 260);
+  lv_obj_set_width(ui_MainScreenPanel, 400);
+  lv_obj_set_height(ui_MainScreenPanel, 300);
   lv_obj_set_x(ui_MainScreenPanel, 0);
   lv_obj_set_y(ui_MainScreenPanel, 1);
   lv_obj_set_align(ui_MainScreenPanel, LV_ALIGN_CENTER);
@@ -79,8 +96,8 @@ void ui_main_screen_init(void) {
   ui_MainScreenBtn1 = lv_btn_create(ui_MainScreenPanel);
   lv_obj_set_width(ui_MainScreenBtn1, 200);
   lv_obj_set_height(ui_MainScreenBtn1, 50);
-  lv_obj_set_x(ui_MainScreenBtn1, 0);
-  lv_obj_set_y(ui_MainScreenBtn1, 0);
+  lv_obj_set_x(ui_MainScreenBtn1, -53);
+  lv_obj_set_y(ui_MainScreenBtn1, 15);
   lv_obj_set_align(ui_MainScreenBtn1, LV_ALIGN_CENTER);
   lv_obj_add_flag(ui_MainScreenBtn1, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
   lv_obj_clear_flag(ui_MainScreenBtn1, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
@@ -97,8 +114,8 @@ void ui_main_screen_init(void) {
   ui_MainScreenBtn2 = lv_btn_create(ui_MainScreenPanel);
   lv_obj_set_width(ui_MainScreenBtn2, 200);
   lv_obj_set_height(ui_MainScreenBtn2, 50);
-  lv_obj_set_x(ui_MainScreenBtn2, 0);
-  lv_obj_set_y(ui_MainScreenBtn2, 70);
+  lv_obj_set_x(ui_MainScreenBtn2, -53);
+  lv_obj_set_y(ui_MainScreenBtn2, 85);
   lv_obj_set_align(ui_MainScreenBtn2, LV_ALIGN_CENTER);
   lv_obj_add_flag(ui_MainScreenBtn2, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
   lv_obj_clear_flag(ui_MainScreenBtn2, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
@@ -115,9 +132,9 @@ void ui_main_screen_init(void) {
   ui_main_scr_Device_Id_Area_Label = lv_label_create(ui_MainScreenPanel);
   lv_obj_set_width(ui_main_scr_Device_Id_Area_Label, 200);  /// 1
   lv_obj_set_height(ui_main_scr_Device_Id_Area_Label, 50);  /// 1
-  lv_obj_set_x(ui_main_scr_Device_Id_Area_Label, 20);
-  lv_obj_set_y(ui_main_scr_Device_Id_Area_Label, -63);
-  lv_obj_set_align(ui_main_scr_Device_Id_Area_Label, LV_ALIGN_CENTER);
+  lv_obj_set_x(ui_main_scr_Device_Id_Area_Label, 0);
+  lv_obj_set_y(ui_main_scr_Device_Id_Area_Label, 5);
+  lv_obj_set_align(ui_main_scr_Device_Id_Area_Label, LV_ALIGN_TOP_MID);
   lv_label_set_text(ui_main_scr_Device_Id_Area_Label, s_device_id);
   lv_obj_set_style_text_font(ui_main_scr_Device_Id_Area_Label, &NanumBar32, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_add_event_cb(ui_main_scr_Device_Id_Area_Label, ui_main_scr_Device_Id_Area_Label_e_handler, LV_EVENT_READY,
@@ -126,17 +143,37 @@ void ui_main_screen_init(void) {
   lv_obj_t *ui_main_scr_Device_Id_Label = lv_label_create(ui_MainScreenPanel);
   lv_obj_set_width(ui_main_scr_Device_Id_Label, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_main_scr_Device_Id_Label, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_main_scr_Device_Id_Label, -130);
-  lv_obj_set_y(ui_main_scr_Device_Id_Label, -70);
-  lv_obj_set_align(ui_main_scr_Device_Id_Label, LV_ALIGN_CENTER);
+  lv_obj_set_x(ui_main_scr_Device_Id_Label, 15);
+  lv_obj_set_y(ui_main_scr_Device_Id_Label, 5);
+  lv_obj_set_align(ui_main_scr_Device_Id_Label, LV_ALIGN_TOP_LEFT);
   lv_label_set_text(ui_main_scr_Device_Id_Label, "ID :");
   lv_obj_set_style_text_font(ui_main_scr_Device_Id_Label, &NanumBar32, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_main_scr_Indicator_Model_Label = lv_label_create(ui_MainScreenPanel);
+  lv_obj_set_width(ui_main_scr_Indicator_Model_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_main_scr_Indicator_Model_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_main_scr_Indicator_Model_Label, 15);
+  lv_obj_set_y(ui_main_scr_Indicator_Model_Label, 40);
+  lv_obj_set_align(ui_main_scr_Indicator_Model_Label, LV_ALIGN_TOP_LEFT);
+  lv_label_set_text(ui_main_scr_Indicator_Model_Label, "모델 : ");
+  lv_obj_set_style_text_color(ui_main_scr_Indicator_Model_Label, lv_color_hex(0xc70039),
+                              LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_font(ui_main_scr_Indicator_Model_Label, &NanumBar32, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_main_scr_Time_Date_Label = lv_label_create(ui_MainScreenPanel);
+  lv_obj_set_width(ui_main_scr_Time_Date_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_main_scr_Time_Date_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_main_scr_Time_Date_Label, 15);
+  lv_obj_set_y(ui_main_scr_Time_Date_Label, 75);
+  lv_obj_set_align(ui_main_scr_Time_Date_Label, LV_ALIGN_TOP_LEFT);
+  lv_label_set_text(ui_main_scr_Time_Date_Label, "날짜 : ");
+  lv_obj_set_style_text_font(ui_main_scr_Time_Date_Label, &NanumBar32, LV_PART_MAIN | LV_STATE_DEFAULT);
 
   lv_obj_t *ui_main_scr_Device_Id_Register_Btn = lv_btn_create(ui_MainScreenPanel);
   lv_obj_set_width(ui_main_scr_Device_Id_Register_Btn, LV_SIZE_CONTENT);
   lv_obj_set_height(ui_main_scr_Device_Id_Register_Btn, LV_SIZE_CONTENT);
   lv_obj_set_x(ui_main_scr_Device_Id_Register_Btn, 120);
-  lv_obj_set_y(ui_main_scr_Device_Id_Register_Btn, -70);
+  lv_obj_set_y(ui_main_scr_Device_Id_Register_Btn, -95);
   lv_obj_set_align(ui_main_scr_Device_Id_Register_Btn, LV_ALIGN_CENTER);
   lv_obj_add_flag(ui_main_scr_Device_Id_Register_Btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
   lv_obj_clear_flag(ui_main_scr_Device_Id_Register_Btn, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
@@ -153,4 +190,44 @@ void ui_main_screen_init(void) {
   lv_obj_set_y(ui_main_scr_Device_Id_Register_Btn_Label, 1);
   lv_label_set_text(ui_main_scr_Device_Id_Register_Btn_Label, "등 록");
   lv_obj_set_style_text_font(ui_main_scr_Device_Id_Register_Btn_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_t *ui_main_scr_Time_Date_Set_Btn = lv_btn_create(ui_MainScreenPanel);
+  lv_obj_set_width(ui_main_scr_Time_Date_Set_Btn, LV_SIZE_CONTENT);
+  lv_obj_set_height(ui_main_scr_Time_Date_Set_Btn, LV_SIZE_CONTENT);
+  lv_obj_set_x(ui_main_scr_Time_Date_Set_Btn, 120);
+  lv_obj_set_y(ui_main_scr_Time_Date_Set_Btn, 15);
+  lv_obj_set_align(ui_main_scr_Time_Date_Set_Btn, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_main_scr_Time_Date_Set_Btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_main_scr_Time_Date_Set_Btn, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_bg_color(ui_main_scr_Time_Date_Set_Btn, lv_color_hex(0x0079ff), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_add_event_cb(ui_main_scr_Time_Date_Set_Btn, ui_main_scr_Time_Date_Set_Btn_e_hendler, LV_EVENT_ALL, NULL);
+
+  lv_obj_t *ui_main_scr_Time_Date_Set_Btn_Label = lv_label_create(ui_main_scr_Time_Date_Set_Btn);
+  lv_obj_set_width(ui_main_scr_Time_Date_Set_Btn_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_main_scr_Time_Date_Set_Btn_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_main_scr_Time_Date_Set_Btn_Label, -3);
+  lv_obj_set_y(ui_main_scr_Time_Date_Set_Btn_Label, 1);
+  lv_label_set_text(ui_main_scr_Time_Date_Set_Btn_Label, "날짜설정");
+  lv_obj_set_style_text_font(ui_main_scr_Time_Date_Set_Btn_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_t *ui_main_scr_Indicate_Vender_Set_Btn = lv_btn_create(ui_MainScreenPanel);
+  lv_obj_set_width(ui_main_scr_Indicate_Vender_Set_Btn, LV_SIZE_CONTENT);
+  lv_obj_set_height(ui_main_scr_Indicate_Vender_Set_Btn, LV_SIZE_CONTENT);
+  lv_obj_set_x(ui_main_scr_Indicate_Vender_Set_Btn, 120);
+  lv_obj_set_y(ui_main_scr_Indicate_Vender_Set_Btn, 85);
+  lv_obj_set_align(ui_main_scr_Indicate_Vender_Set_Btn, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_main_scr_Indicate_Vender_Set_Btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_main_scr_Indicate_Vender_Set_Btn, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_bg_color(ui_main_scr_Indicate_Vender_Set_Btn, lv_color_hex(0x0079ff),
+                            LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_add_event_cb(ui_main_scr_Indicate_Vender_Set_Btn, ui_main_scr_Indicate_Vender_Set_Btn_e_hendler, LV_EVENT_ALL,
+                      NULL);
+
+  lv_obj_t *ui_main_scr_Indicate_Vender_Set_Btn_Label = lv_label_create(ui_main_scr_Indicate_Vender_Set_Btn);
+  lv_obj_set_width(ui_main_scr_Indicate_Vender_Set_Btn_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_main_scr_Indicate_Vender_Set_Btn_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_main_scr_Indicate_Vender_Set_Btn_Label, -3);
+  lv_obj_set_y(ui_main_scr_Indicate_Vender_Set_Btn_Label, 1);
+  lv_label_set_text(ui_main_scr_Indicate_Vender_Set_Btn_Label, "저울설정");
+  lv_obj_set_style_text_font(ui_main_scr_Indicate_Vender_Set_Btn_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
