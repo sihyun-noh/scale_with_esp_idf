@@ -14,10 +14,12 @@
 #include "sys_config.h"
 #include "config.h"
 #include "time.h"
+#include "main.h"
 
 static const char *TAG = "UI_LVGL";
 
 static void ui_ListSelectScreen_List_Panel_PageBuilder();
+
 ///////////////////// VARIABLES ////////////////////
 // SCREEN: ui_indicator_model_select_screen
 lv_obj_t *ui_Indicator_Model_Select_Screen;
@@ -331,14 +333,15 @@ void logic_timer_cb(lv_timer_t *timer) {
       memset(&indicator_data, 0x00, sizeof(indicator_data));
       indicator_BX11_data(&indicator_data);
       // LOGE(TAG, "indicator data : %d", atoi(indicator_data.weight_data));
-      // LOGI(TAG, "heap size : %d", esp_get_free_heap_size());
-      // LOGI(TAG, "heap size of internal %d", esp_get_free_internal_heap_size());
+      //  LOGI(TAG, "heap size : %d", esp_get_free_heap_size());
+      //  LOGI(TAG, "heap size of internal %d", esp_get_free_internal_heap_size());
 
       switch (indicator_data.DP) {
         case DP_100:
-          weight = (float)(atoi(indicator_data.weight_data) * 100);
-          snprintf(s_weight, sizeof(s_weight), "%d", (int)weight);
-          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+          // weight = (float)(atoi(indicator_data.weight_data) * 100);
+          // LOGI(TAG, "DP_100 : %f", weight);
+          // snprintf(s_weight, sizeof(s_weight), "%d", (int)weight);
+          // snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
           break;
         case DP_10:
           weight = (float)(atoi(indicator_data.weight_data) * 10);
@@ -407,7 +410,7 @@ void logic_timer_cb(lv_timer_t *timer) {
   if (indicator_data.event[STATE_TRASH_CHECK_EVENT] == STATE_TRASH_CHECK_EVENT) {
     trash_fileter_flag = true;
   } else {
-    trash_fileter_flag = true;
+    trash_fileter_flag = false;
   }
 
   // display to weight status
@@ -492,15 +495,17 @@ void logic_timer_cb(lv_timer_t *timer) {
               judge_over_count++;
               lv_label_set_text_fmt(ui_Screen1_over_Label, "초과 %d", judge_over_count);
               lv_led_on(ui_led1);
-              lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_YELLOW), LV_PART_MAIN);
-              _ui_screen_change(&ui_judge_color_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0,
-                                &ui_judge_color_screen_init);  //
+              // lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_RED), LV_PART_MAIN);
+              // _ui_screen_change(&ui_judge_color_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0,
+              //                   &ui_judge_color_screen_init);  //
+
+              led_1_ctrl(1);
               over_volume();
+
               // Clear all judgments
-              over_event_flag = true;
+              over_event_flag = VOLUME_CONTIUNE ? true : false;  // 계속나오게.. 요청사항
               nuder_event_flag = true;
               normal_event_flag = true;
-              // LOGI(TAG, "led1 on");
               lv_led_off(ui_led2);
               lv_led_off(ui_led3);
             }
@@ -514,13 +519,14 @@ void logic_timer_cb(lv_timer_t *timer) {
               judge_lack_count++;
               lv_label_set_text_fmt(ui_Screen1_lack_Label, "부족 %d", judge_lack_count);
               lv_led_on(ui_led3);
-              lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_RED), LV_PART_MAIN);
-              _ui_screen_change(&ui_judge_color_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0,
-                                &ui_judge_color_screen_init);  //
+              // lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_BLUE), LV_PART_MAIN);
+              // _ui_screen_change(&ui_judge_color_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0,
+              //                   &ui_judge_color_screen_init);  //
+              led_3_ctrl(1);
               lack_volume();
               // Clear all judgments
               over_event_flag = true;
-              nuder_event_flag = true;
+              nuder_event_flag = VOLUME_CONTIUNE ? true : false;
               normal_event_flag = true;
               lv_led_off(ui_led1);
               lv_led_off(ui_led2);
@@ -534,15 +540,16 @@ void logic_timer_cb(lv_timer_t *timer) {
               judge_normal_count++;
               lv_label_set_text_fmt(ui_Screen1_normal_Label, "정상 %d", judge_normal_count);
               lv_led_on(ui_led2);
-              lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_LIGHT_GREEN),
-                                        LV_PART_MAIN);
-              _ui_screen_change(&ui_judge_color_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0,
-                                &ui_judge_color_screen_init);  //
+              // lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_LIGHT_GREEN),
+              //                           LV_PART_MAIN);
+              // _ui_screen_change(&ui_judge_color_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0,
+              //                   &ui_judge_color_screen_init);  //
+              led_2_ctrl(1);
               normal_volume();
               // Clear all judgments
               over_event_flag = true;
               nuder_event_flag = true;
-              normal_event_flag = true;
+              normal_event_flag = VOLUME_CONTIUNE ? true : false;
               lv_led_off(ui_led1);
               lv_led_off(ui_led3);
             }
@@ -554,10 +561,13 @@ void logic_timer_cb(lv_timer_t *timer) {
               over_event_flag = false;
               nuder_event_flag = false;
               normal_event_flag = false;
+              led_1_ctrl(0);
+              led_2_ctrl(0);
+              led_3_ctrl(0);
               lv_led_off(ui_led1);
               lv_led_off(ui_led2);
               lv_led_off(ui_led3);
-              lv_event_send(ui_judge_color_ScreenPanel, LV_EVENT_CANCEL, NULL);
+              // lv_event_send(ui_judge_color_ScreenPanel, LV_EVENT_CANCEL, NULL);
             }
           }
 
@@ -623,7 +633,7 @@ void ui_init(void) {
   ui_list_select_screen_init();
   ui_judge_color_screen_init();
   ui_time_set_screen_init();
-  ui_indicator_model_select_screen_init();
+  // ui_indicator_model_select_screen_init();
 
   syscfg_get(CFG_DATA, "INDICATOR_MODEL", indicator_model_buf, sizeof(indicator_model_buf));
   if (strncmp(indicator_model_buf, "BX11", 4) == 0) {
@@ -641,6 +651,8 @@ void ui_init(void) {
   } else {
   }
 
+  SET_MUX_CONTROL(CH_2_SET);
+
   ui_data_ctx.ptr[0] = &prod_num_value;
   ui_data_ctx.ptr[1] = &judge_total_count;
   ui_data_ctx.ptr[2] = &judge_over_count;
@@ -649,8 +661,8 @@ void ui_init(void) {
 
   lv_style_init(&style_clock);
   static uint32_t user_data = 10;
-  lv_timer_t *logic_timer = lv_timer_create(logic_timer_cb, 10, &user_data);
-  lv_timer_t *time_timer = lv_timer_create(time_timer_cb, 1, user_data);
+  lv_timer_t *logic_timer = lv_timer_create(logic_timer_cb, 100, &user_data);
+  lv_timer_t *time_timer = lv_timer_create(time_timer_cb, 1000, user_data);
 
   // lv_disp_load_scr(ui_Screen1);
   lv_disp_load_scr(ui_Main_Screen);

@@ -12,10 +12,10 @@
 #include "sys_status.h"
 #include "main.h"
 #include "filelog.h"
+#include "config.h"
 #include "scale_read_485.h"
 #include "gpio_api.h"
 #include "uart_api.h"
-#include "config.h"
 
 // #define BUF_SIZE 23
 #define BUF_SIZE 255

@@ -192,9 +192,61 @@ static void send_data_cb(const uint8_t *mac_addr, esp_now_send_status_t status) 
   LOG_BUFFER_HEX(TAG, mac_addr, MAC_ADDR_LEN);
 }
 
+void SET_CH2_PIN() {
+  gpio_write(LCD_GPIO_1, 0);
+  gpio_write(LCD_GPIO_2, 0);
+  gpio_write(LCD_GPIO_3, 0);
+}
+
+void SET_CH1_PIN() {
+  gpio_write(LCD_GPIO_1, 0);
+  gpio_write(LCD_GPIO_2, 1);
+  gpio_write(LCD_GPIO_3, 0);
+}
+
+void SET_MUX_CONTROL(mux_ctrl_t ch) {
+  switch (ch) {
+    case CH_1_SET:
+      SET_CH1_PIN();
+      /* code */
+      break;
+    case CH_2_SET:
+      SET_CH2_PIN();
+      /* code */
+      break;
+    default: break;
+  }
+}
+
+void led_1_ctrl(uint8_t ctrl) {
+  if (ctrl)
+    gpio_write(LCD_GPIO_4, 0);
+  else
+    gpio_write(LCD_GPIO_4, 1);
+}
+
+void led_2_ctrl(uint8_t ctrl) {
+  if (ctrl)
+    gpio_write(LCD_GPIO_5, 0);
+  else
+    gpio_write(LCD_GPIO_5, 1);
+}
+
+void led_3_ctrl(uint8_t ctrl) {
+  if (ctrl)
+    gpio_write(LCD_GPIO_6, 0);
+  else
+    gpio_write(LCD_GPIO_6, 1);
+}
+
 int gpio_init_to_sc01_IO() {
   int ret;
-
+  gpio_write(LCD_GPIO_1, 1);
+  gpio_write(LCD_GPIO_2, 1);
+  gpio_write(LCD_GPIO_3, 1);
+  gpio_write(LCD_GPIO_4, 1);
+  gpio_write(LCD_GPIO_5, 1);
+  gpio_write(LCD_GPIO_6, 1);
   if ((ret = gpio_init(LCD_GPIO_1, OUTPUT)) != 0) {
     LOGE(TAG, "Could not initialize GPIO %d, error = %d\n", LCD_GPIO_1, ret);
     return ret;
@@ -212,41 +264,42 @@ int gpio_init_to_sc01_IO() {
     return ret;
   }
   if ((ret = gpio_init(LCD_GPIO_5, OUTPUT)) != 0) {
-    LOGE(TAG, "Could not initialize GPIO %d, error = %d\n", LCD_GPIO_4, ret);
+    LOGE(TAG, "Could not initialize GPIO %d, error = %d\n", LCD_GPIO_5, ret);
     return ret;
   }
   if ((ret = gpio_init(LCD_GPIO_6, OUTPUT)) != 0) {
-    LOGE(TAG, "Could not initialize GPIO %d, error = %d\n", LCD_GPIO_4, ret);
+    LOGE(TAG, "Could not initialize GPIO %d, error = %d\n", LCD_GPIO_6, ret);
     return ret;
   }
+
   // All off
-  vTaskDelay(1000 / portTICK_PERIOD_MS);
-  LOGE(TAG, "write low");
-  gpio_write(LCD_GPIO_1, 0);
-  gpio_write(LCD_GPIO_2, 0);
-  gpio_write(LCD_GPIO_3, 0);
-  gpio_write(LCD_GPIO_4, 0);
-  gpio_write(LCD_GPIO_5, 0);
-  gpio_write(LCD_GPIO_6, 0);
-  vTaskDelay(1000 / portTICK_PERIOD_MS);
-  LOGE(TAG, "log high");
-  gpio_write(LCD_GPIO_1, 1);
-  gpio_write(LCD_GPIO_2, 1);
-  gpio_write(LCD_GPIO_3, 1);
-  gpio_write(LCD_GPIO_4, 1);
-  gpio_write(LCD_GPIO_5, 1);
-  gpio_write(LCD_GPIO_6, 1);
-  vTaskDelay(1000 / portTICK_PERIOD_MS);
-  LOGE(TAG, "log low");
-  gpio_write(LCD_GPIO_1, 0);
-  gpio_write(LCD_GPIO_2, 0);
-  gpio_write(LCD_GPIO_3, 0);
-  gpio_write(LCD_GPIO_4, 0);
-  gpio_write(LCD_GPIO_5, 0);
-  gpio_write(LCD_GPIO_6, 0);
-  vTaskDelay(1000 / portTICK_PERIOD_MS);
-  LOGE(TAG, "only gpio 6 high ");
-  gpio_write(LCD_GPIO_6, 1);
+  // vTaskDelay(1000 / portTICK_PERIOD_MS);
+  // LOGE(TAG, "write low");
+  // gpio_write(LCD_GPIO_1, 0);
+  // gpio_write(LCD_GPIO_2, 0);
+  // gpio_write(LCD_GPIO_3, 0);
+  // gpio_write(LCD_GPIO_4, 0);
+  // gpio_write(LCD_GPIO_5, 0);
+  // gpio_write(LCD_GPIO_6, 0);
+  // vTaskDelay(1000 / portTICK_PERIOD_MS);
+  // LOGE(TAG, "log high");
+  // gpio_write(LCD_GPIO_1, 1);
+  // gpio_write(LCD_GPIO_2, 1);
+  // gpio_write(LCD_GPIO_3, 1);
+  // gpio_write(LCD_GPIO_4, 1);
+  // gpio_write(LCD_GPIO_5, 1);
+  // gpio_write(LCD_GPIO_6, 1);
+  // vTaskDelay(1000 / portTICK_PERIOD_MS);
+  // LOGE(TAG, "log low");
+  // gpio_write(LCD_GPIO_1, 0);
+  // gpio_write(LCD_GPIO_2, 0);
+  // gpio_write(LCD_GPIO_3, 0);
+  // gpio_write(LCD_GPIO_4, 0);
+  // gpio_write(LCD_GPIO_5, 0);
+  // gpio_write(LCD_GPIO_6, 0);
+  // vTaskDelay(1000 / portTICK_PERIOD_MS);
+  // LOGE(TAG, "only gpio 6 high ");
+  // gpio_write(LCD_GPIO_6, 1);
 
   // zero is high
   // if you are set s0, using GPIO2

@@ -24,6 +24,9 @@ extern "C" {
 #include "syscfg.h"
 #include "config.h"
 
+#define CONFIG_ZERO_TARE_SET 0
+#define VOLUME_CONTIUNE 1  // 계속 음성나오게..요청사항
+
 extern int cas_zero_command(void);
 extern int cas_tare_command(char *s_data);
 

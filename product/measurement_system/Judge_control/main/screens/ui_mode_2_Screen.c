@@ -159,7 +159,7 @@ void ui_mode_2_screen_init(void) {
                       LV_EVENT_ALL, NULL);
 
   /*Screen1 button */
-
+#if CONFIG_ZERO_TARE_SET
   lv_obj_t *ui_mode_2_scr_Zero_Point_Set_Btn = lv_btn_create(ui_mode_2_scr);  // zero set button
   lv_obj_set_width(ui_mode_2_scr_Zero_Point_Set_Btn, 50);
   lv_obj_set_height(ui_mode_2_scr_Zero_Point_Set_Btn, 50);
@@ -199,6 +199,7 @@ void ui_mode_2_screen_init(void) {
   lv_obj_set_y(ui_mode_2_scr_Tare_Point_Set_Btn_Label, 5);
   lv_label_set_text(ui_mode_2_scr_Tare_Point_Set_Btn_Label, "용기");
   lv_obj_set_style_text_font(ui_mode_2_scr_Tare_Point_Set_Btn_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
+#endif
 
   lv_obj_t *ui_mode_2_scr_Mode_Set_Btn = lv_btn_create(ui_mode_2_scr);  // zero set button
   lv_obj_set_width(ui_mode_2_scr_Mode_Set_Btn, 50);

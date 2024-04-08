@@ -156,7 +156,7 @@ void ui_Screen1_screen_init(void) {
   ui_led1 = lv_led_create(ui_Screen1);
   lv_obj_align(ui_led1, LV_ALIGN_TOP_LEFT, 30, 35);
   lv_led_set_brightness(ui_led1, LV_LED_BRIGHT_MAX);
-  lv_led_set_color(ui_led1, lv_palette_main(LV_PALETTE_RED));
+  lv_led_set_color(ui_led1, lv_palette_main(LV_PALETTE_YELLOW));
   lv_led_off(ui_led1);
 
   ui_led2 = lv_led_create(ui_Screen1);
@@ -168,7 +168,7 @@ void ui_Screen1_screen_init(void) {
   ui_led3 = lv_led_create(ui_Screen1);
   lv_obj_align(ui_led3, LV_ALIGN_TOP_LEFT, 160, 35);
   lv_led_set_brightness(ui_led3, LV_LED_BRIGHT_MAX);
-  lv_led_set_color(ui_led3, lv_palette_main(LV_PALETTE_LIGHT_BLUE));
+  lv_led_set_color(ui_led3, lv_palette_main(LV_PALETTE_RED));
   lv_led_off(ui_led3);
 
   ui_Screen1_over_Label = lv_label_create(ui_Screen1);
@@ -364,6 +364,7 @@ void ui_Screen1_screen_init(void) {
   lv_label_set_text(ui_Screen1_List_Select_Btn_Label, "품 번");
   lv_obj_set_style_text_font(ui_Screen1_List_Select_Btn_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+#if CONFIG_ZERO_TARE_SET
   lv_obj_t *ui_Screen1_Zero_Point_Set_Btn = lv_btn_create(ui_Screen1);
   lv_obj_set_width(ui_Screen1_Zero_Point_Set_Btn, 50);
   lv_obj_set_height(ui_Screen1_Zero_Point_Set_Btn, 50);
@@ -403,7 +404,7 @@ void ui_Screen1_screen_init(void) {
   lv_obj_set_y(ui_Screen1_Tare_Point_Set_Btn_Label, 5);
   lv_label_set_text(ui_Screen1_Tare_Point_Set_Btn_Label, "용기");
   lv_obj_set_style_text_font(ui_Screen1_Tare_Point_Set_Btn_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
-
+#endif
   lv_obj_t *ui_Screen1_Mode_Set_Btn = lv_btn_create(ui_Screen1);
   lv_obj_set_width(ui_Screen1_Mode_Set_Btn, 50);
   lv_obj_set_height(ui_Screen1_Mode_Set_Btn, 50);
