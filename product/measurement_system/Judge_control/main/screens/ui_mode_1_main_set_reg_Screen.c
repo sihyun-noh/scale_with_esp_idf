@@ -5,8 +5,15 @@
 
 #include "../ui.h"
 #include "log.h"
+#include <math.h>
 
 static const char *TAG = "ui_mode_1_main_set_reg_Screen";
+
+extern custom_msg_box_t *user_data_obj;
+extern void Msg_Box_No_Btn_e_handler(lv_event_t *e);
+extern void memory_allocation_manger();
+extern void create_custom_msg_box(const char *msg_text, lv_obj_t *active_screen, void (*event_handler)(lv_event_t *),
+                                  lv_event_code_t event);
 
 static bool ta1_selected;
 static bool ta2_selected;
@@ -152,44 +159,50 @@ void ui_register_pord_num_btn_e_hendler(lv_event_t *e) {
     snprintf(cmp_pord_num, sizeof(cmp_pord_num), "%02d", prod_num_value);
     snprintf(cfg_pord_num, sizeof(cfg_pord_num), "%.2s", get_str);
     if (strcmp(cfg_pord_num, cmp_pord_num) == 0) {
-      static const char *btns[] = { "Close", "" };
-      lv_obj_t *mbox1 = lv_msgbox_create(NULL, "Oops!", "It's already registered.", btns, true);
-      lv_obj_add_event_cb(mbox1, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-      lv_obj_center(mbox1);
+      create_custom_msg_box("이미 등록된 번호가 있습니다.", ui_Screen2, NULL, LV_EVENT_CLICKED);
+      // static const char *btns[] = { "Close", "" };
+      // lv_obj_t *mbox1 = lv_msgbox_create(NULL, "Oops!", "It's already registered.", btns, true);
+      // lv_obj_add_event_cb(mbox1, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+      // lv_obj_center(mbox1);
     } else if (prod_num_value > PROD_NUM) {
       // erroe when entering product number over PROD_NUM value
-      char s_message[30] = { 0 };
-      static const char *btns[] = { "Close", "" };
-      snprintf(s_message, sizeof(s_message), "Available from 0 to %d", PROD_NUM);
-      lv_obj_t *mbox2 = lv_msgbox_create(NULL, "Oops!", s_message, btns, true);
-      lv_obj_add_event_cb(mbox2, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-      lv_obj_center(mbox2);
+      create_custom_msg_box("등록 가능한 번호는 \n 0 ~ 30번 입니다.", ui_Screen2, NULL, LV_EVENT_CLICKED);
+      // char s_message[30] = { 0 };
+      // static const char *btns[] = { "Close", "" };
+      // snprintf(s_message, sizeof(s_message), "Available from 0 to %d", PROD_NUM);
+      // lv_obj_t *mbox2 = lv_msgbox_create(NULL, "Oops!", s_message, btns, true);
+      // lv_obj_add_event_cb(mbox2, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+      // lv_obj_center(mbox2);
     } else if (lower_weight_value >= upper_weight_value && prod_num_value != 0) {
       // pord_num 0 is a special method that does not determine whether it works or not.
-      static const char *btns[] = { "Close", "" };
-      lv_obj_t *mbox3 = lv_msgbox_create(
-          NULL, "Oops!", "Invalid values.\nThe lower input is equal or more than the upper input value.", btns, true);
-      lv_obj_add_event_cb(mbox3, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-      lv_obj_center(mbox3);
+      create_custom_msg_box("유효하지 않은 설정 값입니다.\n부족값이 초과값과 같거나 클 수\n없습니다.", ui_Screen2, NULL,
+                            LV_EVENT_CLICKED);
+      // static const char *btns[] = { "Close", "" };
+      // lv_obj_t *mbox3 = lv_msgbox_create(
+      //     NULL, "Oops!", "Invalid values.\nThe lower input is equal or more than the upper input value.", btns,
+      //     true);
+      // lv_obj_add_event_cb(mbox3, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+      // lv_obj_center(mbox3);
     } else {
       if (strlen(get_str) == 0) {
-        LOGI(TAG, "Set register ");
-        int upper_int_part = (int)upper_weight_value;
-        int lower_int_part = (int)lower_weight_value;
+        LOGI(TAG, "Register settings.");
+        unsigned int upper_int_part = (int)upper_weight_value;
+        unsigned int lower_int_part = (int)lower_weight_value;
         float upper_decimal_part = upper_weight_value - upper_int_part;
         float lower_decimal_part = lower_weight_value - lower_int_part;
-        int upper_dacimal_to_int_part = (int)upper_decimal_part * 1000;  // decimal point 3
-        int lower_decimal_to_int_part = (int)lower_decimal_part * 1000;
+        unsigned int upper_dacimal_to_int_part = roundf(upper_decimal_part * 1000);  // decimal point 3
+        unsigned int lower_decimal_to_int_part = roundf(lower_decimal_part * 1000);  // rounding to the nearest integer
 
         snprintf(set_str, sizeof(set_str), "%02d,upper:%02d.%03d,lower:%02d.%03d", prod_num_value, upper_int_part,
                  upper_dacimal_to_int_part, lower_int_part, lower_decimal_to_int_part);
         LOGI(TAG, "syscfg_data : %s", set_str);
         syscfg_set(CFG_DATA, s_key, set_str);
 
-        static const char *btns[] = { "Close", "" };
-        lv_obj_t *mbox4 = lv_msgbox_create(NULL, "OK!", "Registered", btns, true);
-        lv_obj_add_event_cb(mbox4, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-        lv_obj_center(mbox4);
+        create_custom_msg_box("등록 되었습니다. ", ui_Screen2, NULL, LV_EVENT_CLICKED);
+        // static const char *btns[] = { "Close", "" };
+        // lv_obj_t *mbox4 = lv_msgbox_create(NULL, "OK!", "Registered", btns, true);
+        // lv_obj_add_event_cb(mbox4, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+        // lv_obj_center(mbox4);
       }
     }
   }

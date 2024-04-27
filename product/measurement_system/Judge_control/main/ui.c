@@ -81,6 +81,9 @@ lv_obj_t *ui_Screen1_Upper_Value_Label;
 lv_obj_t *ui_Screen1_Lower_Value_Label;
 lv_obj_t *ui_Screen1_Judge_Comfirm_Btn;
 
+// lv_obj_t *ui_Recently_Msg_Box_Panel;
+// lv_obj_t *ui_Recently_Msg_Box_Panel_Label;
+
 // SCREEN: ui_Screen2
 lv_obj_t *ui_Screen2;
 
@@ -325,7 +328,7 @@ void logic_timer_cb(lv_timer_t *timer) {
       memset(&indicator_data, 0x00, sizeof(indicator_data));
       indicator_WTM_500_data(&indicator_data);
       // LOGE(TAG, "indicator data : %d", atoi(indicator_data.weight_data));
-      //  taking float value using %f format specifier for
+      //   taking float value using %f format specifier for
       sscanf(indicator_data.weight_data, "%f", &weight);
       snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
       break;
@@ -493,6 +496,7 @@ void logic_timer_cb(lv_timer_t *timer) {
             if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
               judge_total_count++;
               judge_over_count++;
+              push(&ui_data_ctx.stack_root, JUDGE_OVER);
               lv_label_set_text_fmt(ui_Screen1_over_Label, "초과 %d", judge_over_count);
               lv_led_on(ui_led1);
               // lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_RED), LV_PART_MAIN);
@@ -517,6 +521,7 @@ void logic_timer_cb(lv_timer_t *timer) {
             if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
               judge_total_count++;
               judge_lack_count++;
+              push(&ui_data_ctx.stack_root, JUDGE_LACK);
               lv_label_set_text_fmt(ui_Screen1_lack_Label, "부족 %d", judge_lack_count);
               lv_led_on(ui_led3);
               // lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_BLUE), LV_PART_MAIN);
@@ -538,6 +543,7 @@ void logic_timer_cb(lv_timer_t *timer) {
             if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
               judge_total_count++;
               judge_normal_count++;
+              push(&ui_data_ctx.stack_root, JUDGE_NORMAL);
               lv_label_set_text_fmt(ui_Screen1_normal_Label, "정상 %d", judge_normal_count);
               lv_led_on(ui_led2);
               // lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_LIGHT_GREEN),
@@ -653,6 +659,7 @@ void ui_init(void) {
 
   SET_MUX_CONTROL(CH_2_SET);
 
+  ui_data_ctx.stack_root = NULL;
   ui_data_ctx.ptr[0] = &prod_num_value;
   ui_data_ctx.ptr[1] = &judge_total_count;
   ui_data_ctx.ptr[2] = &judge_over_count;
@@ -661,7 +668,7 @@ void ui_init(void) {
 
   lv_style_init(&style_clock);
   static uint32_t user_data = 10;
-  lv_timer_t *logic_timer = lv_timer_create(logic_timer_cb, 100, &user_data);
+  lv_timer_t *logic_timer = lv_timer_create(logic_timer_cb, 10, &user_data);
   lv_timer_t *time_timer = lv_timer_create(time_timer_cb, 1000, user_data);
 
   // lv_disp_load_scr(ui_Screen1);

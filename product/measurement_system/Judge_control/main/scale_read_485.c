@@ -64,7 +64,7 @@ int indicator_WTM_500_data(Common_data_t *common_data) {
   static cas_22byte_format_t read_data = { 0 };
 
   uart_write_data(UART_PORT_NUM, set_config, sizeof(set_config));
-  vTaskDelay(10 / portTICK_PERIOD_MS);
+  vTaskDelay(100 / portTICK_PERIOD_MS);
   int len = uart_read_data(UART_PORT_NUM, data, (BUF_SIZE - 1));
   if (len <= 0) {
     LOGE(TAG, "Invalid data. or No data ");

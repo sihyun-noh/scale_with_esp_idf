@@ -2,6 +2,12 @@
 #include "log.h"
 
 static const char *TAG = "ui_main_Screen";
+
+extern custom_msg_box_t *user_data_obj;
+extern void Msg_Box_No_Btn_e_handler(lv_event_t *e);
+extern void memory_allocation_manger();
+extern void create_custom_msg_box(const char *msg_text, lv_obj_t *active_screen, void (*event_handler)(lv_event_t *),
+                                  lv_event_code_t event);
 bool device_id_check_flag = true;
 
 static void mbox_device_id_check_event_cb(lv_event_t *e) {
@@ -20,10 +26,12 @@ void ui_MainScreen_Btn1_e_handler(lv_event_t *e) {
     if (device_id_check_flag) {
       _ui_screen_change(&ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen1_screen_init);
     } else {
-      static const char *btns[] = { "Close", "" };
-      lv_obj_t *mbox_device_id_check = lv_msgbox_create(NULL, "Oops!", "Plase your register device ID ", btns, true);
-      lv_obj_add_event_cb(mbox_device_id_check, mbox_device_id_check_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-      lv_obj_center(mbox_device_id_check);
+      create_custom_msg_box("장치 ID를 등록하세요!", ui_Main_Screen, NULL, LV_EVENT_CLICKED);
+
+      // static const char *btns[] = { "Close", "" };
+      // lv_obj_t *mbox_device_id_check = lv_msgbox_create(NULL, "Oops!", "Plase your register device ID ", btns, true);
+      // lv_obj_add_event_cb(mbox_device_id_check, mbox_device_id_check_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+      // lv_obj_center(mbox_device_id_check);
     }
   }
 }

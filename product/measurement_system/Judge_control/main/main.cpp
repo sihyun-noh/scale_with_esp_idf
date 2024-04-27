@@ -272,39 +272,6 @@ int gpio_init_to_sc01_IO() {
     return ret;
   }
 
-  // All off
-  // vTaskDelay(1000 / portTICK_PERIOD_MS);
-  // LOGE(TAG, "write low");
-  // gpio_write(LCD_GPIO_1, 0);
-  // gpio_write(LCD_GPIO_2, 0);
-  // gpio_write(LCD_GPIO_3, 0);
-  // gpio_write(LCD_GPIO_4, 0);
-  // gpio_write(LCD_GPIO_5, 0);
-  // gpio_write(LCD_GPIO_6, 0);
-  // vTaskDelay(1000 / portTICK_PERIOD_MS);
-  // LOGE(TAG, "log high");
-  // gpio_write(LCD_GPIO_1, 1);
-  // gpio_write(LCD_GPIO_2, 1);
-  // gpio_write(LCD_GPIO_3, 1);
-  // gpio_write(LCD_GPIO_4, 1);
-  // gpio_write(LCD_GPIO_5, 1);
-  // gpio_write(LCD_GPIO_6, 1);
-  // vTaskDelay(1000 / portTICK_PERIOD_MS);
-  // LOGE(TAG, "log low");
-  // gpio_write(LCD_GPIO_1, 0);
-  // gpio_write(LCD_GPIO_2, 0);
-  // gpio_write(LCD_GPIO_3, 0);
-  // gpio_write(LCD_GPIO_4, 0);
-  // gpio_write(LCD_GPIO_5, 0);
-  // gpio_write(LCD_GPIO_6, 0);
-  // vTaskDelay(1000 / portTICK_PERIOD_MS);
-  // LOGE(TAG, "only gpio 6 high ");
-  // gpio_write(LCD_GPIO_6, 1);
-
-  // zero is high
-  // if you are set s0, using GPIO2
-  // if you are set s1, using GPIO3
-
   return 0;
 }
 

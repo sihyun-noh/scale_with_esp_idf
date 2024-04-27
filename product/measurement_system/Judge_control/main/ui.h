@@ -23,6 +23,7 @@ extern "C" {
 #include "sys_status.h"
 #include "syscfg.h"
 #include "config.h"
+#include "LIFO_stack.h"
 
 #define CONFIG_ZERO_TARE_SET 0
 #define VOLUME_CONTIUNE 1  // 계속 음성나오게..요청사항
@@ -32,6 +33,12 @@ extern int cas_tare_command(char *s_data);
 
 extern int (*weight_zero_command)(void);
 extern char const log_table_index[];
+
+typedef enum {
+  JUDGE_LACK = 0x01,
+  JUDGE_NORMAL,
+  JUDGE_OVER,
+} judge_type_t;
 
 typedef enum {
   NONE_E = 0x00,
@@ -62,7 +69,21 @@ typedef struct internal_data_trans {
   int *ptr[10];
   void (*fp)(lv_event_t *e);
   lv_obj_t *obj;
+  struct StackNode *stack_root;
 } ui_internal_data_ctx_t;
+
+typedef struct textareas {
+  lv_obj_t *ta1;
+  lv_obj_t *ta2;
+  lv_obj_t *ta3;
+  // lv_obj_t *ta4;
+  // lv_obj_t *ta5;
+} textareas_t;
+
+typedef struct {
+  lv_obj_t *target1;
+  lv_obj_t *target2;
+} custom_msg_box_t;
 
 // SCREEN : ui_indicator_model_select_screen
 void ui_indicator_model_select_screen_init(void);
@@ -136,6 +157,9 @@ extern lv_obj_t *ui_Screen1_Upper_Value_Label;
 extern lv_obj_t *ui_Screen1_Lower_Value_Label;
 extern lv_obj_t *ui_Screen1_Judge_Comfirm_Btn;
 
+// extern lv_obj_t *ui_Recently_Msg_Box_Panel;
+// extern lv_obj_t *ui_Recently_Msg_Box_Panel_Label;
+
 // SCREEN: ui_Screen2
 void ui_Screen2_screen_init(void);
 extern lv_obj_t *ui_Screen2;
@@ -164,13 +188,6 @@ extern float amount_weight_value;
 extern screen_mode_t curr_mode;
 extern ui_event_ids_t ui_event;
 extern ui_internal_data_ctx_t ui_data_ctx;
-typedef struct textareas {
-  lv_obj_t *ta1;
-  lv_obj_t *ta2;
-  lv_obj_t *ta3;
-  // lv_obj_t *ta4;
-  // lv_obj_t *ta5;
-} textareas_t;
 
 LV_FONT_DECLARE(ui_font_Display16);
 LV_FONT_DECLARE(ui_font_Display24);

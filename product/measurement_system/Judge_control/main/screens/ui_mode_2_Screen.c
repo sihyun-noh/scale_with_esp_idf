@@ -108,7 +108,7 @@ void ui_mode_2_screen_init(void) {
   lv_obj_set_x(ui_mode_2_scr_Panel1_Zero_Point_Label, 5);
   lv_obj_set_y(ui_mode_2_scr_Panel1_Zero_Point_Label, 0);
   lv_obj_set_align(ui_mode_2_scr_Panel1_Zero_Point_Label, LV_ALIGN_TOP_LEFT);
-  lv_label_set_text(ui_mode_2_scr_Panel1_Zero_Point_Label, "-Z-");
+  lv_label_set_text(ui_mode_2_scr_Panel1_Zero_Point_Label, "영점");
   lv_obj_set_style_text_font(ui_mode_2_scr_Panel1_Zero_Point_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_text_color(ui_mode_2_scr_Panel1_Zero_Point_Label, lv_color_hex(0xe9e9e9),
                               LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -120,7 +120,7 @@ void ui_mode_2_screen_init(void) {
   lv_obj_set_x(ui_mode_2_scr_Panel1_Stable_Point_Label, 50);
   lv_obj_set_y(ui_mode_2_scr_Panel1_Stable_Point_Label, 0);
   lv_obj_set_align(ui_mode_2_scr_Panel1_Stable_Point_Label, LV_ALIGN_TOP_LEFT);
-  lv_label_set_text(ui_mode_2_scr_Panel1_Stable_Point_Label, "-S-");
+  lv_label_set_text(ui_mode_2_scr_Panel1_Stable_Point_Label, "안정");
   lv_obj_set_style_text_font(ui_mode_2_scr_Panel1_Stable_Point_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_text_color(ui_mode_2_scr_Panel1_Stable_Point_Label, lv_color_hex(0xe9e9e9),
                               LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -132,7 +132,7 @@ void ui_mode_2_screen_init(void) {
   lv_obj_set_x(ui_mode_2_scr_Panel1_Tare_Point_Label, 95);
   lv_obj_set_y(ui_mode_2_scr_Panel1_Tare_Point_Label, 0);
   lv_obj_set_align(ui_mode_2_scr_Panel1_Tare_Point_Label, LV_ALIGN_TOP_LEFT);
-  lv_label_set_text(ui_mode_2_scr_Panel1_Tare_Point_Label, "-T-");
+  lv_label_set_text(ui_mode_2_scr_Panel1_Tare_Point_Label, "용기");
   lv_obj_set_style_text_font(ui_mode_2_scr_Panel1_Tare_Point_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_text_color(ui_mode_2_scr_Panel1_Tare_Point_Label, lv_color_hex(0xe9e9e9),
                               LV_PART_MAIN | LV_STATE_DEFAULT);

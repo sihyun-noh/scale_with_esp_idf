@@ -22,6 +22,6 @@ SET(SOURCES components/ui_comp_screen2_keyboard1.c
     fonts/NanumBar24.c
     fonts/NanumBar32.c)
 idf_component_register(SRCS "scale_read_485.c" "main.cpp" "gui.cpp" "sd_card.c" "ui.c" "ui_helpers.c" "hid_config.c"
-                            "file_manager.c" "control_task.c" "command.c" "sensor_task.c" "usb_msc_task.c" 
-                            "i2s_speaker.c" "audio/volume.c" ${SOURCES}
+                            "file_manager.c" "control_task.c" "command.c" "sensor_task.c" "usb_msc_task.c" "LIFO_stack.c"
+                            "i2s_speaker.c" "audio/volume.c" "screens/msg_common.c" ${SOURCES}
                       INCLUDE_DIRS ".")

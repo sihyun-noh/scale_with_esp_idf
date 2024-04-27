@@ -7,6 +7,13 @@
 #include "log.h"
 
 static const char *TAG = "ui_device_id_reg_Screen";
+
+extern custom_msg_box_t *user_data_obj;
+extern void Msg_Box_No_Btn_e_handler(lv_event_t *e);
+extern void memory_allocation_manger();
+extern void create_custom_msg_box(const char *msg_text, lv_obj_t *active_screen, void (*event_handler)(lv_event_t *),
+                                  lv_event_code_t event);
+
 static int device_id = 0;
 extern bool device_id_check_flag;
 
@@ -47,27 +54,32 @@ void ui_device_id_Register_Btn_e_hendler(lv_event_t *e) {
     // Max 999
     if (device_id >= 1000) {
       LOGI(TAG, "device id is over number!!  ");
-      static const char *btns[] = { "Close", "" };
-      lv_obj_t *mbox_device_id_err_1 = lv_msgbox_create(NULL, "Oops!", "Available from 1 to 999", btns, true);
-      lv_obj_add_event_cb(mbox_device_id_err_1, mbox_device_id_err_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-      lv_obj_center(mbox_device_id_err_1);
+      create_custom_msg_box("사용가능한 범위는 \n1 ~ 999 입니다.", ui_device_id_reg_screen, NULL, LV_EVENT_CLICKED);
+
+      // static const char *btns[] = { "Close", "" };
+      // lv_obj_t *mbox_device_id_err_1 = lv_msgbox_create(NULL, "Oops!", "Available from 1 to 999", btns, true);
+      // lv_obj_add_event_cb(mbox_device_id_err_1, mbox_device_id_err_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+      // lv_obj_center(mbox_device_id_err_1);
     } else {
       snprintf(s_deivce_id, sizeof(s_deivce_id), "%03d", device_id);
       LOGI(TAG, "Device id : %s", s_deivce_id);
       ret = syscfg_set(CFG_DATA, "DEVICE_ID", s_deivce_id);
       if (ret) {
         LOGI(TAG, "Register fail ");
-        static const char *btns[] = { "Close", "" };
-        lv_obj_t *mbox_device_id_err_2 = lv_msgbox_create(NULL, "Oops!", "Register fail!", btns, true);
-        lv_obj_add_event_cb(mbox_device_id_err_2, mbox_device_id_err_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-        lv_obj_center(mbox_device_id_err_2);
+        create_custom_msg_box("ID등록 실패!!", ui_device_id_reg_screen, NULL, LV_EVENT_CLICKED);
+
+        // static const char *btns[] = { "Close", "" };
+        // lv_obj_t *mbox_device_id_err_2 = lv_msgbox_create(NULL, "Oops!", "Register fail!", btns, true);
+        // lv_obj_add_event_cb(mbox_device_id_err_2, mbox_device_id_err_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+        // lv_obj_center(mbox_device_id_err_2);
       } else {
         device_id_check_flag = true;
         LOGI(TAG, "Device ID registration successful ");
-        static const char *btns[] = { "Close", "" };
-        lv_obj_t *mbox_device_id = lv_msgbox_create(NULL, "Success!", "Registered!", btns, true);
-        lv_obj_add_event_cb(mbox_device_id, mbox_device_id_err_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-        lv_obj_center(mbox_device_id);
+        create_custom_msg_box("ID등록 성공!!", ui_device_id_reg_screen, NULL, LV_EVENT_CLICKED);
+        // static const char *btns[] = { "Close", "" };
+        // lv_obj_t *mbox_device_id = lv_msgbox_create(NULL, "Success!", "Registered!", btns, true);
+        // lv_obj_add_event_cb(mbox_device_id, mbox_device_id_err_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+        // lv_obj_center(mbox_device_id);
       }
     }
   }
