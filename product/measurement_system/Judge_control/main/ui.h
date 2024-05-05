@@ -35,12 +35,6 @@ extern int (*weight_zero_command)(void);
 extern char const log_table_index[];
 
 typedef enum {
-  JUDGE_LACK = 0x01,
-  JUDGE_NORMAL,
-  JUDGE_OVER,
-} judge_type_t;
-
-typedef enum {
   NONE_E = 0x00,
   AMOUNT_VAL_E = 0x01,
   JUDGE_COMFIRM_E,

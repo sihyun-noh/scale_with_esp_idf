@@ -202,9 +202,9 @@ void ui_mode_2_screen_init(void) {
 #endif
 
   lv_obj_t *ui_mode_2_scr_Mode_Set_Btn = lv_btn_create(ui_mode_2_scr);  // zero set button
-  lv_obj_set_width(ui_mode_2_scr_Mode_Set_Btn, 50);
-  lv_obj_set_height(ui_mode_2_scr_Mode_Set_Btn, 50);
-  lv_obj_set_x(ui_mode_2_scr_Mode_Set_Btn, 180);
+  lv_obj_set_width(ui_mode_2_scr_Mode_Set_Btn, 60);
+  lv_obj_set_height(ui_mode_2_scr_Mode_Set_Btn, 60);
+  lv_obj_set_x(ui_mode_2_scr_Mode_Set_Btn, 190);
   lv_obj_set_y(ui_mode_2_scr_Mode_Set_Btn, -10);
   lv_obj_set_align(ui_mode_2_scr_Mode_Set_Btn, LV_ALIGN_BOTTOM_MID);
   lv_obj_add_flag(ui_mode_2_scr_Mode_Set_Btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
@@ -216,14 +216,14 @@ void ui_mode_2_screen_init(void) {
   lv_obj_t *ui_mode_2_scr_Mode_Set_Btn_Label = lv_label_create(ui_mode_2_scr_Mode_Set_Btn);
   lv_obj_set_width(ui_mode_2_scr_Mode_Set_Btn_Label, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_mode_2_scr_Mode_Set_Btn_Label, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_mode_2_scr_Mode_Set_Btn_Label, -5);
-  lv_obj_set_y(ui_mode_2_scr_Mode_Set_Btn_Label, 5);
+  lv_obj_set_x(ui_mode_2_scr_Mode_Set_Btn_Label, 0);
+  lv_obj_set_y(ui_mode_2_scr_Mode_Set_Btn_Label, 10);
   lv_label_set_text(ui_mode_2_scr_Mode_Set_Btn_Label, "모드");
   lv_obj_set_style_text_font(ui_mode_2_scr_Mode_Set_Btn_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
   lv_obj_t *ui_mode_2_scr_Amount_Set_Btn = lv_btn_create(ui_mode_2_scr);  // zero set button
-  lv_obj_set_width(ui_mode_2_scr_Amount_Set_Btn, 50);
-  lv_obj_set_height(ui_mode_2_scr_Amount_Set_Btn, 50);
+  lv_obj_set_width(ui_mode_2_scr_Amount_Set_Btn, 60);
+  lv_obj_set_height(ui_mode_2_scr_Amount_Set_Btn, 60);
   lv_obj_set_x(ui_mode_2_scr_Amount_Set_Btn, 120);
   lv_obj_set_y(ui_mode_2_scr_Amount_Set_Btn, -10);
   lv_obj_set_align(ui_mode_2_scr_Amount_Set_Btn, LV_ALIGN_BOTTOM_MID);
@@ -236,8 +236,8 @@ void ui_mode_2_screen_init(void) {
   lv_obj_t *ui_mode_2_scr_Amount_Set_Btn_Label = lv_label_create(ui_mode_2_scr_Amount_Set_Btn);
   lv_obj_set_width(ui_mode_2_scr_Amount_Set_Btn_Label, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_mode_2_scr_Amount_Set_Btn_Label, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_mode_2_scr_Amount_Set_Btn_Label, -5);
-  lv_obj_set_y(ui_mode_2_scr_Amount_Set_Btn_Label, 5);
+  lv_obj_set_x(ui_mode_2_scr_Amount_Set_Btn_Label, 0);
+  lv_obj_set_y(ui_mode_2_scr_Amount_Set_Btn_Label, 10);
   lv_label_set_text(ui_mode_2_scr_Amount_Set_Btn_Label, "단위");
   lv_obj_set_style_text_font(ui_mode_2_scr_Amount_Set_Btn_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 

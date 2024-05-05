@@ -242,8 +242,8 @@ int file_copy(const char *to, const char *from) {
     goto out_error;
 
   while ((nread = fread(buf, 1, sizeof(buf), fd_from)) > 0) {
-      if (!fwrite(buf, 1, nread, fd_to))
-        goto out_error;
+    if (!fwrite(buf, 1, nread, fd_to))
+      goto out_error;
   }
 
   printf("nread1 = %d\n", nread);
@@ -336,9 +336,9 @@ int make_dir(const char *path) {
   return 0;
 }
 
-int file_delete_cmd(int argc, char **argv){
-    printf("input data :%s\n", argv[1]);
-if (argc != 2) {
+int file_delete_cmd(int argc, char **argv) {
+  printf("input data :%s\n", argv[1]);
+  if (argc != 2) {
     printf("Usage: file absolute path <ex:/storage/test.txt>\n");
     return -1;
   }

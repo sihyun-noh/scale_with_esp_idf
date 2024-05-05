@@ -25,7 +25,6 @@ void ui_Screen1_Setting_Btn_e_handler(lv_event_t *e) {
 }
 void ui_Screen1_Mode_Set_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
-  int res = 0;
   if (event_code == LV_EVENT_CLICKED) {
     _ui_screen_change(&ui_Main_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_main_screen_init);
   }
@@ -71,13 +70,11 @@ void ui_Screen1_Lower_Value_Label_e_handler(lv_event_t *e) {
 
 void ui_Screen1_Amount_Value_Label_e_handler(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
   char s_buff[30] = { 0 };
   if (code == LV_EVENT_READY) {
     snprintf(s_buff, sizeof(s_buff), "min:100g");
     // lv_label_set_text(target, s_buff);
   }
-  /*Todo : */
 }
 
 // static void Judge_Comfirm_Btn_mbox_event_cb(lv_event_t *e) {
@@ -102,11 +99,35 @@ void ui_Screen1_Amount_Value_Label_e_handler(lv_event_t *e) {
 
 static void Judge_Comfirm_Btn_Yes_event_cb(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
-  custom_msg_box_t *user_data_obj = lv_event_get_user_data(e);
   // LOGI(TAG, "Click Judge_Comfirm_Btn_Yes_event_cb!!");
   if (code == LV_EVENT_CLICKED) {
-    FDATA_TABLE_INDEX(log_table_index, BASE_PATH, "%d,%d,%d,%d,%d", *ui_data_ctx.ptr[0], *ui_data_ctx.ptr[1],
-                      *ui_data_ctx.ptr[2], *ui_data_ctx.ptr[3], *ui_data_ctx.ptr[4]);
+    while (!isEmpty(ui_data_ctx.stack_root)) {
+      // file saved
+      LOGI(TAG, "Top element is %d free memory\n", peek(ui_data_ctx.stack_root));
+      switch (ui_data_ctx.stack_root->type) {
+        case JUDGE_NORMAL:
+          FDATA_TABLE_INDEX(log_table_index, BASE_PATH, "%s,%.3f,%d", "OK", ui_data_ctx.stack_root->weight,
+                            ui_data_ctx.stack_root->count);
+          break;
+
+        case JUDGE_OVER:
+          FDATA_TABLE_INDEX(log_table_index, BASE_PATH, "%s,%.3f,%d", "OVER", ui_data_ctx.stack_root->weight,
+                            ui_data_ctx.stack_root->count);
+          break;
+
+        case JUDGE_LACK:
+          FDATA_TABLE_INDEX(log_table_index, BASE_PATH, "%s,%.3f,%d", "UNDER", ui_data_ctx.stack_root->weight,
+                            ui_data_ctx.stack_root->count);
+          break;
+
+        default: break;
+      }
+      pop(&ui_data_ctx.stack_root);
+    }
+
+    // FDATA_TABLE_INDEX(log_table_index, BASE_PATH, "%d,%d,%d,%d,%d", *ui_data_ctx.ptr[0], *ui_data_ctx.ptr[1],
+    //                   *ui_data_ctx.ptr[2], *ui_data_ctx.ptr[3], *ui_data_ctx.ptr[4]);
+
     *ui_data_ctx.ptr[1] = 0;  // judge_total_count initialize.
     *ui_data_ctx.ptr[2] = 0;  // judge_over_count initialize.
     *ui_data_ctx.ptr[3] = 0;  // judge_normal_countinitialize.
@@ -154,7 +175,6 @@ void ui_Screen1_Judge_Comfirm_Btn_e_handler(lv_event_t *e) {
 
 static void Judge_Cancel_Btn_Yes_event_cb(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
-  custom_msg_box_t *user_data_obj = lv_event_get_user_data(e);
   // LOGI(TAG, "click Judge_Cancel_Btn_Yes_event_cb!!");
   if (code == LV_EVENT_CLICKED) {
     *ui_data_ctx.ptr[1] = 0;  // judge_total_count initialize.
@@ -260,18 +280,16 @@ static void ui_Screen1_Recently_Cancel_Btn_e_handler(lv_event_t *e) {
 
 void ui_Screen1_Zero_Point_Set_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
-  int ret = 0;
   if (event_code == LV_EVENT_CLICKED) {
-    ret = weight_zero_command();
+    weight_zero_command();
   }
 }
 
 void ui_Screen1_Tare_Point_Set_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
-  int ret = 0;
   if (event_code == LV_EVENT_CLICKED) {
     memset(s_tare_set_value, 0x00, sizeof(s_tare_set_value));
-    ret = cas_tare_command(s_tare_set_value);
+    cas_tare_command(s_tare_set_value);
   }
 }
 

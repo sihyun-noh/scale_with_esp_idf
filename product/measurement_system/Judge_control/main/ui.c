@@ -4,6 +4,7 @@
 // Project name: ms_type
 
 #include "freertos/FreeRTOS.h"
+#include "esp_system.h"
 #include "ui.h"
 #include <stdio.h>
 #include "ui_helpers.h"
@@ -16,7 +17,11 @@
 #include "time.h"
 #include "main.h"
 
+#define HEAP_MONITOR 1
 static const char *TAG = "UI_LVGL";
+
+extern void create_custom_msg_box(const char *msg_text, lv_obj_t *active_screen, void (*event_handler)(lv_event_t *),
+                                  lv_event_code_t event);
 
 static void ui_ListSelectScreen_List_Panel_PageBuilder();
 
@@ -145,7 +150,7 @@ indicator_model_t indicator_model;
 
 int (*weight_zero_command)();
 
-const char log_table_index[] = { "TIME,PID,TOTAL,OVER,NORMAL,UNDER\n" };
+const char log_table_index[] = { "Time,Judge,Weight,Count\n" };
 
 ///////////////////// ANIMATIONS ////////////////////
 
@@ -159,8 +164,6 @@ inline void OBJ_TEXT_SET_LABEL(lv_obj_t *e, const char *txt) {
 
 void ui_event_Screen1_List_Select_Button(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
-
   if (event_code == LV_EVENT_CLICKED) {
     _ui_screen_change(&ui_list_select, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_list_select_screen_init);
     ui_ListSelectScreen_List_Panel_PageBuilder();
@@ -251,7 +254,6 @@ void ui_ListSelectScreen_List_Panel_Btn_e_handler(lv_event_t *e) {
 
 void ui_ListSelectScreen_Delete_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
   // char *value = lv_event_get_user_data(e);
   char s_key[10] = { 0 };
   if (event_code == LV_EVENT_CLICKED) {
@@ -268,7 +270,6 @@ void ui_ListSelectScreen_Delete_Btn_e_handler(lv_event_t *e) {
 
 void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
-  lv_obj_t *target = lv_event_get_target(e);
   char s_upper_weight_value[10] = { 0 };
   char s_lower_weight_value[10] = { 0 };
   char s_prod_num_value[10] = { 0 };
@@ -302,21 +303,12 @@ void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e) {
   }
 }
 
-static void usb_event_cb(lv_event_t *e) {
-  lv_obj_t *obj = lv_event_get_current_target(e);
-  LOGI(TAG, "Button %s clicked", lv_msgbox_get_active_btn_text(obj));
-  if (strcmp(lv_msgbox_get_active_btn_text(obj), "Close") == 0) {
-    lv_msgbox_close(obj);
-  }
-}
-
 void logic_timer_cb(lv_timer_t *timer) {
   char s_weight[20] = { 0 };
   char s_amount_count[20] = { 0 };
   char s_judge_total_count[20] = { 0 };
 
   float weight = 0;
-  int weight_float = 0;
   float tare_weight = 0.0;
   bool trash_fileter_flag = false;
   Common_data_t indicator_data = { 0 };
@@ -331,6 +323,7 @@ void logic_timer_cb(lv_timer_t *timer) {
       //   taking float value using %f format specifier for
       sscanf(indicator_data.weight_data, "%f", &weight);
       snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
+      snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
       break;
     case MODEL_BAYKON_BX11:
       memset(&indicator_data, 0x00, sizeof(indicator_data));
@@ -399,10 +392,7 @@ void logic_timer_cb(lv_timer_t *timer) {
 
   if (is_usb_copying(USB_COPY_SUCCESS) && usb_copy_success_flag) {
     usb_copy_success_flag = false;
-    static const char *btns[] = { "Close", "" };
-    lv_obj_t *mbox6 = lv_msgbox_create(NULL, "USB_COPY!", "success!", btns, true);
-    lv_obj_add_event_cb(mbox6, usb_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-    lv_obj_center(mbox6);
+    create_custom_msg_box("파일 복사가 완료 되었습니다.\nUSB를 제거해 하십시오.", ui_Screen1, NULL, LV_EVENT_CLICKED);
   }
   if (!is_usb_disconnect_notify()) {
     // usb_copy_success_flag = true;
@@ -496,7 +486,7 @@ void logic_timer_cb(lv_timer_t *timer) {
             if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
               judge_total_count++;
               judge_over_count++;
-              push(&ui_data_ctx.stack_root, JUDGE_OVER);
+              push(&ui_data_ctx.stack_root, JUDGE_OVER, weight, judge_over_count);
               lv_label_set_text_fmt(ui_Screen1_over_Label, "초과 %d", judge_over_count);
               lv_led_on(ui_led1);
               // lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_RED), LV_PART_MAIN);
@@ -512,6 +502,15 @@ void logic_timer_cb(lv_timer_t *timer) {
               normal_event_flag = true;
               lv_led_off(ui_led2);
               lv_led_off(ui_led3);
+              // 사용 가능한 힙 메모리 양 가져오기
+              size_t free_heap_size = esp_get_free_heap_size();
+
+              // 현재 사용 중인 힙 메모리 양 가져오기
+              size_t min_free_heap_size = esp_get_minimum_free_heap_size();
+#if HEAP_MONITOR
+              LOGI(TAG, "free_heap_size : %d", free_heap_size);
+              LOGI(TAG, "min_free_heap_size : %d", min_free_heap_size);
+#endif
             }
           }
 
@@ -521,7 +520,7 @@ void logic_timer_cb(lv_timer_t *timer) {
             if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
               judge_total_count++;
               judge_lack_count++;
-              push(&ui_data_ctx.stack_root, JUDGE_LACK);
+              push(&ui_data_ctx.stack_root, JUDGE_LACK, weight, judge_lack_count);
               lv_label_set_text_fmt(ui_Screen1_lack_Label, "부족 %d", judge_lack_count);
               lv_led_on(ui_led3);
               // lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_BLUE), LV_PART_MAIN);
@@ -529,12 +528,21 @@ void logic_timer_cb(lv_timer_t *timer) {
               //                   &ui_judge_color_screen_init);  //
               led_3_ctrl(1);
               lack_volume();
-              // Clear all judgments
+              //  Clear all judgments
               over_event_flag = true;
               nuder_event_flag = VOLUME_CONTIUNE ? true : false;
               normal_event_flag = true;
               lv_led_off(ui_led1);
               lv_led_off(ui_led2);
+              // 사용 가능한 힙 메모리 양 가져오기
+              size_t free_heap_size = esp_get_free_heap_size();
+
+              // 현재 사용 중인 힙 메모리 양 가져오기
+              size_t min_free_heap_size = esp_get_minimum_free_heap_size();
+#if HEAP_MONITOR
+              LOGI(TAG, "free_heap_size : %d", free_heap_size);
+              LOGI(TAG, "min_free_heap_size : %d", min_free_heap_size);
+#endif
             }
           }
 
@@ -543,7 +551,7 @@ void logic_timer_cb(lv_timer_t *timer) {
             if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
               judge_total_count++;
               judge_normal_count++;
-              push(&ui_data_ctx.stack_root, JUDGE_NORMAL);
+              push(&ui_data_ctx.stack_root, JUDGE_NORMAL, weight, judge_normal_count);
               lv_label_set_text_fmt(ui_Screen1_normal_Label, "정상 %d", judge_normal_count);
               lv_led_on(ui_led2);
               // lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_LIGHT_GREEN),
@@ -552,12 +560,21 @@ void logic_timer_cb(lv_timer_t *timer) {
               //                   &ui_judge_color_screen_init);  //
               led_2_ctrl(1);
               normal_volume();
-              // Clear all judgments
+              //  Clear all judgments
               over_event_flag = true;
               nuder_event_flag = true;
               normal_event_flag = VOLUME_CONTIUNE ? true : false;
               lv_led_off(ui_led1);
               lv_led_off(ui_led3);
+              // 사용 가능한 힙 메모리 양 가져오기
+              size_t free_heap_size = esp_get_free_heap_size();
+
+              // 현재 사용 중인 힙 메모리 양 가져오기
+              size_t min_free_heap_size = esp_get_minimum_free_heap_size();
+#if HEAP_MONITOR
+              LOGI(TAG, "free_heap_size : %d", free_heap_size);
+              LOGI(TAG, "min_free_heap_size : %d", min_free_heap_size);
+#endif
             }
           }
           /*zero state set display */
@@ -576,7 +593,6 @@ void logic_timer_cb(lv_timer_t *timer) {
               // lv_event_send(ui_judge_color_ScreenPanel, LV_EVENT_CANCEL, NULL);
             }
           }
-
         }  // if the set value is 0, it is not counted.
       }    // trash_fileter_flag.
       break;
@@ -600,6 +616,7 @@ void logic_timer_cb(lv_timer_t *timer) {
             lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "000");
           } else {
             lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, s_amount_count);
+            // lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "20");
           }
         }
       }
@@ -637,7 +654,7 @@ void ui_init(void) {
   ui_Screen1_screen_init();
   ui_Screen2_screen_init();
   ui_list_select_screen_init();
-  ui_judge_color_screen_init();
+  // ui_judge_color_screen_init();
   ui_time_set_screen_init();
   // ui_indicator_model_select_screen_init();
 
