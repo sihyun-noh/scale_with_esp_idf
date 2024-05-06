@@ -30,6 +30,7 @@
 #include "sysfile.h"
 #include "wifi_manager.h"
 #include "time_api.h"
+#include "file_copy.h"
 
 extern void stop_shell(void);
 

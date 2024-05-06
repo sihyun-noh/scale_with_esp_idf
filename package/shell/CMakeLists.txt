@@ -1,4 +1,4 @@
-set(req freertos log console nvs_flash syscfg syslog mqttc ping sysfile wifi)
+set(req freertos log console nvs_flash syscfg syslog mqttc ping sysfile wifi file_copy)
 
 set(srcs)
 set(includes)

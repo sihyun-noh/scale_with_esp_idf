@@ -1,7 +1,6 @@
 config BS_PLATFORM_MEASUREMENT_SYSTEM
   bool "weight_measurement"
   select LED_PACKAGE
-  select ESPNOW_PACKAGE
   select GPIO_PACKAGE
   select I2C_PACKAGE
   select ADC_PACKAGE
@@ -16,7 +15,6 @@ config BS_PLATFORM_MEASUREMENT_SYSTEM
   select MODBUS_PACKAGE
   select FILECOPY_PACKAGE
   select FILELOG_FEATURE
-  select USB_HOST_FEATURE
 
   help
     measurement system controls the gross weight judge device.

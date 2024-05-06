@@ -79,6 +79,10 @@ typedef struct {
   lv_obj_t *target2;
 } custom_msg_box_t;
 
+// SCREEN : ui_Version_Screen
+void ui_version_screen_init();
+extern lv_obj_t *ui_Version_Screen;
+
 // SCREEN : ui_indicator_model_select_screen
 void ui_indicator_model_select_screen_init(void);
 extern lv_obj_t *ui_Indicator_Model_Select_Screen;

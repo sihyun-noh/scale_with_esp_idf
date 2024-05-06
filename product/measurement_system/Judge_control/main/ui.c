@@ -4,6 +4,8 @@
 // Project name: ms_type
 
 #include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "esp_timer.h"
 #include "esp_system.h"
 #include "ui.h"
 #include <stdio.h>
@@ -26,6 +28,9 @@ extern void create_custom_msg_box(const char *msg_text, lv_obj_t *active_screen,
 static void ui_ListSelectScreen_List_Panel_PageBuilder();
 
 ///////////////////// VARIABLES ////////////////////
+// SCREEN : ui_Version_Screen
+lv_obj_t *ui_Version_Screen;
+
 // SCREEN: ui_indicator_model_select_screen
 lv_obj_t *ui_Indicator_Model_Select_Screen;
 lv_obj_t *indicator_list;
@@ -124,7 +129,8 @@ ui_internal_data_ctx_t ui_data_ctx;
 #error "LV_COLOR_16_SWAP should be 0 to match SquareLine Studio's settings"
 #endif
 
-static lv_style_t style_clock;
+// static lv_style_t style_clock;
+
 char timeString[9] = { 0 };
 char dateString[30] = { 0 };
 static char time_date_string[50] = { 0 };
@@ -145,12 +151,14 @@ static char saved_data[PROD_NUM][MAX_DATA_LEN] = {
 static int btn_num = PROD_NUM;
 static char string_empty[100];
 
-static char indicator_model_buf[20] = { 0 };
 indicator_model_t indicator_model;
 
 int (*weight_zero_command)();
 
 const char log_table_index[] = { "Time,Judge,Weight,Count\n" };
+
+lv_timer_t *logic_timer_handler;
+lv_timer_t *time_timer_handler;
 
 ///////////////////// ANIMATIONS ////////////////////
 
@@ -641,24 +649,35 @@ void time_timer_cb(lv_timer_t *timer) {
   OBJ_TEXT_SET_LABEL(ui_main_scr_Time_Date_Label, time_date_string);
 }
 
+void timer_callback(void *arg) {
+  LOGI(TAG, "start timer");
+  _ui_screen_change(&ui_Main_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_main_screen_init);
+}
+
 void ui_init(void) {
+  const esp_timer_create_args_t timer_args = { .callback = &timer_callback, .name = "change_screen" };
+  esp_timer_handle_t timer;
+  esp_timer_create(&timer_args, &timer);
+  const uint64_t interval_us = 3 * 1000000;  // 3sec
+
   LV_EVENT_GET_COMP_CHILD = lv_event_register_id();
 
   lv_disp_t *dispp = lv_disp_get_default();
   lv_theme_t *theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED),
                                             false, LV_FONT_DEFAULT);
   lv_disp_set_theme(dispp, theme);
+
+  ui_version_screen_init();
   ui_main_screen_init();
   ui_device_id_reg_screen_init();
   ui_mode_2_screen_init();
   ui_Screen1_screen_init();
   ui_Screen2_screen_init();
   ui_list_select_screen_init();
-  // ui_judge_color_screen_init();
   ui_time_set_screen_init();
   // ui_indicator_model_select_screen_init();
 
-  syscfg_get(CFG_DATA, "INDICATOR_MODEL", indicator_model_buf, sizeof(indicator_model_buf));
+  // 인디케이터 모델 확인
   if (strncmp(indicator_model_buf, "BX11", 4) == 0) {
     // zero command set
     weight_zero_command = baykon_bx11_zero_command;
@@ -674,6 +693,7 @@ void ui_init(void) {
   } else {
   }
 
+  // 485 to 232 port controler
   SET_MUX_CONTROL(CH_2_SET);
 
   ui_data_ctx.stack_root = NULL;
@@ -683,11 +703,15 @@ void ui_init(void) {
   ui_data_ctx.ptr[3] = &judge_normal_count;
   ui_data_ctx.ptr[4] = &judge_lack_count;
 
-  lv_style_init(&style_clock);
-  static uint32_t user_data = 10;
-  lv_timer_t *logic_timer = lv_timer_create(logic_timer_cb, 10, &user_data);
-  lv_timer_t *time_timer = lv_timer_create(time_timer_cb, 1000, user_data);
+  // lv_style_init(&style_clock);
+  if (strncmp(msc_mode_check, "MSC", 3) == 0) {
+    static uint32_t user_data = 10;
+    logic_timer_handler = lv_timer_create(logic_timer_cb, 10, &user_data);
+    time_timer_handler = lv_timer_create(time_timer_cb, 1000, user_data);
+    // Start timer
+    esp_timer_start_once(timer, interval_us);
+  }
 
-  // lv_disp_load_scr(ui_Screen1);
-  lv_disp_load_scr(ui_Main_Screen);
+  /// Show start screen
+  lv_disp_load_scr(ui_Version_Screen);
 }

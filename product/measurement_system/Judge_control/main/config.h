@@ -1,5 +1,16 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
+#include "version_config.h"
+/**
+ * @brief Version description
+ *
+ * Version description is refers to a description or explanation of a version of software or firmware.
+ * It typically includes details such as new features, improvements, bug fixes, and any other relevant
+ * information about the changes made in that version compared to previous versions.
+ *
+ * V.1.0 : first firmware version.
+ */
+#define VERSION FW_VERSION
 
 /******************************************
  * Board : ESP32S3
@@ -47,5 +58,9 @@
 #define SEN_DATA_PATH_2 "/spiffs/Sen2"
 #define SEN_DATA_PATH_3 "/spiffs/Sen3"
 #endif
+
+typedef enum {
+  MSC_OTA_UPDATE = 100,
+} config_event_id_t;
 
 #endif /* _CONFIG_H_ */

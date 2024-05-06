@@ -36,6 +36,9 @@ void led_1_ctrl(uint8_t ctrl);
 void led_2_ctrl(uint8_t ctrl);
 void led_3_ctrl(uint8_t ctrl);
 
+extern char msc_mode_check[5];
+extern char indicator_model_buf[20];
+
 #ifdef __cplusplus
 }
 #endif
