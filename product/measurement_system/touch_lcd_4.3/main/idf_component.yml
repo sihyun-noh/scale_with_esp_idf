@@ -1,6 +1,7 @@
 dependencies:
   espressif/usb_host_msc: "^1.1.2"
   espressif/esp-modbus: "^1.0.13"
-  espressif/mdns: "^1.2.3"
+  #espressif/mdns: "^1.2.3"
   espressif/asio: "^1.28.2"
+  qrcode: "^0.1.0"
   idf: ">=5.1"

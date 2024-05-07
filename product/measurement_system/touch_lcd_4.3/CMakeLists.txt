@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 
+#set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../../../package ${CMAKE_CURRENT_SOURCE_DIR}/../../../opensource/lvgl  ${CMAKE_CURRENT_SOURCE_DIR}/../../../opensource/esp_littlefs ${CMAKE_CURRENT_SOURCE_DIR}/../../../features ${CMAKE_CURRENT_SOURCE_DIR}/../../../arduino_platform/arduino)
 set(EXTRA_COMPONENT_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../../../package ${CMAKE_CURRENT_SOURCE_DIR}/../../../opensource/lvgl  ${CMAKE_CURRENT_SOURCE_DIR}/../../../opensource/esp_littlefs ${CMAKE_CURRENT_SOURCE_DIR}/../../../features)
 
 #configure_file(

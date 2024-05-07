@@ -20,51 +20,80 @@ menu "Smartfarm Product"
     rsource "../../../../features/*/Kconfig.in"
   endmenu
 
-menu "Configuration"
-    config EXAMPLE_DOUBLE_FB
-        bool "Use double Frame Buffer"
-        default "n"
-        help
-            Enable this option, driver will allocate two frame buffers.
+  menu "Configuration"
+      config EXAMPLE_DOUBLE_FB
+          bool "Use double Frame Buffer"
+          default "n"
+          help
+              Enable this option, driver will allocate two frame buffers.
 
-    config EXAMPLE_USE_BOUNCE_BUFFER
-        depends on !EXAMPLE_DOUBLE_FB
-        bool "Use bounce buffer"
-        help
-            Enable bounce buffer mode can achieve higher PCLK frequency at the cost of higher CPU consumption.
+      config EXAMPLE_USE_BOUNCE_BUFFER
+          depends on !EXAMPLE_DOUBLE_FB
+          bool "Use bounce buffer"
+          help
+              Enable bounce buffer mode can achieve higher PCLK frequency at the cost of higher CPU consumption.
 
-    config EXAMPLE_AVOID_TEAR_EFFECT_WITH_SEM
-        depends on !EXAMPLE_DOUBLE_FB
-        bool "Avoid tearing effect"
-        default "y"
-        help
-            Enable this option, the example will use a pair of semaphores to avoid the tearing effect.
-            Note, if the Double Frame Buffer is used, then we can also avoid the tearing effect without the lock.
-	
-	config I2C_MASTER_SCL
-        int "SCL GPIO Num"
-        default 6 if IDF_TARGET_ESP32C3 || IDF_TARGET_ESP32C2 || IDF_TARGET_ESP32H2
-        default 9 if IDF_TARGET_ESP32 || IDF_TARGET_ESP32S2 || IDF_TARGET_ESP32S3
-        help
-            GPIO number for I2C Master clock line.
+      config EXAMPLE_AVOID_TEAR_EFFECT_WITH_SEM
+          depends on !EXAMPLE_DOUBLE_FB
+          bool "Avoid tearing effect"
+          default "y"
+          help
+              Enable this option, the example will use a pair of semaphores to avoid the tearing effect.
+              Note, if the Double Frame Buffer is used, then we can also avoid the tearing effect without the lock.
+    
+    config I2C_MASTER_SCL
+          int "SCL GPIO Num"
+          default 6 if IDF_TARGET_ESP32C3 || IDF_TARGET_ESP32C2 || IDF_TARGET_ESP32H2
+          default 9 if IDF_TARGET_ESP32 || IDF_TARGET_ESP32S2 || IDF_TARGET_ESP32S3
+          help
+              GPIO number for I2C Master clock line.
 
-   config I2C_MASTER_SDA
-        int "SDA GPIO Num"
-        default 5 if IDF_TARGET_ESP32C3 || IDF_TARGET_ESP32C2 || IDF_TARGET_ESP32H2
-        default 8 if IDF_TARGET_ESP32 || IDF_TARGET_ESP32S2 || IDF_TARGET_ESP32S3
-        help
-            GPIO number for I2C Master data line.
+    config I2C_MASTER_SDA
+          int "SDA GPIO Num"
+          default 5 if IDF_TARGET_ESP32C3 || IDF_TARGET_ESP32C2 || IDF_TARGET_ESP32H2
+          default 8 if IDF_TARGET_ESP32 || IDF_TARGET_ESP32S2 || IDF_TARGET_ESP32S3
+          help
+              GPIO number for I2C Master data line.
 
-    config LCD_H_RES
-        int "LCD_H_RES value"
-        default 800  
+      config LCD_H_RES
+          int "LCD_H_RES value"
+          default 800  
+          help
+              rgb lcd value.
+      config LCD_V_RES
+          int "LCD_V_RES value"
+          default 480  
+          help
+              rgb lcd value.
+
+  endmenu
+
+  menu "DDP Configuration"
+    config ESP_DPP_LISTEN_CHANNEL_LIST
+        string "DPP Listen channel list"
+        default "6"
         help
-            rgb lcd value.
-    config LCD_V_RES
-        int "LCD_V_RES value"
-        default 480  
+            DPP Bootstrapping listen channels separated by commas.
+
+    config ESP_DPP_BOOTSTRAPPING_KEY
+        string "Bootstrapping key"
         help
-            rgb lcd value.
+            64 hex digits (or 32 bytes) of raw private key for DPP Bootstrapping.
+
+    config ESP_DPP_DEVICE_INFO
+        string "Additional Device Info"
+        help
+            Additional ancillary information to be included in QR Code.
+  endmenu
+
+  menu "Wifi Scan Configuration"
+
+    config EXAMPLE_SCAN_LIST_SIZE
+        int "Max size of scan list"
+        range 0 20
+        default 10
+        help
+            The size of array that will be used to retrieve the list of access points.
 
 endmenu
 endmenu
