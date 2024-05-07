@@ -128,7 +128,7 @@ void example_touchpad_read(lv_indev_drv_t *drv, lv_indev_data_t *data) {
     data->point.x = touchpad_x[0];
     data->point.y = touchpad_y[0];
     data->state = LV_INDEV_STATE_PR;
-    ESP_LOGI(TAG, "X=%u Y=%u", data->point.x, data->point.y);
+//    ESP_LOGI(TAG, "X=%u Y=%u", data->point.x, data->point.y);
   } else {
     data->state = LV_INDEV_STATE_REL;
   }
@@ -251,12 +251,21 @@ void lv_port_disp_init(void) {
             .h_res = EXAMPLE_LCD_H_RES,
             .v_res = EXAMPLE_LCD_V_RES,
             // The following parameters should refer to LCD spec
+            
             .hsync_back_porch = 30,
             .hsync_front_porch = 210,
             .hsync_pulse_width = 30,
             .vsync_back_porch = 4,
             .vsync_front_porch = 4,
             .vsync_pulse_width = 4,
+            /*
+            .hsync_back_porch = 40,
+            .hsync_front_porch = 20,
+            .hsync_pulse_width = 1,
+            .vsync_back_porch = 8,
+            .vsync_front_porch = 4,
+            .vsync_pulse_width = 1,
+            */
             .flags.pclk_active_neg = true,
         },
         .flags.fb_in_psram = true, // allocate frame buffer in PSRAM
@@ -287,12 +296,15 @@ void lv_port_disp_init(void) {
   lv_disp_draw_buf_init(&disp_buf, buf1, buf2, EXAMPLE_LCD_H_RES * EXAMPLE_LCD_V_RES);
 #else
   ESP_LOGI(TAG, "Allocate separate LVGL draw buffers from PSRAM");
-  buf1 = heap_caps_malloc(EXAMPLE_LCD_H_RES * 160 * sizeof(lv_color_t), MALLOC_CAP_DMA);
+  //buf1 = heap_caps_malloc(EXAMPLE_LCD_H_RES * 160 * sizeof(lv_color_t), MALLOC_CAP_DMA);
+  buf1 = heap_caps_malloc(EXAMPLE_LCD_H_RES * 100 * sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
   assert(buf1);
-  // buf2 = heap_caps_malloc(EXAMPLE_LCD_H_RES * 80 * sizeof(lv_color_t), MALLOC_CAP_DMA);
-  // assert(buf2);
-  // initialize LVGL draw buffers
-  lv_disp_draw_buf_init(&disp_buf, buf1, buf2, EXAMPLE_LCD_H_RES * 160);
+//  buf2 = heap_caps_malloc(EXAMPLE_LCD_H_RES * 80 * sizeof(lv_color_t), MALLOC_CAP_DMA);
+  buf2 = heap_caps_malloc(EXAMPLE_LCD_H_RES * 100 * sizeof(lv_color_t), MALLOC_CAP_SPIRAM);
+  assert(buf2);
+  //initialize LVGL draw buffers
+//  lv_disp_draw_buf_init(&disp_buf, buf1, buf2, EXAMPLE_LCD_H_RES * 160);
+ lv_disp_draw_buf_init(&disp_buf, buf1, buf2, EXAMPLE_LCD_H_RES * 100);
 #endif  // CONFIG_EXAMPLE_DOUBLE_FB
 
   ESP_LOGI(TAG, "Register display driver to LVGL");
