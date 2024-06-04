@@ -1,43 +1,55 @@
-#include "Arduino.h"
-// #include "RTClib.h"
-#include "Wire.h"
+#include <Arduino.h>
+#include "USB.h"
+#include "FirmwareMSC.h"
 
-const int i2c_sda = 1;
-const int i2c_scl = 2;
+FirmwareMSC MSC_Update;
 
-// RTC_DS3231 rtc;
-int status = 0;
+static void usbEventCallback(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
+  if (event_base == ARDUINO_USB_EVENTS) {
+    arduino_usb_event_data_t *data = (arduino_usb_event_data_t *)event_data;
+    switch (event_id) {
+      case ARDUINO_USB_STARTED_EVENT: Serial.println("USB PLUGGED"); break;
+      case ARDUINO_USB_STOPPED_EVENT: Serial.println("USB UNPLUGGED"); break;
+      case ARDUINO_USB_SUSPEND_EVENT:
+        Serial.printf("USB SUSPENDED: remote_wakeup_en: %u\n", data->suspend.remote_wakeup_en);
+        break;
+      case ARDUINO_USB_RESUME_EVENT: Serial.println("USB RESUMED"); break;
 
-void Scanner() {
-  Serial.println();
-  Serial.println("I2C scanner. Scanning ...");
-  byte count = 0;
+      default: break;
+    }
+  } else if (event_base == ARDUINO_FIRMWARE_MSC_EVENTS) {
+    arduino_firmware_msc_event_data_t *data = (arduino_firmware_msc_event_data_t *)event_data;
+    switch (event_id) {
+      case ARDUINO_FIRMWARE_MSC_START_EVENT: Serial.println("MSC Update Start"); break;
+      case ARDUINO_FIRMWARE_MSC_WRITE_EVENT:
+        // Serial.printf("MSC Update Write %u bytes at offset %u\n", data->write.size, data->write.offset);
+        Serial.print(".");
+        break;
+      case ARDUINO_FIRMWARE_MSC_END_EVENT: Serial.printf("\nMSC Update End: %u bytes\n", data->end.size); break;
+      case ARDUINO_FIRMWARE_MSC_ERROR_EVENT:
+        Serial.printf("MSC Update ERROR! Progress: %u bytes\n", data->error.size);
+        break;
+      case ARDUINO_FIRMWARE_MSC_POWER_EVENT:
+        Serial.printf("MSC Update Power: power: %u, start: %u, eject: %u", data->power.power_condition,
+                      data->power.start, data->power.load_eject);
+        break;
 
-  Wire.begin();
-  for (byte i = 8; i < 120; i++) {
-    Wire.beginTransmission(i);        // Begin I2C transmission Address (i)
-    if (Wire.endTransmission() == 0)  // Receive 0 = success (ACK response)
-    {
-      Serial.print("Found address: ");
-      Serial.print(i, DEC);
-      Serial.print(" (0x");
-      Serial.print(i, HEX);  // PCF8574 7 bit address
-      Serial.println(")");
-      count++;
+      default: break;
     }
   }
-  Serial.print("Found ");
-  Serial.print(count, DEC);  // numbers of devices
-  Serial.println(" device(s).");
 }
 
-extern "C" void app_main(void) {
+void setup() {
   Serial.begin(115200);
-  Serial.println("hello world");
-  Wire.begin(i2c_sda, i2c_scl);
-  // rtc.begin();
-  while (1) {
-    Scanner();
-    delay(1000);
-  }
+  Serial.setDebugOutput(true);
+
+  USB.onEvent(usbEventCallback);
+  MSC_Update.onEvent(usbEventCallback);
+  MSC_Update.begin();
+  USB.begin();
 }
+
+void loop() {
+  // put your main code here, to run repeatedly
+}
+#endif /* ARDUINO_USB_MODE */

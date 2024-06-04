@@ -17,12 +17,14 @@ struct StackNode {
   uint16_t count;
   float weight;
   judge_type_t type;
+  char prod_name[7];
+  char time_date[20];
   struct StackNode* next;
 };
 
-struct StackNode* newNode(judge_type_t type, float weight, uint16_t count);
+struct StackNode* newNode(judge_type_t type, float weight, uint16_t count, char* prod_name, char* time_date);
 int isEmpty(struct StackNode* root);
-void push(struct StackNode** root, judge_type_t type, float weight, uint16_t count);
+void push(struct StackNode** root, judge_type_t type, float weight, uint16_t count, char* prod_name, char* time_date);
 int pop(struct StackNode** root);
 int peek(struct StackNode* root);
 int create_stack();

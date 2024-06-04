@@ -7,6 +7,22 @@
 #include "log.h"
 
 static const char *TAG = "ui_mode_2_scr";
+static char *count_buf[] = { "  1", " 10", " 20", " 50", "100", "200" };
+static char **count_ptr = count_buf;
+
+void ui_mode_2_scr_Amount_Count_Set_Btn_e_handler(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *target_label = lv_event_get_user_data(e);
+  if (code == LV_EVENT_CLICKED) {
+    count_ptr++;
+    if (count_ptr >= count_buf + sizeof(count_buf) / sizeof(count_buf[0])) {
+      count_ptr = count_buf;
+    }
+    mode_2_compare_count = atoi(*count_ptr);
+    lv_label_set_text(target_label, *count_ptr);
+    LOGI(TAG, "mode 2 compare count : %d", mode_2_compare_count);
+  }
+}
 
 void ui_mode_2_scr_Panel1_Amount_Value_Label_e_handler(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
@@ -40,6 +56,7 @@ void ui_mode_2_scr_Tare_Point_Set_Btn_e_handler(lv_event_t *e) {
 void ui_mode_2_scr_Mode_Set_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_CLICKED) {
+    ui_data_ctx.curr_mode = MODE_MAIN;
     _ui_screen_change(&ui_Main_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_main_screen_init);
   }
 }
@@ -216,10 +233,10 @@ void ui_mode_2_screen_init(void) {
   lv_obj_t *ui_mode_2_scr_Mode_Set_Btn_Label = lv_label_create(ui_mode_2_scr_Mode_Set_Btn);
   lv_obj_set_width(ui_mode_2_scr_Mode_Set_Btn_Label, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_mode_2_scr_Mode_Set_Btn_Label, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_mode_2_scr_Mode_Set_Btn_Label, 0);
+  lv_obj_set_x(ui_mode_2_scr_Mode_Set_Btn_Label, -2);
   lv_obj_set_y(ui_mode_2_scr_Mode_Set_Btn_Label, 10);
   lv_label_set_text(ui_mode_2_scr_Mode_Set_Btn_Label, "모드");
-  lv_obj_set_style_text_font(ui_mode_2_scr_Mode_Set_Btn_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_font(ui_mode_2_scr_Mode_Set_Btn_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
   lv_obj_t *ui_mode_2_scr_Amount_Set_Btn = lv_btn_create(ui_mode_2_scr);  // zero set button
   lv_obj_set_width(ui_mode_2_scr_Amount_Set_Btn, 60);
@@ -236,10 +253,32 @@ void ui_mode_2_screen_init(void) {
   lv_obj_t *ui_mode_2_scr_Amount_Set_Btn_Label = lv_label_create(ui_mode_2_scr_Amount_Set_Btn);
   lv_obj_set_width(ui_mode_2_scr_Amount_Set_Btn_Label, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_mode_2_scr_Amount_Set_Btn_Label, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_mode_2_scr_Amount_Set_Btn_Label, 0);
+  lv_obj_set_x(ui_mode_2_scr_Amount_Set_Btn_Label, -2);
   lv_obj_set_y(ui_mode_2_scr_Amount_Set_Btn_Label, 10);
   lv_label_set_text(ui_mode_2_scr_Amount_Set_Btn_Label, "단위");
-  lv_obj_set_style_text_font(ui_mode_2_scr_Amount_Set_Btn_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_font(ui_mode_2_scr_Amount_Set_Btn_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_t *ui_mode_2_scr_Amount_Count_Set_Btn = lv_btn_create(ui_mode_2_scr);  // zero set button
+  lv_obj_set_width(ui_mode_2_scr_Amount_Count_Set_Btn, 60);
+  lv_obj_set_height(ui_mode_2_scr_Amount_Count_Set_Btn, 60);
+  lv_obj_set_x(ui_mode_2_scr_Amount_Count_Set_Btn, 50);
+  lv_obj_set_y(ui_mode_2_scr_Amount_Count_Set_Btn, -10);
+  lv_obj_set_align(ui_mode_2_scr_Amount_Count_Set_Btn, LV_ALIGN_BOTTOM_MID);
+  lv_obj_add_flag(ui_mode_2_scr_Amount_Count_Set_Btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_mode_2_scr_Amount_Count_Set_Btn, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_bg_color(ui_mode_2_scr_Amount_Count_Set_Btn, lv_color_hex(0x0E04F8),
+                            LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_t *ui_mode_2_scr_Amount_Count_Set_Btn_Label = lv_label_create(ui_mode_2_scr_Amount_Count_Set_Btn);
+  lv_obj_set_width(ui_mode_2_scr_Amount_Count_Set_Btn_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_mode_2_scr_Amount_Count_Set_Btn_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_mode_2_scr_Amount_Count_Set_Btn_Label, 0);
+  lv_obj_set_y(ui_mode_2_scr_Amount_Count_Set_Btn_Label, 10);
+  lv_label_set_text(ui_mode_2_scr_Amount_Count_Set_Btn_Label, " 1");
+  lv_obj_set_style_text_font(ui_mode_2_scr_Amount_Count_Set_Btn_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_add_event_cb(ui_mode_2_scr_Amount_Count_Set_Btn, ui_mode_2_scr_Amount_Count_Set_Btn_e_handler, LV_EVENT_ALL,
+                      ui_mode_2_scr_Amount_Count_Set_Btn_Label);
 
   // lv_obj_t *ui_mode_2_scr_Judge_Comfirm_Btn = lv_btn_create(ui_mode_2_scr);  // zero set button
   // lv_obj_set_width(ui_mode_2_scr_Judge_Comfirm_Btn, 50);

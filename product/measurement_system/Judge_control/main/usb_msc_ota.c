@@ -6,19 +6,24 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include "esp_err.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_check.h"
 #include "esp_msc_host.h"
 #include "esp_msc_ota.h"
+#include "event_ids.h"
+#include "freertos/portmacro.h"
 #include "log.h"
 #include "file_copy.h"
 #include "usb/usb_host.h"
+#include "main.h"
 
 #include "sysevent.h"
 #include "config.h"
 #include "ui.h"
+#include "widgets/lv_label.h"
 
 #define OTA_FILE_NAME "/usb/" CONFIG_MSC_OTA_BIN_NAME
 static const char *TAG = "usb_msc_ota";
@@ -30,13 +35,11 @@ extern void create_custom_msg_box(const char *msg_text, lv_obj_t *active_screen,
 lv_obj_t *ui_msc_ota_panel;
 lv_obj_t *ui_msc_ota_panel_top_Label;
 lv_obj_t *ui_msc_ota_panel_bottom_Label;
-bool update_flag = false;
 static char s_buf[100] = { 0 };
 static int ota_updata_percent = 0;
 
 void ui_msc_ota_update() {
-  update_flag = true;
-  ui_msc_ota_panel = lv_obj_create(lv_scr_act());
+  ui_msc_ota_panel = lv_obj_create(ui_Version_Screen);
   lv_obj_set_width(ui_msc_ota_panel, 300);
   lv_obj_set_height(ui_msc_ota_panel, 150);
   lv_obj_set_x(ui_msc_ota_panel, 0);
@@ -67,10 +70,21 @@ void ui_msc_ota_update() {
   lv_obj_set_style_text_font(ui_msc_ota_panel_bottom_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
+void ui_task() {
+  char event_buf[10] = { 0 };
+  ui_msc_ota_update();
+  while (1) {
+    sysevent_get(SYSEVENT_BASE, ACTUATOR_PORT1, event_buf, sizeof(event_buf));
+    lv_label_set_text_fmt(ui_msc_ota_panel_top_Label, "진행률:%s%%", event_buf);
+
+    vTaskDelay(1 / portTICK_PERIOD_MS);
+  }
+}
+
 void print_progressbar(float progress, float total) {
   const int bar_width = 50;
   int filled_width = progress * bar_width / total;
-  // char s_buf[10]={0};
+  char s_buf[10] = { 0 };
   printf("%s[", LOG_COLOR_I);
   for (int i = 0; i < bar_width; ++i) {
     if (i < filled_width) {
@@ -81,17 +95,18 @@ void print_progressbar(float progress, float total) {
   }
   printf(" ]%s%d%%\r", LOG_RESET_COLOR, filled_width * 100 / bar_width);
   ota_updata_percent = (int)filled_width * 100 / bar_width;
-  // sprintf(s_buf, "%d", filled_width * 100 / bar_width);
-  //  sysevent_set(MSC_OTA_UPDATE, s_buf);
+  snprintf(s_buf, sizeof(s_buf), "%d", ota_updata_percent);
+  sysevent_set(ACTUATOR_PORT1, s_buf);
 }
 
 static void msc_ota_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
+  UBaseType_t task_priority = tskIDLE_PRIORITY + 6;
   switch (event_id) {
     case ESP_MSC_OTA_START: ESP_LOGI(TAG, "ESP_MSC_OTA_START"); break;
     case ESP_MSC_OTA_READY_UPDATE:
       ESP_LOGI(TAG, "ESP_MSC_OTA_READY_UPDATE");
-      ui_msc_ota_update();
-      //_ui_flag_modify(ui_msc_ota_panel, LV_OBJ_FLAG_HIDDEN, _UI_MODIFY_FLAG_REMOVE);
+      syscfg_set(SYSCFG_I_USB_MODE, SYSCFG_N_USB_MODE, "MSC");
+      xTaskCreatePinnedToCore(ui_task, "ui_task", 4096, NULL, task_priority, NULL, 0);
       break;
     case ESP_MSC_OTA_WRITE_FLASH:
       float progress = *(float *)event_data;
@@ -109,12 +124,11 @@ static void msc_ota_event_handler(void *arg, esp_event_base_t event_base, int32_
       break;
     case ESP_MSC_OTA_FINISH:
       ESP_LOGI(TAG, "ESP_MSC_OTA_FINISH");
-      syscfg_set(CFG_DATA, "MSC_OTA_MODE", "MSC");
-      lv_label_set_text(ui_msc_ota_panel_bottom_Label, "USB를 제거 하세요");
+      syscfg_set(SYSCFG_I_USB_MODE, SYSCFG_N_USB_MODE, "MSC");
       break;
     case ESP_MSC_OTA_ABORT:
       ESP_LOGI(TAG, "ESP_MSC_OTA_ABORT");
-      syscfg_set(CFG_DATA, "MSC_OTA_MODE", "MSC");
+      syscfg_set(SYSCFG_I_USB_MODE, SYSCFG_N_USB_MODE, "MSC");
       break;
   }
 }
@@ -153,11 +167,6 @@ void usb_msc_ota_task(void) {
     if (ret != ESP_OK) {
       break;
       ESP_LOGE(TAG, "esp_msc_ota_perform: (%s)\n", esp_err_to_name(ret));
-    }
-    if (update_flag) {
-      // sysevent_get(SYSEVENT_BASE, MSC_OTA_UPDATE, s_buf, sizeof(s_buf));
-      sprintf(s_buf, "UADATE 진행률 : %d%%", ota_updata_percent);
-      lv_label_set_text(ui_msc_ota_panel_top_Label, s_buf);
     }
   } while (!esp_msc_ota_is_complete_data_received(msc_ota_handle));
 

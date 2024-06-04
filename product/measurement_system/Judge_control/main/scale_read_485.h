@@ -5,6 +5,13 @@
 extern "C" {
 #endif
 
+typedef struct {
+  unsigned char *data;
+  int size;
+  int weight_pos;
+  int weight_len;
+} printer_data_t;
+
 typedef enum {
   STATE_NONE = -1,
   STATE_OK,
@@ -18,8 +25,10 @@ typedef enum {
 
 typedef enum {
   MODEL_NONE = 0x00,
-  MODEL_CAD_WTM500,
+  MODEL_CAS_WTM500,
   MODEL_BAYKON_BX11,
+  MODEL_CAS_NT301A,
+  MODEL_CAS_EC_D_SERIES,
 } indicator_model_t;
 
 typedef enum {
@@ -54,6 +63,14 @@ typedef struct cas_22byte_format {
   char unit[2];
 } cas_22byte_format_t;
 
+typedef struct {
+  char states[2];
+  char measurement_states[2];
+  char lamp_states[1];
+  char data[8];
+  char unit[2];
+} cas_nt301a_data_format2_t;
+
 typedef struct Common_data {
   indicator_model_t model;
   decimal_point_t DP;
@@ -68,6 +85,22 @@ typedef struct Common_data {
  * @return int
  */
 int weight_uart_485_init(void);
+
+/**
+ * @brief
+ *
+ * @param common_data
+ * @return int
+ */
+
+int indicator_EC_D_Serise_data(Common_data_t *common_data);
+/**
+ * @brief
+ *
+ * @param common_data
+ * @return int
+ */
+int indicator_CAS_NT301A_data(Common_data_t *common_data);
 
 /**
  * @brief
@@ -101,6 +134,11 @@ int indicator_BX11_data(Common_data_t *common_data);
  */
 int baykon_bx11_zero_command(void);
 
+/**
+ * @brief weight printf
+ *
+ */
+void weight_print_msg(char *s_weight);
 #ifdef __cplusplus
 }
 #endif

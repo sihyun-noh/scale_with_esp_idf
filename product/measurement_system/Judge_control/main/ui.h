@@ -9,7 +9,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "esp_timer.h"
+#include "esp_system.h"
 #include "lvgl/lvgl.h"
 
 #include "ui_helpers.h"
@@ -35,8 +38,21 @@ extern int (*weight_zero_command)(void);
 extern char const log_table_index[];
 
 typedef enum {
+  NOTI_NONE,
+  NOTI_INDICATOR_NOT_CONN,
+  NOTI_HEAP_SIZE,
+} ui_noti_event_t;
+
+typedef struct ui_noti_ctx {
+  lv_obj_t *curr_screen;
+  ui_noti_event_t event;
+  void (*handler)(void *);
+  char *data;
+} ui_noti_ctx_t;
+
+typedef enum {
   NONE_E = 0x00,
-  AMOUNT_VAL_E = 0x01,
+  AMOUNT_VAL_E,
   JUDGE_COMFIRM_E,
 } ui_event_ids_t;
 
@@ -50,6 +66,7 @@ typedef enum {
 typedef enum {
   MODE_1 = 0x01,
   MODE_2,
+  MODE_MAIN,
 } mode_select_t;
 
 typedef struct screen_mode {
@@ -70,7 +87,7 @@ typedef struct textareas {
   lv_obj_t *ta1;
   lv_obj_t *ta2;
   lv_obj_t *ta3;
-  // lv_obj_t *ta4;
+  lv_obj_t *ta4;
   // lv_obj_t *ta5;
 } textareas_t;
 
@@ -176,16 +193,19 @@ extern lv_obj_t *ui_ListSelectScreen_Delete_Btn;
 extern lv_obj_t *ui_ListSelectScreen_Delete_Btn_Label;
 
 extern char s_tare_set_value[10];
-
 extern float upper_weight_value;
 extern float lower_weight_value;
 extern int prod_num_value;
 extern float renge_weight_value;
 extern float amount_weight_value;
+extern int mode_2_compare_count;
+extern char buf_prod_name[10];
+extern bool printer_state;
 
 extern screen_mode_t curr_mode;
 extern ui_event_ids_t ui_event;
 extern ui_internal_data_ctx_t ui_data_ctx;
+extern ui_noti_ctx_t ui_noti;
 
 LV_FONT_DECLARE(ui_font_Display16);
 LV_FONT_DECLARE(ui_font_Display24);

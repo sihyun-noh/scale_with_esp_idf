@@ -1,3 +1,4 @@
+
 #include "../ui.h"
 #include "log.h"
 
@@ -22,16 +23,15 @@ void ui_MainScreen_Btn1_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   if (event_code == LV_EVENT_CLICKED) {
-    ui_data_ctx.curr_mode = MODE_1;
-    if (device_id_check_flag) {
-      _ui_screen_change(&ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen1_screen_init);
+    if (ui_noti.event == NOTI_INDICATOR_NOT_CONN) {
+      create_custom_msg_box("연결 케이블을 확인하세요.", ui_Main_Screen, NULL, LV_EVENT_CLICKED);
     } else {
-      create_custom_msg_box("장치 ID를 등록하세요!", ui_Main_Screen, NULL, LV_EVENT_CLICKED);
-
-      // static const char *btns[] = { "Close", "" };
-      // lv_obj_t *mbox_device_id_check = lv_msgbox_create(NULL, "Oops!", "Plase your register device ID ", btns, true);
-      // lv_obj_add_event_cb(mbox_device_id_check, mbox_device_id_check_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
-      // lv_obj_center(mbox_device_id_check);
+      ui_data_ctx.curr_mode = MODE_1;
+      if (device_id_check_flag) {
+        _ui_screen_change(&ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen1_screen_init);
+      } else {
+        create_custom_msg_box("장치 ID를 등록하세요!", ui_Main_Screen, NULL, LV_EVENT_CLICKED);
+      }
     }
   }
 }
@@ -40,8 +40,18 @@ void ui_MainScreen_Btn2_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
   if (event_code == LV_EVENT_CLICKED) {
-    ui_data_ctx.curr_mode = MODE_2;
-    _ui_screen_change(&ui_mode_2_scr, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_mode_2_screen_init);
+    // ui_data_ctx.curr_mode = MODE_2;
+    // vTaskDelay(1000 / portTICK_PERIOD_MS);
+    if (ui_noti.event == NOTI_INDICATOR_NOT_CONN) {
+      create_custom_msg_box("연결 케이블을 확인하세요.", ui_Main_Screen, NULL, LV_EVENT_CLICKED);
+    } else {
+      ui_data_ctx.curr_mode = MODE_2;
+      if (device_id_check_flag) {
+        _ui_screen_change(&ui_mode_2_scr, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_mode_2_screen_init);
+      } else {
+        create_custom_msg_box("장치 ID를 등록하세요!", ui_Main_Screen, NULL, LV_EVENT_CLICKED);
+      }
+    }
   }
 }
 
@@ -236,6 +246,6 @@ void ui_main_screen_init(void) {
   lv_obj_set_height(ui_main_scr_Indicate_Vender_Set_Btn_Label, LV_SIZE_CONTENT);  /// 1
   lv_obj_set_x(ui_main_scr_Indicate_Vender_Set_Btn_Label, -3);
   lv_obj_set_y(ui_main_scr_Indicate_Vender_Set_Btn_Label, 1);
-  lv_label_set_text(ui_main_scr_Indicate_Vender_Set_Btn_Label, "저울설정");
+  lv_label_set_text(ui_main_scr_Indicate_Vender_Set_Btn_Label, "설정");
   lv_obj_set_style_text_font(ui_main_scr_Indicate_Vender_Set_Btn_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 }

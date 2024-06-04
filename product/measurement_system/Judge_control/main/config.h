@@ -34,6 +34,7 @@
 
 #define PROD_NUM 30
 #define MAX_DATA_LEN 80
+#define PROD_NAME "prod_name"
 
 #if (CONFIG_MS_RS485_MODBUS)
 #define MB_RX_PIN 1

@@ -22,7 +22,7 @@ void Msg_Box_No_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
   // custom_msg_box_t *user_data_obj = lv_event_get_user_data(e);
   if (code == LV_EVENT_CLICKED) {
-    LOGI(TAG, "click btn Msg_Box_No_Btn_e_handler!!");
+    // LOGI(TAG, "click btn Msg_Box_No_Btn_e_handler!!");
     memory_allocation_manger();
   }
 }
@@ -82,11 +82,12 @@ void create_custom_msg_box(const char *msg_text, lv_obj_t *active_screen, void (
     lv_obj_set_width(Msg_Box_Yes_Btn, 80);
     lv_obj_set_height(Msg_Box_Yes_Btn, 40);
     lv_obj_set_x(Msg_Box_Yes_Btn, -50);
-    lv_obj_set_y(Msg_Box_Yes_Btn, 35);
+    lv_obj_set_y(Msg_Box_Yes_Btn, 43);
     lv_obj_set_align(Msg_Box_Yes_Btn, LV_ALIGN_CENTER);
     lv_obj_add_flag(Msg_Box_Yes_Btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
     lv_obj_clear_flag(Msg_Box_Yes_Btn, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
     // lv_obj_add_event_cb(Msg_Box_Yes_Btn, Msg_Box_Yes_Btn_e_handler, LV_EVENT_CLICKED, user_data_obj);
+
     lv_obj_add_event_cb(Msg_Box_Yes_Btn, event_handler, event, NULL);
 
     lv_obj_t *Msg_Box_Yes_Btn_Label = lv_label_create(Msg_Box_Yes_Btn);
@@ -101,7 +102,7 @@ void create_custom_msg_box(const char *msg_text, lv_obj_t *active_screen, void (
     lv_obj_set_width(Msg_Box_No_Btn, 80);
     lv_obj_set_height(Msg_Box_No_Btn, 40);
     lv_obj_set_x(Msg_Box_No_Btn, 50);
-    lv_obj_set_y(Msg_Box_No_Btn, 35);
+    lv_obj_set_y(Msg_Box_No_Btn, 43);
     lv_obj_set_align(Msg_Box_No_Btn, LV_ALIGN_CENTER);
     lv_obj_add_flag(Msg_Box_No_Btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
     lv_obj_clear_flag(Msg_Box_No_Btn, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
@@ -120,7 +121,7 @@ void create_custom_msg_box(const char *msg_text, lv_obj_t *active_screen, void (
     lv_obj_set_width(Msg_Box_No_Btn, 80);
     lv_obj_set_height(Msg_Box_No_Btn, 40);
     lv_obj_set_x(Msg_Box_No_Btn, 50);
-    lv_obj_set_y(Msg_Box_No_Btn, 35);
+    lv_obj_set_y(Msg_Box_No_Btn, 43);
     lv_obj_set_align(Msg_Box_No_Btn, LV_ALIGN_CENTER);
     lv_obj_add_flag(Msg_Box_No_Btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
     lv_obj_clear_flag(Msg_Box_No_Btn, LV_OBJ_FLAG_SCROLLABLE);     /// Flags

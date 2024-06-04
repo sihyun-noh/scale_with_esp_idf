@@ -3,12 +3,9 @@
 // LVGL version: 8.3.6
 // Project name: ms_type
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "esp_timer.h"
-#include "esp_system.h"
-#include "ui.h"
 #include <stdio.h>
+
+#include "ui.h"
 #include "ui_helpers.h"
 #include "scale_read_485.h"
 #include "log.h"
@@ -18,10 +15,13 @@
 #include "config.h"
 #include "time.h"
 #include "main.h"
+#include "file_manager.h"
 
 #define HEAP_MONITOR 1
+#define SAVE_ALAM_COUNT 50
 static const char *TAG = "UI_LVGL";
 
+extern void memory_allocation_manger();
 extern void create_custom_msg_box(const char *msg_text, lv_obj_t *active_screen, void (*event_handler)(lv_event_t *),
                                   lv_event_code_t event);
 
@@ -112,6 +112,9 @@ float lower_weight_value = 0.0;
 int prod_num_value = 0;
 float renge_weight_value = 0.0;
 float amount_weight_value = 0.0;
+int mode_2_compare_count = 0;
+char buf_prod_name[10] = { 0 };
+bool printer_state = true;
 
 int judge_total_count = 0;
 int judge_over_count = 0;
@@ -120,6 +123,7 @@ int judge_lack_count = 0;
 screen_mode_t curr_mode;
 ui_event_ids_t ui_event;
 ui_internal_data_ctx_t ui_data_ctx;
+ui_noti_ctx_t ui_noti;
 
 ///////////////////// TEST LVGL SETTINGS ////////////////////
 #if LV_COLOR_DEPTH != 16
@@ -145,20 +149,28 @@ bool usb_copy_success_flag = true;
 bool weight_tare_flag = false;
 
 static lv_obj_t *s_btn[PROD_NUM];
-static char saved_data[PROD_NUM][MAX_DATA_LEN] = {
-  0,
-};
+
+typedef struct reg_cfg_data {
+  char saved_data[PROD_NUM][MAX_DATA_LEN];
+  char saved_data_prodName[PROD_NUM][MAX_DATA_LEN];
+} reg_cfg_data_t;
+
+reg_cfg_data_t reg_data;
+
 static int btn_num = PROD_NUM;
 static char string_empty[100];
+static char string_empty_prodName[10];
 
 indicator_model_t indicator_model;
 
 int (*weight_zero_command)();
 
-const char log_table_index[] = { "Time,Judge,Weight,Count\n" };
+const char log_table_index[] = { "Time,P-Name,Judge,Weight,Count\n" };
 
 lv_timer_t *logic_timer_handler;
 lv_timer_t *time_timer_handler;
+
+file_data_ctx_t file_data_info;
 
 ///////////////////// ANIMATIONS ////////////////////
 
@@ -180,9 +192,10 @@ void ui_event_Screen1_List_Select_Button(lv_event_t *e) {
 
 static void ui_ListSelectScreen_List_Panel_PageBuilder() {
   uint32_t i = 0;
-  for (i = 0; i < btn_num; i++) {
-    char key[10] = { 0 };
+  char key[10] = { 0 };
+  char key_prodName[50] = { 0 };
 
+  for (i = 0; i < btn_num; i++) {
     if (s_btn[i]) {
       LOGI(TAG, "obj delete = [%p]", s_btn[i]);
       lv_obj_remove_event_cb(s_btn[i], ui_ListSelectScreen_List_Panel_Btn_e_handler);
@@ -190,31 +203,42 @@ static void ui_ListSelectScreen_List_Panel_PageBuilder() {
       s_btn[i] = NULL;
     }
 
-    memset(&saved_data[i], 0x00, sizeof(saved_data[i]));
+    memset(key, 0x00, sizeof(key));
+    memset(&reg_data.saved_data[i], 0x00, sizeof(reg_data.saved_data[i]));
     snprintf(key, sizeof(key), "Prod%02ld", i);
-    syscfg_get(CFG_DATA, key, saved_data[i], sizeof(saved_data[i]));
+    syscfg_get(CFG_DATA, key, reg_data.saved_data[i], sizeof(reg_data.saved_data[i]));
+
+    memset(key_prodName, 0x00, sizeof(key_prodName));
+    memset(&reg_data.saved_data_prodName[i], 0x00, sizeof(reg_data.saved_data_prodName[i]));
+    snprintf(key_prodName, sizeof(key_prodName), "%s_%02ld", PROD_NAME, i);
+    syscfg_get(CFG_DATA, key_prodName, reg_data.saved_data_prodName[i], sizeof(reg_data.saved_data_prodName[i]));
 
     s_btn[i] = lv_btn_create(ui_ListSelectScreen_List_Panel);
 
     if (s_btn[i]) {
       LOGI(TAG, "btn[%d] = %p", i, s_btn[i]);
-      LOGI(TAG, "saved_data = %s", saved_data[i]);
+      LOGI(TAG, "saved_data = %s", reg_data.saved_data[i]);
+      LOGI(TAG, "saved_data_prodName = %s", reg_data.saved_data_prodName[i]);
 
-      lv_obj_set_size(s_btn[i], 120, 70);
+      lv_obj_set_size(s_btn[i], 120, 90);
       lv_obj_set_style_bg_color(s_btn[i], lv_color_hex(0x232D3F), LV_PART_MAIN | LV_STATE_DEFAULT);
 
-      lv_obj_add_event_cb(s_btn[i], ui_ListSelectScreen_List_Panel_Btn_e_handler, LV_EVENT_ALL, saved_data[i]);
+      lv_obj_add_event_cb(s_btn[i], ui_ListSelectScreen_List_Panel_Btn_e_handler, LV_EVENT_ALL, &reg_data);
       lv_obj_t *label = lv_label_create(s_btn[i]);
 
-      if (strlen(saved_data[i])) {  // Check registered values.
+      if (strlen(reg_data.saved_data[i]) && strlen(reg_data.saved_data_prodName[i])) {  // Check registered values.
         // data format : 01.upper:10.000,lower:10.000
-        char *ptr = saved_data[i];
+        char *ptr = reg_data.saved_data[i];
+        char *ptr_prodName = reg_data.saved_data_prodName[i];
+
         if (i == 3) {
-          lv_label_set_text_fmt(label, "품번 %.2s\n상한:%.6s\n하한:%.6s", ptr, ptr + 9, ptr + 22);
+          lv_label_set_text_fmt(label, "품명 %s \n품번 %.2s\n상한:%.6s\n하한:%.6s", ptr_prodName, ptr, ptr + 9,
+                                ptr + 22);
           lv_obj_set_style_text_font(label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
           lv_obj_clear_flag(s_btn[i], LV_OBJ_FLAG_SNAPABLE);
         } else {
-          lv_label_set_text_fmt(label, "품번 %.2s\n상한:%.6s\n하한:%.6s", ptr, ptr + 9, ptr + 22);
+          lv_label_set_text_fmt(label, "품명 %s \n품번 %.2s\n상한:%.6s\n하한:%.6s", ptr_prodName, ptr, ptr + 9,
+                                ptr + 22);
           lv_obj_set_style_text_font(label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
         lv_obj_center(label);
@@ -231,13 +255,15 @@ static void ui_ListSelectScreen_List_Panel_PageBuilder() {
 void ui_ListSelectScreen_List_Panel_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   lv_obj_t *target = lv_event_get_target(e);
-  char *value = lv_event_get_user_data(e);
+  reg_cfg_data_t *value = lv_event_get_user_data(e);
   char data[MAX_DATA_LEN] = { 0 };
   char s_empty[80] = { 0 };
+  int n = 0;
   if (event_code == LV_EVENT_CLICKED) {
     for (int i = 0; i < btn_num; i++) {
       if (s_btn[i] == target) {
         LOGI(TAG, "btn[%d] = %p, target = %p", i, s_btn[i], target);
+        n = i;
         lv_obj_set_style_bg_color(target, lv_palette_main(LV_PALETTE_RED), 0);  // color change of selected btn
         // break;
       } else {
@@ -245,8 +271,9 @@ void ui_ListSelectScreen_List_Panel_Btn_e_handler(lv_event_t *e) {
       }
     }
     if (value) {
-      snprintf(data, sizeof(data), "%s", value);
-      LOGI(TAG, "selected btn : %s", value);
+      snprintf(data, sizeof(data), "%s", value->saved_data[n]);
+      LOGI(TAG, "selected btn : %s", value->saved_data[n]);
+      LOGI(TAG, "selected i : %d", n);
     }
     if (strlen(data)) {
       snprintf(s_empty, sizeof(s_empty), "품번:%.2s, 상한:%.6s, 하한:%.6s", &data[0], &data[9], &data[22]);
@@ -255,23 +282,32 @@ void ui_ListSelectScreen_List_Panel_Btn_e_handler(lv_event_t *e) {
     lv_obj_set_style_text_font(ui_ListSelectScreen_Comfirm_Label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
 
     memset(string_empty, 0x00, sizeof(string_empty));
-    memcpy(string_empty, data, strlen(value));
-    LOGI(TAG, "Comfirm_Label_data : %s", data);
+    memset(string_empty_prodName, 0x00, sizeof(string_empty_prodName));
+    memcpy(string_empty, value->saved_data[n], strlen(value->saved_data[n]));
+    memcpy(string_empty_prodName, value->saved_data_prodName[n], strlen(value->saved_data_prodName[n]));
+    LOGI(TAG, "Comfirm_Label_data set judge data: %s", string_empty);
+    LOGI(TAG, "Comfirm_Label_data set prodName : %s", string_empty_prodName);
   }
 }
-
+// 2024년 5월 13일
 void ui_ListSelectScreen_Delete_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   // char *value = lv_event_get_user_data(e);
   char s_key[10] = { 0 };
+  char key_prodName[50] = { 0 };
   if (event_code == LV_EVENT_CLICKED) {
-    LOGI(TAG, "Delete value : %s", string_empty);
-    if (strlen(string_empty)) {
+    LOGI(TAG, "Delete string_empty_judge data : %s", string_empty);
+    LOGI(TAG, "Delete string_empty_prodName : %s", string_empty_prodName);
+    if (strlen(string_empty) && strlen(string_empty_prodName)) {
       snprintf(s_key, sizeof(s_key), "Prod%.2s", string_empty);
       syscfg_unset(CFG_DATA, s_key);
       memset(string_empty, 0x00, sizeof(string_empty));
+
+      snprintf(key_prodName, sizeof(key_prodName), "%s_%.2s", PROD_NAME, string_empty);  // need to prod num
+      syscfg_unset(CFG_DATA, key_prodName);
+      memset(string_empty_prodName, 0x00, sizeof(string_empty_prodName));
     }
-    _ui_screen_change(&ui_list_select, LV_SCR_LOAD_ANIM_FADE_ON, 300, 0, &ui_list_select_screen_init);
+    _ui_screen_change(&ui_list_select, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_list_select_screen_init);
     ui_ListSelectScreen_List_Panel_PageBuilder();
   }
 }
@@ -281,24 +317,31 @@ void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e) {
   char s_upper_weight_value[10] = { 0 };
   char s_lower_weight_value[10] = { 0 };
   char s_prod_num_value[10] = { 0 };
+  char s_prod_name[10] = { 0 };
   if (event_code == LV_EVENT_CLICKED) {
     /*Todo*/
     // set to selected value loop
     LOGI(TAG, "Set value : %s", string_empty);
     if (strlen(string_empty)) {
-      // data format : 01.upper:10.000,lower:10.000
+      // data format : 01.upper:10.000,lower:10.000,prod_name
       snprintf(s_upper_weight_value, sizeof(s_upper_weight_value), "%.6s", string_empty + 9);
       snprintf(s_lower_weight_value, sizeof(s_lower_weight_value), "%.6s", string_empty + 22);
       snprintf(s_prod_num_value, sizeof(s_prod_num_value), "%.2s", string_empty);
+      snprintf(s_prod_name, sizeof(s_prod_name), "%s", string_empty_prodName);
       LOGI(TAG, "s_upper_weight_value : %s", s_upper_weight_value);
       LOGI(TAG, "s_lower_weight_value : %s", s_lower_weight_value);
       LOGI(TAG, "s_prod_num_value : %s", s_prod_num_value);
+      LOGI(TAG, "s_prod_name : %s", s_prod_name);
 
       memset(string_empty, 0x00, sizeof(string_empty));
 
       sscanf(s_upper_weight_value, "%f", &upper_weight_value);
       sscanf(s_lower_weight_value, "%f", &lower_weight_value);
       prod_num_value = atoi(s_prod_num_value);
+
+      memset(buf_prod_name, 0x00, sizeof(buf_prod_name));
+      memcpy(buf_prod_name, s_prod_name, strlen(s_prod_name));
+      // buf_prod_name = s_prod_name;
 
       lv_event_send(ui_Screen1_Upper_Value_Label, LV_EVENT_READY, NULL);
       lv_event_send(ui_Screen1_Lower_Value_Label, LV_EVENT_READY, NULL);
@@ -311,6 +354,45 @@ void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e) {
   }
 }
 
+void mode2_judge_countor(int curr_count, int compare_count, Common_data_t *indicator_data) {
+  if (indicator_data->event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT &&
+      indicator_data->event[STATE_ZERO_EVENT] != STATE_ZERO_EVENT) {
+    if (curr_count > compare_count && !over_event_flag) {
+      if (strncmp(speaker_set, "ON", 2) == 0)
+        over_volume();
+      over_event_flag = VOLUME_CONTIUNE ? true : false;
+      nuder_event_flag = true;
+      normal_event_flag = true;
+    }
+    if (curr_count < compare_count && !nuder_event_flag) {
+      if (strncmp(speaker_set, "ON", 2) == 0)
+        lack_volume();
+      over_event_flag = true;
+      nuder_event_flag = VOLUME_CONTIUNE ? true : false;
+      normal_event_flag = true;
+    }
+    if (curr_count == compare_count && !normal_event_flag) {
+      if (strncmp(speaker_set, "ON", 2) == 0)
+        normal_volume();
+      over_event_flag = true;
+      nuder_event_flag = true;
+      normal_event_flag = VOLUME_CONTIUNE ? true : false;
+    }
+  }
+  /*zero state set display */
+
+  if (indicator_data->event[STATE_ZERO_EVENT] == STATE_ZERO_EVENT) {
+    if (over_event_flag && nuder_event_flag && normal_event_flag) {
+      over_event_flag = false;
+      nuder_event_flag = false;
+      normal_event_flag = false;
+
+      // lv_event_send(ui_judge_color_ScreenPanel, LV_EVENT_CANCEL, NULL);
+    }
+  }
+  return;
+}
+
 void logic_timer_cb(lv_timer_t *timer) {
   char s_weight[20] = { 0 };
   char s_amount_count[20] = { 0 };
@@ -319,27 +401,55 @@ void logic_timer_cb(lv_timer_t *timer) {
   float weight = 0;
   float tare_weight = 0.0;
   bool trash_fileter_flag = false;
+  int res = 0;
+  float minimum_num = 0.0;
+
+  // 사용 가능한 힙 메모리 양 가져오기
+  size_t free_heap_size = 0;
+  // 현재 사용 중인 힙 메모리 양 가져오기
+  size_t min_free_heap_size = 0;
   Common_data_t indicator_data = { 0 };
 
   switch (indicator_model) {
     case MODEL_NONE: LOGE(TAG, "No target indicator model!"); break;
-
-    case MODEL_CAD_WTM500:
+    case MODEL_CAS_EC_D_SERIES:
       memset(&indicator_data, 0x00, sizeof(indicator_data));
-      indicator_WTM_500_data(&indicator_data);
-      // LOGE(TAG, "indicator data : %d", atoi(indicator_data.weight_data));
-      //   taking float value using %f format specifier for
+      res = indicator_EC_D_Serise_data(&indicator_data);
+      ui_noti.event = (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
+      // LOGE(TAG, "indicator data_NT301A : %d", atoi(indicator_data.weight_data));
+      //    taking float value using %f format specifier for
       sscanf(indicator_data.weight_data, "%f", &weight);
       snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
+      // MODE_2
+      snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+      break;
+    case MODEL_CAS_NT301A:
+      memset(&indicator_data, 0x00, sizeof(indicator_data));
+
+      res = indicator_CAS_NT301A_data(&indicator_data);
+      ui_noti.event = (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
+      // LOGE(TAG, "indicator data_NT301A : %d", atoi(indicator_data.weight_data));
+      //    taking float value using %f format specifier for
+      sscanf(indicator_data.weight_data, "%f", &weight);
+      snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
+      // MODE_2
+      snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+      break;
+    case MODEL_CAS_WTM500:
+      memset(&indicator_data, 0x00, sizeof(indicator_data));
+      res = indicator_WTM_500_data(&indicator_data);
+      ui_noti.event = (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
+      // LOGE(TAG, "indicator data WTM_500 : %d", atoi(indicator_data.weight_data));
+      //    taking float value using %f format specifier for
+      sscanf(indicator_data.weight_data, "%f", &weight);
+      snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
+      // MODE_2
       snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
       break;
     case MODEL_BAYKON_BX11:
       memset(&indicator_data, 0x00, sizeof(indicator_data));
-      indicator_BX11_data(&indicator_data);
-      // LOGE(TAG, "indicator data : %d", atoi(indicator_data.weight_data));
-      //  LOGI(TAG, "heap size : %d", esp_get_free_heap_size());
-      //  LOGI(TAG, "heap size of internal %d", esp_get_free_internal_heap_size());
-
+      res = indicator_BX11_data(&indicator_data);
+      ui_noti.event = (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
       switch (indicator_data.DP) {
         case DP_100:
           // weight = (float)(atoi(indicator_data.weight_data) * 100);
@@ -350,43 +460,49 @@ void logic_timer_cb(lv_timer_t *timer) {
         case DP_10:
           weight = (float)(atoi(indicator_data.weight_data) * 10);
           snprintf(s_weight, sizeof(s_weight), "%d", (int)weight);
+          // MODE_2
           snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
           break;
         case DP_1:
           weight = (float)(atoi(indicator_data.weight_data) * 1);
           snprintf(s_weight, sizeof(s_weight), "%d", (int)weight);
+          // MODE_2
           snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
           break;
         case DP_0_1:
           weight = (float)(atoi(indicator_data.weight_data) * 0.1);
           snprintf(s_weight, sizeof(s_weight), "%.1f", weight);
+          // MODE_2
           snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
           break;
         case DP_0_01:
           weight = (float)(atoi(indicator_data.weight_data) * 0.01);
           snprintf(s_weight, sizeof(s_weight), "%.2f", weight);
+          // MODE_2
           snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
           break;
         case DP_0_001:
           weight = (float)(atoi(indicator_data.weight_data) * 0.001);
           snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
+          // MODE_2
           snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
           break;
         case DP_0_0001:
           weight = (float)(atoi(indicator_data.weight_data) * 0.0001);
           snprintf(s_weight, sizeof(s_weight), "%.4f", weight);
+          // MODE_2
           snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
           break;
         case DP_0_00001:
           weight = (float)(atoi(indicator_data.weight_data) * 0.00001);
           snprintf(s_weight, sizeof(s_weight), "%.5f", weight);
+          // MODE_2
           snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
           break;
         default: break;
       }
     default: break;
   }
-
   snprintf(s_judge_total_count, sizeof(s_judge_total_count), "%03d", judge_total_count);
 
   /* This is a function that changes the color of the notification button to green
@@ -403,7 +519,6 @@ void logic_timer_cb(lv_timer_t *timer) {
     create_custom_msg_box("파일 복사가 완료 되었습니다.\nUSB를 제거해 하십시오.", ui_Screen1, NULL, LV_EVENT_CLICKED);
   }
   if (!is_usb_disconnect_notify()) {
-    // usb_copy_success_flag = true;
     usb_copy_success_flag = true;
   }
 
@@ -447,8 +562,6 @@ void logic_timer_cb(lv_timer_t *timer) {
       sscanf(s_tare_set_value, "%f", &tare_weight);
       tare_weight *= -1;
       LOGI(TAG, "tare string value : %s", s_tare_set_value);
-      // LOGI(TAG, "tare float value : %f", tare_weight);
-      // LOGI(TAG, "weight float value : %f", weight);
       lv_obj_set_style_text_color(ui_Screen1_Panel1_Tare_Point_Label, lv_color_hex(0x000000),
                                   LV_PART_MAIN | LV_STATE_DEFAULT);
       lv_obj_set_style_text_color(ui_mode_2_scr_Panel1_Tare_Point_Label, lv_color_hex(0x000000),
@@ -463,7 +576,13 @@ void logic_timer_cb(lv_timer_t *timer) {
   }
 
   switch (ui_data_ctx.curr_mode) {
+    case MODE_MAIN: break;
     case MODE_1:
+      // Automatically save every time the number of judgement data reaches 50(Temporary save)
+      if (judge_total_count % SAVE_ALAM_COUNT == 0 && !isEmpty(ui_data_ctx.stack_root)) {
+        create_custom_msg_box("임시저장 중 입니다.....", ui_Screen1, NULL, LV_EVENT_CLICKED);
+        lv_event_send(ui_Screen1_Judge_Comfirm_Btn, LV_EVENT_READY, NULL);
+      }
       // no show to under zero and over 100kg
       if (trash_fileter_flag) {
         if (indicator_data.event[STATE_SIGN_EVENT] == STATE_SIGN_EVENT) {
@@ -494,16 +613,23 @@ void logic_timer_cb(lv_timer_t *timer) {
             if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
               judge_total_count++;
               judge_over_count++;
-              push(&ui_data_ctx.stack_root, JUDGE_OVER, weight, judge_over_count);
+              // 현재 판정값 메모리에 저장
+              push(&ui_data_ctx.stack_root, JUDGE_OVER, weight, judge_over_count, buf_prod_name, log_timestamp());
               lv_label_set_text_fmt(ui_Screen1_over_Label, "초과 %d", judge_over_count);
               lv_led_on(ui_led1);
-              // lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_RED), LV_PART_MAIN);
-              // _ui_screen_change(&ui_judge_color_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0,
-              //                   &ui_judge_color_screen_init);  //
 
               led_1_ctrl(1);
-              over_volume();
+              if (strncmp(speaker_set, "ON", 2) == 0)
+                over_volume();
 
+#if PRINT_ALL
+              // print prot control
+              if (printer_state) {
+                SET_MUX_CONTROL(CH_1_SET);
+                weight_print_msg(s_weight);
+                SET_MUX_CONTROL(CH_2_SET);
+              }
+#endif
               // Clear all judgments
               over_event_flag = VOLUME_CONTIUNE ? true : false;  // 계속나오게.. 요청사항
               nuder_event_flag = true;
@@ -511,10 +637,10 @@ void logic_timer_cb(lv_timer_t *timer) {
               lv_led_off(ui_led2);
               lv_led_off(ui_led3);
               // 사용 가능한 힙 메모리 양 가져오기
-              size_t free_heap_size = esp_get_free_heap_size();
+              free_heap_size = esp_get_free_heap_size();
 
               // 현재 사용 중인 힙 메모리 양 가져오기
-              size_t min_free_heap_size = esp_get_minimum_free_heap_size();
+              min_free_heap_size = esp_get_minimum_free_heap_size();
 #if HEAP_MONITOR
               LOGI(TAG, "free_heap_size : %d", free_heap_size);
               LOGI(TAG, "min_free_heap_size : %d", min_free_heap_size);
@@ -524,18 +650,32 @@ void logic_timer_cb(lv_timer_t *timer) {
 
           // nuder weight check
           // Judgment minimum weight 100g
-          if ((float)0.1 < weight && lower_weight_value > weight && !nuder_event_flag && weight > 0) {
+          if (indicator_model == MODEL_CAS_EC_D_SERIES) {
+            minimum_num = 0.001;
+          } else {
+            minimum_num = 0.1;
+          }
+
+          if (minimum_num < weight && lower_weight_value > weight && !nuder_event_flag && weight > 0) {
             if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
               judge_total_count++;
               judge_lack_count++;
-              push(&ui_data_ctx.stack_root, JUDGE_LACK, weight, judge_lack_count);
+              // 현재 판정값 메모리에 저장
+              push(&ui_data_ctx.stack_root, JUDGE_LACK, weight, judge_lack_count, buf_prod_name, log_timestamp());
               lv_label_set_text_fmt(ui_Screen1_lack_Label, "부족 %d", judge_lack_count);
               lv_led_on(ui_led3);
-              // lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_BLUE), LV_PART_MAIN);
-              // _ui_screen_change(&ui_judge_color_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0,
-              //                   &ui_judge_color_screen_init);  //
+
               led_3_ctrl(1);
-              lack_volume();
+              if (strncmp(speaker_set, "ON", 2) == 0)
+                lack_volume();
+// print prot control
+#if PRINT_ALL
+              if (printer_state) {
+                SET_MUX_CONTROL(CH_1_SET);
+                weight_print_msg(s_weight);
+                SET_MUX_CONTROL(CH_2_SET);
+              }
+#endif
               //  Clear all judgments
               over_event_flag = true;
               nuder_event_flag = VOLUME_CONTIUNE ? true : false;
@@ -543,10 +683,10 @@ void logic_timer_cb(lv_timer_t *timer) {
               lv_led_off(ui_led1);
               lv_led_off(ui_led2);
               // 사용 가능한 힙 메모리 양 가져오기
-              size_t free_heap_size = esp_get_free_heap_size();
+              free_heap_size = esp_get_free_heap_size();
 
               // 현재 사용 중인 힙 메모리 양 가져오기
-              size_t min_free_heap_size = esp_get_minimum_free_heap_size();
+              min_free_heap_size = esp_get_minimum_free_heap_size();
 #if HEAP_MONITOR
               LOGI(TAG, "free_heap_size : %d", free_heap_size);
               LOGI(TAG, "min_free_heap_size : %d", min_free_heap_size);
@@ -559,15 +699,22 @@ void logic_timer_cb(lv_timer_t *timer) {
             if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
               judge_total_count++;
               judge_normal_count++;
-              push(&ui_data_ctx.stack_root, JUDGE_NORMAL, weight, judge_normal_count);
+              // 현재 판정값 메모리에 저장
+              push(&ui_data_ctx.stack_root, JUDGE_NORMAL, weight, judge_normal_count, buf_prod_name, log_timestamp());
               lv_label_set_text_fmt(ui_Screen1_normal_Label, "정상 %d", judge_normal_count);
               lv_led_on(ui_led2);
-              // lv_obj_set_style_bg_color(ui_judge_color_ScreenPanel, lv_palette_main(LV_PALETTE_LIGHT_GREEN),
-              //                           LV_PART_MAIN);
-              // _ui_screen_change(&ui_judge_color_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0,
-              //                   &ui_judge_color_screen_init);  //
+
               led_2_ctrl(1);
-              normal_volume();
+
+              if (strncmp(speaker_set, "ON", 2) == 0)
+                normal_volume();
+
+              // print prot control
+              if (printer_state) {
+                SET_MUX_CONTROL(CH_1_SET);
+                weight_print_msg(s_weight);
+                SET_MUX_CONTROL(CH_2_SET);
+              }
               //  Clear all judgments
               over_event_flag = true;
               nuder_event_flag = true;
@@ -575,10 +722,9 @@ void logic_timer_cb(lv_timer_t *timer) {
               lv_led_off(ui_led1);
               lv_led_off(ui_led3);
               // 사용 가능한 힙 메모리 양 가져오기
-              size_t free_heap_size = esp_get_free_heap_size();
-
+              free_heap_size = esp_get_free_heap_size();
               // 현재 사용 중인 힙 메모리 양 가져오기
-              size_t min_free_heap_size = esp_get_minimum_free_heap_size();
+              min_free_heap_size = esp_get_minimum_free_heap_size();
 #if HEAP_MONITOR
               LOGI(TAG, "free_heap_size : %d", free_heap_size);
               LOGI(TAG, "min_free_heap_size : %d", min_free_heap_size);
@@ -624,7 +770,8 @@ void logic_timer_cb(lv_timer_t *timer) {
             lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "000");
           } else {
             lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, s_amount_count);
-            // lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "20");
+            // judge count!!
+            mode2_judge_countor(atoi(s_amount_count), mode_2_compare_count, &indicator_data);
           }
         }
       }
@@ -632,7 +779,43 @@ void logic_timer_cb(lv_timer_t *timer) {
     default: break;
   }
 }
+
 ///////////////////// SCREENS ////////////////////
+
+void clear_file_delete(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  size_t buf_size = 300;
+  char *str = malloc(buf_size);
+  if (str == NULL) {
+    perror("Memory allocation failed!");
+    return;
+  }
+  if (event_code == LV_EVENT_CLICKED) {
+    snprintf(str, buf_size, "%s\n가 삭제 되었습니다.", file_data_info.file_name);
+    create_custom_msg_box(str, ui_Main_Screen, NULL, LV_EVENT_CLICKED);
+    file_delete_set(&file_data_info);
+  }
+  free(str);
+}
+
+void set_file_delete(lv_event_t *e) {
+  lv_event_code_t event_code = lv_event_get_code(e);
+  size_t buf_size = 300;
+  char *str = malloc(buf_size);
+  if (str == NULL) {
+    perror("Memory allocation failed!");
+    return;
+  }
+  if (event_code == LV_EVENT_CLICKED) {
+    if (file_data_info.file_name[0] == '\0') {
+      create_custom_msg_box("대상 파일이 없습니다.", ui_Main_Screen, NULL, LV_EVENT_CLICKED);
+    } else {
+      snprintf(str, buf_size, "%s\n를 삭제 할까요?", file_data_info.file_name);
+      create_custom_msg_box(str, ui_Main_Screen, clear_file_delete, LV_EVENT_CLICKED);
+    }
+  }
+  free(str);
+}
 
 void time_timer_cb(lv_timer_t *timer) {
   time_t t = time(NULL);
@@ -651,7 +834,18 @@ void time_timer_cb(lv_timer_t *timer) {
 
 void timer_callback(void *arg) {
   LOGI(TAG, "start timer");
+  size_t buf_size = 120;
+  char *str = malloc(buf_size);
+  if (str == NULL) {
+    perror("Memory allocation failed!");
+    return;
+  }
   _ui_screen_change(&ui_Main_Screen, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_main_screen_init);
+  // 파일선택 알림
+  snprintf(str, buf_size, "기존 작업파일을 삭제하고\n새로운 파일을 생성하겠습니까?\nsize: %s(최대:400000)",
+           file_data_info.file_size);
+  create_custom_msg_box(str, ui_Main_Screen, set_file_delete, LV_EVENT_CLICKED);
+  free(str);
 }
 
 void ui_init(void) {
@@ -667,6 +861,7 @@ void ui_init(void) {
                                             false, LV_FONT_DEFAULT);
   lv_disp_set_theme(dispp, theme);
 
+  // ui 초기화
   ui_version_screen_init();
   ui_main_screen_init();
   ui_device_id_reg_screen_init();
@@ -678,33 +873,44 @@ void ui_init(void) {
   // ui_indicator_model_select_screen_init();
 
   // 인디케이터 모델 확인
-  if (strncmp(indicator_model_buf, "BX11", 4) == 0) {
+  if (strncmp(indicator_set, "BX11", 4) == 0) {
     // zero command set
     weight_zero_command = baykon_bx11_zero_command;
     indicator_model = MODEL_BAYKON_BX11;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : BX11");
-  } else if (strncmp(indicator_model_buf, "WTM-500", 7) == 0) {
+  } else if (strncmp(indicator_set, "WTM-500", 7) == 0) {
     weight_zero_command = cas_zero_command;
-    indicator_model = MODEL_CAD_WTM500;
+    indicator_model = MODEL_CAS_WTM500;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : WTM-500");
-  } else if (strncmp(indicator_model_buf, "none", 4) == 0) {
+  } else if (strncmp(indicator_set, "NT-301A", 7) == 0) {
+    // weight_zero_command = cas_zero_command;
+    indicator_model = MODEL_CAS_NT301A;
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : NT-301A");
+  } else if (strncmp(indicator_set, "EC-D", 4) == 0) {
+    // weight_zero_command = cas_zero_command;
+    indicator_model = MODEL_CAS_EC_D_SERIES;
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : EC-D Serise");
+  } else if (strncmp(indicator_set, "none", 4) == 0) {
     indicator_model = MODEL_NONE;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : NONE");
   } else {
   }
 
-  // 485 to 232 port controler
+  // 초기 인디게이터 시리얼 설정
   SET_MUX_CONTROL(CH_2_SET);
-
+  // 초기 변수 포이터 설정
   ui_data_ctx.stack_root = NULL;
   ui_data_ctx.ptr[0] = &prod_num_value;
   ui_data_ctx.ptr[1] = &judge_total_count;
   ui_data_ctx.ptr[2] = &judge_over_count;
   ui_data_ctx.ptr[3] = &judge_normal_count;
   ui_data_ctx.ptr[4] = &judge_lack_count;
+  // 초기 동작설정
+  ui_data_ctx.curr_mode = MODE_MAIN;
 
   // lv_style_init(&style_clock);
-  if (strncmp(msc_mode_check, "MSC", 3) == 0) {
+  // OTA 모드 시  타이머 안돌게
+  if (strncmp(usb_mode, "MSC", 3) == 0) {
     static uint32_t user_data = 10;
     logic_timer_handler = lv_timer_create(logic_timer_cb, 10, &user_data);
     time_timer_handler = lv_timer_create(time_timer_cb, 1000, user_data);
@@ -712,6 +918,11 @@ void ui_init(void) {
     esp_timer_start_once(timer, interval_us);
   }
 
+  memset(&file_data_info, 0, sizeof(file_data_ctx_t));
+  read_file_info(&file_data_info);
+  LOGI(TAG, "file name %s", file_data_info.file_name);
+  LOGI(TAG, "file size %s", file_data_info.file_size);
+  // LOGI(TAG, "file size : %s", file_data_info->file_size);
   /// Show start screen
   lv_disp_load_scr(ui_Version_Screen);
 }

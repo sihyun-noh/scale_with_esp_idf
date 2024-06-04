@@ -26,7 +26,7 @@ typedef enum {
   TASK_ERROR = -1,
 } winsen_ze03_err_code;
 
-static const char *TAG = "scale_read_485_TASK";
+static const char *TAG = "scale_read_485_task";
 
 int weight_uart_485_init(void) {
   int res = TASK_OK;
@@ -38,6 +38,154 @@ int weight_uart_485_init(void) {
     LOGI(TAG, "Uart initialize success = %d", res);
   }
   return res;
+}
+
+// P cont mode
+// 1  | 2  | 3  |  4  |  5  |  6  | 7 ~ 14  |  15 ~ 18  | 19  |  20  |
+
+// ST,GS,+ 0.879 g
+int indicator_EC_D_Serise_data(Common_data_t *common_data) {
+  uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
+  static cas_22byte_format_t read_data = { 0 };
+  double weight = 0;
+
+  int len = uart_read_data(UART_PORT_NUM, data, (BUF_SIZE - 1));
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  if (len <= 0) {
+    LOGE(TAG, "Invalid data. or No data ");
+    LOGE(TAG, "len = %d\n", len);
+    LOGE(TAG, "uart 485 read data = %s", data);
+    free(data);
+    return -1;
+  }
+
+  memset(&read_data, 0x00, sizeof(read_data));
+
+  memcpy(read_data.states, data, 2);
+  memcpy(read_data.measurement_states, data + 3, 2);
+  // memcpy(read_data.lamp_states, data + 7, 1);
+  memcpy(read_data.data, data + 7, 8);
+  memcpy(read_data.unit, data + 18, 2);
+
+  // Todo
+  // copy to weight data
+  memcpy(common_data->weight_data, read_data.data, 8);
+
+  // check weight data
+  sscanf(read_data.data, "%lf", &weight);
+  // LOGI(TAG, " weight = %lf", weight);
+
+  /*stable state set display */
+  if (strncmp(read_data.states, "ST", 2) == 0) {
+    common_data->event[STATE_STABLE_EVENT] = STATE_STABLE_EVENT;
+  } else {
+    common_data->event[STATE_STABLE_EVENT] = STATE_NONE;
+  }
+
+  /*zero state set display */
+  if (strncmp(read_data.states, "ST", 2) == 0 && weight == 0.0) {
+    common_data->event[STATE_ZERO_EVENT] = STATE_ZERO_EVENT;
+  } else {
+    common_data->event[STATE_ZERO_EVENT] = STATE_NONE;
+  }
+
+  if (read_data.data[0] == '-') {
+    common_data->event[STATE_SIGN_EVENT] = STATE_SIGN_EVENT;
+  } else {
+    common_data->event[STATE_SIGN_EVENT] = STATE_NONE;
+  }
+  if (strncmp(read_data.states, "ST", 2) == 0 || strncmp(read_data.states, "US", 2) == 0 ||
+      strncmp(read_data.states, "OL", 2) == 0) {
+    common_data->event[STATE_TRASH_CHECK_EVENT] = STATE_TRASH_CHECK_EVENT;
+  } else {
+    common_data->event[STATE_TRASH_CHECK_EVENT] = STATE_NONE;
+  }
+
+#if INDICATOR_DEBUG
+  LOG_BUFFER_HEXDUMP(TAG, &read_data, sizeof(read_data), LOG_INFO);
+#endif
+  free(data);
+  return 0;
+}
+
+// US,NT,+000.008kg
+int indicator_CAS_NT301A_data(Common_data_t *common_data) {
+  uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
+  static cas_22byte_format_t read_data = { 0 };
+  double weight = 0;
+
+  int len = uart_read_data(UART_PORT_NUM, data, (BUF_SIZE - 1));
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  if (len <= 0) {
+    LOGE(TAG, "Invalid data. or No data ");
+    LOGE(TAG, "len = %d\n", len);
+    LOGE(TAG, "uart 485 read data = %s", data);
+    free(data);
+    return -1;
+  }
+
+  // LOGE(TAG, "len = %d\n", len);
+  // LOGI(TAG, "uart 485 read data = %s", data);
+  // LOG_BUFFER_HEXDUMP(TAG, data, len, LOG_INFO);
+  memset(&read_data, 0x00, sizeof(read_data));
+
+  memcpy(read_data.states, data, 2);
+  memcpy(read_data.measurement_states, data + 3, 2);
+  memcpy(read_data.lamp_states, data + 7, 1);
+  memcpy(read_data.data, data + 9, 8);
+  memcpy(read_data.unit, data + 18, 2);
+
+  // Todo
+  // copy to weight data
+  memcpy(common_data->weight_data, read_data.data, 8);
+
+  // check weight data
+  sscanf(read_data.data, "%lf", &weight);
+  // LOGI(TAG, "zero check weight = %lf", weight);
+
+  /*stable state set display */
+  if (*read_data.lamp_states & 0x40) {
+    common_data->event[STATE_STABLE_EVENT] = STATE_STABLE_EVENT;
+  } else {
+    common_data->event[STATE_STABLE_EVENT] = STATE_NONE;
+  }
+  /*zero state set display */
+  if (strncmp(read_data.states, "ST", 2) == 0 && weight == 0.0) {
+    common_data->event[STATE_ZERO_EVENT] = STATE_ZERO_EVENT;
+  } else {
+    common_data->event[STATE_ZERO_EVENT] = STATE_NONE;
+  }
+
+  // if (*read_data.lamp_states & 0x01) {
+  //   common_data->event[STATE_ZERO_EVENT] = STATE_ZERO_EVENT;
+  // } else {
+  //   common_data->event[STATE_ZERO_EVENT] = STATE_NONE;
+  // }
+
+  /*tare state set display */
+  // if (*read_data.lamp_states & 0x02) {
+  //   common_data->event[STATE_TARE_EVENT] = STATE_TARE_EVENT;
+  // } else {
+  //   common_data->event[STATE_TARE_EVENT] = STATE_NONE;
+  // }
+
+  if (read_data.data[0] == '-') {
+    common_data->event[STATE_SIGN_EVENT] = STATE_SIGN_EVENT;
+  } else {
+    common_data->event[STATE_SIGN_EVENT] = STATE_NONE;
+  }
+  if (strncmp(read_data.states, "ST", 2) == 0 || strncmp(read_data.states, "US", 2) == 0 ||
+      strncmp(read_data.states, "OL", 2) == 0) {
+    common_data->event[STATE_TRASH_CHECK_EVENT] = STATE_TRASH_CHECK_EVENT;
+  } else {
+    common_data->event[STATE_TRASH_CHECK_EVENT] = STATE_NONE;
+  }
+
+#if INDICATOR_DEBUG
+  LOG_BUFFER_HEXDUMP(TAG, &read_data, sizeof(read_data), LOG_INFO);
+#endif
+  free(data);
+  return 0;
 }
 
 /*
@@ -73,6 +221,7 @@ int indicator_WTM_500_data(Common_data_t *common_data) {
     free(data);
     return -1;
   }
+
   memset(&read_data, 0x00, sizeof(read_data));
 
   memcpy(read_data.states, data, 2);
@@ -321,4 +470,67 @@ int baykon_bx11_tare_command(char *s_data) {
     free(data);
     return -1;
   }
+}
+
+void update_weight(printer_data_t *pdata, const char *new_weight) {
+  int new_weight_len = strlen(new_weight);
+  int new_size = pdata->size + (new_weight_len - pdata->weight_len);
+
+  unsigned char *new_data = malloc(new_size);
+
+  memcpy(new_data, pdata->data, pdata->weight_pos);
+  memcpy(new_data + pdata->weight_pos, new_weight, new_weight_len);
+  memcpy(new_data + pdata->weight_pos + new_weight_len, pdata->data + pdata->weight_pos + pdata->weight_len,
+         pdata->size - pdata->weight_pos - pdata->weight_len);
+
+  free(pdata->data);
+
+  pdata->data = new_data;
+  pdata->size = new_size;
+  pdata->weight_len = new_weight_len;
+}
+
+printer_data_t *init_data(const unsigned char *initial_data, int len, int weight_position, int weight_length) {
+  printer_data_t *pdata = malloc(sizeof(printer_data_t));
+  pdata->data = malloc(len);
+  memcpy(pdata->data, initial_data, len);
+  pdata->size = len;
+  pdata->weight_pos = weight_position;
+  pdata->weight_len = weight_length;
+  return pdata;
+}
+
+void print_data(const printer_data_t *pdata) {
+  for (int i = 0; i < pdata->size; i++) {
+    LOGI(TAG, "%02x ", pdata->data[i]);
+  }
+}
+
+void weight_print_msg(char *s_weight) {
+  unsigned char print_data[40] = { 0 };
+  unsigned char print_data_head[] = { 0x20, 0x20, 0x20, 0x37, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+                                      0x31, 0x20, 0x20, 0x20, 0x31, 0x33, 0x37, 0x38, 0x20, 0x20, 0x20 };
+  unsigned char print_data_body[] = { 0x33, 0x32, 0x2e, 0x36, 0x30 };  // avable using data format 0.000, 00.00, 000.0
+  unsigned char print_data_tail[] = { 0x20, 0x6b, 0x67, 0x0d, 0x0a };  // " kg\r\n"
+
+  char *weight = s_weight;
+  int weight_len = strlen(weight);
+
+  memcpy(print_data, print_data_head, sizeof(print_data_head));
+  memcpy(print_data + sizeof(print_data_head), weight, weight_len);
+  memcpy(print_data + sizeof(print_data_head) + weight_len, print_data_tail, sizeof(print_data_tail));
+
+  LOGI(TAG, "before data : %s", print_data);
+
+  // printer_data_t *pdata = init_data(print_data_body, sizeof(print_data_body), 26, 2);
+  // LOGI(TAG, "before data:");
+  // print_data(pdata);
+  // LOGI(TAG, "after data:");
+  // update_weight(pdata, "10.00");
+  // print_data(pdata);
+  // free(pdata->data);
+  // free(pdata);
+
+  uart_write_data(UART_PORT_NUM, print_data, sizeof(print_data));
+  vTaskDelay(100 / portTICK_PERIOD_MS);
 }

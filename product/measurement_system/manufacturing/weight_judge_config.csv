@@ -1,0 +1,5 @@
+mfg,namespace,
+usb_mode,data,string,REPEAT
+indicator_set,data,string,REPEAT
+printer_mode,data,string,REPEAT
+speaker_set,data,string,REPEAT

@@ -20,6 +20,8 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <ctype.h>
+#include <stdbool.h>
+#include <errno.h>
 
 #include "log.h"
 #include "sysfile.h"
@@ -30,6 +32,8 @@ static const char *TAG = "file manager";
 #define FILE_LEN_MAX 256
 
 static char g_root_path[FILE_LEN_MAX];
+file_data_ctx_t file_info;
+bool copy_flag = false;
 
 // fnmatch defines
 #define FNM_NOMATCH 1         // Match failed.
@@ -327,6 +331,13 @@ static void file_list(const char *path, char *match) {
       }
 
       printf("%c  %s  %s  %s\r\n", type, size, tbuffer, ent->d_name);
+
+      if (copy_flag) {
+        printf("file name is : %s\n", ent->d_name);
+        printf("file size is : %s\n", size);
+        memcpy(file_info.file_name, ent->d_name, sizeof(ent->d_name));
+        memcpy(file_info.file_size, size, sizeof(size));
+      }
     }
   }
   if (total) {
@@ -544,4 +555,35 @@ int fm_mkdir(const char *path) {
   }
 
   return status;
+}
+
+void get_file_name_and_size_info() {
+  copy_flag = true;
+  file_list(BASE_PATH, NULL);
+  copy_flag = false;
+  return;
+}
+
+void read_file_info(file_data_ctx_t *file_data) {
+  memset(&file_info, 0, sizeof(file_data_ctx_t));
+  get_file_name_and_size_info();
+  memcpy(file_data->file_name, file_info.file_name, strlen(file_info.file_name));
+  memcpy(file_data->file_size, file_info.file_size, strlen(file_info.file_size));
+  return;
+}
+
+void file_delete_set(file_data_ctx_t *file_data) {
+  size_t buf_size = 300;
+  char *buf = malloc(buf_size);
+  if (buf == NULL) {
+    perror("Memory allocation failed!");
+    return;
+  }
+
+  snprintf(buf, buf_size, "%s/%s", BASE_PATH, file_data->file_name);
+  if (unlink(buf) != 0) {
+    perror("Error deleting file");
+  }
+  free(buf);
+  return;
 }

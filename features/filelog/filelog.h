@@ -36,10 +36,13 @@ int file_log_write_datalogger(char *path, char *format, ...);
 
 int new_file_log_write_datalogger(const char *table_index, char *path, char *format, ...);
 
+int new_file_log_write_judge(const char *table_index, char *path, char *format, ...);
+
 void set_file_log_number(int file_log_num);
 
 #define FILE_LOG_FORMAT(letter, format) #letter " (%s) %s: " format "\r\n"
 #define FILE_LOG_FORMAT_FOR_DATALOGGER(format) "%s," format "\n"
+#define FILE_LOG_FORMAT_FOR_JUDGE(format) format "\n"
 
 #define FILELOGI(tag, format, ...) FILE_LOG_LEVEL(LOG_INFO, tag, format, ##__VA_ARGS__)
 #define FILELOGW(tag, format, ...) FILE_LOG_LEVEL(LOG_WARN, tag, format, ##__VA_ARGS__)
@@ -76,12 +79,16 @@ void set_file_log_number(int file_log_num);
     file_log_write_datalogger(path, FILE_LOG_FORMAT_FOR_DATALOGGER(format), log_timestamp(), ##__VA_ARGS__); \
   } while (0)
 
-#define FDATA_TABLE_INDEX(table_index, path, format, ...)                                                                             \
-  do {                                                                                                       \
-    new_file_log_write_datalogger(table_index, path, FILE_LOG_FORMAT_FOR_DATALOGGER(format), log_timestamp(), ##__VA_ARGS__); \
+#define FDATA_TABLE_INDEX(table_index, path, format, ...)                                                     \
+  do {                                                                                                        \
+    new_file_log_write_datalogger(table_index, path, FILE_LOG_FORMAT_FOR_DATALOGGER(format), log_timestamp(), \
+                                  ##__VA_ARGS__);                                                             \
   } while (0)
 
-
+#define FDATA_TABLE_INDEX_JUDGE(table_index, path, format, ...)                                  \
+  do {                                                                                           \
+    new_file_log_write_judge(table_index, path, FILE_LOG_FORMAT_FOR_JUDGE(format), __VA_ARGS__); \
+  } while (0)
 
 #ifdef __cplusplus
 }

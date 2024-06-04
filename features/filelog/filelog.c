@@ -314,6 +314,55 @@ END:
   return 0;
 }
 
+int new_file_log_write_judge(const char *table_index, char *path, char *format, ...) {
+  char *newfilepath;
+  int ret = 0;
+  char buff[FILE_LOG_MAX_MSG_SIZE] = { 0 };
+
+  // memcpy(buff, format, strlen(format));
+  va_list list;
+  va_start(list, format);
+  vsnprintf(buff, sizeof(buff), format, list);
+  va_end(list);
+
+  ret = file_status_check(path);
+  if (ret != 0) {
+    LOGE(TAG, "file status check fail.");
+    return -1;
+  }
+
+  LOGE(TAG, " file count : %d", file_ctx.file_num);
+  LOGI(TAG, " path : %s", path);
+  LOGI(TAG, " buff : %s", buff);
+
+  if (file_ctx.file_num == 0) {
+    newfilepath = file_path_name(path);
+    write_log(newfilepath, table_index);
+    write_log(newfilepath, buff);
+    free(newfilepath);
+    goto END;
+  }
+
+  if (file_ctx.latest_file_size >= FILE_LOG_MAX_FILE_SIZE) {
+    file_ctx.latest_file_size = 0;
+    newfilepath = file_path_name(path);
+    write_log(newfilepath, table_index);
+    write_log(newfilepath, buff);
+    free(newfilepath);
+  } else {
+    write_log(file_ctx.filepath, buff);
+  }
+
+  if (file_ctx.file_num > g_file_log_num) {
+    LOGE(TAG, "file delete!");
+    if (file_delete(file_ctx.oldest_file, path) != 0) {
+      LOGE(TAG, "file delete erorr!");
+    }
+  }
+END:
+  return 0;
+}
+
 void set_file_log_number(int file_log_num) {
   g_file_log_num = file_log_num;
 }

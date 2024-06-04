@@ -5,6 +5,18 @@
 extern "C" {
 #endif
 
+#define SYSCFG_N_USB_MODE "usb_mode"
+#define SYSCFG_S_USB_MODE 5
+#define SYSCFG_I_USB_MODE CFG_DATA
+
+#define SYSCFG_N_INDICATOR_SET "indicator_set"
+#define SYSCFG_S_INDICATOR_SET 20
+#define SYSCFG_I_INDICATOR_SET CFG_DATA
+
+#define SYSCFG_N_SPEAKER "speaker_set"
+#define SYSCFG_S_SPEAKER 5
+#define SYSCFG_I_SPEAKER CFG_DATA
+
 typedef enum {
   SYSINIT_OK,
   ERR_NVS_FLASH,
@@ -36,8 +48,9 @@ void led_1_ctrl(uint8_t ctrl);
 void led_2_ctrl(uint8_t ctrl);
 void led_3_ctrl(uint8_t ctrl);
 
-extern char msc_mode_check[5];
-extern char indicator_model_buf[20];
+extern char usb_mode[5];
+extern char speaker_set[5];
+extern char indicator_set[20];
 
 #ifdef __cplusplus
 }

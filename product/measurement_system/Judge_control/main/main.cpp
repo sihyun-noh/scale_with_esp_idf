@@ -39,8 +39,9 @@ static const char *TAG = "main_app";
 
 sc_ctx_t *sc_ctx = NULL;
 
-char msc_mode_check[5] = { 0 };
-char indicator_model_buf[20] = { 0 };
+char usb_mode[5] = { 0 };
+char speaker_set[5] = { 0 };
+char indicator_set[20] = { 0 };
 
 extern "C" {
 extern void sdcard_init(void);
@@ -66,15 +67,25 @@ extern "C" void stop_shell(void) {
 }
 
 static void check_model(void) {
-  char model_name[10] = { 0 };
-  char power_mode[10] = { 0 };
-
-  syscfg_get(SYSCFG_I_MODELNAME, SYSCFG_N_MODELNAME, model_name, sizeof(model_name));
-  syscfg_get(SYSCFG_I_POWERMODE, SYSCFG_N_POWERMODE, power_mode, sizeof(power_mode));
-
-  LOGI(TAG, "model_name : %s, power_mode : %s", model_name, power_mode);
-
-  set_battery_model(1);
+  syscfg_get(SYSCFG_I_USB_MODE, SYSCFG_N_USB_MODE, usb_mode, sizeof(usb_mode));
+  syscfg_get(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, indicator_set, sizeof(indicator_set));
+  syscfg_get(SYSCFG_I_SPEAKER, SYSCFG_N_SPEAKER, speaker_set, sizeof(speaker_set));
+  if (strcmp(usb_mode, "") == 0) {
+    syscfg_get(MFG_DATA, SYSCFG_N_USB_MODE, usb_mode, sizeof(usb_mode));
+    LOGI(TAG, "MFG GET usb_mode : %s", usb_mode);
+    syscfg_set(SYSCFG_I_USB_MODE, SYSCFG_N_USB_MODE, usb_mode);
+  }
+  if (strcmp(indicator_set, "") == 0) {
+    syscfg_get(MFG_DATA, SYSCFG_N_INDICATOR_SET, indicator_set, sizeof(indicator_set));
+    LOGI(TAG, "MFG GET indicator_set : %s", indicator_set);
+    syscfg_set(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, indicator_set);
+  }
+  if (strcmp(speaker_set, "") == 0) {
+    syscfg_get(MFG_DATA, SYSCFG_N_SPEAKER, speaker_set, sizeof(speaker_set));
+    LOGI(TAG, "MFG GET speaker_set : %s", speaker_set);
+    syscfg_set(SYSCFG_I_SPEAKER, SYSCFG_N_SPEAKER, speaker_set);
+  }
+  LOGI(TAG, "usb_mode : %s, indicator_set : %s, speaker_set : %s", usb_mode, indicator_set, speaker_set);
 }
 
 void SET_CH2_PIN() {
@@ -230,17 +241,15 @@ void app_main(void) {
   if (sc_ctx) {
     sc_start(sc_ctx);
   }
-  syscfg_get(CFG_DATA, "MSC_OTA_MODE", msc_mode_check, sizeof(msc_mode_check));
-  syscfg_get(CFG_DATA, "INDICATOR_MODEL", indicator_model_buf, sizeof(indicator_model_buf));
 
   if (lv_display_init() != 0) {
     LOGE(TAG, "LVGL setup failed!!!");
   }
   // usb msc or msc ota mode
 
-  if (strncmp(msc_mode_check, "OTA", 3) == 0) {
+  if (strncmp(usb_mode, "OTA", 3) == 0) {
     create_usb_host_msc_ota_task();
-  } else if (strncmp(msc_mode_check, "MSC", 3) == 0) {
+  } else if (strncmp(usb_mode, "MSC", 3) == 0) {
     create_usb_host_msc_task();
   }
   //  create_control_task();

@@ -1,0 +1,6 @@
+key,type,encoding,value
+mfg,namespace,,
+usb_mode,data,string,MSC
+indicator_set,data,string,WTM-500
+printer_mode,data,string,ON
+speaker_set,data,string,ON
