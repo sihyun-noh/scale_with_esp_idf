@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "log.h"
@@ -38,6 +39,88 @@ int weight_uart_485_init(void) {
     LOGI(TAG, "Uart initialize success = %d", res);
   }
   return res;
+}
+
+/**
+ * "샘플"키 누르고 있음 들어가짐
+ * Func 항목에서 프린트 버튼 누르면 설정 화면으로 바뀜
+ * 시리얼 데이터를 사용하기 위한 설정은
+ * Prt 0  --> 0
+ * BPS : 9600  --> 2
+ * btPr : 8비트  --> 2
+ */
+// ST,+00000.00  gCRLF
+
+int indicator_AND_CB_12K_data(Common_data_t *common_data) {
+  uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
+  static empty_format_t read_data = { 0 };
+  double weight = 0;
+
+  int len = uart_read_data(UART_PORT_NUM, data, (BUF_SIZE - 1));
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  if (len <= 0) {
+    LOGE(TAG, "Invalid data. or No data ");
+    LOGE(TAG, "len = %d\n", len);
+    LOGE(TAG, "uart 485 read data = %s", data);
+    free(data);
+    return -1;
+  }
+
+  // LOGE(TAG, "len = %d\n", len);
+  // LOGI(TAG, "uart 485 read data = %s", data);
+  // LOG_BUFFER_HEXDUMP(TAG, data, len, LOG_INFO);
+
+  memset(&read_data, 0x00, sizeof(read_data));
+
+  memcpy(read_data.states, data, 2);
+  memcpy(read_data.sign, data + 3, 1);
+  memcpy(read_data.data, data + 4, 8);
+  memcpy(read_data.unit, data + 13, 2);
+  //  Todo
+
+  // check weight data & unit
+  if (strncmp(read_data.unit, " g", 2) == 0) {
+    // copy to weight data
+    weight = (float)(atoi(read_data.data) * 0.001);
+    memcpy(common_data->weight_data, read_data.data, 8);
+    common_data->DP = DP_1;
+  } else {
+    sscanf(read_data.data, "%lf", &weight);
+    memcpy(common_data->weight_data, read_data.data, 8);
+  }
+
+  /*stable state set display */
+  if (strncmp(read_data.states, "ST", 2) == 0) {
+    common_data->event[STATE_STABLE_EVENT] = STATE_STABLE_EVENT;
+  } else {
+    common_data->event[STATE_STABLE_EVENT] = STATE_NONE;
+  }
+
+  /*zero state set display */
+  if (strncmp(read_data.states, "ST", 2) == 0 && weight == 0.0) {
+    common_data->event[STATE_ZERO_EVENT] = STATE_ZERO_EVENT;
+  } else {
+    common_data->event[STATE_ZERO_EVENT] = STATE_NONE;
+  }
+
+  if (read_data.sign[0] == '-') {
+    common_data->event[STATE_SIGN_EVENT] = STATE_SIGN_EVENT;
+  } else {
+    common_data->event[STATE_SIGN_EVENT] = STATE_NONE;
+  }
+
+  if (strncmp(read_data.states, "ST", 2) == 0 || strncmp(read_data.states, "US", 2) == 0 ||
+      strncmp(read_data.states, "OL", 2) == 0) {
+    common_data->event[STATE_TRASH_CHECK_EVENT] = STATE_TRASH_CHECK_EVENT;
+  } else {
+    common_data->event[STATE_TRASH_CHECK_EVENT] = STATE_NONE;
+  }
+
+#if INDICATOR_DEBUG
+  LOG_BUFFER_HEXDUMP(TAG, &read_data, sizeof(read_data), LOG_INFO);
+#endif
+  free(data);
+  return 0;
 }
 
 // P cont mode

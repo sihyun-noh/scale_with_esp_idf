@@ -29,6 +29,7 @@ typedef enum {
   MODEL_BAYKON_BX11,
   MODEL_CAS_NT301A,
   MODEL_CAS_EC_D_SERIES,
+  MODEL_AND_CB_12K,
 } indicator_model_t;
 
 typedef enum {
@@ -71,6 +72,13 @@ typedef struct {
   char unit[2];
 } cas_nt301a_data_format2_t;
 
+typedef struct {
+  char states[2];
+  char sign[1];
+  char data[8];
+  char unit[2];
+} empty_format_t;
+
 typedef struct Common_data {
   indicator_model_t model;
   decimal_point_t DP;
@@ -85,6 +93,15 @@ typedef struct Common_data {
  * @return int
  */
 int weight_uart_485_init(void);
+
+/**
+ * @brief
+ *
+ * @param common_data
+ * @return int
+ */
+
+int indicator_AND_CB_12K_data(Common_data_t *common_data);
 
 /**
  * @brief

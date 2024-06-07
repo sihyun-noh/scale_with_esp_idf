@@ -403,21 +403,34 @@ void logic_timer_cb(lv_timer_t *timer) {
   bool trash_fileter_flag = false;
   int res = 0;
   float minimum_num = 0.0;
-
-  // 사용 가능한 힙 메모리 양 가져오기
   size_t free_heap_size = 0;
-  // 현재 사용 중인 힙 메모리 양 가져오기
   size_t min_free_heap_size = 0;
   Common_data_t indicator_data = { 0 };
 
   switch (indicator_model) {
     case MODEL_NONE: LOGE(TAG, "No target indicator model!"); break;
+    case MODEL_AND_CB_12K:
+      memset(&indicator_data, 0x00, sizeof(indicator_data));
+      res = indicator_AND_CB_12K_data(&indicator_data);
+      ui_noti.event = (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
+
+      if (indicator_data.DP == DP_1) {
+        // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
+        weight = (float)(atoi(indicator_data.weight_data) * 0.001);
+        snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
+      } else {
+        sscanf(indicator_data.weight_data, "%f", &weight);
+        snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
+      }
+
+      // MODE_2
+      snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+      break;
     case MODEL_CAS_EC_D_SERIES:
       memset(&indicator_data, 0x00, sizeof(indicator_data));
       res = indicator_EC_D_Serise_data(&indicator_data);
       ui_noti.event = (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
-      // LOGE(TAG, "indicator data_NT301A : %d", atoi(indicator_data.weight_data));
-      //    taking float value using %f format specifier for
       sscanf(indicator_data.weight_data, "%f", &weight);
       snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
       // MODE_2
@@ -428,8 +441,6 @@ void logic_timer_cb(lv_timer_t *timer) {
 
       res = indicator_CAS_NT301A_data(&indicator_data);
       ui_noti.event = (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
-      // LOGE(TAG, "indicator data_NT301A : %d", atoi(indicator_data.weight_data));
-      //    taking float value using %f format specifier for
       sscanf(indicator_data.weight_data, "%f", &weight);
       snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
       // MODE_2
@@ -650,7 +661,7 @@ void logic_timer_cb(lv_timer_t *timer) {
 
           // nuder weight check
           // Judgment minimum weight 100g
-          if (indicator_model == MODEL_CAS_EC_D_SERIES) {
+          if (indicator_model == MODEL_CAS_EC_D_SERIES || indicator_model == MODEL_AND_CB_12K) {
             minimum_num = 0.001;
           } else {
             minimum_num = 0.1;
@@ -748,7 +759,7 @@ void logic_timer_cb(lv_timer_t *timer) {
             }
           }
         }  // if the set value is 0, it is not counted.
-      }    // trash_fileter_flag.
+      }  // trash_fileter_flag.
       break;
     case MODE_2:
       // LOGI(TAG, "current mode %d:", ui_data_ctx.curr_mode);
@@ -890,6 +901,10 @@ void ui_init(void) {
     // weight_zero_command = cas_zero_command;
     indicator_model = MODEL_CAS_EC_D_SERIES;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : EC-D Serise");
+  } else if (strncmp(indicator_set, "CB-12K", 6) == 0) {
+    // weight_zero_command = cas_zero_command;
+    indicator_model = MODEL_AND_CB_12K;
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : CB-12K");
   } else if (strncmp(indicator_set, "none", 4) == 0) {
     indicator_model = MODEL_NONE;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : NONE");
@@ -913,7 +928,7 @@ void ui_init(void) {
   if (strncmp(usb_mode, "MSC", 3) == 0) {
     static uint32_t user_data = 10;
     logic_timer_handler = lv_timer_create(logic_timer_cb, 10, &user_data);
-    time_timer_handler = lv_timer_create(time_timer_cb, 1000, user_data);
+    time_timer_handler = lv_timer_create(time_timer_cb, 1000, &user_data);
     // Start timer
     esp_timer_start_once(timer, interval_us);
   }
