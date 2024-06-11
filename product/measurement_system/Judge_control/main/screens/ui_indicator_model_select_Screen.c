@@ -63,10 +63,13 @@ static void event_handler(lv_event_t *e) {
       create_custom_msg_box("선택된 모델은 \nEC-D Serise 입니다.", ui_Indicator_Model_Select_Screen, NULL,
                             LV_EVENT_CLICKED);
     } else if (strncmp(str_buf, "CB-12K", 6) == 0) {
-      create_custom_msg_box("선택된 모델은 \nCB-12K 입니다.", ui_Indicator_Model_Select_Screen, NULL,
-                            LV_EVENT_CLICKED);
+      create_custom_msg_box("선택된 모델은 \nCB-12K 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
 
-    } else if (strncmp(str_buf, "none", 4) == 0) {
+    } else if (strncmp(str_buf, "PW-200", 6) == 0) {
+      create_custom_msg_box("선택된 모델은 \nPW-200 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
+    }
+
+    else if (strncmp(str_buf, "none", 4) == 0) {
       create_custom_msg_box("다시 선택해 주십시오.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
     }
   }
@@ -197,6 +200,8 @@ void ui_indicator_model_select_screen_init(void) {
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "BX11");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "CB-12K");
+  lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
+  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "PW-200");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "none");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);

@@ -16,6 +16,7 @@
 #include "time.h"
 #include "main.h"
 #include "file_manager.h"
+#include "widgets/lv_label.h"
 
 #define HEAP_MONITOR 1
 #define SAVE_ALAM_COUNT 50
@@ -409,6 +410,29 @@ void logic_timer_cb(lv_timer_t *timer) {
 
   switch (indicator_model) {
     case MODEL_NONE: LOGE(TAG, "No target indicator model!"); break;
+    case MODEL_ACOM_PW_200:
+      memset(&indicator_data, 0x00, sizeof(indicator_data));
+      res = indicator_ACOM_pw_200_data(&indicator_data);
+      ui_noti.event = (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
+
+      if (indicator_data.DP == DP_1) {
+        // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
+        weight = (float)(atoi(indicator_data.weight_data) * 0.001);
+        snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
+        // lv_label_set_text_fmt(ui_Screen1_Amount_Value_Label, "#0000ff Max:%fkg# #ff0000 Min:%f# #000000 e=%dg#",
+        //                       indicator_data.spec.scale_Max * 0.001, indicator_data.spec.scale_Max * 0.001,
+        //                       indicator_data.spec.e_d);
+
+      } else {
+        sscanf(indicator_data.weight_data, "%f", &weight);
+        snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
+      }
+
+      // MODE_2
+      snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+      break;
+
     case MODEL_AND_CB_12K:
       memset(&indicator_data, 0x00, sizeof(indicator_data));
       res = indicator_AND_CB_12K_data(&indicator_data);
@@ -419,6 +443,9 @@ void logic_timer_cb(lv_timer_t *timer) {
         weight = (float)(atoi(indicator_data.weight_data) * 0.001);
         snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
         lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
+        // lv_label_set_text_fmt(ui_Screen1_Amount_Value_Label, "#0000ff Max:%fkg# #ff0000 Min:%f# #000000 e=%dg#",
+        //                       indicator_data.spec.scale_Max * 0.001, indicator_data.spec.scale_Max * 0.001,
+        //                       indicator_data.spec.e_d);
       } else {
         sscanf(indicator_data.weight_data, "%f", &weight);
         snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
@@ -431,8 +458,21 @@ void logic_timer_cb(lv_timer_t *timer) {
       memset(&indicator_data, 0x00, sizeof(indicator_data));
       res = indicator_EC_D_Serise_data(&indicator_data);
       ui_noti.event = (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
-      sscanf(indicator_data.weight_data, "%f", &weight);
-      snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
+
+      if (indicator_data.DP == DP_1) {
+        // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
+        weight = (float)(atoi(indicator_data.weight_data) * 0.001);
+        snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
+        // lv_label_set_text_fmt(ui_Screen1_Amount_Value_Label, "#0000ff Max:%fkg# #ff0000 Min:%f# #000000 e=%dg#",
+        //                       indicator_data.spec.scale_Max * 0.001, indicator_data.spec.scale_Max * 0.001,
+        //                       indicator_data.spec.e_d);
+      } else {
+        sscanf(indicator_data.weight_data, "%f", &weight);
+        snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : kg");
+      }
+
       // MODE_2
       snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
       break;
@@ -905,6 +945,10 @@ void ui_init(void) {
     // weight_zero_command = cas_zero_command;
     indicator_model = MODEL_AND_CB_12K;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : CB-12K");
+  } else if (strncmp(indicator_set, "PW-200", 6) == 0) {
+    // weight_zero_command = cas_zero_command;
+    indicator_model = MODEL_ACOM_PW_200;
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : PW-200");
   } else if (strncmp(indicator_set, "none", 4) == 0) {
     indicator_model = MODEL_NONE;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : NONE");

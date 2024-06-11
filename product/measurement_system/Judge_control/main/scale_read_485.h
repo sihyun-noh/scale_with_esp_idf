@@ -6,6 +6,12 @@ extern "C" {
 #endif
 
 typedef struct {
+  unsigned int scale_Max;
+  unsigned int scale_Min;
+  unsigned int e_d;
+} indi_mode_spac_t;
+
+typedef struct {
   unsigned char *data;
   int size;
   int weight_pos;
@@ -30,6 +36,7 @@ typedef enum {
   MODEL_CAS_NT301A,
   MODEL_CAS_EC_D_SERIES,
   MODEL_AND_CB_12K,
+  MODEL_ACOM_PW_200,
 } indicator_model_t;
 
 typedef enum {
@@ -74,6 +81,7 @@ typedef struct {
 
 typedef struct {
   char states[2];
+  char measurement_states[2];
   char sign[1];
   char data[8];
   char unit[2];
@@ -84,6 +92,7 @@ typedef struct Common_data {
   decimal_point_t DP;
   increment_size_t IS;
   weight_evnet_t event[30];
+  indi_mode_spac_t spec;
   char weight_data[10];
 } Common_data_t;
 
@@ -93,6 +102,15 @@ typedef struct Common_data {
  * @return int
  */
 int weight_uart_485_init(void);
+
+/**
+ * @brief
+ *
+ * @param common_data
+ * @return int
+ */
+
+int indicator_ACOM_pw_200_data(Common_data_t *common_data);
 
 /**
  * @brief

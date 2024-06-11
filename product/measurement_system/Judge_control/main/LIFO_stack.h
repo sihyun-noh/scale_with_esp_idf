@@ -17,7 +17,7 @@ struct StackNode {
   uint16_t count;
   float weight;
   judge_type_t type;
-  char prod_name[7];
+  char prod_name[8];
   char time_date[20];
   struct StackNode* next;
 };
