@@ -701,7 +701,8 @@ void logic_timer_cb(lv_timer_t *timer) {
 
           // nuder weight check
           // Judgment minimum weight 100g
-          if (indicator_model == MODEL_CAS_EC_D_SERIES || indicator_model == MODEL_AND_CB_12K) {
+          if (indicator_model == MODEL_CAS_EC_D_SERIES || indicator_model == MODEL_AND_CB_12K ||
+              indicator_model == MODEL_ACOM_PW_200) {
             minimum_num = 0.001;
           } else {
             minimum_num = 0.1;
