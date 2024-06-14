@@ -94,7 +94,7 @@ int indicator_ACOM_pw_200_data(Common_data_t *common_data) {
     //    LOGI(TAG, "weight read data_g = %s", read_data.data);
     weight = (float)(atoi(read_data.data) * 0.001);
     memcpy(common_data->weight_data, read_data.data, 6);
-    common_data->DP = DP_1;
+    common_data->spec.unit = UNIT_G;
   } else {
     // LOGI(TAG, "weight read data_other = %s", read_data.data);
     sscanf(read_data.data, "%lf", &weight);
@@ -181,7 +181,7 @@ int indicator_AND_CB_12K_data(Common_data_t *common_data) {
     // copy to weight data
     weight = (float)(atoi(read_data.data) * 0.001);
     memcpy(common_data->weight_data, read_data.data, 8);
-    common_data->DP = DP_1;
+    common_data->spec.unit = UNIT_G;
   } else {
     sscanf(read_data.data, "%lf", &weight);
     memcpy(common_data->weight_data, read_data.data, 8);
@@ -309,7 +309,7 @@ int indicator_EC_D_Serise_data(Common_data_t *common_data) {
     weight = (float)(atoi(read_data.data) * 0.001);
     // LOGI(TAG, "g = %f", weight);
     memcpy(common_data->weight_data, read_data.data, 8);
-    common_data->DP = DP_1;
+    common_data->spec.unit = UNIT_G;
 
   } else if (strncmp(read_data.unit, "kg", 2) == 0) {
     sscanf(read_data.data, "%lf", &weight);

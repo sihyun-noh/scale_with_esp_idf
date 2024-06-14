@@ -415,14 +415,11 @@ void logic_timer_cb(lv_timer_t *timer) {
       res = indicator_ACOM_pw_200_data(&indicator_data);
       ui_noti.event = (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
 
-      if (indicator_data.DP == DP_1) {
+      if (indicator_data.spec.unit == UNIT_G) {
         // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
         weight = (float)(atoi(indicator_data.weight_data) * 0.001);
         snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
         lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
-        // lv_label_set_text_fmt(ui_Screen1_Amount_Value_Label, "#0000ff Max:%fkg# #ff0000 Min:%f# #000000 e=%dg#",
-        //                       indicator_data.spec.scale_Max * 0.001, indicator_data.spec.scale_Max * 0.001,
-        //                       indicator_data.spec.e_d);
 
       } else {
         sscanf(indicator_data.weight_data, "%f", &weight);
@@ -438,14 +435,11 @@ void logic_timer_cb(lv_timer_t *timer) {
       res = indicator_AND_CB_12K_data(&indicator_data);
       ui_noti.event = (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
 
-      if (indicator_data.DP == DP_1) {
+      if (indicator_data.spec.unit == UNIT_G) {
         // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
         weight = (float)(atoi(indicator_data.weight_data) * 0.001);
         snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
         lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
-        // lv_label_set_text_fmt(ui_Screen1_Amount_Value_Label, "#0000ff Max:%fkg# #ff0000 Min:%f# #000000 e=%dg#",
-        //                       indicator_data.spec.scale_Max * 0.001, indicator_data.spec.scale_Max * 0.001,
-        //                       indicator_data.spec.e_d);
       } else {
         sscanf(indicator_data.weight_data, "%f", &weight);
         snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
@@ -459,14 +453,11 @@ void logic_timer_cb(lv_timer_t *timer) {
       res = indicator_EC_D_Serise_data(&indicator_data);
       ui_noti.event = (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
 
-      if (indicator_data.DP == DP_1) {
+      if (indicator_data.spec.unit == UNIT_G) {
         // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
         weight = (float)(atoi(indicator_data.weight_data) * 0.001);
         snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
         lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
-        // lv_label_set_text_fmt(ui_Screen1_Amount_Value_Label, "#0000ff Max:%fkg# #ff0000 Min:%f# #000000 e=%dg#",
-        //                       indicator_data.spec.scale_Max * 0.001, indicator_data.spec.scale_Max * 0.001,
-        //                       indicator_data.spec.e_d);
       } else {
         sscanf(indicator_data.weight_data, "%f", &weight);
         snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
@@ -800,7 +791,7 @@ void logic_timer_cb(lv_timer_t *timer) {
             }
           }
         }  // if the set value is 0, it is not counted.
-      }  // trash_fileter_flag.
+      }    // trash_fileter_flag.
       break;
     case MODE_2:
       // LOGI(TAG, "current mode %d:", ui_data_ctx.curr_mode);

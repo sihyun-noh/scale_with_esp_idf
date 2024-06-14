@@ -5,10 +5,16 @@
 extern "C" {
 #endif
 
+typedef enum {
+  UNIT_G = 0x01,
+  UNIT_KG,
+} weight_unit_t;
+
 typedef struct {
   unsigned int scale_Max;
   unsigned int scale_Min;
   unsigned int e_d;
+  weight_unit_t unit;
 } indi_mode_spac_t;
 
 typedef struct {
