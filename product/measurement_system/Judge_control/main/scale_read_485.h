@@ -199,7 +199,7 @@ int baykon_bx11_zero_command(void);
  * @brief weight printf
  *
  */
-void weight_print_msg(char *s_weight);
+void weight_print_msg(char *s_weight, weight_unit_t unit);
 #ifdef __cplusplus
 }
 #endif

@@ -959,20 +959,24 @@ void print_data(const printer_data_t *pdata) {
   }
 }
 
-void weight_print_msg(char *s_weight) {
+void weight_print_msg(char *s_weight, weight_unit_t unit) {
   unsigned char print_data[40] = { 0 };
   unsigned char print_data_head[] = { 0x20, 0x20, 0x20, 0x37, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
                                       0x31, 0x20, 0x20, 0x20, 0x31, 0x33, 0x37, 0x38, 0x20, 0x20, 0x20 };
   unsigned char print_data_body[] = { 0x33, 0x32, 0x2e, 0x36, 0x30 };  // avable using data format 0.000, 00.00, 000.0
-  unsigned char print_data_tail[] = { 0x20, 0x6b, 0x67, 0x0d, 0x0a };  // " kg\r\n"
+  unsigned char print_data_tail_unit_kg[] = { 0x20, 0x6b, 0x67, 0x0d, 0x0a };  // " kg\r\n"
+  unsigned char print_data_tail_unit_g[] = { 0x20, 0x20, 0x67, 0x0d, 0x0a };   // "  g\r\n"
 
   char *weight = s_weight;
   int weight_len = strlen(weight);
 
   memcpy(print_data, print_data_head, sizeof(print_data_head));
   memcpy(print_data + sizeof(print_data_head), weight, weight_len);
-  memcpy(print_data + sizeof(print_data_head) + weight_len, print_data_tail, sizeof(print_data_tail));
-
+  if (unit == UNIT_KG) {
+    memcpy(print_data + sizeof(print_data_head) + weight_len, print_data_tail_unit_kg, sizeof(print_data_tail_unit_kg));
+  } else if (unit == UNIT_G) {
+    memcpy(print_data + sizeof(print_data_head) + weight_len, print_data_tail_unit_g, sizeof(print_data_tail_unit_g));
+  }
   LOGI(TAG, "before data : %s", print_data);
 
   // printer_data_t *pdata = init_data(print_data_body, sizeof(print_data_body), 26, 2);

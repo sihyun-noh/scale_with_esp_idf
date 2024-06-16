@@ -843,7 +843,7 @@ void logic_timer_cb(lv_timer_t *timer) {
               // print prot control
               if (printer_state) {
                 SET_MUX_CONTROL(CH_1_SET);
-                weight_print_msg(s_weight);
+                weight_print_msg(s_weight, indicator_data.spec.unit);
                 SET_MUX_CONTROL(CH_2_SET);
               }
               //  Clear all judgments
