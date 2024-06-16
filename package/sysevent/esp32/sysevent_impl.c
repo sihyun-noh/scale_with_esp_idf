@@ -610,7 +610,7 @@ int sysevent_get_impl(sysevent_ctx_t *ctx, const char *event_base, int event_id,
   // LOGI(TAG, "Wait for event_base = %s, event_id = %d", event_base, event_id);
 
   if (xQueueReceive(ctx->sysevent_res, &event_msg, portMAX_DELAY) == pdTRUE) {
-    //   LOGI(TAG, "Got event_base = %s, event_id = %d", event_msg.event_base, event_msg.event_id);
+    //  LOGI(TAG, "Got event_base = %s, event_id = %d", event_msg.event_base, event_msg.event_id);
     if (strcmp(event_msg.event_base, NO_EVENT_BASE) == 0 && event_msg.event_id == NO_EVENT_ID) {
       // No event in accordance with event base and event id
       goto _exit;

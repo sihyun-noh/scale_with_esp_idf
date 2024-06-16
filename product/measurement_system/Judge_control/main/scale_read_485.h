@@ -25,7 +25,7 @@ typedef struct {
 } printer_data_t;
 
 typedef enum {
-  STATE_NONE = -1,
+  STATE_NONE = 0x00,
   STATE_OK,
   STATE_ZERO_EVENT,
   STATE_STABLE_EVENT,
@@ -43,6 +43,8 @@ typedef enum {
   MODEL_CAS_EC_D_SERIES,
   MODEL_AND_CB_12K,
   MODEL_ACOM_PW_200,
+  MODEL_CAS_SW_11,
+  MODEL_INNOTEM_T25,
 } indicator_model_t;
 
 typedef enum {
@@ -108,6 +110,24 @@ typedef struct Common_data {
  * @return int
  */
 int weight_uart_485_init(void);
+
+/**
+ * @brief
+ *
+ * @param common_data
+ * @return int
+ */
+
+int indicator_INNOTEM_T25_data(Common_data_t *common_data);
+
+/**
+ * @brief
+ *
+ * @param common_data
+ * @return int
+ */
+
+int indicator_CAS_sw_11_data(Common_data_t *common_data);
 
 /**
  * @brief

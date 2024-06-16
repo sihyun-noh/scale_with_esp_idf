@@ -4,13 +4,17 @@
 // Project name: ms_type
 
 #include <stdio.h>
+#include <string.h>
 
 #include "ui.h"
+#include "sysevent.h"
 #include "ui_helpers.h"
 #include "scale_read_485.h"
 #include "log.h"
 #include "i2s_speaker.h"
 #include "syscfg.h"
+#include "sysevent.h"
+#include "event_ids.h"
 #include "sys_config.h"
 #include "config.h"
 #include "time.h"
@@ -394,6 +398,8 @@ void mode2_judge_countor(int curr_count, int compare_count, Common_data_t *indic
   return;
 }
 
+static Common_data_t indicator_data = { 0 };
+
 void logic_timer_cb(lv_timer_t *timer) {
   char s_weight[20] = { 0 };
   char s_amount_count[20] = { 0 };
@@ -403,13 +409,83 @@ void logic_timer_cb(lv_timer_t *timer) {
   float tare_weight = 0.0;
   bool trash_fileter_flag = false;
   int res = 0;
-  float minimum_num = 0.0;
+  int res_e = 0;
+  float maxmum_weight, minimum_weight = 0.0;
   size_t free_heap_size = 0;
   size_t min_free_heap_size = 0;
-  Common_data_t indicator_data = { 0 };
+  char weight_data_buff[100] = { 0 };
+  char *ptr = weight_data_buff;
 
   switch (indicator_model) {
     case MODEL_NONE: LOGE(TAG, "No target indicator model!"); break;
+
+    case MODEL_INNOTEM_T25:
+      // memset(&indicator_data, 0x00, sizeof(indicator_data));
+      //`res = indicator_INNOTEM_T25_data(&indicator_data);
+      // weight, unit, zero, stable, sign, trash
+      // 파싱 자릿수 확인해서 ....
+      res_e = sysevent_get(SYSEVENT_BASE, WEIGHT_DATA_EVENT, weight_data_buff, sizeof(weight_data_buff));
+
+      if (res_e == 0) {
+        memset(&indicator_data, 0x00, sizeof(indicator_data));
+        memcpy(indicator_data.weight_data, ptr, 10);
+        indicator_data.spec.unit = *(ptr + 11) - '0';
+
+        indicator_data.event[STATE_ZERO_EVENT] = *(ptr + 13) - '0';
+        indicator_data.event[STATE_STABLE_EVENT] = *(ptr + 15) - '0';
+        indicator_data.event[STATE_SIGN_EVENT] = *(ptr + 17) - '0';
+        indicator_data.event[STATE_TRASH_CHECK_EVENT] = *(ptr + 19) - '0';
+        // 인디게이터 property입으로 일단 hard coding
+        indicator_data.spec.scale_Max = 10000;
+        indicator_data.spec.scale_Min = 40;
+        indicator_data.spec.e_d = 2;
+      }
+
+      res_e = sysevent_get(SYSEVENT_BASE, WEIGHT_DATA_RES_EVENT, &res, sizeof(res));
+      if (res_e == 0) {
+        ui_noti.event =
+            (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
+      }
+
+      if (indicator_data.spec.unit == UNIT_G) {
+        // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
+        weight = (float)(atoi(indicator_data.weight_data) * 0.001);
+        snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
+      } else if (indicator_data.spec.unit == UNIT_KG) {
+        sscanf(indicator_data.weight_data, "%f", &weight);
+        snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : kg");
+      } else {
+        LOGI(TAG, "none %d", indicator_data.spec.unit);
+      }
+
+      // MODE_2
+      snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+      break;
+
+    case MODEL_CAS_SW_11:
+      memset(&indicator_data, 0x00, sizeof(indicator_data));
+      res = indicator_CAS_sw_11_data(&indicator_data);
+      ui_noti.event = (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
+
+      if (indicator_data.spec.unit == UNIT_G) {
+        // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
+        weight = (float)(atoi(indicator_data.weight_data) * 0.001);
+        snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
+
+      } else if (indicator_data.spec.unit == UNIT_KG) {
+        sscanf(indicator_data.weight_data, "%f", &weight);
+        snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : kg");
+      } else {
+      }
+
+      // MODE_2
+      snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+      break;
+
     case MODEL_ACOM_PW_200:
       memset(&indicator_data, 0x00, sizeof(indicator_data));
       res = indicator_ACOM_pw_200_data(&indicator_data);
@@ -458,10 +534,11 @@ void logic_timer_cb(lv_timer_t *timer) {
         weight = (float)(atoi(indicator_data.weight_data) * 0.001);
         snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
         lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
-      } else {
+      } else if (indicator_data.spec.unit == UNIT_KG) {
         sscanf(indicator_data.weight_data, "%f", &weight);
         snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
         lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : kg");
+      } else {
       }
 
       // MODE_2
@@ -625,8 +702,25 @@ void logic_timer_cb(lv_timer_t *timer) {
         create_custom_msg_box("임시저장 중 입니다.....", ui_Screen1, NULL, LV_EVENT_CLICKED);
         lv_event_send(ui_Screen1_Judge_Comfirm_Btn, LV_EVENT_READY, NULL);
       }
+
+      maxmum_weight = (float)indicator_data.spec.scale_Max * 0.001;
+      minimum_weight = (float)indicator_data.spec.scale_Min * 0.001;
+
+      // checking weight maxmum, minimun for indicator
+      if (indicator_model == MODEL_CAS_WTM500 || indicator_model == MODEL_BAYKON_BX11 ||
+          indicator_model == MODEL_CAS_NT301A) {
+        maxmum_weight = (float)100.00;
+        minimum_weight = (float)0.1;
+      } else {
+        maxmum_weight = (float)(indicator_data.spec.scale_Max - indicator_data.spec.e_d) * 0.001;
+        minimum_weight = (float)indicator_data.spec.scale_Min * 0.001;
+        // LOGI(TAG, "max : %.3f", maxmum_weight);
+        // LOGI(TAG, "mini : %.3f", minimum_weight);
+      }
+
       // no show to under zero and over 100kg
       if (trash_fileter_flag) {
+        // show display stage
         if (indicator_data.event[STATE_SIGN_EVENT] == STATE_SIGN_EVENT) {
           lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, "UNKNOWN");
           lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, "\0");
@@ -639,7 +733,7 @@ void logic_timer_cb(lv_timer_t *timer) {
             lv_led_off(ui_led2);
             lv_led_off(ui_led3);
           }
-        } else if (weight >= (float)100.0) {
+        } else if (weight >= maxmum_weight) {
           lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, "OVERLOAD");
           lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, "\0");
         } else {
@@ -652,7 +746,8 @@ void logic_timer_cb(lv_timer_t *timer) {
         if ((float)0.0 == upper_weight_value || (float)0.0 == lower_weight_value || 0 == prod_num_value) {
         } else {
           if (upper_weight_value < weight && !over_event_flag) {
-            if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
+            if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT &&
+                indicator_data.event[STATE_SIGN_EVENT] == STATE_NONE) {
               judge_total_count++;
               judge_over_count++;
               // 현재 판정값 메모리에 저장
@@ -690,17 +785,9 @@ void logic_timer_cb(lv_timer_t *timer) {
             }
           }
 
-          // nuder weight check
-          // Judgment minimum weight 100g
-          if (indicator_model == MODEL_CAS_EC_D_SERIES || indicator_model == MODEL_AND_CB_12K ||
-              indicator_model == MODEL_ACOM_PW_200) {
-            minimum_num = 0.001;
-          } else {
-            minimum_num = 0.1;
-          }
-
-          if (minimum_num < weight && lower_weight_value > weight && !nuder_event_flag && weight > 0) {
-            if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
+          if (minimum_weight < weight && lower_weight_value > weight && !nuder_event_flag && weight > 0) {
+            if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT &&
+                indicator_data.event[STATE_SIGN_EVENT] == STATE_NONE) {
               judge_total_count++;
               judge_lack_count++;
               // 현재 판정값 메모리에 저장
@@ -739,7 +826,8 @@ void logic_timer_cb(lv_timer_t *timer) {
 
           // // success weight check
           if (lower_weight_value <= weight && upper_weight_value > weight && !normal_event_flag) {
-            if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT) {
+            if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT &&
+                indicator_data.event[STATE_SIGN_EVENT] == STATE_NONE) {
               judge_total_count++;
               judge_normal_count++;
               // 현재 판정값 메모리에 저장
@@ -791,7 +879,7 @@ void logic_timer_cb(lv_timer_t *timer) {
             }
           }
         }  // if the set value is 0, it is not counted.
-      }    // trash_fileter_flag.
+      }  // trash_fileter_flag.
       break;
     case MODE_2:
       // LOGI(TAG, "current mode %d:", ui_data_ctx.curr_mode);
@@ -941,6 +1029,14 @@ void ui_init(void) {
     // weight_zero_command = cas_zero_command;
     indicator_model = MODEL_ACOM_PW_200;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : PW-200");
+  } else if (strncmp(indicator_set, "SW-11", 5) == 0) {
+    // weight_zero_command = cas_zero_command;
+    indicator_model = MODEL_CAS_SW_11;
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : SW-11");
+  } else if (strncmp(indicator_set, "INNOTEM-T25", 11) == 0) {
+    // weight_zero_command = cas_zero_command;
+    indicator_model = MODEL_INNOTEM_T25;
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : INNOTEM-T25");
   } else if (strncmp(indicator_set, "none", 4) == 0) {
     indicator_model = MODEL_NONE;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : NONE");

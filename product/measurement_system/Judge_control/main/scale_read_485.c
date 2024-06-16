@@ -41,6 +41,213 @@ int weight_uart_485_init(void) {
   return res;
 }
 
+// ST,GS,00,-    78   g
+// I (1970-01-01 00:01:39) scale_read_485_task: read data 0_S
+// I (1970-01-01 00:01:39) scale_read_485_task: read data 1_T
+// I (1970-01-01 00:01:39) scale_read_485_task: read data 2_,
+// I (1970-01-01 00:01:39) scale_read_485_task: read data 3_G
+// I (1970-01-01 00:01:39) scale_read_485_task: read data 4_S
+// I (1970-01-01 00:01:39) scale_read_485_task: read data 5_,
+// I (1970-01-01 00:01:39) scale_read_485_task: read data 6_0
+// I (1970-01-01 00:01:39) scale_read_485_task: read data 7_0
+// I (1970-01-01 00:01:39) scale_read_485_task: read data 8_,
+// I (1970-01-01 00:01:39) scale_read_485_task: read data 9_-
+// I (1970-01-01 00:01:39) scale_read_485_task: read data 10_
+// I (1970-01-01 00:01:40) scale_read_485_task: read data 11_
+// I (1970-01-01 00:01:40) scale_read_485_task: read data 12_
+// I (1970-01-01 00:01:40) scale_read_485_task: read data 13_
+// I (1970-01-01 00:01:40) scale_read_485_task: read data 14_2
+// I (1970-01-01 00:01:40) scale_read_485_task: read data 15_0
+// I (1970-01-01 00:01:40) scale_read_485_task: read data 16_
+// I (1970-01-01 00:01:40) scale_read_485_task: read data 17_
+// I (1970-01-01 00:01:40) scale_read_485_task: read data 18_
+// I (1970-01-01 00:01:40) scale_read_485_task: read data 19_g
+
+int indicator_INNOTEM_T25_data(Common_data_t *common_data) {
+  uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
+  static empty_format_t read_data = { 0 };
+  double weight = 0;
+
+  int len = uart_read_data(UART_PORT_NUM, data, (BUF_SIZE - 1));
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  if (len <= 0) {
+    LOGE(TAG, "Invalid data. or No data ");
+    LOGE(TAG, "len = %d\n", len);
+    LOGE(TAG, "uart 485 read data = %s", data);
+    free(data);
+    return -1;
+  }
+
+  // for (int i = 0; i < 20; i++) {
+  //   LOGI(TAG, "read data %d_%c", i, data[i]);
+  // }
+
+  memset(&read_data, 0x00, sizeof(read_data));
+
+  memcpy(read_data.states, data, 2);
+  memcpy(read_data.measurement_states, data + 3, 2);
+  memcpy(read_data.sign, data + 9, 1);
+  memcpy(read_data.data, data + 10, 6);
+  memcpy(read_data.unit, data + 18, 2);
+
+  // Todo
+  // indicator Min, Max, digit set = g unit
+  common_data->spec.scale_Max = 10000;
+  common_data->spec.scale_Min = 40;
+  common_data->spec.e_d = 2;
+
+  // copy to weight data
+  memcpy(common_data->weight_data, read_data.data, 8);
+
+  // Compare 2digit
+  if (strncmp(read_data.unit, " g", 2) == 0) {
+    // copy to weight data
+    weight = (float)(atoi(read_data.data) * 0.001);
+    // LOGI(TAG, "g = %f", weight);
+    memcpy(common_data->weight_data, read_data.data, 8);
+    common_data->spec.unit = UNIT_G;
+
+  } else if (strncmp(read_data.unit, "kg", 2) == 0) {
+    sscanf(read_data.data, "%lf", &weight);
+    // LOGI(TAG, "kg = %f", weight);
+    memcpy(common_data->weight_data, read_data.data, 8);
+    common_data->spec.unit = UNIT_KG;
+
+  } else {
+    return 0;
+  }
+
+  /*stable state set display */
+  if (strncmp(read_data.states, "ST", 2) == 0) {
+    common_data->event[STATE_STABLE_EVENT] = STATE_STABLE_EVENT;
+  } else {
+    common_data->event[STATE_STABLE_EVENT] = STATE_NONE;
+  }
+
+  /*zero state set display */
+  if (strncmp(read_data.states, "ST", 2) == 0 && weight == 0.0) {
+    common_data->event[STATE_ZERO_EVENT] = STATE_ZERO_EVENT;
+  } else {
+    common_data->event[STATE_ZERO_EVENT] = STATE_NONE;
+  }
+
+  if (read_data.sign[0] == '-') {
+    common_data->event[STATE_SIGN_EVENT] = STATE_SIGN_EVENT;
+  } else {
+    common_data->event[STATE_SIGN_EVENT] = STATE_NONE;
+  }
+  if (strncmp(read_data.states, "ST", 2) == 0 || strncmp(read_data.states, "US", 2) == 0 ||
+      strncmp(read_data.states, "OL", 2) == 0) {
+    common_data->event[STATE_TRASH_CHECK_EVENT] = STATE_TRASH_CHECK_EVENT;
+  } else {
+    common_data->event[STATE_TRASH_CHECK_EVENT] = STATE_NONE;
+  }
+
+#if INDICATOR_DEBUG
+  LOG_BUFFER_HEXDUMP(TAG, &read_data, sizeof(read_data), LOG_INFO);
+#endif
+  free(data);
+  return 0;
+}
+
+/**
+ *
+ * 저울의 기본 프로토콜 = baudrate : 9600bpc, Data bit : 8, stop bit: 1, Parity : none
+ * "영점" 누른 상태에서 전원 -> 영점 버튼 한번더 누르면 통신 set mode
+ * "모드" 버튼을 누르면 rs-232 설정값 변경 -> rS-Co 모드로(데이터 연속적으로)
+ * MAX: 30kg, Min 200g e=d 10g
+ */
+// format : cas 22 byte
+
+int indicator_CAS_sw_11_data(Common_data_t *common_data) {
+  uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
+  static cas_22byte_format_t read_data = { 0 };
+  double weight = 0;
+
+  int len = uart_read_data(UART_PORT_NUM, data, (BUF_SIZE - 1));
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  if (len <= 0) {
+    LOGE(TAG, "Invalid data. or No data ");
+    LOGE(TAG, "len = %d\n", len);
+    LOGE(TAG, "uart 485 read data = %s", data);
+    free(data);
+    return -1;
+  }
+  //
+  // LOGE(TAG, "len = %d\n", len);
+  // LOGI(TAG, "uart 485 read data = %s", data);
+  // LOG_BUFFER_HEXDUMP(TAG, data, len, LOG_INFO);
+  //
+  memset(&read_data, 0x00, sizeof(read_data));
+
+  memcpy(read_data.states, data, 2);
+  memcpy(read_data.measurement_states, data + 3, 2);
+  memcpy(read_data.lamp_states, data + 7, 1);
+  memcpy(read_data.data, data + 9, 8);
+  memcpy(read_data.unit, data + 18, 2);
+
+  // Todo
+  // indicator Min, Max, digit set = g unit
+  common_data->spec.scale_Max = 30000;  // 30kg
+  common_data->spec.scale_Min = 200;
+  common_data->spec.e_d = 10;
+
+  // copy to weight data
+  memcpy(common_data->weight_data, read_data.data, 8);
+
+  // check weight data
+  sscanf(read_data.data, "%lf", &weight);
+  // LOGI(TAG, "zero check weight = %lf", weight);
+
+  /*stable state set display */
+  if (*read_data.lamp_states & 0x40) {
+    common_data->event[STATE_STABLE_EVENT] = STATE_STABLE_EVENT;
+  } else {
+    common_data->event[STATE_STABLE_EVENT] = STATE_NONE;
+  }
+  /*zero state set display */
+  if (strncmp(read_data.states, "ST", 2) == 0 && weight == 0.0) {
+    common_data->event[STATE_ZERO_EVENT] = STATE_ZERO_EVENT;
+  } else {
+    common_data->event[STATE_ZERO_EVENT] = STATE_NONE;
+  }
+
+  // if (*read_data.lamp_states & 0x01) {
+  //   common_data->event[STATE_ZERO_EVENT] = STATE_ZERO_EVENT;
+  // } else {
+  //   common_data->event[STATE_ZERO_EVENT] = STATE_NONE;
+  // }
+
+  /*tare state set display */
+  // if (*read_data.lamp_states & 0x02) {
+  //   common_data->event[STATE_TARE_EVENT] = STATE_TARE_EVENT;
+  // } else {
+  //   common_data->event[STATE_TARE_EVENT] = STATE_NONE;
+  // }
+  //
+  if (strncmp(read_data.unit, "kg", 2) == 0) {
+    common_data->spec.unit = UNIT_KG;
+  }
+
+  if (read_data.data[0] == '-') {
+    common_data->event[STATE_SIGN_EVENT] = STATE_SIGN_EVENT;
+  } else {
+    common_data->event[STATE_SIGN_EVENT] = STATE_NONE;
+  }
+  if (strncmp(read_data.states, "ST", 2) == 0 || strncmp(read_data.states, "US", 2) == 0 ||
+      strncmp(read_data.states, "OL", 2) == 0) {
+    common_data->event[STATE_TRASH_CHECK_EVENT] = STATE_TRASH_CHECK_EVENT;
+  } else {
+    common_data->event[STATE_TRASH_CHECK_EVENT] = STATE_NONE;
+  }
+
+#if INDICATOR_DEBUG
+  LOG_BUFFER_HEXDUMP(TAG, &read_data, sizeof(read_data), LOG_INFO);
+#endif
+  free(data);
+  return 0;
+}
+
 /**
  * 저울의 기본 프로토콜 = baudrate : 9600bpc, Data bit : 8, stop bit: 1, Parity : none
  * "*" 누른 상태에서 전원 -> UP -
@@ -315,6 +522,8 @@ int indicator_EC_D_Serise_data(Common_data_t *common_data) {
     sscanf(read_data.data, "%lf", &weight);
     // LOGI(TAG, "kg = %f", weight);
     memcpy(common_data->weight_data, read_data.data, 8);
+    common_data->spec.unit = UNIT_KG;
+
   } else {
     return 0;
   }

@@ -33,6 +33,8 @@
 #include "scale_read_485.h"
 #include "ui.h"
 
+#include "control_task.h"
+
 typedef enum { INPUT = 0, INPUT_PULLUP, OUTPUT } gpio_hal_mode_t;
 
 static const char *TAG = "main_app";
@@ -246,13 +248,15 @@ void app_main(void) {
     LOGE(TAG, "LVGL setup failed!!!");
   }
   // usb msc or msc ota mode
-
   if (strncmp(usb_mode, "OTA", 3) == 0) {
     create_usb_host_msc_ota_task();
   } else if (strncmp(usb_mode, "MSC", 3) == 0) {
     create_usb_host_msc_task();
   }
-  //  create_control_task();
+
+  if (strncmp(indicator_set, "INNOTEM-T25", 11) == 0) {
+    create_control_task();
+  }
 
   vTaskDelay(1000 / portTICK_PERIOD_MS);
 }
