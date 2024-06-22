@@ -19,6 +19,14 @@ extern void memory_allocation_manger();
 extern void create_custom_msg_box(const char *msg_text, lv_obj_t *active_screen, void (*event_handler)(lv_event_t *),
                                   lv_event_code_t event);
 
+typedef enum {
+  FOCUS_TA_NONE = -1,
+  FOCUS_TA1,
+  FOCUS_TA2,
+  FOCUS_TA3,
+  FOCUS_TA4,
+} focus_ta_t;
+
 static bool ta1_selected = false;
 static bool ta2_selected = false;
 static bool ta3_selected = false;
@@ -26,20 +34,25 @@ static bool ta4_selected = false;
 // static bool ta5_selected;
 
 static textareas_t use_text_area;
+
 int button_state[12] = { 0 };
+focus_ta_t current_focus = FOCUS_TA1;
+focus_ta_t previous_focus = FOCUS_TA_NONE;
+int current_id = 0;
+int previous_id = 0;
 
 const char *button_texts[12][MAX_CHAR_CYCLES] = {
-  { "1", "!", "@", "#", "1" },  // ID 0
-  { "2", "A", "B", "C", "2" },  // ID 1
-  { "3", "D", "E", "F", "3" },  // ID 2
-  { "4", "G", "H", "I", "4" },  // ID 3
-  { "5", "J", "K", "L", "5" },  // ID 4
-  { "6", "M", "N", "O", "6" },  // ID 5
-  { "7", "P", "Q", "R", "S" },  // ID 6
-  { "8", "T", "U", "V", "8" },  // ID 7
-  { "9", "W", "X", "Y", "Z" },  // ID 8
+  { "1", "1", "!", "@", "#" },  // ID 0
+  { "2", "2", "A", "B", "C" },  // ID 1
+  { "3", "3", "D", "E", "F" },  // ID 2
+  { "4", "4", "G", "H", "I" },  // ID 3
+  { "5", "5", "J", "K", "L" },  // ID 4
+  { "6", "6", "M", "N", "O" },  // ID 5
+  { "S", "7", "P", "Q", "R" },  // ID 6
+  { "8", "8", "T", "U", "V" },  // ID 7
+  { "Z", "9", "W", "X", "Y" },  // ID 8
   { " ", " ", " ", " ", " " },  // ID 9
-  { "0", ".", "-", "/", "0" },  // ID 10
+  { "0", "0", ".", "-", "/" },  // ID 10
   { " ", " ", " ", " ", " " }   // ID 11 //공백으로 자리 확보
 };
 
@@ -54,7 +67,7 @@ const char *button_nums[12][2] = {
   { "8", "8" },  // ID 7
   { "9", "9" },  // ID 8
   { " ", " " },  // ID 9
-  { "0", "." },  // ID 10
+  { ".", "0" },  // ID 10 // 0 first, . second
   { " ", " " }   // ID 11
 };
 
@@ -157,33 +170,67 @@ void textarea_event_handler3(lv_event_t *e) {
   }
   // /*Todo : */
 }
+
 void btnm_event_handler(lv_event_t *e) {
   lv_obj_t *obj = lv_event_get_target(e);
   uint32_t id = lv_btnmatrix_get_selected_btn(obj);
   const char *txt = NULL;
-  char buf[10] = { 0 };
   bool text_write_flag = false;
-
   LOGI(TAG, "btn_id %d", id);
+  current_id = id;
+  if (current_id != previous_id) {
+    previous_id = current_id;
+    memset(button_state, 0x00, sizeof(button_state));
+  }
 
   // insert charicter initialize the current cursor position
   lv_obj_t *ta = use_text_area.ta1;
 
   if (ta1_selected) {
     ta = use_text_area.ta1;
+    current_focus = FOCUS_TA1;
+    if (current_focus != previous_focus) {
+      memset(button_state, 0x00, sizeof(button_state));
+      previous_focus = current_focus;
+    }
     LOGI(TAG, "Send data to ta1");
   } else if (ta2_selected) {
     ta = use_text_area.ta2;
+    current_focus = FOCUS_TA2;
+    if (current_focus != previous_focus) {
+      memset(button_state, 0x00, sizeof(button_state));
+      previous_focus = current_focus;
+    }
+
     LOGI(TAG, "Send data to ta2");
   } else if (ta3_selected) {
     ta = use_text_area.ta3;
+    current_focus = FOCUS_TA3;
+    if (current_focus != previous_focus) {
+      memset(button_state, 0x00, sizeof(button_state));
+      previous_focus = current_focus;
+    }
     LOGI(TAG, "Send data to ta3");
   } else if (ta4_selected) {
     ta = use_text_area.ta4;
+    current_focus = FOCUS_TA4;
+    if (current_focus != previous_focus) {
+      memset(button_state, 0x00, sizeof(button_state));
+      previous_focus = current_focus;
+    }
     LOGI(TAG, "Send data to ta4");
   } else {
     ta = use_text_area.ta1;
+    current_focus = FOCUS_TA1;
+    if (current_focus != previous_focus) {
+      memset(button_state, 0x00, sizeof(button_state));
+      previous_focus = current_focus;
+    }
     LOGI(TAG, "Send data to ta1");
+  }
+  // 입력 문자 버퍼 초기
+  if (id == 11) {
+    memset(button_state, 0x00, sizeof(button_state));
   }
 
   if (ta == use_text_area.ta1 || ta == use_text_area.ta2 || ta == use_text_area.ta3) {
@@ -209,6 +256,7 @@ void btnm_event_handler(lv_event_t *e) {
       }
     }
   }
+
   // 같은자리 지우고 다시 쓰기 및 del 키 입력 시 문자삭제 및 자리이동
   if (id != 11) {
     if (id == 9 && strcmp(txt, "Del") == 0) {
@@ -217,8 +265,9 @@ void btnm_event_handler(lv_event_t *e) {
     } else
       lv_textarea_del_char(ta);
   }
-  if (text_write_flag)
+  if (text_write_flag) {
     lv_textarea_add_text(ta, txt);
+  }
 }
 
 static void event_cb(lv_event_t *e) {
@@ -236,6 +285,47 @@ static bool is_buffer_empty_or_whitespace(const char *buffer, size_t size) {
     }
   }
   return true;
+}
+
+static void modify_register_Btn_Yes_e_handler(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  // LOGI(TAG, "click Judge_Cancel_Btn_Yes_event_cb!!");
+  char set_str[50] = { 0 };
+  char set_str_prodName[50] = { 0 };
+  char s_key[10] = { 0 };
+  char s_key_prodName[50] = { 0 };
+  if (code == LV_EVENT_CLICKED) {
+    LOGI(TAG, "Register settings.");
+    unsigned int upper_int_part = (int)upper_weight_value;
+    unsigned int lower_int_part = (int)lower_weight_value;
+    float upper_decimal_part = upper_weight_value - upper_int_part;
+    float lower_decimal_part = lower_weight_value - lower_int_part;
+    unsigned int upper_dacimal_to_int_part = roundf(upper_decimal_part * 1000);  // decimal point 3
+    unsigned int lower_decimal_to_int_part = roundf(lower_decimal_part * 1000);  // rounding to the nearest integer
+
+    snprintf(s_key, sizeof(s_key), "Prod%02d", prod_num_value);
+    LOGI(TAG, "key:%s", s_key);
+
+    memset(set_str, 0x00, sizeof(set_str));
+    snprintf(set_str, sizeof(set_str), "%02d,upper:%02d.%03d,lower:%02d.%03d", prod_num_value, upper_int_part,
+             upper_dacimal_to_int_part, lower_int_part, lower_decimal_to_int_part);
+    LOGI(TAG, "Set syscfg_data for setting value : %s", set_str);
+
+    memset(set_str_prodName, 0x00, sizeof(set_str_prodName));
+    snprintf(set_str_prodName, sizeof(set_str_prodName), "%s", buf_prod_name);
+    LOGI(TAG, "Set syscfg_data for prodName : %s", set_str_prodName);
+    snprintf(s_key_prodName, sizeof(s_key_prodName), "%s_%02d", PROD_NAME, prod_num_value);
+    LOGI(TAG, "Set syscfg_data for s_key_prodName : %s", s_key_prodName);
+
+    syscfg_set(CFG_DATA, s_key, set_str);
+    syscfg_set(CFG_DATA, s_key_prodName, buf_prod_name);
+
+    create_custom_msg_box("등록 되었습니다. ", ui_Screen2, NULL, LV_EVENT_CLICKED);
+
+  } else {
+    LOGI(TAG, "Miss. ");
+    memory_allocation_manger();
+  }
 }
 
 void ui_register_pord_num_btn_e_hendler(lv_event_t *e) {
@@ -267,7 +357,8 @@ void ui_register_pord_num_btn_e_hendler(lv_event_t *e) {
     snprintf(cmp_pord_num, sizeof(cmp_pord_num), "%02d", prod_num_value);
     snprintf(cfg_pord_num, sizeof(cfg_pord_num), "%.2s", get_str);
     if (strcmp(cfg_pord_num, cmp_pord_num) == 0) {
-      create_custom_msg_box("이미 등록된 번호가 있습니다.", ui_Screen2, NULL, LV_EVENT_CLICKED);
+      create_custom_msg_box("이미 등록된 번호가 있습니다\n변경하겠습니까?", ui_Screen2,
+                            modify_register_Btn_Yes_e_handler, LV_EVENT_CLICKED);
 
     } else if (prod_num_value > PROD_NUM) {
       // erroe when entering product number over PROD_NUM value
@@ -279,7 +370,7 @@ void ui_register_pord_num_btn_e_hendler(lv_event_t *e) {
                             LV_EVENT_CLICKED);
     } else if (buf_prod_name[0] == '\0') {
       // pord_name is a special method that does not determine whether it works or not.
-      create_custom_msg_box("유효하지 않은 설정 값입니다.\n품명이 없습니다..", ui_Screen2, NULL, LV_EVENT_CLICKED);
+      create_custom_msg_box("유효하지 않은 설정 값입니다.\n품명이 없습니다.", ui_Screen2, NULL, LV_EVENT_CLICKED);
     } else {
       if (strlen(get_str) == 0) {
         LOGI(TAG, "Register settings.");

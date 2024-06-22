@@ -252,10 +252,7 @@ void app_main(void) {
     create_usb_host_msc_ota_task();
   } else if (strncmp(usb_mode, "MSC", 3) == 0) {
     create_usb_host_msc_task();
-  }
-
-  if (strncmp(indicator_set, "INNOTEM-T25", 11) == 0) {
-    create_control_task();
+    create_control_task(indicator_set);
   }
 
   vTaskDelay(1000 / portTICK_PERIOD_MS);

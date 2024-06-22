@@ -74,7 +74,8 @@ static void event_handler(lv_event_t *e) {
     } else if (strncmp(str_buf, "INNOTEM-T25", 11) == 0) {
       create_custom_msg_box("선택된 모델은 \nINNOTEM T25 입니다.", ui_Indicator_Model_Select_Screen, NULL,
                             LV_EVENT_CLICKED);
-
+    } else if (strncmp(str_buf, "MW2-H", 5) == 0) {
+      create_custom_msg_box("선택된 모델은 \nMW2-H 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
     } else if (strncmp(str_buf, "none", 4) == 0) {
       create_custom_msg_box("다시 선택해 주십시오.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
     }
@@ -202,6 +203,8 @@ void ui_indicator_model_select_screen_init(void) {
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "EC-D");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "SW-11");
+  lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
+  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "MW2-H");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
 
   lv_list_add_text(indicator_list, "OTHER");

@@ -7,20 +7,21 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdint.h>
+#include "event_ids.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "log.h"
-#include "sys_status.h"
-#include "main.h"
-#include "filelog.h"
 #include "config.h"
 #include "scale_read_485.h"
-#include "gpio_api.h"
 #include "uart_api.h"
+#include "sysevent.h"
 
 // #define BUF_SIZE 23
 #define BUF_SIZE 255
 #define INDICATOR_DEBUG 0
+
+#define RD_BUF_SIZE (BUF_SIZE)
 
 typedef enum {
   TASK_OK = 0,
@@ -39,6 +40,62 @@ int weight_uart_485_init(void) {
     LOGI(TAG, "Uart initialize success = %d", res);
   }
   return res;
+}
+
+// MW2-H
+// "설정" 버튼 3초간 -> unit 표시
+// "변환" 버튼 -> print 표시
+// "설정" 버튼 -> p.print key 설정
+// "설정" 버튼 -> 현재 print 키 설정 -> auto-1 로 지정 -> "변환"으로 변경
+// "영점" 버튼 -> auto -1 설정 후 빠져 나오기
+// 22:02:46 W:    86.1 g
+// 통신선 연결 방식은 2-2,3-3,5-5 형식으로 해야함
+//
+// I (1970-01-01 00:00:07) scale_read_485_task: data_0_
+// I (1970-01-01 00:00:07) scale_read_485_task: data_1_2
+// I (1970-01-01 00:00:07) scale_read_485_task: data_2_1
+// I (1970-01-01 00:00:07) scale_read_485_task: data_3_:
+// I (1970-01-01 00:00:07) scale_read_485_task: data_4_4
+// I (1970-01-01 00:00:07) scale_read_485_task: data_5_9
+// I (1970-01-01 00:00:07) scale_read_485_task: data_6_:
+// I (1970-01-01 00:00:07) scale_read_485_task: data_7_5
+// I (1970-01-01 00:00:07) scale_read_485_task: data_8_6
+// I (1970-01-01 00:00:07) scale_read_485_task: data_9_
+// I (1970-01-01 00:00:07) scale_read_485_task: data_10_W
+// I (1970-01-01 00:00:07) scale_read_485_task: data_11_:
+// I (1970-01-01 00:00:07) scale_read_485_task: data_12_
+// I (1970-01-01 00:00:07) scale_read_485_task: data_13_
+// I (1970-01-01 00:00:07) scale_read_485_task: data_14_
+// I (1970-01-01 00:00:07) scale_read_485_task: data_15_
+// I (1970-01-01 00:00:07) scale_read_485_task: data_16_8
+// I (1970-01-01 00:00:07) scale_read_485_task: data_17_0
+// I (1970-01-01 00:00:07) scale_read_485_task: data_18_.
+// I (1970-01-01 00:00:07) scale_read_485_task: data_19_5
+// I (1970-01-01 00:00:07) scale_read_485_task: data_20_
+// I (1970-01-01 00:00:07) scale_read_485_task: data_21_g
+//
+int indicator_CAS_MW2_H_data(Common_data_t *common_data) {
+  int res = 0;
+  uint8_t *dtmp = (uint8_t *)malloc(RD_BUF_SIZE);
+  if (dtmp == NULL) {
+    LOGI(TAG, "Calloc failed");
+    return -1;
+  }
+  memset(dtmp, 0x00, RD_BUF_SIZE);
+  res = sysevent_get(SYSEVENT_BASE, WEIGHT_DATA_EVENT, dtmp, RD_BUF_SIZE);
+  if (res == 0) {
+    LOGI(TAG, "weight data : %s", dtmp);
+    for (int a = 0; a < 30; a++) {
+      LOGI(TAG, "data_%d_%c", a, dtmp[a]);
+    }
+    memcpy(common_data->weight_data, dtmp + 12, 8);
+    common_data->spec.unit = UNIT_G;
+
+    free(dtmp);
+    return 0;
+  }
+  free(dtmp);
+  return -1;
 }
 
 // ST,GS,00,-    78   g
@@ -195,6 +252,9 @@ int indicator_CAS_sw_11_data(Common_data_t *common_data) {
   // copy to weight data
   memcpy(common_data->weight_data, read_data.data, 8);
 
+  if (strncmp(read_data.unit, "kg", 2) == 0) {
+    common_data->spec.unit = UNIT_KG;
+  }
   // check weight data
   sscanf(read_data.data, "%lf", &weight);
   // LOGI(TAG, "zero check weight = %lf", weight);
@@ -210,23 +270,6 @@ int indicator_CAS_sw_11_data(Common_data_t *common_data) {
     common_data->event[STATE_ZERO_EVENT] = STATE_ZERO_EVENT;
   } else {
     common_data->event[STATE_ZERO_EVENT] = STATE_NONE;
-  }
-
-  // if (*read_data.lamp_states & 0x01) {
-  //   common_data->event[STATE_ZERO_EVENT] = STATE_ZERO_EVENT;
-  // } else {
-  //   common_data->event[STATE_ZERO_EVENT] = STATE_NONE;
-  // }
-
-  /*tare state set display */
-  // if (*read_data.lamp_states & 0x02) {
-  //   common_data->event[STATE_TARE_EVENT] = STATE_TARE_EVENT;
-  // } else {
-  //   common_data->event[STATE_TARE_EVENT] = STATE_NONE;
-  // }
-  //
-  if (strncmp(read_data.unit, "kg", 2) == 0) {
-    common_data->spec.unit = UNIT_KG;
   }
 
   if (read_data.data[0] == '-') {

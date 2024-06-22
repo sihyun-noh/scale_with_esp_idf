@@ -45,6 +45,7 @@ typedef enum {
   MODEL_ACOM_PW_200,
   MODEL_CAS_SW_11,
   MODEL_INNOTEM_T25,
+  MODEL_CAS_MW2_H,
 } indicator_model_t;
 
 typedef enum {
@@ -110,6 +111,14 @@ typedef struct Common_data {
  * @return int
  */
 int weight_uart_485_init(void);
+
+/**
+ * @brief
+ *
+ * @param common_data
+ * @return int
+ */
+int indicator_CAS_MW2_H_data(Common_data_t *common_data);
 
 /**
  * @brief
