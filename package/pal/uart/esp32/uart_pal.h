@@ -14,6 +14,8 @@ extern "C" {
 #define HW_FLOWCTRL_CTS 0x2      // use only CTS PIN for HW Flow Control
 #define HW_FLOWCTRL_CTS_RTS 0x3  // use both CTS and RTS PIN for HW Flow Control
 
+typedef struct uart_hal uart_hal_t;
+
 typedef enum {
   HAL_UART_NO_ERR = 0,
   HAL_UART_INIT_ERR = -1,
@@ -22,6 +24,9 @@ typedef enum {
   HAL_UART_INVALID_ARGS = -4,
   HAL_UART_INVALID_IFACE = -5
 } uart_hal_err_t;
+
+uart_hal_t *uart_hal_initialize_intr(int dev, uint32_t baudrate, int8_t rxPin, int8_t txPin, uint16_t rx_buffer_size,
+                                     uint16_t tx_buffer_size);
 
 int uart_hal_initialize(int dev, uint32_t baudrate, int8_t rxPin, int8_t txPin, uint16_t rx_buffer_size,
                         uint16_t tx_buffer_size);

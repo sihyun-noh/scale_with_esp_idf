@@ -6,32 +6,38 @@
 #include "hal/uart_hal.h"
 #include "uart_pal.h"
 
-#define UART_CONTEX_INIT_DEF(uart_num) {\
-    .hal.dev = UART_LL_GET_HW(uart_num),\
-    .spinlock = portMUX_INITIALIZER_UNLOCKED,\
-    .hw_enabled = false,\
-}
+#define UART_CONTEX_INIT_DEF(uart_num) \
+  { .hal.dev = UART_LL_GET_HW(uart_num), .spinlock = portMUX_INITIALIZER_UNLOCKED, .hw_enabled = false, }
 
 typedef struct {
-    uart_hal_context_t hal;
-    portMUX_TYPE spinlock;
-    bool hw_enabled;
+  uart_hal_context_t hal;
+  portMUX_TYPE spinlock;
+  bool hw_enabled;
 } uart_context_t;
 
 static uart_context_t uart_context[3] = {
-    UART_CONTEX_INIT_DEF(UART_NUM_0),
-    UART_CONTEX_INIT_DEF(UART_NUM_1),
-    UART_CONTEX_INIT_DEF(UART_NUM_2),
+  UART_CONTEX_INIT_DEF(UART_NUM_0),
+  UART_CONTEX_INIT_DEF(UART_NUM_1),
+  UART_CONTEX_INIT_DEF(UART_NUM_2),
 };
 
-typedef struct uart_hal {
+// typedef struct uart_hal {
+//   uint8_t num;
+//   int ref_cnt;
+//   bool has_peek;
+//   uint8_t peek_byte;
+//   SemaphoreHandle_t mutex;
+//   QueueHandle_t uart_event_queue;
+// } uart_hal_t;
+
+struct uart_hal {
   uint8_t num;
   int ref_cnt;
   bool has_peek;
   uint8_t peek_byte;
   SemaphoreHandle_t mutex;
   QueueHandle_t uart_event_queue;
-} uart_hal_t;
+};
 
 static uart_hal_t uart_hal_data[3] = {
   { 0, 0, false, 0, NULL, NULL },
@@ -88,15 +94,15 @@ int uart_hal_initialize(int dev, uint32_t baudrate, int8_t rxPin, int8_t txPin, 
     uart_config.parity = UART_PARITY_DISABLE;
     uart_config.stop_bits = UART_STOP_BITS_1;
     uart_config.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
-    //uart_config.flow_ctrl = UART_HW_FLOWCTRL_RTS;
+    // uart_config.flow_ctrl = UART_HW_FLOWCTRL_RTS;
     uart_config.rx_flow_ctrl_thresh = 122;
     uart_config.source_clk = UART_SCLK_APB;
 
     rc = uart_driver_install(dev, rx_buffer_size, tx_buffer_size, 20, &(uart->uart_event_queue), 0);
     rc = uart_param_config(dev, &uart_config);
-    //rc = uart_set_pin(dev, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    // rc = uart_set_pin(dev, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     rc = uart_set_pin(dev, txPin, rxPin, 2, UART_PIN_NO_CHANGE);
-    
+
     rc = uart_set_mode(dev, UART_MODE_RS485_HALF_DUPLEX);
 
     uart_hal_unlock(dev);
@@ -112,6 +118,63 @@ int uart_hal_initialize(int dev, uint32_t baudrate, int8_t rxPin, int8_t txPin, 
   }
 
   return HAL_UART_INIT_ERR;
+}
+
+uart_hal_t* uart_hal_initialize_intr(int dev, uint32_t baudrate, int8_t rxPin, int8_t txPin, uint16_t rx_buffer_size,
+                                     uint16_t tx_buffer_size) {
+  esp_err_t rc = ESP_FAIL;
+
+  if (dev >= 3) {
+    return HAL_UART_INIT_ERR;
+  }
+
+  uart_hal_t* uart = &uart_hal_data[dev];
+
+  if (uart_hal_data[dev].ref_cnt == 0) {
+    if (uart_is_driver_installed(dev)) {
+      uart_hal_free(dev);
+    }
+
+    if (uart->mutex == NULL) {
+      uart->mutex = xSemaphoreCreateMutex();
+      if (uart->mutex == NULL) {
+        return HAL_UART_INIT_ERR;
+      }
+    }
+
+    uart_hal_lock(dev);
+
+    uart_hal_data[dev].ref_cnt++;
+    uart_config_t uart_config;
+    uart_config.baud_rate = baudrate;
+    uart_config.data_bits = UART_DATA_8_BITS;
+    uart_config.parity = UART_PARITY_DISABLE;
+    uart_config.stop_bits = UART_STOP_BITS_1;
+    uart_config.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
+    // uart_config.flow_ctrl = UART_HW_FLOWCTRL_RTS;
+    uart_config.rx_flow_ctrl_thresh = 122;
+    uart_config.source_clk = UART_SCLK_APB;
+
+    rc = uart_driver_install(dev, rx_buffer_size, tx_buffer_size, 20, &(uart->uart_event_queue), 0);
+    rc = uart_param_config(dev, &uart_config);
+    // rc = uart_set_pin(dev, txPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    rc = uart_set_pin(dev, txPin, rxPin, 2, UART_PIN_NO_CHANGE);
+
+    rc = uart_set_mode(dev, UART_MODE_RS485_HALF_DUPLEX);
+
+    uart_hal_unlock(dev);
+
+    uart_hal_flush(dev);
+  } else {
+    uart_hal_data[dev].ref_cnt++;
+    rc = ESP_OK;
+  }
+
+  if (ESP_OK == rc) {
+    return uart;
+  }
+
+  return 0;
 }
 
 void uart_hal_free(int dev) {
@@ -195,8 +258,7 @@ void uart_hal_flush_tx_only(int dev, bool tx_only) {
   uart_hal_unlock(dev);
 }
 
-int uart_hal_baudrate(int dev, uint32_t baud_rate)
-{
+int uart_hal_baudrate(int dev, uint32_t baud_rate) {
   uart_sclk_t src_clk;
   uint32_t sclk_freq;
 
