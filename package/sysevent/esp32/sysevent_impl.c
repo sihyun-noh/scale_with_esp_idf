@@ -276,7 +276,7 @@ static void event_handler_remove_list_all(void) {
 }
 
 static void sysevent_handler(void *handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
-  LOGI(TAG, "sysevent_handler: event_base=%s, event_id=%d, event_data=%p", event_base, event_id, event_data);
+  // LOGI(TAG, "sysevent_handler: event_base=%s, event_id=%d, event_data=%p", event_base, event_id, event_data);
 
   char ip_addr[32] = { 0 };
   char buf_monitor[50] = { 0 };
@@ -305,7 +305,7 @@ static void sysevent_handler(void *handler_arg, esp_event_base_t event_base, int
         event_msg.event_data = (char *)calloc(1, event_msg.event_data_len + 1);
         if (event_msg.event_data) {
           memcpy(event_msg.event_data, event_data, event_msg.event_data_len);
-          LOGI(TAG, "sysevent_handler: event data = %s", (char *)event_msg.event_data);
+          // LOGI(TAG, "sysevent_handler: event data = %s", (char *)event_msg.event_data);
         }
       }
     } else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_CONNECTED) {
