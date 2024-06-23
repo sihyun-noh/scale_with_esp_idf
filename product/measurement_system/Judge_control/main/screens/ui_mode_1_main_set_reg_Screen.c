@@ -5,10 +5,11 @@
 
 #include "../ui.h"
 #include "log.h"
+#include <stdio.h>
 #include <math.h>
-
-#include "stdbool.h"
 #include <ctype.h>
+#include <stdbool.h>
+#include "scale_read_485.h"
 
 #define MAX_CHAR_CYCLES 5
 static const char *TAG = "ui_mode_1_main_set_reg_Screen";
@@ -41,7 +42,7 @@ focus_ta_t previous_focus = FOCUS_TA_NONE;
 int current_id = 0;
 int previous_id = 0;
 
-const char *button_texts[12][MAX_CHAR_CYCLES] = {
+static const char *button_texts[12][MAX_CHAR_CYCLES] = {
   { "1", "1", "!", "@", "#" },  // ID 0
   { "2", "2", "A", "B", "C" },  // ID 1
   { "3", "3", "D", "E", "F" },  // ID 2
@@ -56,7 +57,7 @@ const char *button_texts[12][MAX_CHAR_CYCLES] = {
   { " ", " ", " ", " ", " " }   // ID 11 //공백으로 자리 확보
 };
 
-const char *button_nums[12][2] = {
+static const char *button_nums[12][2] = {
   { "1", "1" },  // ID 0
   { "2", "2" },  // ID 1
   { "3", "3" },  // ID 2
@@ -70,6 +71,28 @@ const char *button_nums[12][2] = {
   { ".", "0" },  // ID 10 // 0 first, . second
   { " ", " " }   // ID 11
 };
+
+static char *count_buf[] = { "kg", " g" };
+static char **count_ptr = count_buf;
+static weight_unit_t prod_unit = UNIT_KG;
+
+void ui_prod_unit_set_Btn_e_handler(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *target_label = lv_event_get_user_data(e);
+
+  if (code == LV_EVENT_CLICKED) {
+    count_ptr++;
+    if (count_ptr >= count_buf + sizeof(count_buf) / sizeof(count_buf[0])) {
+      count_ptr = count_buf;
+    }
+    lv_label_set_text(target_label, *count_ptr);
+    if (strcmp(*count_ptr, "kg") == 0)
+      prod_unit = UNIT_KG;
+    if (strcmp(*count_ptr, " g") == 0)
+      prod_unit = UNIT_G;
+    LOGI(TAG, "prod unit :%s_%d", *count_ptr, prod_unit);
+  }
+}
 
 void ui_all_delete_btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
@@ -287,43 +310,75 @@ static bool is_buffer_empty_or_whitespace(const char *buffer, size_t size) {
   return true;
 }
 
-static void modify_register_Btn_Yes_e_handler(lv_event_t *e) {
-  lv_event_code_t code = lv_event_get_code(e);
-  // LOGI(TAG, "click Judge_Cancel_Btn_Yes_event_cb!!");
+void register_set_parameter() {
+  LOGI(TAG, "Register settings.");
   char set_str[50] = { 0 };
   char set_str_prodName[50] = { 0 };
   char s_key[10] = { 0 };
   char s_key_prodName[50] = { 0 };
-  if (code == LV_EVENT_CLICKED) {
-    LOGI(TAG, "Register settings.");
-    unsigned int upper_int_part = (int)upper_weight_value;
-    unsigned int lower_int_part = (int)lower_weight_value;
-    float upper_decimal_part = upper_weight_value - upper_int_part;
-    float lower_decimal_part = lower_weight_value - lower_int_part;
-    unsigned int upper_dacimal_to_int_part = roundf(upper_decimal_part * 1000);  // decimal point 3
-    unsigned int lower_decimal_to_int_part = roundf(lower_decimal_part * 1000);  // rounding to the nearest integer
 
-    snprintf(s_key, sizeof(s_key), "Prod%02d", prod_num_value);
-    LOGI(TAG, "key:%s", s_key);
+  unsigned int upper_int_part = (int)upper_weight_value;
+  unsigned int lower_int_part = (int)lower_weight_value;
+  float upper_decimal_part = upper_weight_value - upper_int_part;
+  float lower_decimal_part = lower_weight_value - lower_int_part;
+  unsigned int upper_dacimal_to_int_part = roundf(upper_decimal_part * 1000);  // decimal point 3
+  unsigned int lower_decimal_to_int_part = roundf(lower_decimal_part * 1000);  // rounding to the nearest integer
 
+  snprintf(s_key, sizeof(s_key), "Prod%02d", prod_num_value);
+  LOGI(TAG, "key:%s", s_key);
+
+  if (prod_unit == UNIT_KG) {
+    LOGI(TAG, "SET UNIT KG");
+    upper_dacimal_to_int_part = roundf(upper_decimal_part * 1000);  // decimal point 3
+    lower_decimal_to_int_part = roundf(lower_decimal_part * 1000);  // rounding to the nearest integer
     memset(set_str, 0x00, sizeof(set_str));
-    snprintf(set_str, sizeof(set_str), "%02d,upper:%02d.%03d,lower:%02d.%03d", prod_num_value, upper_int_part,
-             upper_dacimal_to_int_part, lower_int_part, lower_decimal_to_int_part);
-    LOGI(TAG, "Set syscfg_data for setting value : %s", set_str);
+    snprintf(set_str, sizeof(set_str), "%02d,upper:%02d.%03d,lower:%02d.%03d,%d", prod_num_value, upper_int_part,
+             upper_dacimal_to_int_part, lower_int_part, lower_decimal_to_int_part, prod_unit);
+  } else if (prod_unit == UNIT_G) {
+    LOGI(TAG, "SET UNIT G");
+    upper_dacimal_to_int_part = roundf(upper_decimal_part * 10);  // decimal point 1
+    lower_decimal_to_int_part = roundf(lower_decimal_part * 10);  // rounding to the nearest integer
+    memset(set_str, 0x00, sizeof(set_str));
+    snprintf(set_str, sizeof(set_str), "%02d,upper:%04d.%01d,lower:%04d.%01d,%d", prod_num_value, upper_int_part,
+             upper_dacimal_to_int_part, lower_int_part, lower_decimal_to_int_part, prod_unit);
+  }
 
-    memset(set_str_prodName, 0x00, sizeof(set_str_prodName));
-    snprintf(set_str_prodName, sizeof(set_str_prodName), "%s", buf_prod_name);
-    LOGI(TAG, "Set syscfg_data for prodName : %s", set_str_prodName);
-    snprintf(s_key_prodName, sizeof(s_key_prodName), "%s_%02d", PROD_NAME, prod_num_value);
-    LOGI(TAG, "Set syscfg_data for s_key_prodName : %s", s_key_prodName);
+  LOGI(TAG, "Set syscfg_data for setting value : %s", set_str);
 
-    syscfg_set(CFG_DATA, s_key, set_str);
-    syscfg_set(CFG_DATA, s_key_prodName, buf_prod_name);
+  memset(set_str_prodName, 0x00, sizeof(set_str_prodName));
+  snprintf(set_str_prodName, sizeof(set_str_prodName), "%s", buf_prod_name);
+  LOGI(TAG, "Set syscfg_data for prodName : %s", set_str_prodName);
+  snprintf(s_key_prodName, sizeof(s_key_prodName), "%s_%02d", PROD_NAME, prod_num_value);
+  LOGI(TAG, "Set syscfg_data for s_key_prodName : %s", s_key_prodName);
 
-    create_custom_msg_box("등록 되었습니다. ", ui_Screen2, NULL, LV_EVENT_CLICKED);
+  if (syscfg_set(CFG_DATA, s_key, set_str) == -1) {
+    LOGI(TAG, "Error set register ");
+  }
+  if (syscfg_set(CFG_DATA, s_key_prodName, buf_prod_name) == -1) {
+    LOGI(TAG, "Error set register prod name ");
+  }
+  return;
+}
 
+static void modify_register_Btn_Yes_e_handler(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  // LOGI(TAG, "click Judge_Cancel_Btn_Yes_event_cb!!");
+  if (code == LV_EVENT_CLICKED) {
+    register_set_parameter();
+    create_custom_msg_box("재등록 되었습니다. ", ui_Screen2, NULL, LV_EVENT_CLICKED);
   } else {
-    LOGI(TAG, "Miss. ");
+    memory_allocation_manger();
+  }
+}
+
+void none_prod_name_set(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  if (code == LV_EVENT_CLICKED) {
+    strcpy(buf_prod_name, "N/A");
+    LOGI(TAG, "buf_prod_name : %s", buf_prod_name);
+    register_set_parameter();
+    create_custom_msg_box("품명없이 등록 되었습니다. ", ui_Screen2, NULL, LV_EVENT_CLICKED);
+  } else {
     memory_allocation_manger();
   }
 }
@@ -356,9 +411,14 @@ void ui_register_pord_num_btn_e_hendler(lv_event_t *e) {
     /*compare same product num*/ /*"prodName" does not compare */
     snprintf(cmp_pord_num, sizeof(cmp_pord_num), "%02d", prod_num_value);
     snprintf(cfg_pord_num, sizeof(cfg_pord_num), "%.2s", get_str);
-    if (strcmp(cfg_pord_num, cmp_pord_num) == 0) {
-      create_custom_msg_box("이미 등록된 번호가 있습니다\n변경하겠습니까?", ui_Screen2,
-                            modify_register_Btn_Yes_e_handler, LV_EVENT_CLICKED);
+
+    if (upper_weight_value > (float)100 && prod_unit == UNIT_KG) {
+      // erroe when entering product number over PROD_NUM value
+      create_custom_msg_box("최대 상한값은 99.999kg 입니다.", ui_Screen2, NULL, LV_EVENT_CLICKED);
+
+    } else if (upper_weight_value > (float)10000 && prod_unit == UNIT_G) {
+      // erroe when entering product number over PROD_NUM value
+      create_custom_msg_box("최대 상한값은 9999.9g 입니다.", ui_Screen2, NULL, LV_EVENT_CLICKED);
 
     } else if (prod_num_value > PROD_NUM) {
       // erroe when entering product number over PROD_NUM value
@@ -370,20 +430,38 @@ void ui_register_pord_num_btn_e_hendler(lv_event_t *e) {
                             LV_EVENT_CLICKED);
     } else if (buf_prod_name[0] == '\0') {
       // pord_name is a special method that does not determine whether it works or not.
-      create_custom_msg_box("유효하지 않은 설정 값입니다.\n품명이 없습니다.", ui_Screen2, NULL, LV_EVENT_CLICKED);
+      create_custom_msg_box("유효하지 않은 설정 값입니다.\n품명 없이 등록하겠습니까?", ui_Screen2, none_prod_name_set,
+                            LV_EVENT_CLICKED);
+    } else if (strcmp(cfg_pord_num, cmp_pord_num) == 0) {
+      create_custom_msg_box("이미 등록된 번호가 있습니다\n변경하겠습니까?", ui_Screen2,
+                            modify_register_Btn_Yes_e_handler, LV_EVENT_CLICKED);
     } else {
       if (strlen(get_str) == 0) {
         LOGI(TAG, "Register settings.");
+        unsigned int upper_dacimal_to_int_part = 0;
+        unsigned int lower_decimal_to_int_part = 0;
+
         unsigned int upper_int_part = (int)upper_weight_value;
         unsigned int lower_int_part = (int)lower_weight_value;
         float upper_decimal_part = upper_weight_value - upper_int_part;
         float lower_decimal_part = lower_weight_value - lower_int_part;
-        unsigned int upper_dacimal_to_int_part = roundf(upper_decimal_part * 1000);  // decimal point 3
-        unsigned int lower_decimal_to_int_part = roundf(lower_decimal_part * 1000);  // rounding to the nearest integer
 
-        memset(set_str, 0x00, sizeof(set_str));
-        snprintf(set_str, sizeof(set_str), "%02d,upper:%02d.%03d,lower:%02d.%03d", prod_num_value, upper_int_part,
-                 upper_dacimal_to_int_part, lower_int_part, lower_decimal_to_int_part);
+        if (prod_unit == UNIT_KG) {
+          LOGI(TAG, "SET UNIT KG");
+          upper_dacimal_to_int_part = roundf(upper_decimal_part * 1000);  // decimal point 3
+          lower_decimal_to_int_part = roundf(lower_decimal_part * 1000);  // rounding to the nearest integer
+          memset(set_str, 0x00, sizeof(set_str));
+          snprintf(set_str, sizeof(set_str), "%02d,upper:%02d.%03d,lower:%02d.%03d,%d", prod_num_value, upper_int_part,
+                   upper_dacimal_to_int_part, lower_int_part, lower_decimal_to_int_part, prod_unit);
+        } else if (prod_unit == UNIT_G) {
+          LOGI(TAG, "SET UNIT G");
+          upper_dacimal_to_int_part = roundf(upper_decimal_part * 10);  // decimal point 1
+          lower_decimal_to_int_part = roundf(lower_decimal_part * 10);  // rounding to the nearest integer
+          memset(set_str, 0x00, sizeof(set_str));
+          snprintf(set_str, sizeof(set_str), "%02d,upper:%04d.%01d,lower:%04d.%01d,%d", prod_num_value, upper_int_part,
+                   upper_dacimal_to_int_part, lower_int_part, lower_decimal_to_int_part, prod_unit);
+        }
+
         LOGI(TAG, "Set syscfg_data for setting value : %s", set_str);
 
         memset(set_str_prodName, 0x00, sizeof(set_str_prodName));
@@ -424,6 +502,26 @@ void ui_Screen2_screen_init(void) {
   lv_obj_set_y(Screen2_prod_num_register_btn_label, 1);
   lv_label_set_text(Screen2_prod_num_register_btn_label, "등 록");
   lv_obj_set_style_text_font(Screen2_prod_num_register_btn_label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_t *ui_prod_unit_btn = lv_btn_create(ui_Screen2);
+  lv_obj_set_width(ui_prod_unit_btn, 70);
+  lv_obj_set_height(ui_prod_unit_btn, 50);
+  lv_obj_set_x(ui_prod_unit_btn, -110);
+  lv_obj_set_y(ui_prod_unit_btn, 70);
+  lv_obj_set_align(ui_prod_unit_btn, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_prod_unit_btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_prod_unit_btn, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_bg_color(ui_prod_unit_btn, lv_color_hex(0xa9a9a9), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_t *ui_prod_unit_btn_label = lv_label_create(ui_prod_unit_btn);
+  lv_obj_set_width(ui_prod_unit_btn_label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_prod_unit_btn_label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_prod_unit_btn_label, -3);
+  lv_obj_set_y(ui_prod_unit_btn_label, 1);
+  lv_label_set_text(ui_prod_unit_btn_label, "kg");
+  lv_obj_set_style_text_font(ui_prod_unit_btn_label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_add_event_cb(ui_prod_unit_btn, ui_prod_unit_set_Btn_e_handler, LV_EVENT_CLICKED, ui_prod_unit_btn_label);
 
   lv_obj_t *ui_comfirm_btn = lv_btn_create(ui_Screen2);
   lv_obj_set_width(ui_comfirm_btn, 70);

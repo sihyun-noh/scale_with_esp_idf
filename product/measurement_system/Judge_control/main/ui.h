@@ -27,6 +27,7 @@ extern "C" {
 #include "syscfg.h"
 #include "config.h"
 #include "LIFO_stack.h"
+#include "scale_read_485.h"
 
 #define CONFIG_ZERO_TARE_SET 0
 #define VOLUME_CONTIUNE 1  // 계속 음성나오게..요청사항
@@ -201,6 +202,7 @@ extern float amount_weight_value;
 extern int mode_2_compare_count;
 extern char buf_prod_name[10];
 extern bool printer_state;
+extern weight_unit_t prod_weight_unit;
 
 extern screen_mode_t curr_mode;
 extern ui_event_ids_t ui_event;

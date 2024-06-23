@@ -120,6 +120,7 @@ float amount_weight_value = 0.0;
 int mode_2_compare_count = 0;
 char buf_prod_name[10] = { 0 };
 bool printer_state = true;
+weight_unit_t prod_weight_unit = UNIT_KG;
 
 int judge_total_count = 0;
 int judge_over_count = 0;
@@ -152,6 +153,7 @@ bool nuder_event_flag = false;
 bool copying_flag = true;
 bool usb_copy_success_flag = true;
 bool weight_tare_flag = false;
+bool mw2_h_set_flag = true;
 
 static lv_obj_t *s_btn[PROD_NUM];
 
@@ -223,18 +225,29 @@ static void ui_ListSelectScreen_List_Panel_PageBuilder() {
       lv_obj_t *label = lv_label_create(s_btn[i]);
 
       if (strlen(reg_data.saved_data[i]) && strlen(reg_data.saved_data_prodName[i])) {  // Check registered values.
-        // data format : 01.upper:10.000,lower:10.000
+        // data format : 01.upper:10.000,lower:10.000,1
+        //                                          (unit)
         char *ptr = reg_data.saved_data[i];
         char *ptr_prodName = reg_data.saved_data_prodName[i];
 
         if (i == 3) {
-          lv_label_set_text_fmt(label, "품명 %s \n품번 %.2s\n상한:%.6s\n하한:%.6s", ptr_prodName, ptr, ptr + 9,
-                                ptr + 22);
+          if (strncmp(ptr + 29, "1", UNIT_G) == 0) {  // check unit 'g'
+            lv_label_set_text_fmt(label, "품명 %s \n품번 %.2s (g)\n상한:%.6s\n하한:%.6s", ptr_prodName, ptr, ptr + 9,
+                                  ptr + 22);
+          } else {
+            lv_label_set_text_fmt(label, "품명 %s \n품번 %.2s (kg)\n상한:%.6s\n하한:%.6s", ptr_prodName, ptr, ptr + 9,
+                                  ptr + 22);
+          }
           lv_obj_set_style_text_font(label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
           lv_obj_clear_flag(s_btn[i], LV_OBJ_FLAG_SNAPABLE);
         } else {
-          lv_label_set_text_fmt(label, "품명 %s \n품번 %.2s\n상한:%.6s\n하한:%.6s", ptr_prodName, ptr, ptr + 9,
-                                ptr + 22);
+          if (strncmp(ptr + 29, "1", UNIT_G) == 0) {  // check unit 'g'
+            lv_label_set_text_fmt(label, "품명 %s \n품번 %.2s (g)\n상한:%.6s\n하한:%.6s", ptr_prodName, ptr, ptr + 9,
+                                  ptr + 22);
+          } else {
+            lv_label_set_text_fmt(label, "품명 %s \n품번 %.2s (kg)\n상한:%.6s\n하한:%.6s", ptr_prodName, ptr, ptr + 9,
+                                  ptr + 22);
+          }
           lv_obj_set_style_text_font(label, &NanumBar18, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
         lv_obj_center(label);
@@ -314,12 +327,14 @@ void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e) {
   char s_lower_weight_value[10] = { 0 };
   char s_prod_num_value[10] = { 0 };
   char s_prod_name[10] = { 0 };
+  char s_replace_buf_upper[10] = { 0 };
+  char s_replace_buf_lower[10] = { 0 };
   if (event_code == LV_EVENT_CLICKED) {
     /*Todo*/
     // set to selected value loop
     LOGI(TAG, "Set value : %s", string_empty);
     if (strlen(string_empty)) {
-      // data format : 01.upper:10.000,lower:10.000,prod_name
+      // data format : 01.upper:10.000,lower:10.000,1,prod_name
       snprintf(s_upper_weight_value, sizeof(s_upper_weight_value), "%.6s", string_empty + 9);
       snprintf(s_lower_weight_value, sizeof(s_lower_weight_value), "%.6s", string_empty + 22);
       snprintf(s_prod_num_value, sizeof(s_prod_num_value), "%.2s", string_empty);
@@ -329,19 +344,44 @@ void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e) {
       LOGI(TAG, "s_prod_num_value : %s", s_prod_num_value);
       LOGI(TAG, "s_prod_name : %s", s_prod_name);
 
+      if (strncmp(string_empty + 29, "1", UNIT_G) == 0) {  // check unit 'g'
+        LOGI(TAG, "selected unit : G");
+        snprintf(s_replace_buf_upper, sizeof(s_replace_buf_upper), "%.1f", atof(s_upper_weight_value));
+        snprintf(s_replace_buf_lower, sizeof(s_replace_buf_lower), "%.1f", atof(s_lower_weight_value));
+        prod_weight_unit = UNIT_G;
+      } else {
+        LOGI(TAG, "selected unit : KG");
+        snprintf(s_replace_buf_upper, sizeof(s_replace_buf_upper), "%.3f", atof(s_upper_weight_value));
+        snprintf(s_replace_buf_lower, sizeof(s_replace_buf_lower), "%.3f", atof(s_lower_weight_value));
+        prod_weight_unit = UNIT_KG;
+      }
       memset(string_empty, 0x00, sizeof(string_empty));
 
-      sscanf(s_upper_weight_value, "%f", &upper_weight_value);
-      sscanf(s_lower_weight_value, "%f", &lower_weight_value);
+      upper_weight_value = atof(s_replace_buf_upper);
+      lower_weight_value = atof(s_replace_buf_lower);
       prod_num_value = atoi(s_prod_num_value);
+
+      // sscanf(s_replace_buf_upper, "%f", &upper_weight_value);
+      // sscanf(s_replace_buf_lower, "%f", &lower_weight_value);
+      // prod_num_value = atoi(s_prod_num_value);
 
       memset(buf_prod_name, 0x00, sizeof(buf_prod_name));
       memcpy(buf_prod_name, s_prod_name, strlen(s_prod_name));
       // buf_prod_name = s_prod_name;
 
+      // 표시되는 상한 하한 값
       lv_event_send(ui_Screen1_Upper_Value_Label, LV_EVENT_READY, NULL);
       lv_event_send(ui_Screen1_Lower_Value_Label, LV_EVENT_READY, NULL);
       lv_event_send(ui_Screen1_Prod_Num_Label, LV_EVENT_READY, NULL);
+
+      // 계산되는 상한 하한값
+      if (prod_weight_unit == UNIT_G) {
+        upper_weight_value = upper_weight_value * 0.001;
+        lower_weight_value = lower_weight_value * 0.001;
+
+        LOGI(TAG, "upper : %f", upper_weight_value);
+        LOGI(TAG, "lower : %f", lower_weight_value);
+      }
 
       _ui_screen_change(&ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen1_screen_init);
     } else {
@@ -430,9 +470,18 @@ void logic_timer_cb(lv_timer_t *timer) {
       if (res == 0) {
         if (indicator_data.spec.unit == UNIT_G) {
           // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
-          weight = (float)(atoi(indicator_data.weight_data) * 0.001);
-          snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
-          lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
+          // weight = (float)(atoi(indicator_data.weight_data) * 0.001);
+          // snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
+          sscanf(indicator_data.weight_data, "%f", &weight);
+          // g 단위로 설정값을 설정하고 이 인디게이터는 g 단위로만 설정 가능
+          // 품번에서 가지고 오는 상한, 하한값을 소수점 3자리수로 변경한 사항이 있어서
+          if (mw2_h_set_flag) {
+            upper_weight_value = upper_weight_value * 1000;
+            lower_weight_value = lower_weight_value * 1000;
+            mw2_h_set_flag = false;
+          }
+          snprintf(s_weight, sizeof(s_weight), "%.1f", weight);
+          lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
         }
 
         lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, s_weight);
@@ -632,13 +681,14 @@ void logic_timer_cb(lv_timer_t *timer) {
 
       if (indicator_data.spec.unit == UNIT_G) {
         // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
+
         weight = (float)(atoi(indicator_data.weight_data) * 0.001);
         snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
-        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
       } else if (indicator_data.spec.unit == UNIT_KG) {
         sscanf(indicator_data.weight_data, "%f", &weight);
         snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
-        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : kg");
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: kg");
       } else {
         LOGI(TAG, "none %d", indicator_data.spec.unit);
       }
@@ -677,11 +727,11 @@ void logic_timer_cb(lv_timer_t *timer) {
         // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
         weight = (float)(atoi(indicator_data.weight_data) * 0.001);
         snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
-        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
       } else if (indicator_data.spec.unit == UNIT_KG) {
         sscanf(indicator_data.weight_data, "%f", &weight);
         snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
-        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : kg");
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: kg");
       } else {
       }
 
@@ -719,8 +769,7 @@ void logic_timer_cb(lv_timer_t *timer) {
         // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
         weight = (float)(atoi(indicator_data.weight_data) * 0.001);
         snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
-        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
-
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
       } else {
         sscanf(indicator_data.weight_data, "%f", &weight);
         snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
@@ -739,7 +788,7 @@ void logic_timer_cb(lv_timer_t *timer) {
         // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
         weight = (float)(atoi(indicator_data.weight_data) * 0.001);
         snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
-        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
       } else {
         sscanf(indicator_data.weight_data, "%f", &weight);
         snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
@@ -757,11 +806,11 @@ void logic_timer_cb(lv_timer_t *timer) {
         // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
         weight = (float)(atoi(indicator_data.weight_data) * 0.001);
         snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
-        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : g");
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
       } else if (indicator_data.spec.unit == UNIT_KG) {
         sscanf(indicator_data.weight_data, "%f", &weight);
         snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
-        lv_label_set_text(ui_Screen1_Amount_Value_Label, "Unit : kg");
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: kg");
       } else {
       }
 

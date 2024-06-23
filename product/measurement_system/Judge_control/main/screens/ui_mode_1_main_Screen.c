@@ -5,6 +5,7 @@
 
 #include "../ui.h"
 #include "log.h"
+#include "scale_read_485.h"
 
 static const char *TAG = "  ui_mode_1_main_Screen";
 
@@ -44,7 +45,11 @@ void ui_Screen1_Upper_Value_Label_e_handler(lv_event_t *e) {
       snprintf(s_buff, sizeof(s_buff), "판정하지 않습니다.");
       lv_label_set_text(target, s_buff);
     } else {
-      snprintf(s_buff, sizeof(s_buff), "상한 %.3f", upper_weight_value);
+      if (prod_weight_unit == UNIT_G) {
+        snprintf(s_buff, sizeof(s_buff), "상한 %.1f", upper_weight_value);
+      } else {
+        snprintf(s_buff, sizeof(s_buff), "상한 %.3f", upper_weight_value);
+      }
       lv_label_set_text(target, s_buff);
     }
   }
@@ -58,7 +63,12 @@ void ui_Screen1_Lower_Value_Label_e_handler(lv_event_t *e) {
     if (prod_num_value == 0) {
       lv_label_set_text(target, s_buff);
     } else {
-      snprintf(s_buff, sizeof(s_buff), "하한 %.3f", lower_weight_value);
+      if (prod_weight_unit == UNIT_G) {
+        // 설정된 단위 표시
+        snprintf(s_buff, sizeof(s_buff), "하한 %.1f ( g )", lower_weight_value);
+      } else {
+        snprintf(s_buff, sizeof(s_buff), "하한 %.3f ( kg )", lower_weight_value);
+      }
       lv_label_set_text(target, s_buff);
     }
   }
@@ -415,7 +425,7 @@ void ui_Screen1_screen_init(void) {
   lv_label_set_long_mode(ui_Screen1_Amount_Value_Label, LV_LABEL_LONG_SCROLL_CIRCULAR);
   lv_obj_set_width(ui_Screen1_Amount_Value_Label, 100);  /// 1
   lv_obj_set_height(ui_Screen1_Amount_Value_Label, 50);  /// 1
-  lv_obj_set_x(ui_Screen1_Amount_Value_Label, 0);
+  lv_obj_set_x(ui_Screen1_Amount_Value_Label, 20);
   lv_obj_set_y(ui_Screen1_Amount_Value_Label, 28);
   lv_obj_set_align(ui_Screen1_Amount_Value_Label, LV_ALIGN_BOTTOM_RIGHT);
   lv_label_set_recolor(ui_Screen1_Amount_Value_Label, true);
