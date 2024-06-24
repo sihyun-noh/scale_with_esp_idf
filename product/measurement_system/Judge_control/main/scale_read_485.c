@@ -91,6 +91,12 @@ int indicator_CAS_MW2_H_data(Common_data_t *common_data) {
     memcpy(common_data->weight_data, dtmp + 12, 8);
     common_data->spec.unit = UNIT_G;
 
+    if (strncmp((char *)dtmp + 10, "W", 1) == 0) {
+      common_data->check = DATA_OK;
+    } else {
+      common_data->check = DATA_ERROR;
+    }
+
     free(dtmp);
     return 0;
   }

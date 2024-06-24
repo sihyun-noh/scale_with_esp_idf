@@ -29,7 +29,7 @@ void ui_mode_2_scr_Panel1_Amount_Value_Label_e_handler(lv_event_t *e) {
   lv_obj_t *target = lv_event_get_target(e);
   char s_buff[30] = { 0 };
   if (code == LV_EVENT_READY) {
-    snprintf(s_buff, sizeof(s_buff), "단위 %.3f kg", amount_weight_value);
+    snprintf(s_buff, sizeof(s_buff), "단위 %.3f", amount_weight_value);
     lv_label_set_text(target, s_buff);
   }
   /*Todo : */

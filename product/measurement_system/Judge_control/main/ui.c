@@ -117,7 +117,7 @@ float lower_weight_value = 0.0;
 int prod_num_value = 0;
 float renge_weight_value = 0.0;
 float amount_weight_value = 0.0;
-int mode_2_compare_count = 0;
+int mode_2_compare_count = 1;
 char buf_prod_name[10] = { 0 };
 bool printer_state = true;
 weight_unit_t prod_weight_unit = UNIT_KG;
@@ -381,6 +381,7 @@ void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e) {
 
         LOGI(TAG, "upper : %f", upper_weight_value);
         LOGI(TAG, "lower : %f", lower_weight_value);
+        mw2_h_set_flag = true;
       }
 
       _ui_screen_change(&ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen1_screen_init);
@@ -468,6 +469,10 @@ void logic_timer_cb(lv_timer_t *timer) {
       res = indicator_CAS_MW2_H_data(&indicator_data);
 
       if (res == 0) {
+        // mw2는 프린트 시리얼에서 데이터를 받아서 중간에 날짜값이 들어온다. 날짜값을 걸러내기 위한 방법
+        if (indicator_data.check == DATA_ERROR)
+          break;
+
         if (indicator_data.spec.unit == UNIT_G) {
           // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
           // weight = (float)(atoi(indicator_data.weight_data) * 0.001);
@@ -483,10 +488,9 @@ void logic_timer_cb(lv_timer_t *timer) {
           snprintf(s_weight, sizeof(s_weight), "%.1f", weight);
           lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
         }
-
+        LOGI(TAG, "upper : %.3f", upper_weight_value);
+        LOGI(TAG, "lower : %.3f", lower_weight_value);
         lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, s_weight);
-
-        snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
 
         switch (ui_data_ctx.curr_mode) {
           case MODE_MAIN: break;
@@ -603,14 +607,12 @@ void logic_timer_cb(lv_timer_t *timer) {
             if (indicator_data.event[STATE_SIGN_EVENT] == STATE_SIGN_EVENT) {
               lv_label_set_text(ui_mode_2_scr_Panel1_Current_Weight_Label, "UNKNOWN");
               lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "\0");
-            } else if (weight >= (float)100.0) {
-              lv_label_set_text(ui_mode_2_scr_Panel1_Current_Weight_Label, "OVERLOAD");
-              lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "\0");
             } else {
               lv_label_set_text(ui_mode_2_scr_Panel1_Current_Weight_Label, s_weight);
               if (amount_weight_value == 0.0) {
                 lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "000");
               } else {
+                snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
                 lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, s_amount_count);
                 // judge count!!
                 // mode2_judge_countor(atoi(s_amount_count), mode_2_compare_count, &indicator_data);
@@ -693,8 +695,6 @@ void logic_timer_cb(lv_timer_t *timer) {
         LOGI(TAG, "none %d", indicator_data.spec.unit);
       }
 
-      // MODE_2
-      snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
       break;
 
     case MODEL_CAS_SW_11:
@@ -756,8 +756,6 @@ void logic_timer_cb(lv_timer_t *timer) {
       // } else {
       // }
       //
-      // // MODE_2
-      // snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
       break;
 
     case MODEL_ACOM_PW_200:
@@ -775,8 +773,6 @@ void logic_timer_cb(lv_timer_t *timer) {
         snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
       }
 
-      // MODE_2
-      snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
       break;
 
     case MODEL_AND_CB_12K:
@@ -794,8 +790,6 @@ void logic_timer_cb(lv_timer_t *timer) {
         snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
       }
 
-      // MODE_2
-      snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
       break;
     case MODEL_CAS_EC_D_SERIES:
       memset(&indicator_data, 0x00, sizeof(indicator_data));
@@ -814,8 +808,6 @@ void logic_timer_cb(lv_timer_t *timer) {
       } else {
       }
 
-      // MODE_2
-      snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
       break;
     case MODEL_CAS_NT301A:
       memset(&indicator_data, 0x00, sizeof(indicator_data));
@@ -825,8 +817,6 @@ void logic_timer_cb(lv_timer_t *timer) {
       sscanf(indicator_data.weight_data, "%f", &weight);
       snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
 
-      // MODE_2
-      snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
       break;
     case MODEL_CAS_WTM500:
       memset(&indicator_data, 0x00, sizeof(indicator_data));
@@ -836,8 +826,6 @@ void logic_timer_cb(lv_timer_t *timer) {
       //    taking float value using %f format specifier for
       sscanf(indicator_data.weight_data, "%f", &weight);
       snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
-      // MODE_2
-      snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
       break;
     case MODEL_BAYKON_BX11:
       memset(&indicator_data, 0x00, sizeof(indicator_data));
@@ -853,44 +841,30 @@ void logic_timer_cb(lv_timer_t *timer) {
         case DP_10:
           weight = (float)(atoi(indicator_data.weight_data) * 10);
           snprintf(s_weight, sizeof(s_weight), "%d", (int)weight);
-          // MODE_2
-          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
           break;
         case DP_1:
           weight = (float)(atoi(indicator_data.weight_data) * 1);
           snprintf(s_weight, sizeof(s_weight), "%d", (int)weight);
-          // MODE_2
-          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
           break;
         case DP_0_1:
           weight = (float)(atoi(indicator_data.weight_data) * 0.1);
           snprintf(s_weight, sizeof(s_weight), "%.1f", weight);
-          // MODE_2
-          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
           break;
         case DP_0_01:
           weight = (float)(atoi(indicator_data.weight_data) * 0.01);
           snprintf(s_weight, sizeof(s_weight), "%.2f", weight);
-          // MODE_2
-          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
           break;
         case DP_0_001:
           weight = (float)(atoi(indicator_data.weight_data) * 0.001);
           snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
-          // MODE_2
-          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
           break;
         case DP_0_0001:
           weight = (float)(atoi(indicator_data.weight_data) * 0.0001);
           snprintf(s_weight, sizeof(s_weight), "%.4f", weight);
-          // MODE_2
-          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
           break;
         case DP_0_00001:
           weight = (float)(atoi(indicator_data.weight_data) * 0.00001);
           snprintf(s_weight, sizeof(s_weight), "%.5f", weight);
-          // MODE_2
-          snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
           break;
         default: break;
       }
@@ -1165,14 +1139,12 @@ void logic_timer_cb(lv_timer_t *timer) {
         if (indicator_data.event[STATE_SIGN_EVENT] == STATE_SIGN_EVENT) {
           lv_label_set_text(ui_mode_2_scr_Panel1_Current_Weight_Label, "UNKNOWN");
           lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "\0");
-        } else if (weight >= (float)100.0) {
-          lv_label_set_text(ui_mode_2_scr_Panel1_Current_Weight_Label, "OVERLOAD");
-          lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "\0");
         } else {
           lv_label_set_text(ui_mode_2_scr_Panel1_Current_Weight_Label, s_weight);
           if (amount_weight_value == 0.0) {
             lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "000");
           } else {
+            snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
             lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, s_amount_count);
             // judge count!!
             mode2_judge_countor(atoi(s_amount_count), mode_2_compare_count, &indicator_data);

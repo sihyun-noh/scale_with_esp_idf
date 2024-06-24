@@ -6,6 +6,11 @@ extern "C" {
 #endif
 
 typedef enum {
+  DATA_ERROR = 0x00,
+  DATA_OK,
+} check_data_t;
+
+typedef enum {
   UNIT_G = 0x01,
   UNIT_KG,
 } weight_unit_t;
@@ -101,6 +106,7 @@ typedef struct Common_data {
   decimal_point_t DP;
   increment_size_t IS;
   weight_evnet_t event[30];
+  check_data_t check;
   indi_mode_spac_t spec;
   char weight_data[10];
 } Common_data_t;
