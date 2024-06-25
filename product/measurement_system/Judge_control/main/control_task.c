@@ -164,8 +164,11 @@ static void control_task(void *pvParameter) {
     } else if (strncmp(indicator_set, "INNOTEM-T25", 11) == 0) {
       // LOGI(TAG, "start innotem T25");
       res = indicator_INNOTEM_T25_data(&weight_data);
-      vTaskDelay(500);
+      vTaskDelay(500);  // 실제 읽기 시간
+    } else if (strncmp(indicator_set, "EC-D", 4) == 0) {
+      res = indicator_EC_D_Serise_data(&weight_data);
     }
+
     // weight, unit, zero, stable, sign, trash
     // 자릿수확인 1 -> 10 변할 때 1자리에서 2자리로
     if (res == -1) {
@@ -204,7 +207,9 @@ void create_control_task(char *indicator_set) {
     // Create a task to handler UART event from ISR
     uart_interrupt_config();
     xTaskCreatePinnedToCore(uart_event_task, "uart_event_task", 4096, NULL, 12, NULL, 0);
-  } else {
+  } else if (strncmp(indicator_set, "SW-11", 5) == 0 || strncmp(indicator_set, "EC-D", 4) == 0) {
+    LOGI(TAG, "ec-D data task");
     xTaskCreatePinnedToCore(control_task, "control_task", stack_size, NULL, task_priority, &control_handle, 0);
+  } else {
   }
 }

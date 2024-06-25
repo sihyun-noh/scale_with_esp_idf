@@ -150,7 +150,7 @@ int indicator_INNOTEM_T25_data(Common_data_t *common_data) {
   memcpy(read_data.states, data, 2);
   memcpy(read_data.measurement_states, data + 3, 2);
   memcpy(read_data.sign, data + 9, 1);
-  memcpy(read_data.data, data + 10, 6);
+  memcpy(read_data.data, data + 10, 7);
   memcpy(read_data.unit, data + 18, 2);
 
   // Todo

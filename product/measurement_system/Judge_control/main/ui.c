@@ -382,6 +382,10 @@ void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e) {
         LOGI(TAG, "upper : %f", upper_weight_value);
         LOGI(TAG, "lower : %f", lower_weight_value);
         mw2_h_set_flag = true;
+      } else {
+        LOGI(TAG, "upper : %f", upper_weight_value);
+        LOGI(TAG, "lower : %f", lower_weight_value);
+        mw2_h_set_flag = true;
       }
 
       _ui_screen_change(&ui_Screen1, LV_SCR_LOAD_ANIM_FADE_ON, 100, 0, &ui_Screen1_screen_init);
@@ -488,8 +492,8 @@ void logic_timer_cb(lv_timer_t *timer) {
           snprintf(s_weight, sizeof(s_weight), "%.1f", weight);
           lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
         }
-        LOGI(TAG, "upper : %.3f", upper_weight_value);
-        LOGI(TAG, "lower : %.3f", lower_weight_value);
+        LOGI(TAG, "upper__ : %.3f", upper_weight_value);
+        LOGI(TAG, "lower__ : %.3f", lower_weight_value);
         lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, s_weight);
 
         switch (ui_data_ctx.curr_mode) {
@@ -659,7 +663,7 @@ void logic_timer_cb(lv_timer_t *timer) {
       // weight, unit, zero, stable, sign, trash
       // 파싱 자릿수 확인해서 ....
       res_e = sysevent_get(SYSEVENT_BASE, WEIGHT_DATA_EVENT, weight_data_buff, sizeof(weight_data_buff));
-
+      // LOGI(TAG, "Innotem data%s", weight_data_buff);
       if (res_e == 0) {
         memset(&indicator_data, 0x00, sizeof(indicator_data));
         memcpy(indicator_data.weight_data, ptr, 10);
@@ -792,21 +796,79 @@ void logic_timer_cb(lv_timer_t *timer) {
 
       break;
     case MODEL_CAS_EC_D_SERIES:
-      memset(&indicator_data, 0x00, sizeof(indicator_data));
-      res = indicator_EC_D_Serise_data(&indicator_data);
-      ui_noti.event = (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
+
+      res_e = sysevent_get(SYSEVENT_BASE, WEIGHT_DATA_EVENT, weight_data_buff, sizeof(weight_data_buff));
+      // LOGI(TAG, "ec-D data%s", weight_data_buff);
+      if (res_e == 0) {
+        memset(&indicator_data, 0x00, sizeof(indicator_data));
+        memcpy(indicator_data.weight_data, ptr, 10);
+        indicator_data.spec.unit = *(ptr + 11) - '0';
+
+        indicator_data.event[STATE_ZERO_EVENT] = *(ptr + 13) - '0';
+        indicator_data.event[STATE_STABLE_EVENT] = *(ptr + 15) - '0';
+        indicator_data.event[STATE_SIGN_EVENT] = *(ptr + 17) - '0';
+        indicator_data.event[STATE_TRASH_CHECK_EVENT] = *(ptr + 19) - '0';
+        // 인디게이터 property입으로 일단 hard coding
+        // indicator Min, Max, digit set = g unit
+        indicator_data.spec.scale_Max = 6000;
+        indicator_data.spec.scale_Min = 25;
+        indicator_data.spec.e_d = 1;
+      }
+
+      res_e = sysevent_get(SYSEVENT_BASE, WEIGHT_DATA_RES_EVENT, &res, sizeof(res));
+      if (res_e == 0) {
+        ui_noti.event =
+            (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
+      }
 
       if (indicator_data.spec.unit == UNIT_G) {
         // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
-        weight = (float)(atoi(indicator_data.weight_data) * 0.001);
-        snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
+        // weight = (float)(atoi(indicator_data.weight_data) * 0.001);
+        // snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
+        sscanf(indicator_data.weight_data, "%f", &weight);
+        // weight = atof(indicator_data.weight_data);
+        //  g 단위로 설정값을 설정하고 이 인디게이터는 g 단위로만 설정 가능
+        //  품번에서 가지고 오는 상한, 하한값을 소수점 3자리수로 변경한 사항이 있어서
+        if (mw2_h_set_flag) {
+          upper_weight_value = upper_weight_value * 1000;
+          lower_weight_value = lower_weight_value * 1000;
+          mw2_h_set_flag = false;
+        }
+        snprintf(s_weight, sizeof(s_weight), "%.1f", weight);
+
         lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
+
+        // weight = (float)(atoi(indicator_data.weight_data) * 0.001);
+        // snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
+        // lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
       } else if (indicator_data.spec.unit == UNIT_KG) {
         sscanf(indicator_data.weight_data, "%f", &weight);
-        snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
+        // LOGI(TAG, "data f %f", weight);
+        snprintf(s_weight, sizeof(s_weight), "%.4f", weight);  // 이 저울만 이렇게 나옴
         lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: kg");
       } else {
+        LOGI(TAG, "none %d", indicator_data.spec.unit);
       }
+
+      // LOGI(TAG, "upper__ : %.3f", upper_weight_value);
+      // LOGI(TAG, "lower__ : %.3f", lower_weight_value);
+      // //
+      // memset(&indicator_data, 0x00, sizeof(indicator_data));
+      // res = indicator_EC_D_Serise_data(&indicator_data);
+      // ui_noti.event = (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not
+      // connected.
+      //
+      // if (indicator_data.spec.unit == UNIT_G) {
+      //   // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
+      //   weight = (float)(atoi(indicator_data.weight_data) * 0.001);
+      //   snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
+      //   lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
+      // } else if (indicator_data.spec.unit == UNIT_KG) {
+      //   sscanf(indicator_data.weight_data, "%f", &weight);
+      //   snprintf(s_weight, sizeof(s_weight), "%.3f", weight);
+      //   lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: kg");
+      // } else {
+      // }
 
       break;
     case MODEL_CAS_NT301A:
@@ -959,12 +1021,17 @@ void logic_timer_cb(lv_timer_t *timer) {
           indicator_model == MODEL_CAS_NT301A) {
         maxmum_weight = (float)100.00;
         minimum_weight = (float)0.1;
-      } else {
+      } else if (indicator_data.spec.unit == UNIT_G &&
+                 indicator_model == MODEL_CAS_EC_D_SERIES) {  // g단위 의 소수점 표현
+        maxmum_weight = (float)(indicator_data.spec.scale_Max - indicator_data.spec.e_d);
+        minimum_weight = (float)indicator_data.spec.scale_Min;
+      } else if (indicator_data.spec.unit == UNIT_KG) {
         maxmum_weight = (float)(indicator_data.spec.scale_Max - indicator_data.spec.e_d) * 0.001;
         minimum_weight = (float)indicator_data.spec.scale_Min * 0.001;
-        // LOGI(TAG, "max : %.3f", maxmum_weight);
-        // LOGI(TAG, "mini : %.3f", minimum_weight);
+      } else {
       }
+      // LOGI(TAG, "max : %.3f", maxmum_weight);
+      // LOGI(TAG, "mini : %.3f", minimum_weight);
 
       // no show to under zero and over 100kg
       if (trash_fileter_flag) {
