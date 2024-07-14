@@ -16,6 +16,7 @@
 #include "scale_read_485.h"
 #include "uart_api.h"
 #include "sysevent.h"
+#include "esp32/uart_pal.h"
 
 // #define BUF_SIZE 23
 #define BUF_SIZE 255
@@ -63,7 +64,7 @@ int weight_uart_485_init(void) {
 // I (1970-01-01 00:00:07) scale_read_485_task: data_9_
 // I (1970-01-01 00:00:07) scale_read_485_task: data_10_W
 // I (1970-01-01 00:00:07) scale_read_485_task: data_11_:
-// I (1970-01-01 00:00:07) scale_read_485_task: data_12_
+// I (1970-01-01 00:00:07) scGGale_read_485_task: data_12_
 // I (1970-01-01 00:00:07) scale_read_485_task: data_13_
 // I (1970-01-01 00:00:07) scale_read_485_task: data_14_
 // I (1970-01-01 00:00:07) scale_read_485_task: data_15_
@@ -195,6 +196,87 @@ int indicator_INNOTEM_T25_data(Common_data_t *common_data) {
   }
 
   if (read_data.sign[0] == '-') {
+    common_data->event[STATE_SIGN_EVENT] = STATE_SIGN_EVENT;
+  } else {
+    common_data->event[STATE_SIGN_EVENT] = STATE_NONE;
+  }
+  if (strncmp(read_data.states, "ST", 2) == 0 || strncmp(read_data.states, "US", 2) == 0 ||
+      strncmp(read_data.states, "OL", 2) == 0) {
+    common_data->event[STATE_TRASH_CHECK_EVENT] = STATE_TRASH_CHECK_EVENT;
+  } else {
+    common_data->event[STATE_TRASH_CHECK_EVENT] = STATE_NONE;
+  }
+
+#if INDICATOR_DEBUG
+  LOG_BUFFER_HEXDUMP(TAG, &read_data, sizeof(read_data), LOG_INFO);
+#endif
+  free(data);
+  return 0;
+}
+/**
+ *
+ * * MAX: 150kg, Min 500g e=d 10g
+ * RS-232 전송 방법
+ * P Count2
+ */
+// format : cas 22 byte
+int indicator_CAS_hb_hbi_data(Common_data_t *common_data) {
+  uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
+  static cas_22byte_format_t read_data = { 0 };
+  double weight = 0;
+
+  int len = uart_read_data(UART_PORT_NUM, data, (BUF_SIZE - 1));
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  if (len <= 0) {
+    LOGE(TAG, "Invalid data. or No data ");
+    LOGE(TAG, "len = %d\n", len);
+    LOGE(TAG, "uart 485 read data = %s", data);
+    free(data);
+    return -1;
+  }
+  //
+  // LOGE(TAG, "len = %d\n", len);
+  // LOGI(TAG, "uart 485 read data = %s", data);
+  // LOG_BUFFER_HEXDUMP(TAG, data, len, LOG_INFO);
+  //
+  memset(&read_data, 0x00, sizeof(read_data));
+
+  memcpy(read_data.states, data, 2);
+  memcpy(read_data.measurement_states, data + 3, 2);
+  memcpy(read_data.lamp_states, data + 7, 1);
+  memcpy(read_data.data, data + 9, 8);
+  memcpy(read_data.unit, data + 18, 2);
+
+  // Todo
+  // indicator Min, Max, digit set = g unit
+  common_data->spec.scale_Max = 30000;  // 30kg
+  common_data->spec.scale_Min = 200;
+  common_data->spec.e_d = 10;
+
+  // copy to weight data
+  memcpy(common_data->weight_data, read_data.data, 8);
+
+  if (strncmp(read_data.unit, "kg", 2) == 0) {
+    common_data->spec.unit = UNIT_KG;
+  }
+  // check weight data
+  sscanf(read_data.data, "%lf", &weight);
+  // LOGI(TAG, "zero check weight = %lf", weight);
+
+  /*stable state set display */
+  if (*read_data.lamp_states & 0x40) {
+    common_data->event[STATE_STABLE_EVENT] = STATE_STABLE_EVENT;
+  } else {
+    common_data->event[STATE_STABLE_EVENT] = STATE_NONE;
+  }
+  /*zero state set display */
+  if (strncmp(read_data.states, "ST", 2) == 0 && weight == 0.0) {
+    common_data->event[STATE_ZERO_EVENT] = STATE_ZERO_EVENT;
+  } else {
+    common_data->event[STATE_ZERO_EVENT] = STATE_NONE;
+  }
+
+  if (read_data.data[0] == '-') {
     common_data->event[STATE_SIGN_EVENT] = STATE_SIGN_EVENT;
   } else {
     common_data->event[STATE_SIGN_EVENT] = STATE_NONE;
@@ -1038,5 +1120,67 @@ void weight_print_msg(char *s_weight, weight_unit_t unit) {
   // free(pdata);
 
   uart_write_data(UART_PORT_NUM, print_data, sizeof(print_data));
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+}
+
+int cas_dlp_label_weight_print_msg(char *s_weight) {
+  uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
+  char print_data[40] = { 0 };
+  const char *cas_print_effective_Qualification[] = { "SER" };
+  size_t num_qualifications = sizeof(cas_print_effective_Qualification) / sizeof(cas_print_effective_Qualification[0]);
+
+  unsigned char print_data_form[] = { 0x46, 0x52, 0x22, 0x46, 0x4f, 0x52, 0x4d, 0x30, 0x22, 0x0a };  // form 3
+  unsigned char print_data_head[] = { 0x3f, 0x0a };
+  unsigned char print_data_formmat_value[] = { 0x20, 0x20, 0x20, 0x30, 0x2e, 0x33, 0x30, 0x0a };
+  unsigned char print_data_body[] = { 0x33, 0x32, 0x2e, 0x36, 0x30 };  // avable using data format 0.000, 00.00, 000.0
+  unsigned char print_data_0a[] = { 0x0a };                            // 0x0a
+
+  char *weight = s_weight;
+  int weight_len = strlen(weight);
+
+  // memcpy(print_data, print_data_head, sizeof(print_data_head));
+  // memcpy(print_data + sizeof(print_data_head), weight, weight_len);
+  // memcpy(print_data + sizeof(print_data_head) + weight_len, print_data_tail, sizeof(print_data_tail));
+  //
+  memcpy(print_data, print_data_form, sizeof(print_data_form));
+  memcpy(print_data + strlen(print_data), print_data_head, sizeof(print_data_head));
+  memcpy(print_data + strlen(print_data), print_data_formmat_value, sizeof(print_data_formmat_value));
+  memcpy(print_data + strlen(print_data), weight, weight_len);
+  memcpy(print_data + strlen(print_data), print_data_0a, sizeof(print_data_0a));
+
+  // memcpy(print_data + strlen(print_data), print_data_tail, sizeof(print_data_tail));
+
+  LOGI(TAG, "CAS DLP_LABEL create data for print: %s", print_data);
+  LOGI(TAG, "CAS DLP_LABEL strlen : %d", strlen(print_data));
+  LOG_BUFFER_HEXDUMP(TAG, print_data, sizeof(print_data), LOG_LOCAL_LEVEL);
+
+  uart_read_data(UART_PORT_NUM, data, (BUF_SIZE - 1));
+  LOGE(TAG, "garbage read data = %s", data);
+
+  memset(data, 0x00, BUF_SIZE);
+  uart_hal_flush(UART_PORT_NUM);
+  uart_write_data(UART_PORT_NUM, (const unsigned char *)print_data, strlen(print_data));
+  vTaskDelay(200 / portTICK_PERIOD_MS);
+  uart_read_data(UART_PORT_NUM, data, (BUF_SIZE - 1));
+  LOGE(TAG, "print response data = %s", data);
+  LOG_BUFFER_HEXDUMP(TAG, data, sizeof(data), LOG_LOCAL_LEVEL);
+
+  for (int i = 0; num_qualifications > i; i++) {
+    if (strncmp((const char *)data, cas_print_effective_Qualification[i],
+                strlen(cas_print_effective_Qualification[i])) == 0) {
+      LOGI(TAG, "success data = %s", data);
+      vTaskDelay(1000 / portTICK_PERIOD_MS);
+      free(data);
+      return 0;
+    }
+  }
+  free(data);
+  return -1;
+}
+
+void real_print_cmd() {
+  unsigned char print_data_tail[] = { 0x30, 0x30, 0x0a, 0x50, 0x31, 0x2c, 0x31, 0x0a, 0x0a };  // "p1,1
+  uart_hal_flush(UART_PORT_NUM);
+  uart_write_data(UART_PORT_NUM, (const unsigned char *)print_data_tail, strlen((char *)print_data_tail));
   vTaskDelay(100 / portTICK_PERIOD_MS);
 }

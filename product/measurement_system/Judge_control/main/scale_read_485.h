@@ -13,6 +13,7 @@ typedef enum {
 typedef enum {
   UNIT_G = 0x01,
   UNIT_KG,
+  UNIT_100UP,
 } weight_unit_t;
 
 typedef struct {
@@ -49,8 +50,9 @@ typedef enum {
   MODEL_AND_CB_12K,
   MODEL_ACOM_PW_200,
   MODEL_CAS_SW_11,
-  MODEL_INNOTEM_T25,
+  MODEL_INNOTEM_T28,
   MODEL_CAS_MW2_H,
+  MODEL_CAS_HB_HBI,
 } indicator_model_t;
 
 typedef enum {
@@ -117,6 +119,14 @@ typedef struct Common_data {
  * @return int
  */
 int weight_uart_485_init(void);
+
+/**
+ * @brief
+ *
+ * @param common_data
+ * @return int
+ */
+int indicator_CAS_hb_hbi_data(Common_data_t *common_data);
 
 /**
  * @brief
@@ -215,6 +225,20 @@ int baykon_bx11_zero_command(void);
  *
  */
 void weight_print_msg(char *s_weight, weight_unit_t unit);
+
+/**
+ * @ brief CAD DLP printer
+ *
+ */
+
+int cas_dlp_label_weight_print_msg(char *s_weight);
+
+/**
+ *  operation command for print
+ *
+ *
+ */
+void real_print_cmd(void);
 #ifdef __cplusplus
 }
 #endif

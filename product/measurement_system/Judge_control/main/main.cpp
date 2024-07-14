@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include "esp_event.h"
 #include "nvs_flash.h"
 #include "esp_sleep.h"
 #include "esp_mac.h"
@@ -43,6 +44,7 @@ sc_ctx_t *sc_ctx = NULL;
 
 char usb_mode[5] = { 0 };
 char speaker_set[5] = { 0 };
+char printer_set[5] = { 0 };
 char indicator_set[20] = { 0 };
 
 extern "C" {
@@ -72,6 +74,7 @@ static void check_model(void) {
   syscfg_get(SYSCFG_I_USB_MODE, SYSCFG_N_USB_MODE, usb_mode, sizeof(usb_mode));
   syscfg_get(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, indicator_set, sizeof(indicator_set));
   syscfg_get(SYSCFG_I_SPEAKER, SYSCFG_N_SPEAKER, speaker_set, sizeof(speaker_set));
+  syscfg_get(SYSCFG_I_PRINTER, SYSCFG_N_PRINTER, printer_set, sizeof(printer_set));
   if (strcmp(usb_mode, "") == 0) {
     syscfg_get(MFG_DATA, SYSCFG_N_USB_MODE, usb_mode, sizeof(usb_mode));
     LOGI(TAG, "MFG GET usb_mode : %s", usb_mode);
@@ -87,7 +90,14 @@ static void check_model(void) {
     LOGI(TAG, "MFG GET speaker_set : %s", speaker_set);
     syscfg_set(SYSCFG_I_SPEAKER, SYSCFG_N_SPEAKER, speaker_set);
   }
-  LOGI(TAG, "usb_mode : %s, indicator_set : %s, speaker_set : %s", usb_mode, indicator_set, speaker_set);
+  if (strcmp(printer_set, "") == 0) {
+    syscfg_get(MFG_DATA, SYSCFG_N_PRINTER, printer_set, sizeof(printer_set));
+    LOGI(TAG, "MFG GET printer_set : %s", printer_set);
+    syscfg_set(SYSCFG_I_SPEAKER, SYSCFG_N_PRINTER, printer_set);
+  }
+
+  LOGI(TAG, "usb_mode : %s, indicator_set : %s, speaker_set : %s, printer_set : %s", usb_mode, indicator_set,
+       speaker_set, printer_set);
 }
 
 void SET_CH2_PIN() {
@@ -243,6 +253,17 @@ void app_main(void) {
   if (sc_ctx) {
     sc_start(sc_ctx);
   }
+  //
+  // SET_MUX_CONTROL(CH_1_SET);
+  // int result_p = 0;
+  // for (int ss = 0; ss < 20; ss++) {
+  //   LOGI(TAG, "print test %d", ss);
+  //   result_p = cas_dlp_label_weight_print_msg("2000");
+  //   if (result_p == 0) {
+  //     LOGI(TAG, "success print");
+  //   }
+  //   vTaskDelay(1000 / portTICK_PERIOD_MS);
+  // }
 
   if (lv_display_init() != 0) {
     LOGE(TAG, "LVGL setup failed!!!");

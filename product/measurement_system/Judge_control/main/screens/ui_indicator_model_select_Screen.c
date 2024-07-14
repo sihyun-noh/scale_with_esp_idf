@@ -12,9 +12,14 @@ extern void Msg_Box_No_Btn_e_handler(lv_event_t *e);
 extern void memory_allocation_manger();
 extern void create_custom_msg_box(const char *msg_text, lv_obj_t *active_screen, void (*event_handler)(lv_event_t *),
                                   lv_event_code_t event);
+extern void create_custom_msg_box_type_1(const char *msg_text, lv_obj_t *active_screen,
+                                         void (*yes_event_handler)(lv_event_t *),
+                                         void (*no_event_handler)(lv_event_t *), lv_event_code_t event);
 
 lv_obj_t *ui_Indicator_Model_Select_Screen_Comfirm_Btn;
 lv_obj_t *ui_Indicator_Model_Select_Screen_Comfirm_Btn_Label;
+lv_obj_t *ui_SPK_Set_State_Label;
+lv_obj_t *ui_PRT_Set_State_Label;
 
 typedef enum {
   STATE_CHANGE_SPK = 0x01,
@@ -71,11 +76,13 @@ static void event_handler(lv_event_t *e) {
     } else if (strncmp(str_buf, "SW-11", 5) == 0) {
       create_custom_msg_box("선택된 모델은 \nSW-11 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
 
-    } else if (strncmp(str_buf, "INNOTEM-T25", 11) == 0) {
-      create_custom_msg_box("선택된 모델은 \nINNOTEM T25 입니다.", ui_Indicator_Model_Select_Screen, NULL,
+    } else if (strncmp(str_buf, "INNOTEM-T28", 11) == 0) {
+      create_custom_msg_box("선택된 모델은 \nINNOTEM T28 입니다.", ui_Indicator_Model_Select_Screen, NULL,
                             LV_EVENT_CLICKED);
     } else if (strncmp(str_buf, "MW2-H", 5) == 0) {
       create_custom_msg_box("선택된 모델은 \nMW2-H 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
+    } else if (strncmp(str_buf, "HB/HBI", 6) == 0) {
+      create_custom_msg_box("선택된 모델은 \nHB/HBI 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
     } else if (strncmp(str_buf, "none", 4) == 0) {
       create_custom_msg_box("다시 선택해 주십시오.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
     }
@@ -85,17 +92,26 @@ static void event_handler(lv_event_t *e) {
 static void Speaker_Btn_Yes_event_cb(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
   if (code == LV_EVENT_CLICKED) {
-    if (strncmp(speaker_set, "ON", 2) == 0) {
-      syscfg_set(SYSCFG_I_SPEAKER, SYSCFG_N_SPEAKER, "OFF");
-    } else if (strncmp(speaker_set, "OFF", 3) == 0) {
-      syscfg_set(SYSCFG_I_SPEAKER, SYSCFG_N_SPEAKER, "ON");
-    }
+    syscfg_set(SYSCFG_I_SPEAKER, SYSCFG_N_SPEAKER, "ON");
+    lv_label_set_text(ui_SPK_Set_State_Label, "음성:ON");
     // 다시 원 상태로 돌아온다면?
     lv_obj_set_style_bg_color(ui_Indicator_Model_Select_Screen_Comfirm_Btn, lv_palette_main(LV_PALETTE_LIGHT_GREEN),
                               LV_PART_MAIN);
     memory_allocation_manger();
   } else {
-    LOGI(TAG, "Miss loop Judge_Cancel_Btn_Yes_event_cb ");
+    memory_allocation_manger();
+  }
+}
+static void Speaker_Btn_No_event_cb(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  if (code == LV_EVENT_CLICKED) {
+    syscfg_set(SYSCFG_I_SPEAKER, SYSCFG_N_SPEAKER, "OFF");
+    lv_label_set_text(ui_SPK_Set_State_Label, "음성:OFF");
+    // 다시 원 상태로 돌아온다면?
+    lv_obj_set_style_bg_color(ui_Indicator_Model_Select_Screen_Comfirm_Btn, lv_palette_main(LV_PALETTE_LIGHT_GREEN),
+                              LV_PART_MAIN);
+    memory_allocation_manger();
+  } else {
     memory_allocation_manger();
   }
 }
@@ -112,7 +128,6 @@ static void OTA_Mode_Btn_Yes_event_cb(lv_event_t *e) {
                               LV_PART_MAIN);
     memory_allocation_manger();
   } else {
-    LOGI(TAG, "Miss loop Judge_Cancel_Btn_Yes_event_cb ");
     memory_allocation_manger();
   }
 }
@@ -122,10 +137,48 @@ static void ui_Indicator_Model_Speaker_Btn_e_hendler(lv_event_t *e) {
   char s_buf[100] = { 0 };
   if (code == LV_EVENT_CLICKED) {
     LOGE(TAG, "Speaker Set");
-    syscfg_get(SYSCFG_I_SPEAKER, SYSCFG_N_SPEAKER, speaker_set, sizeof(speaker_set));
-    snprintf(s_buf, sizeof(s_buf), "음성지원을 사용하시겠습니까?\n현재모드:%s", speaker_set);
-    LOGE(TAG, "%s", s_buf);
-    create_custom_msg_box(s_buf, ui_Indicator_Model_Select_Screen, Speaker_Btn_Yes_event_cb, LV_EVENT_CLICKED);
+    snprintf(s_buf, sizeof(s_buf), "음성지원을 사용하시겠습니까?");
+    create_custom_msg_box_type_1(s_buf, ui_Indicator_Model_Select_Screen, Speaker_Btn_Yes_event_cb,
+                                 Speaker_Btn_No_event_cb, LV_EVENT_CLICKED);
+  }
+}
+
+static void Printer_Btn_Yes_event_cb(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  if (code == LV_EVENT_CLICKED) {
+    syscfg_set(SYSCFG_I_PRINTER, SYSCFG_N_PRINTER, "ON");
+    lv_label_set_text(ui_PRT_Set_State_Label, "PRT :ON");
+    // 다시 원 상태로 돌아온다면?
+    lv_obj_set_style_bg_color(ui_Indicator_Model_Select_Screen_Comfirm_Btn, lv_palette_main(LV_PALETTE_LIGHT_GREEN),
+                              LV_PART_MAIN);
+    memory_allocation_manger();
+  } else {
+    memory_allocation_manger();
+  }
+}
+
+static void Printer_Btn_No_event_cb(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  if (code == LV_EVENT_CLICKED) {
+    syscfg_set(SYSCFG_I_PRINTER, SYSCFG_N_PRINTER, "OFF");
+    lv_label_set_text(ui_PRT_Set_State_Label, "PRT :OFF");
+    // 다시 원 상태로 돌아온다면?
+    lv_obj_set_style_bg_color(ui_Indicator_Model_Select_Screen_Comfirm_Btn, lv_palette_main(LV_PALETTE_LIGHT_GREEN),
+                              LV_PART_MAIN);
+    memory_allocation_manger();
+  } else {
+    memory_allocation_manger();
+  }
+}
+
+static void ui_Indicator_Model_Printer_Btn_e_hendler(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  char s_buf[100] = { 0 };
+  if (code == LV_EVENT_CLICKED) {
+    LOGE(TAG, "Printer Set");
+    snprintf(s_buf, sizeof(s_buf), "프린터를 사용하시겠습니까?");
+    create_custom_msg_box_type_1(s_buf, ui_Indicator_Model_Select_Screen, Printer_Btn_Yes_event_cb,
+                                 Printer_Btn_No_event_cb, LV_EVENT_CLICKED);
   }
 }
 
@@ -206,6 +259,8 @@ void ui_indicator_model_select_screen_init(void) {
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "MW2-H");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
+  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "HB/HBI");
+  lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
 
   lv_list_add_text(indicator_list, "OTHER");
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "BX11");
@@ -214,7 +269,7 @@ void ui_indicator_model_select_screen_init(void) {
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "PW-200");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
-  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "INNOTEM-T25");
+  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "INNOTEM-T28");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "none");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
@@ -321,7 +376,7 @@ void ui_indicator_model_select_screen_init(void) {
   lv_label_set_text(ui_Name_Set_State_Label, "설정상태");
   lv_obj_set_style_text_font(ui_Name_Set_State_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 
-  lv_obj_t *ui_SPK_Set_State_Label = lv_label_create(ui_Indicator_Model_Select_Screen);
+  ui_SPK_Set_State_Label = lv_label_create(ui_Indicator_Model_Select_Screen);
   lv_obj_set_width(ui_SPK_Set_State_Label, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_SPK_Set_State_Label, LV_SIZE_CONTENT);  /// 1
   lv_obj_set_x(ui_SPK_Set_State_Label, 10);
@@ -338,4 +393,33 @@ void ui_indicator_model_select_screen_init(void) {
   lv_obj_set_align(ui_USB_Set_State_Label, LV_ALIGN_TOP_LEFT);
   lv_label_set_text_fmt(ui_USB_Set_State_Label, "USB : %s", usb_mode);
   lv_obj_set_style_text_font(ui_USB_Set_State_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  ui_PRT_Set_State_Label = lv_label_create(ui_Indicator_Model_Select_Screen);
+  lv_obj_set_width(ui_PRT_Set_State_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_PRT_Set_State_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_PRT_Set_State_Label, 10);
+  lv_obj_set_y(ui_PRT_Set_State_Label, 170);
+  lv_obj_set_align(ui_PRT_Set_State_Label, LV_ALIGN_TOP_LEFT);
+  lv_label_set_text_fmt(ui_PRT_Set_State_Label, "PRT : %s", printer_set);
+  lv_obj_set_style_text_font(ui_PRT_Set_State_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_t *ui_Indicator_Model_Printer_Btn = lv_btn_create(ui_Indicator_Model_Select_Screen);
+  lv_obj_set_width(ui_Indicator_Model_Printer_Btn, LV_SIZE_CONTENT);
+  lv_obj_set_height(ui_Indicator_Model_Printer_Btn, LV_SIZE_CONTENT);
+  lv_obj_set_x(ui_Indicator_Model_Printer_Btn, 10);
+  lv_obj_set_y(ui_Indicator_Model_Printer_Btn, -20);
+  lv_obj_set_align(ui_Indicator_Model_Printer_Btn, LV_ALIGN_BOTTOM_LEFT);
+  lv_obj_add_flag(ui_Indicator_Model_Printer_Btn, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_Indicator_Model_Printer_Btn, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_bg_color(ui_Indicator_Model_Printer_Btn, lv_color_hex(0x0E04F8), LV_PART_MAIN | LV_STATE_DEFAULT);
+
+  lv_obj_add_event_cb(ui_Indicator_Model_Printer_Btn, ui_Indicator_Model_Printer_Btn_e_hendler, LV_EVENT_ALL, NULL);
+
+  lv_obj_t *ui_Indicator_Model_Printer_Btn_Label = lv_label_create(ui_Indicator_Model_Printer_Btn);
+  lv_obj_set_width(ui_Indicator_Model_Printer_Btn_Label, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Indicator_Model_Printer_Btn_Label, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Indicator_Model_Printer_Btn_Label, -3);
+  lv_obj_set_y(ui_Indicator_Model_Printer_Btn_Label, 1);
+  lv_label_set_text(ui_Indicator_Model_Printer_Btn_Label, "PRT");
+  lv_obj_set_style_text_font(ui_Indicator_Model_Printer_Btn_Label, &NanumBar24, LV_PART_MAIN | LV_STATE_DEFAULT);
 }

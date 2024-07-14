@@ -202,6 +202,7 @@ extern float amount_weight_value;
 extern int mode_2_compare_count;
 extern char buf_prod_name[10];
 extern bool printer_state;
+extern bool setting_printer_flag;
 extern weight_unit_t prod_weight_unit;
 
 extern screen_mode_t curr_mode;

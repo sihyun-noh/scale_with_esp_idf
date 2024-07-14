@@ -120,6 +120,8 @@ float amount_weight_value = 0.0;
 int mode_2_compare_count = 1;
 char buf_prod_name[10] = { 0 };
 bool printer_state = true;
+bool setting_printer_flag = true;
+
 weight_unit_t prod_weight_unit = UNIT_KG;
 
 int judge_total_count = 0;
@@ -321,6 +323,16 @@ void ui_ListSelectScreen_Delete_Btn_e_handler(lv_event_t *e) {
   }
 }
 
+// Function to convert weight_unit_t to string
+const char *weight_unit_to_string(weight_unit_t unit) {
+  switch (unit) {
+    case UNIT_G: return "1";
+    case UNIT_KG: return "2";
+    case UNIT_100UP: return "3";
+    default: return "";
+  }
+}
+
 void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e) {
   lv_event_code_t event_code = lv_event_get_code(e);
   char s_upper_weight_value[10] = { 0 };
@@ -344,16 +356,21 @@ void ui_ListSelectScreen_Comfirm_Btn_e_handler(lv_event_t *e) {
       LOGI(TAG, "s_prod_num_value : %s", s_prod_num_value);
       LOGI(TAG, "s_prod_name : %s", s_prod_name);
 
-      if (strncmp(string_empty + 29, "1", UNIT_G) == 0) {  // check unit 'g'
+      if (strncmp(string_empty + 29, weight_unit_to_string(UNIT_G), UNIT_G) == 0) {  // check unit 'g'
         LOGI(TAG, "selected unit : G");
         snprintf(s_replace_buf_upper, sizeof(s_replace_buf_upper), "%.1f", atof(s_upper_weight_value));
         snprintf(s_replace_buf_lower, sizeof(s_replace_buf_lower), "%.1f", atof(s_lower_weight_value));
         prod_weight_unit = UNIT_G;
-      } else {
+      } else if (strncmp(string_empty + 29, weight_unit_to_string(UNIT_KG), UNIT_KG) == 0) {  // check uint "kg"
         LOGI(TAG, "selected unit : KG");
         snprintf(s_replace_buf_upper, sizeof(s_replace_buf_upper), "%.3f", atof(s_upper_weight_value));
         snprintf(s_replace_buf_lower, sizeof(s_replace_buf_lower), "%.3f", atof(s_lower_weight_value));
         prod_weight_unit = UNIT_KG;
+      } else {
+        LOGI(TAG, "selected unit : 100UP");
+        snprintf(s_replace_buf_upper, sizeof(s_replace_buf_upper), "%.2f", atof(s_upper_weight_value));
+        snprintf(s_replace_buf_lower, sizeof(s_replace_buf_lower), "%.2f", atof(s_lower_weight_value));
+        prod_weight_unit = UNIT_100UP;
       }
       memset(string_empty, 0x00, sizeof(string_empty));
 
@@ -464,7 +481,6 @@ void logic_timer_cb(lv_timer_t *timer) {
   size_t min_free_heap_size = 0;
   char weight_data_buff[100] = { 0 };
   char *ptr = weight_data_buff;
-  char empty_buf[50] = { 0 };  // "Initialize and use"
 
   switch (indicator_model) {
     case MODEL_NONE: LOGE(TAG, "No target indicator model!"); break;
@@ -574,10 +590,14 @@ void logic_timer_cb(lv_timer_t *timer) {
                   normal_volume();
 
                 // print prot control
-                if (printer_state) {
-                  SET_MUX_CONTROL(CH_1_SET);
-                  weight_print_msg(s_weight, indicator_data.spec.unit);
-                  SET_MUX_CONTROL(CH_2_SET);
+                if (strncmp(printer_set, "ON", 2) == 0) {
+                  if (printer_state) {
+                    LOGI(TAG, "print");
+                    SET_MUX_CONTROL(CH_1_SET);
+                    cas_dlp_label_weight_print_msg(s_weight);
+                    //  weight_print_msg(s_weight, indicator_data.spec.unit);
+                    SET_MUX_CONTROL(CH_2_SET);
+                  }
                 }
                 //  Clear all judgments
                 over_event_flag = true;
@@ -657,7 +677,49 @@ void logic_timer_cb(lv_timer_t *timer) {
 
       break;
 
-    case MODEL_INNOTEM_T25:
+    case MODEL_CAS_HB_HBI:
+
+      res_e = sysevent_get(SYSEVENT_BASE, WEIGHT_DATA_EVENT, weight_data_buff, sizeof(weight_data_buff));
+
+      if (res_e == 0) {
+        memset(&indicator_data, 0x00, sizeof(indicator_data));
+        memcpy(indicator_data.weight_data, ptr, 10);
+        indicator_data.spec.unit = *(ptr + 11) - '0';
+
+        indicator_data.event[STATE_ZERO_EVENT] = *(ptr + 13) - '0';
+        indicator_data.event[STATE_STABLE_EVENT] = *(ptr + 15) - '0';
+        indicator_data.event[STATE_SIGN_EVENT] = *(ptr + 17) - '0';
+        indicator_data.event[STATE_TRASH_CHECK_EVENT] = *(ptr + 19) - '0';
+        // 인디게이터 property입으로 일단 hard coding
+        // indicator Min, Max, digit set = g unit
+        indicator_data.spec.scale_Max = 150000;  // 150kg
+        indicator_data.spec.scale_Min = 500;
+        indicator_data.spec.e_d = 10;
+      }
+
+      res_e = sysevent_get(SYSEVENT_BASE, WEIGHT_DATA_RES_EVENT, &res, sizeof(res));
+      if (res_e == 0) {
+        ui_noti.event =
+            (res == -1) ? NOTI_INDICATOR_NOT_CONN : NOTI_NONE;  //  Display a notification when not connected.
+      }
+
+      if (indicator_data.spec.unit == UNIT_G) {
+        // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
+        weight = (float)(atoi(indicator_data.weight_data) * 0.001);
+        snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
+      } else if (indicator_data.spec.unit == UNIT_KG) {
+        sscanf(indicator_data.weight_data, "%f", &weight);
+        snprintf(s_weight, sizeof(s_weight), "%.2f", weight);  // 저울의 단위가 0.00 이다.
+        lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: kg");
+      } else {
+      }
+
+      // MODE_2
+      snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+
+      break;
+    case MODEL_INNOTEM_T28:
       // memset(&indicator_data, 0x00, sizeof(indicator_data));
       //`res = indicator_INNOTEM_T25_data(&indicator_data);
       // weight, unit, zero, stable, sign, trash
@@ -825,25 +887,15 @@ void logic_timer_cb(lv_timer_t *timer) {
         // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
         // weight = (float)(atoi(indicator_data.weight_data) * 0.001);
         // snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
-        sscanf(indicator_data.weight_data, "%f", &weight);
         // weight = atof(indicator_data.weight_data);
-        //  g 단위로 설정값을 설정하고 이 인디게이터는 g 단위로만 설정 가능
-        //  품번에서 가지고 오는 상한, 하한값을 소수점 3자리수로 변경한 사항이 있어서
-        if (mw2_h_set_flag) {
-          upper_weight_value = upper_weight_value * 1000;
-          lower_weight_value = lower_weight_value * 1000;
-          mw2_h_set_flag = false;
-        }
+
+        sscanf(indicator_data.weight_data, "%f", &weight);
         snprintf(s_weight, sizeof(s_weight), "%.1f", weight);
-
         lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
+        weight = weight * 0.001;
 
-        // weight = (float)(atoi(indicator_data.weight_data) * 0.001);
-        // snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
-        // lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
       } else if (indicator_data.spec.unit == UNIT_KG) {
         sscanf(indicator_data.weight_data, "%f", &weight);
-        // LOGI(TAG, "data f %f", weight);
         snprintf(s_weight, sizeof(s_weight), "%.4f", weight);  // 이 저울만 이렇게 나옴
         lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: kg");
       } else {
@@ -1021,17 +1073,13 @@ void logic_timer_cb(lv_timer_t *timer) {
           indicator_model == MODEL_CAS_NT301A) {
         maxmum_weight = (float)100.00;
         minimum_weight = (float)0.1;
-      } else if (indicator_data.spec.unit == UNIT_G &&
-                 indicator_model == MODEL_CAS_EC_D_SERIES) {  // g단위 의 소수점 표현
-        maxmum_weight = (float)(indicator_data.spec.scale_Max - indicator_data.spec.e_d);
-        minimum_weight = (float)indicator_data.spec.scale_Min;
-      } else if (indicator_data.spec.unit == UNIT_KG) {
+      } else {
         maxmum_weight = (float)(indicator_data.spec.scale_Max - indicator_data.spec.e_d) * 0.001;
         minimum_weight = (float)indicator_data.spec.scale_Min * 0.001;
-      } else {
       }
       // LOGI(TAG, "max : %.3f", maxmum_weight);
       // LOGI(TAG, "mini : %.3f", minimum_weight);
+      // LOGI(TAG, "weight : %.3f", weight);
 
       // no show to under zero and over 100kg
       if (trash_fileter_flag) {
@@ -1149,17 +1197,32 @@ void logic_timer_cb(lv_timer_t *timer) {
               push(&ui_data_ctx.stack_root, JUDGE_NORMAL, weight, judge_normal_count, buf_prod_name, log_timestamp());
               lv_label_set_text_fmt(ui_Screen1_normal_Label, "정상 %d", judge_normal_count);
               lv_led_on(ui_led2);
-
               led_2_ctrl(1);
 
               if (strncmp(speaker_set, "ON", 2) == 0)
                 normal_volume();
 
               // print prot control
-              if (printer_state) {
-                SET_MUX_CONTROL(CH_1_SET);
-                weight_print_msg(s_weight, indicator_data.spec.unit);
-                SET_MUX_CONTROL(CH_2_SET);
+              if (strncmp(printer_set, "ON", 2) == 0) {
+                if (printer_state) {
+                  LOGI(TAG, "print");
+
+                  // dlp-50 이"g"으로만 표현이 되어서 모든 프린트출력 값을 "g"으로 맞춘다.
+                  weight = weight * 1000;
+                  if (indicator_model == MODEL_CAS_WTM500 || indicator_model == MODEL_AND_CB_12K ||
+                      indicator_model == MODEL_ACOM_PW_200 || indicator_model == MODEL_CAS_NT301A ||
+                      indicator_model == MODEL_BAYKON_BX11) {
+                    // 프린터 터 시리얼 설정
+                    SET_MUX_CONTROL(CH_1_SET);
+                    snprintf(s_weight, sizeof(s_weight), "%7.1f", weight);
+                    cas_dlp_label_weight_print_msg(s_weight);
+                    SET_MUX_CONTROL(CH_2_SET);
+
+                  } else {
+                    snprintf(s_weight, sizeof(s_weight), "%7.1f", weight);
+                    sysevent_set(WEIGHT_PRINTER_EVENT, s_weight);
+                  }
+                }
               }
               //  Clear all judgments
               over_event_flag = true;
@@ -1304,6 +1367,12 @@ void ui_init(void) {
                                             false, LV_FONT_DEFAULT);
   lv_disp_set_theme(dispp, theme);
 
+  if (strncmp(printer_set, "ON", 2) == 0) {
+    setting_printer_flag = true;
+  } else {
+    setting_printer_flag = false;
+  }
+
   // ui 초기화
   ui_version_screen_init();
   ui_main_screen_init();
@@ -1345,14 +1414,18 @@ void ui_init(void) {
     // weight_zero_command = cas_zero_command;
     indicator_model = MODEL_CAS_SW_11;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : SW-11");
-  } else if (strncmp(indicator_set, "INNOTEM-T25", 11) == 0) {
+  } else if (strncmp(indicator_set, "INNOTEM-T28", 11) == 0) {
     // weight_zero_command = cas_zero_command;
-    indicator_model = MODEL_INNOTEM_T25;
-    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : INNOTEM-T25");
+    indicator_model = MODEL_INNOTEM_T28;
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : INNOTEM-T28");
   } else if (strncmp(indicator_set, "MW2-H", 5) == 0) {
     // weight_zero_command = cas_zero_command;
     indicator_model = MODEL_CAS_MW2_H;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : MW2-H");
+  } else if (strncmp(indicator_set, "HB/HBI", 6) == 0) {
+    // weight_zero_command = cas_zero_command;
+    indicator_model = MODEL_CAS_HB_HBI;
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : HB/HBI");
   } else if (strncmp(indicator_set, "none", 4) == 0) {
     indicator_model = MODEL_NONE;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : NONE");

@@ -153,20 +153,40 @@ int uart_interrupt_config(void) {
 static void control_task(void *pvParameter) {
   Common_data_t weight_data;
   char str[100] = { 0 };
-  int res = 0;
+  char printer_data_buffer[10] = { 0 };
+  int res, res_printer = 0;
   for (;;) {
     // LOGE(TAG, "Failed to receive ctrl message form queue");
     // LOGI(TAG, "start firmware");
+
+    res_printer = sysevent_get(SYSEVENT_BASE, WEIGHT_PRINTER_EVENT, printer_data_buffer, sizeof(printer_data_buffer));
+
+    if (res_printer == 0) {
+      SET_MUX_CONTROL(CH_1_SET);
+      LOGI(TAG, "print start");
+
+      while (cas_dlp_label_weight_print_msg(printer_data_buffer) == -1) {
+        vTaskDelay(200);  // 실제 읽기 시간
+      }
+      // cas_dlp_label_weight_print_msg(printer_data_buffer);
+      real_print_cmd();
+      SET_MUX_CONTROL(CH_2_SET);
+    }
+
     memset(&weight_data, 0x00, sizeof(weight_data));
     if (strncmp(indicator_set, "SW-11", 5) == 0) {
       // LOGI(TAG, "start sw-11");
       res = indicator_CAS_sw_11_data(&weight_data);
-    } else if (strncmp(indicator_set, "INNOTEM-T25", 11) == 0) {
+    } else if (strncmp(indicator_set, "INNOTEM-T28", 11) == 0) {
       // LOGI(TAG, "start innotem T25");
       res = indicator_INNOTEM_T25_data(&weight_data);
       vTaskDelay(500);  // 실제 읽기 시간
     } else if (strncmp(indicator_set, "EC-D", 4) == 0) {
       res = indicator_EC_D_Serise_data(&weight_data);
+    } else if (strncmp(indicator_set, "HB/HBI", 6) == 0) {
+      res = indicator_CAS_hb_hbi_data(&weight_data);
+    } else {
+      LOGI(TAG, "No paly control task");
     }
 
     // weight, unit, zero, stable, sign, trash
@@ -201,15 +221,16 @@ void create_control_task(char *indicator_set) {
     return;
   }
 
-  if (strncmp(indicator_set, "INNOTEM-T25", 11) == 0) {
+  if (strncmp(indicator_set, "INNOTEM-T28", 11) == 0) {
     xTaskCreatePinnedToCore(control_task, "control_task", stack_size, NULL, task_priority, &control_handle, 0);
   } else if (strncmp(indicator_set, "MW2-H", 5) == 0) {
     // Create a task to handler UART event from ISR
     uart_interrupt_config();
     xTaskCreatePinnedToCore(uart_event_task, "uart_event_task", 4096, NULL, 12, NULL, 0);
-  } else if (strncmp(indicator_set, "SW-11", 5) == 0 || strncmp(indicator_set, "EC-D", 4) == 0) {
-    LOGI(TAG, "ec-D data task");
+  } else if (strncmp(indicator_set, "SW-11", 5) == 0 || strncmp(indicator_set, "EC-D", 4) == 0 ||
+             strncmp(indicator_set, "HB/HBI", 6) == 0) {
     xTaskCreatePinnedToCore(control_task, "control_task", stack_size, NULL, task_priority, &control_handle, 0);
   } else {
+    LOGI(TAG, "None task");
   }
 }

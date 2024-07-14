@@ -72,7 +72,7 @@ static const char *button_nums[12][2] = {
   { " ", " " }   // ID 11
 };
 
-static char *count_buf[] = { "kg", " g" };
+static char *count_buf[] = { "kg", " g", "100up" };
 static char **count_ptr = count_buf;
 static weight_unit_t prod_unit = UNIT_KG;
 
@@ -90,6 +90,8 @@ void ui_prod_unit_set_Btn_e_handler(lv_event_t *e) {
       prod_unit = UNIT_KG;
     if (strcmp(*count_ptr, " g") == 0)
       prod_unit = UNIT_G;
+    if (strcmp(*count_ptr, "100up") == 0)
+      prod_unit = UNIT_100UP;
     LOGI(TAG, "prod unit :%s_%d", *count_ptr, prod_unit);
   }
 }
@@ -341,6 +343,13 @@ void register_set_parameter() {
     memset(set_str, 0x00, sizeof(set_str));
     snprintf(set_str, sizeof(set_str), "%02d,upper:%04d.%01d,lower:%04d.%01d,%d", prod_num_value, upper_int_part,
              upper_dacimal_to_int_part, lower_int_part, lower_decimal_to_int_part, prod_unit);
+  } else if (prod_unit == UNIT_100UP) {
+    LOGI(TAG, "SET UNIT G");
+    upper_dacimal_to_int_part = roundf(upper_decimal_part * 100);  // decimal point 1
+    lower_decimal_to_int_part = roundf(lower_decimal_part * 100);  // rounding to the nearest integer
+    memset(set_str, 0x00, sizeof(set_str));
+    snprintf(set_str, sizeof(set_str), "%02d,upper:%03d.%02d,lower:%03d.%02d,%d", prod_num_value, upper_int_part,
+             upper_dacimal_to_int_part, lower_int_part, lower_decimal_to_int_part, prod_unit);
   }
 
   LOGI(TAG, "Set syscfg_data for setting value : %s", set_str);
@@ -420,6 +429,10 @@ void ui_register_pord_num_btn_e_hendler(lv_event_t *e) {
       // erroe when entering product number over PROD_NUM value
       create_custom_msg_box("최대 상한값은 9999.9g 입니다.", ui_Screen2, NULL, LV_EVENT_CLICKED);
 
+    } else if (upper_weight_value > (float)1000 && prod_unit == UNIT_100UP) {
+      // erroe when entering product number over PROD_NUM value
+      create_custom_msg_box("최대 상한값은 999.99kg 입니다.", ui_Screen2, NULL, LV_EVENT_CLICKED);
+
     } else if (prod_num_value > PROD_NUM) {
       // erroe when entering product number over PROD_NUM value
       create_custom_msg_box("등록 가능한 번호는 \n 0 ~ 30번 입니다.", ui_Screen2, NULL, LV_EVENT_CLICKED);
@@ -459,6 +472,13 @@ void ui_register_pord_num_btn_e_hendler(lv_event_t *e) {
           lower_decimal_to_int_part = roundf(lower_decimal_part * 10);  // rounding to the nearest integer
           memset(set_str, 0x00, sizeof(set_str));
           snprintf(set_str, sizeof(set_str), "%02d,upper:%04d.%01d,lower:%04d.%01d,%d", prod_num_value, upper_int_part,
+                   upper_dacimal_to_int_part, lower_int_part, lower_decimal_to_int_part, prod_unit);
+        } else if (prod_unit == UNIT_100UP) {
+          LOGI(TAG, "SET UNIT 100UP");
+          upper_dacimal_to_int_part = roundf(upper_decimal_part * 100);  // decimal point 1
+          lower_decimal_to_int_part = roundf(lower_decimal_part * 100);  // rounding to the nearest integer
+          memset(set_str, 0x00, sizeof(set_str));
+          snprintf(set_str, sizeof(set_str), "%02d,upper:%03d.%02d,lower:%03d.%02d,%d", prod_num_value, upper_int_part,
                    upper_dacimal_to_int_part, lower_int_part, lower_decimal_to_int_part, prod_unit);
         }
 

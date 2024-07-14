@@ -17,6 +17,10 @@ extern "C" {
 #define SYSCFG_S_SPEAKER 5
 #define SYSCFG_I_SPEAKER CFG_DATA
 
+#define SYSCFG_N_PRINTER "printer_set"
+#define SYSCFG_S_PRINTER 5
+#define SYSCFG_I_PRINTER CFG_DATA
+
 typedef enum {
   SYSINIT_OK,
   ERR_NVS_FLASH,
@@ -50,6 +54,7 @@ void led_3_ctrl(uint8_t ctrl);
 
 extern char usb_mode[5];
 extern char speaker_set[5];
+extern char printer_set[5];
 extern char indicator_set[20];
 
 #ifdef __cplusplus
