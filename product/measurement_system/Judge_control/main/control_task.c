@@ -172,10 +172,9 @@ static void control_task(void *pvParameter) {
       real_print_cmd();
       SET_MUX_CONTROL(CH_2_SET);
     }
-
     memset(&weight_data, 0x00, sizeof(weight_data));
-    if (strncmp(indicator_set, "SW-11", 5) == 0) {
-      // LOGI(TAG, "start sw-11");
+    if (strncmp(indicator_set, "SWII-CS", 7) == 0) {
+      // LOGI(TAG, "start SWII-CB");
       res = indicator_CAS_sw_11_data(&weight_data);
     } else if (strncmp(indicator_set, "INNOTEM-T28", 11) == 0) {
       // LOGI(TAG, "start innotem T25");
@@ -223,11 +222,11 @@ void create_control_task(char *indicator_set) {
 
   if (strncmp(indicator_set, "INNOTEM-T28", 11) == 0) {
     xTaskCreatePinnedToCore(control_task, "control_task", stack_size, NULL, task_priority, &control_handle, 0);
-  } else if (strncmp(indicator_set, "MW2-H", 5) == 0) {
+  } else if (strncmp(indicator_set, "MWII-H", 6) == 0) {
     // Create a task to handler UART event from ISR
     uart_interrupt_config();
     xTaskCreatePinnedToCore(uart_event_task, "uart_event_task", 4096, NULL, 12, NULL, 0);
-  } else if (strncmp(indicator_set, "SW-11", 5) == 0 || strncmp(indicator_set, "EC-D", 4) == 0 ||
+  } else if (strncmp(indicator_set, "SWII-CS", 7) == 0 || strncmp(indicator_set, "EC-D", 4) == 0 ||
              strncmp(indicator_set, "HB/HBI", 6) == 0) {
     xTaskCreatePinnedToCore(control_task, "control_task", stack_size, NULL, task_priority, &control_handle, 0);
   } else {

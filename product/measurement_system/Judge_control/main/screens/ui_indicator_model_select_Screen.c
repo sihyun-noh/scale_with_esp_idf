@@ -67,20 +67,22 @@ static void event_handler(lv_event_t *e) {
     } else if (strncmp(str_buf, "EC-D", 4) == 0) {
       create_custom_msg_box("선택된 모델은 \nEC-D Serise 입니다.", ui_Indicator_Model_Select_Screen, NULL,
                             LV_EVENT_CLICKED);
-    } else if (strncmp(str_buf, "CB-12K", 6) == 0) {
-      create_custom_msg_box("선택된 모델은 \nCB-12K 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
+    } else if (strncmp(str_buf, "CB-SERIES", 9) == 0) {
+      create_custom_msg_box("선택된 모델은 \nCB-SERIES 입니다.", ui_Indicator_Model_Select_Screen, NULL,
+                            LV_EVENT_CLICKED);
 
     } else if (strncmp(str_buf, "PW-200", 6) == 0) {
       create_custom_msg_box("선택된 모델은 \nPW-200 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
 
-    } else if (strncmp(str_buf, "SW-11", 5) == 0) {
-      create_custom_msg_box("선택된 모델은 \nSW-11 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
+    } else if (strncmp(str_buf, "SWII-CS", 7) == 0) {
+      create_custom_msg_box("선택된 모델은 \nSWII-CS 입니다.", ui_Indicator_Model_Select_Screen, NULL,
+                            LV_EVENT_CLICKED);
 
     } else if (strncmp(str_buf, "INNOTEM-T28", 11) == 0) {
       create_custom_msg_box("선택된 모델은 \nINNOTEM T28 입니다.", ui_Indicator_Model_Select_Screen, NULL,
                             LV_EVENT_CLICKED);
-    } else if (strncmp(str_buf, "MW2-H", 5) == 0) {
-      create_custom_msg_box("선택된 모델은 \nMW2-H 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
+    } else if (strncmp(str_buf, "MWII-H", 6) == 0) {
+      create_custom_msg_box("선택된 모델은 \nMWII-H 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
     } else if (strncmp(str_buf, "HB/HBI", 6) == 0) {
       create_custom_msg_box("선택된 모델은 \nHB/HBI 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
     } else if (strncmp(str_buf, "none", 4) == 0) {
@@ -255,9 +257,9 @@ void ui_indicator_model_select_screen_init(void) {
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "EC-D");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
-  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "SW-11");
+  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "SWII-CS");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
-  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "MW2-H");
+  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "MWII-H");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "HB/HBI");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
@@ -265,7 +267,7 @@ void ui_indicator_model_select_screen_init(void) {
   lv_list_add_text(indicator_list, "OTHER");
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "BX11");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
-  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "CB-12K");
+  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "CB-SERIES");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "PW-200");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);

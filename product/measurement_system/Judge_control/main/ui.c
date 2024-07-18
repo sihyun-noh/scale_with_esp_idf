@@ -1401,27 +1401,27 @@ void ui_init(void) {
   } else if (strncmp(indicator_set, "EC-D", 4) == 0) {
     // weight_zero_command = cas_zero_command;
     indicator_model = MODEL_CAS_EC_D_SERIES;
-    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : EC-D Serise");
-  } else if (strncmp(indicator_set, "CB-12K", 6) == 0) {
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : EC-D Series");
+  } else if (strncmp(indicator_set, "CB-SERIES", 9) == 0) {
     // weight_zero_command = cas_zero_command;
     indicator_model = MODEL_AND_CB_12K;
-    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : CB-12K");
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : CB-Series");
   } else if (strncmp(indicator_set, "PW-200", 6) == 0) {
     // weight_zero_command = cas_zero_command;
     indicator_model = MODEL_ACOM_PW_200;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : PW-200");
-  } else if (strncmp(indicator_set, "SW-11", 5) == 0) {
+  } else if (strncmp(indicator_set, "SWII-CS", 7) == 0) {
     // weight_zero_command = cas_zero_command;
     indicator_model = MODEL_CAS_SW_11;
-    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : SW-11");
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : SWII-CS");
   } else if (strncmp(indicator_set, "INNOTEM-T28", 11) == 0) {
     // weight_zero_command = cas_zero_command;
     indicator_model = MODEL_INNOTEM_T28;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : INNOTEM-T28");
-  } else if (strncmp(indicator_set, "MW2-H", 5) == 0) {
+  } else if (strncmp(indicator_set, "MWII-H", 6) == 0) {
     // weight_zero_command = cas_zero_command;
     indicator_model = MODEL_CAS_MW2_H;
-    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : MW2-H");
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : MWII-H");
   } else if (strncmp(indicator_set, "HB/HBI", 6) == 0) {
     // weight_zero_command = cas_zero_command;
     indicator_model = MODEL_CAS_HB_HBI;

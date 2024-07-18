@@ -1150,20 +1150,20 @@ int cas_dlp_label_weight_print_msg(char *s_weight) {
 
   // memcpy(print_data + strlen(print_data), print_data_tail, sizeof(print_data_tail));
 
-  LOGI(TAG, "CAS DLP_LABEL create data for print: %s", print_data);
-  LOGI(TAG, "CAS DLP_LABEL strlen : %d", strlen(print_data));
-  LOG_BUFFER_HEXDUMP(TAG, print_data, sizeof(print_data), LOG_LOCAL_LEVEL);
+  // LOGI(TAG, "CAS DLP_LABEL create data for print: %s", print_data);
+  // LOGI(TAG, "CAS DLP_LABEL strlen : %d", strlen(print_data));
+  // LOG_BUFFER_HEXDUMP(TAG, print_data, sizeof(print_data), LOG_LOCAL_LEVEL);
 
   uart_read_data(UART_PORT_NUM, data, (BUF_SIZE - 1));
-  LOGE(TAG, "garbage read data = %s", data);
+  // LOGE(TAG, "garbage read data = %s", data);
 
   memset(data, 0x00, BUF_SIZE);
   uart_hal_flush(UART_PORT_NUM);
   uart_write_data(UART_PORT_NUM, (const unsigned char *)print_data, strlen(print_data));
   vTaskDelay(200 / portTICK_PERIOD_MS);
   uart_read_data(UART_PORT_NUM, data, (BUF_SIZE - 1));
-  LOGE(TAG, "print response data = %s", data);
-  LOG_BUFFER_HEXDUMP(TAG, data, sizeof(data), LOG_LOCAL_LEVEL);
+  // LOGE(TAG, "print response data = %s", data);
+  // LOG_BUFFER_HEXDUMP(TAG, data, sizeof(data), LOG_LOCAL_LEVEL);
 
   for (int i = 0; num_qualifications > i; i++) {
     if (strncmp((const char *)data, cas_print_effective_Qualification[i],
