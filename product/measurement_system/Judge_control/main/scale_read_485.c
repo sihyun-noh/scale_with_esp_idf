@@ -43,6 +43,45 @@ int weight_uart_485_init(void) {
   return res;
 }
 
+// DEP-50 target print mode
+// format
+// ===========WEIGHT==========
+// Weight :    50.05 kg
+// Max 60/150kg, Min 400g, e=d=20/50g
+// 20 3d 3d 3d 3d 3d 3d 3d 3d 20 57 45 49 47 48 54
+// 20 3d 3d 3d 3d 3d 3d 3d 3d 0a 0a 20 20 57 65 69
+// 67 68 74 20 3a 20 20 20 20 20 20 20 32 2e 32 38
+// 6b 67 0a 0a 0a 0a 0a 0a 0a 0a 0a 0a 0a
+int indicator_cas_db_1_1h_data(Common_data_t *common_data) {
+  int res = 0;
+  int read_buf = 60;
+  uint8_t *dtmp = (uint8_t *)malloc(read_buf);
+  if (dtmp == NULL) {
+    LOGI(TAG, "Malloc failed");
+    return -1;
+  }
+  memset(dtmp, 0x00, read_buf);
+  res = sysevent_get(SYSEVENT_BASE, WEIGHT_DATA_EVENT, dtmp, read_buf);
+  if (res == 0) {
+    LOGI(TAG, "weight data : %s", dtmp);
+    for (int a = 0; a < read_buf; a++) {
+      LOGI(TAG, "data_%d_%c", a, dtmp[a]);
+    }
+    memcpy(common_data->weight_data, dtmp + 44, 6);
+    common_data->spec.unit = UNIT_KG;
+
+    if (strncmp((char *)dtmp + 10, "W", 1) == 0) {
+      common_data->check = DATA_OK;
+    } else {
+      common_data->check = DATA_ERROR;
+    }
+
+    free(dtmp);
+    return 0;
+  }
+  free(dtmp);
+  return -1;
+}
 // MW2-H
 // "설정" 버튼 3초간 -> unit 표시
 // "변환" 버튼 -> print 표시
@@ -79,7 +118,7 @@ int indicator_CAS_MW2_H_data(Common_data_t *common_data) {
   int res = 0;
   uint8_t *dtmp = (uint8_t *)malloc(RD_BUF_SIZE);
   if (dtmp == NULL) {
-    LOGI(TAG, "Calloc failed");
+    LOGI(TAG, "Malloc failed");
     return -1;
   }
   memset(dtmp, 0x00, RD_BUF_SIZE);

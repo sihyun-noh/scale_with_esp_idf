@@ -85,6 +85,9 @@ static void event_handler(lv_event_t *e) {
       create_custom_msg_box("선택된 모델은 \nMWII-H 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
     } else if (strncmp(str_buf, "HB/HBI", 6) == 0) {
       create_custom_msg_box("선택된 모델은 \nHB/HBI 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
+    } else if (strncmp(str_buf, "DB-1/1H", 7) == 0) {
+      create_custom_msg_box("선택된 모델은 \nDB-1/1H 입니다.", ui_Indicator_Model_Select_Screen, NULL,
+                            LV_EVENT_CLICKED);
     } else if (strncmp(str_buf, "none", 4) == 0) {
       create_custom_msg_box("다시 선택해 주십시오.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
     }
@@ -262,6 +265,8 @@ void ui_indicator_model_select_screen_init(void) {
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "MWII-H");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "HB/HBI");
+  lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
+  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "DB-1/1H");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
 
   lv_list_add_text(indicator_list, "OTHER");

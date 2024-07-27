@@ -165,11 +165,18 @@ static void control_task(void *pvParameter) {
       SET_MUX_CONTROL(CH_1_SET);
       LOGI(TAG, "print start");
 
+#ifdef CONFIG_PRINT_FORMAT_REGACY
+      LOGI(TAG, "dlp print format");
       while (cas_dlp_label_weight_print_msg(printer_data_buffer) == -1) {
         vTaskDelay(200);  // 실제 읽기 시간
       }
       // cas_dlp_label_weight_print_msg(printer_data_buffer);
       real_print_cmd();
+#else
+      LOGI(TAG, "custom print format");
+      weight_print_msg(printer_data_buffer, UNIT_G);
+#endif
+
       SET_MUX_CONTROL(CH_2_SET);
     }
     memset(&weight_data, 0x00, sizeof(weight_data));
@@ -222,7 +229,7 @@ void create_control_task(char *indicator_set) {
 
   if (strncmp(indicator_set, "INNOTEM-T28", 11) == 0) {
     xTaskCreatePinnedToCore(control_task, "control_task", stack_size, NULL, task_priority, &control_handle, 0);
-  } else if (strncmp(indicator_set, "MWII-H", 6) == 0) {
+  } else if (strncmp(indicator_set, "MWII-H", 6) == 0 || strncmp(indicator_set, "DB-1/1H", 7) == 0) {
     // Create a task to handler UART event from ISR
     uart_interrupt_config();
     xTaskCreatePinnedToCore(uart_event_task, "uart_event_task", 4096, NULL, 12, NULL, 0);

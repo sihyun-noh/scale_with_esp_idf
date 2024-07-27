@@ -466,6 +466,222 @@ void clear_cycle(void) {
   }
 }
 
+void one_short_data_operation(indicator_model_t model) {
+  char s_weight[20] = { 0 };
+  char s_amount_count[20] = { 0 };
+  char s_judge_total_count[20] = { 0 };
+
+  float weight = 0;
+  int res = 0;
+  float maxmum_weight, minimum_weight = 0.0;
+  size_t free_heap_size = 0;
+  size_t min_free_heap_size = 0;
+
+  switch (model) {
+    case MODEL_CAS_MW2_H: res = indicator_CAS_MW2_H_data(&indicator_data); break;
+    case MODEL_CAS_DB_1: res = indicator_cas_db_1_1h_data(&indicator_data); break;
+    default: break;
+  }
+
+  if (res == 0) {
+    // mw2는 프린트 시리얼에서 데이터를 받아서 중간에 날짜값이 들어온다. 날짜값을 걸러내기 위한 방법
+    if (indicator_data.check == DATA_ERROR)
+      return;
+
+    if (indicator_data.spec.unit == UNIT_G) {
+      // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
+      // weight = (float)(atoi(indicator_data.weight_data) * 0.001);
+      // snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
+      sscanf(indicator_data.weight_data, "%f", &weight);
+      // g 단위로 설정값을 설정하고 이 인디게이터는 g 단위로만 설정 가능
+      // 품번에서 가지고 오는 상한, 하한값을 소수점 3자리수로 변경한 사항이 있어서
+      if (mw2_h_set_flag) {
+        upper_weight_value = upper_weight_value * 1000;
+        lower_weight_value = lower_weight_value * 1000;
+        mw2_h_set_flag = false;
+      }
+      snprintf(s_weight, sizeof(s_weight), "%.1f", weight);
+      lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
+    } else {
+      sscanf(indicator_data.weight_data, "%f", &weight);
+      // g 단위로 설정값을 설정하고 이 인디게이터는 g 단위로만 설정 가능
+      // 품번에서 가지고 오는 상한, 하한값을 소수점 3자리수로 변경한 사항이 있어서
+      snprintf(s_weight, sizeof(s_weight), "%.2f", weight);
+      lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: kg");
+    }
+
+    LOGI(TAG, "upper__ : %.3f", upper_weight_value);
+    LOGI(TAG, "lower__ : %.3f", lower_weight_value);
+    lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, s_weight);
+
+    switch (ui_data_ctx.curr_mode) {
+      case MODE_MAIN: break;
+      case MODE_1:
+        if (upper_weight_value == (float)0.0 || lower_weight_value == (float)0.0 || prod_num_value == 0) {
+        } else {
+          if (upper_weight_value <= weight && !over_event_flag) {
+            judge_total_count++;
+            judge_over_count++;
+            // 현재 판정값 메모리에 저장
+            push(&ui_data_ctx.stack_root, JUDGE_OVER, weight, judge_over_count, buf_prod_name, log_timestamp());
+            lv_label_set_text_fmt(ui_Screen1_over_Label, "초과 %d", judge_over_count);
+            lv_led_on(ui_led1);
+
+            led_1_ctrl(1);
+            if (strncmp(speaker_set, "ON", 2) == 0)
+              over_volume();
+
+            // Clear all judgments
+            over_event_flag = VOLUME_CONTIUNE ? true : false;  // 계속나오게.. 요청사항
+            nuder_event_flag = true;
+            normal_event_flag = true;
+            lv_led_off(ui_led2);
+            lv_led_off(ui_led3);
+            // 사용 가능한 힙 메모리 양 가져오기
+            free_heap_size = esp_get_free_heap_size();
+
+            // 현재 사용 중인 힙 메모리 양 가져오기
+            min_free_heap_size = esp_get_minimum_free_heap_size();
+#if HEAP_MONITOR
+            LOGI(TAG, "free_heap_size : %d", free_heap_size);
+            LOGI(TAG, "min_free_heap_size : %d", min_free_heap_size);
+#endif
+          }
+          if (minimum_weight < weight && lower_weight_value >= weight && !nuder_event_flag && weight > 0) {
+            judge_total_count++;
+            judge_lack_count++;
+            // 현재 판정값 메모리에 저장
+            push(&ui_data_ctx.stack_root, JUDGE_LACK, weight, judge_lack_count, buf_prod_name, log_timestamp());
+            lv_label_set_text_fmt(ui_Screen1_lack_Label, "부족 %d", judge_lack_count);
+            lv_led_on(ui_led3);
+
+            led_3_ctrl(1);
+            if (strncmp(speaker_set, "ON", 2) == 0)
+              lack_volume();
+
+            //  Clear all judgments
+            over_event_flag = true;
+            nuder_event_flag = VOLUME_CONTIUNE ? true : false;
+            normal_event_flag = true;
+            lv_led_off(ui_led1);
+            lv_led_off(ui_led2);
+            // 사용 가능한 힙 메모리 양 가져오기
+            free_heap_size = esp_get_free_heap_size();
+
+            // 현재 사용 중인 힙 메모리 양 가져오기
+            min_free_heap_size = esp_get_minimum_free_heap_size();
+#if HEAP_MONITOR
+            LOGI(TAG, "free_heap_size : %d", free_heap_size);
+            LOGI(TAG, "min_free_heap_size : %d", min_free_heap_size);
+#endif
+          }
+
+          // // success weight check
+          if (lower_weight_value < weight && upper_weight_value > weight && !normal_event_flag) {
+            judge_total_count++;
+            judge_normal_count++;
+            // 현재 판정값 메모리에 저장
+            push(&ui_data_ctx.stack_root, JUDGE_NORMAL, weight, judge_normal_count, buf_prod_name, log_timestamp());
+            lv_label_set_text_fmt(ui_Screen1_normal_Label, "정상 %d", judge_normal_count);
+            lv_led_on(ui_led2);
+
+            led_2_ctrl(1);
+
+            if (strncmp(speaker_set, "ON", 2) == 0)
+              normal_volume();
+
+            // print prot control
+            if (strncmp(printer_set, "ON", 2) == 0) {
+              if (printer_state) {
+                LOGI(TAG, "print");
+                SET_MUX_CONTROL(CH_1_SET);
+#ifdef CONFIG_PRINT_FORMAT_REGACY
+                cas_dlp_label_weight_print_msg(s_weight);
+#else
+                weight_print_msg(s_weight, UNIT_G);
+#endif
+
+                //  weight_print_msg(s_weight, indicator_data.spec.unit);
+                SET_MUX_CONTROL(CH_2_SET);
+              }
+            }
+            //  Clear all judgments
+            over_event_flag = true;
+            nuder_event_flag = true;
+            normal_event_flag = VOLUME_CONTIUNE ? true : false;
+            lv_led_off(ui_led1);
+            lv_led_off(ui_led3);
+            // 사용 가능한 힙 메모리 양 가져오기
+            free_heap_size = esp_get_free_heap_size();
+            // 현재 사용 중인 힙 메모리 양 가져오기
+            min_free_heap_size = esp_get_minimum_free_heap_size();
+#if HEAP_MONITOR
+            LOGI(TAG, "free_heap_size : %d", free_heap_size);
+            LOGI(TAG, "min_free_heap_size : %d", min_free_heap_size);
+#endif
+          }
+
+          snprintf(s_judge_total_count, sizeof(s_judge_total_count), "%03d", judge_total_count);
+          lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, s_judge_total_count);
+
+          vTaskDelay(1000 / portTICK_PERIOD_MS);
+          clear_cycle();
+        }
+        break;
+      case MODE_2:
+        if (ui_data_ctx.ids == AMOUNT_VAL_E) {
+          ui_data_ctx.ids = NONE_E;
+          amount_weight_value = weight;
+          lv_event_send(ui_data_ctx.obj, LV_EVENT_READY, NULL);
+        }
+        if (indicator_data.event[STATE_SIGN_EVENT] == STATE_SIGN_EVENT) {
+          lv_label_set_text(ui_mode_2_scr_Panel1_Current_Weight_Label, "UNKNOWN");
+          lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "\0");
+        } else {
+          lv_label_set_text(ui_mode_2_scr_Panel1_Current_Weight_Label, s_weight);
+          if (amount_weight_value == 0.0) {
+            lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "000");
+          } else {
+            snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
+            lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, s_amount_count);
+            // judge count!!
+            // mode2_judge_countor(atoi(s_amount_count), mode_2_compare_count, &indicator_data);
+            if (atoi(s_amount_count) > mode_2_compare_count && !over_event_flag) {
+              if (strncmp(speaker_set, "ON", 2) == 0)
+                over_volume();
+              over_event_flag = VOLUME_CONTIUNE ? true : false;
+              nuder_event_flag = true;
+              normal_event_flag = true;
+            }
+            if (atoi(s_amount_count) < mode_2_compare_count && !nuder_event_flag) {
+              if (strncmp(speaker_set, "ON", 2) == 0)
+                lack_volume();
+              over_event_flag = true;
+              nuder_event_flag = VOLUME_CONTIUNE ? true : false;
+              normal_event_flag = true;
+            }
+            if (atoi(s_amount_count) == mode_2_compare_count && !normal_event_flag) {
+              if (strncmp(speaker_set, "ON", 2) == 0)
+                normal_volume();
+              over_event_flag = true;
+              nuder_event_flag = true;
+              normal_event_flag = VOLUME_CONTIUNE ? true : false;
+            }
+
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+            if (over_event_flag && nuder_event_flag && normal_event_flag) {
+              over_event_flag = false;
+              nuder_event_flag = false;
+              normal_event_flag = false;
+            }
+          }
+        }
+        break;
+    }  // switch
+  }
+}
+
 void logic_timer_cb(lv_timer_t *timer) {
   char s_weight[20] = { 0 };
   char s_amount_count[20] = { 0 };
@@ -485,197 +701,8 @@ void logic_timer_cb(lv_timer_t *timer) {
   switch (indicator_model) {
     case MODEL_NONE: LOGE(TAG, "No target indicator model!"); break;
 
-    case MODEL_CAS_MW2_H:
-      res = indicator_CAS_MW2_H_data(&indicator_data);
-
-      if (res == 0) {
-        // mw2는 프린트 시리얼에서 데이터를 받아서 중간에 날짜값이 들어온다. 날짜값을 걸러내기 위한 방법
-        if (indicator_data.check == DATA_ERROR)
-          break;
-
-        if (indicator_data.spec.unit == UNIT_G) {
-          // g으로 들어오는 값은 표시는 g 으로 하고 계산은 kg으로 한다.
-          // weight = (float)(atoi(indicator_data.weight_data) * 0.001);
-          // snprintf(s_weight, sizeof(s_weight), "%4d", atoi(indicator_data.weight_data));
-          sscanf(indicator_data.weight_data, "%f", &weight);
-          // g 단위로 설정값을 설정하고 이 인디게이터는 g 단위로만 설정 가능
-          // 품번에서 가지고 오는 상한, 하한값을 소수점 3자리수로 변경한 사항이 있어서
-          if (mw2_h_set_flag) {
-            upper_weight_value = upper_weight_value * 1000;
-            lower_weight_value = lower_weight_value * 1000;
-            mw2_h_set_flag = false;
-          }
-          snprintf(s_weight, sizeof(s_weight), "%.1f", weight);
-          lv_label_set_text(ui_Screen1_Amount_Value_Label, "단위: g");
-        }
-        LOGI(TAG, "upper__ : %.3f", upper_weight_value);
-        LOGI(TAG, "lower__ : %.3f", lower_weight_value);
-        lv_label_set_text(ui_Screen1_Panel1_Current_Weight_Label, s_weight);
-
-        switch (ui_data_ctx.curr_mode) {
-          case MODE_MAIN: break;
-          case MODE_1:
-            if (upper_weight_value == (float)0.0 || lower_weight_value == (float)0.0 || prod_num_value == 0) {
-            } else {
-              if (upper_weight_value < weight && !over_event_flag) {
-                judge_total_count++;
-                judge_over_count++;
-                // 현재 판정값 메모리에 저장
-                push(&ui_data_ctx.stack_root, JUDGE_OVER, weight, judge_over_count, buf_prod_name, log_timestamp());
-                lv_label_set_text_fmt(ui_Screen1_over_Label, "초과 %d", judge_over_count);
-                lv_led_on(ui_led1);
-
-                led_1_ctrl(1);
-                if (strncmp(speaker_set, "ON", 2) == 0)
-                  over_volume();
-
-                // Clear all judgments
-                over_event_flag = VOLUME_CONTIUNE ? true : false;  // 계속나오게.. 요청사항
-                nuder_event_flag = true;
-                normal_event_flag = true;
-                lv_led_off(ui_led2);
-                lv_led_off(ui_led3);
-                // 사용 가능한 힙 메모리 양 가져오기
-                free_heap_size = esp_get_free_heap_size();
-
-                // 현재 사용 중인 힙 메모리 양 가져오기
-                min_free_heap_size = esp_get_minimum_free_heap_size();
-#if HEAP_MONITOR
-                LOGI(TAG, "free_heap_size : %d", free_heap_size);
-                LOGI(TAG, "min_free_heap_size : %d", min_free_heap_size);
-#endif
-              }
-
-              if (minimum_weight < weight && lower_weight_value > weight && !nuder_event_flag && weight > 0) {
-                judge_total_count++;
-                judge_lack_count++;
-                // 현재 판정값 메모리에 저장
-                push(&ui_data_ctx.stack_root, JUDGE_LACK, weight, judge_lack_count, buf_prod_name, log_timestamp());
-                lv_label_set_text_fmt(ui_Screen1_lack_Label, "부족 %d", judge_lack_count);
-                lv_led_on(ui_led3);
-
-                led_3_ctrl(1);
-                if (strncmp(speaker_set, "ON", 2) == 0)
-                  lack_volume();
-
-                //  Clear all judgments
-                over_event_flag = true;
-                nuder_event_flag = VOLUME_CONTIUNE ? true : false;
-                normal_event_flag = true;
-                lv_led_off(ui_led1);
-                lv_led_off(ui_led2);
-                // 사용 가능한 힙 메모리 양 가져오기
-                free_heap_size = esp_get_free_heap_size();
-
-                // 현재 사용 중인 힙 메모리 양 가져오기
-                min_free_heap_size = esp_get_minimum_free_heap_size();
-#if HEAP_MONITOR
-                LOGI(TAG, "free_heap_size : %d", free_heap_size);
-                LOGI(TAG, "min_free_heap_size : %d", min_free_heap_size);
-#endif
-              }
-
-              // // success weight check
-              if (lower_weight_value <= weight && upper_weight_value > weight && !normal_event_flag) {
-                judge_total_count++;
-                judge_normal_count++;
-                // 현재 판정값 메모리에 저장
-                push(&ui_data_ctx.stack_root, JUDGE_NORMAL, weight, judge_normal_count, buf_prod_name, log_timestamp());
-                lv_label_set_text_fmt(ui_Screen1_normal_Label, "정상 %d", judge_normal_count);
-                lv_led_on(ui_led2);
-
-                led_2_ctrl(1);
-
-                if (strncmp(speaker_set, "ON", 2) == 0)
-                  normal_volume();
-
-                // print prot control
-                if (strncmp(printer_set, "ON", 2) == 0) {
-                  if (printer_state) {
-                    LOGI(TAG, "print");
-                    SET_MUX_CONTROL(CH_1_SET);
-                    cas_dlp_label_weight_print_msg(s_weight);
-                    //  weight_print_msg(s_weight, indicator_data.spec.unit);
-                    SET_MUX_CONTROL(CH_2_SET);
-                  }
-                }
-                //  Clear all judgments
-                over_event_flag = true;
-                nuder_event_flag = true;
-                normal_event_flag = VOLUME_CONTIUNE ? true : false;
-                lv_led_off(ui_led1);
-                lv_led_off(ui_led3);
-                // 사용 가능한 힙 메모리 양 가져오기
-                free_heap_size = esp_get_free_heap_size();
-                // 현재 사용 중인 힙 메모리 양 가져오기
-                min_free_heap_size = esp_get_minimum_free_heap_size();
-#if HEAP_MONITOR
-                LOGI(TAG, "free_heap_size : %d", free_heap_size);
-                LOGI(TAG, "min_free_heap_size : %d", min_free_heap_size);
-#endif
-              }
-
-              snprintf(s_judge_total_count, sizeof(s_judge_total_count), "%03d", judge_total_count);
-              lv_label_set_text(ui_Screen1_Panel1_Current_Count_Label, s_judge_total_count);
-
-              vTaskDelay(1000 / portTICK_PERIOD_MS);
-              clear_cycle();
-            }
-            break;
-          case MODE_2:
-            if (ui_data_ctx.ids == AMOUNT_VAL_E) {
-              ui_data_ctx.ids = NONE_E;
-              amount_weight_value = weight;
-              lv_event_send(ui_data_ctx.obj, LV_EVENT_READY, NULL);
-            }
-            if (indicator_data.event[STATE_SIGN_EVENT] == STATE_SIGN_EVENT) {
-              lv_label_set_text(ui_mode_2_scr_Panel1_Current_Weight_Label, "UNKNOWN");
-              lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "\0");
-            } else {
-              lv_label_set_text(ui_mode_2_scr_Panel1_Current_Weight_Label, s_weight);
-              if (amount_weight_value == 0.0) {
-                lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, "000");
-              } else {
-                snprintf(s_amount_count, sizeof(s_amount_count), "%03d", (int)(weight / amount_weight_value));
-                lv_label_set_text(ui_mode_2_scr_Panel1_Current_Count_Label, s_amount_count);
-                // judge count!!
-                // mode2_judge_countor(atoi(s_amount_count), mode_2_compare_count, &indicator_data);
-                if (atoi(s_amount_count) > mode_2_compare_count && !over_event_flag) {
-                  if (strncmp(speaker_set, "ON", 2) == 0)
-                    over_volume();
-                  over_event_flag = VOLUME_CONTIUNE ? true : false;
-                  nuder_event_flag = true;
-                  normal_event_flag = true;
-                }
-                if (atoi(s_amount_count) < mode_2_compare_count && !nuder_event_flag) {
-                  if (strncmp(speaker_set, "ON", 2) == 0)
-                    lack_volume();
-                  over_event_flag = true;
-                  nuder_event_flag = VOLUME_CONTIUNE ? true : false;
-                  normal_event_flag = true;
-                }
-                if (atoi(s_amount_count) == mode_2_compare_count && !normal_event_flag) {
-                  if (strncmp(speaker_set, "ON", 2) == 0)
-                    normal_volume();
-                  over_event_flag = true;
-                  nuder_event_flag = true;
-                  normal_event_flag = VOLUME_CONTIUNE ? true : false;
-                }
-
-                vTaskDelay(1000 / portTICK_PERIOD_MS);
-
-                if (over_event_flag && nuder_event_flag && normal_event_flag) {
-                  over_event_flag = false;
-                  nuder_event_flag = false;
-                  normal_event_flag = false;
-                }
-              }
-            }
-            break;
-        }  // switch
-      }
-
-      break;
+    case MODEL_CAS_MW2_H: one_short_data_operation(MODEL_CAS_MW2_H); break;
+    case MODEL_CAS_DB_1: one_short_data_operation(MODEL_CAS_DB_1); break;
 
     case MODEL_CAS_HB_HBI:
 
@@ -1108,7 +1135,7 @@ void logic_timer_cb(lv_timer_t *timer) {
         // pord_num 0 is a special method that does not determine whether it works or not.
         if ((float)0.0 == upper_weight_value || (float)0.0 == lower_weight_value || 0 == prod_num_value) {
         } else {
-          if (upper_weight_value < weight && !over_event_flag) {
+          if (upper_weight_value <= weight && !over_event_flag) {
             if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT &&
                 indicator_data.event[STATE_SIGN_EVENT] == STATE_NONE) {
               judge_total_count++;
@@ -1148,7 +1175,7 @@ void logic_timer_cb(lv_timer_t *timer) {
             }
           }
 
-          if (minimum_weight < weight && lower_weight_value > weight && !nuder_event_flag && weight > 0) {
+          if (minimum_weight < weight && lower_weight_value >= weight && !nuder_event_flag && weight > 0) {
             if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT &&
                 indicator_data.event[STATE_SIGN_EVENT] == STATE_NONE) {
               judge_total_count++;
@@ -1188,7 +1215,7 @@ void logic_timer_cb(lv_timer_t *timer) {
           }
 
           // // success weight check
-          if (lower_weight_value <= weight && upper_weight_value > weight && !normal_event_flag) {
+          if (lower_weight_value < weight && upper_weight_value > weight && !normal_event_flag) {
             if (indicator_data.event[STATE_STABLE_EVENT] == STATE_STABLE_EVENT &&
                 indicator_data.event[STATE_SIGN_EVENT] == STATE_NONE) {
               judge_total_count++;
@@ -1215,7 +1242,12 @@ void logic_timer_cb(lv_timer_t *timer) {
                     // 프린터 터 시리얼 설정
                     SET_MUX_CONTROL(CH_1_SET);
                     snprintf(s_weight, sizeof(s_weight), "%7.1f", weight);
+
+#ifdef CONFIG_PRINT_FORMAT_REGACY
                     cas_dlp_label_weight_print_msg(s_weight);
+#else
+                    weight_print_msg(s_weight, UNIT_G);
+#endif
                     SET_MUX_CONTROL(CH_2_SET);
 
                   } else {
@@ -1426,10 +1458,15 @@ void ui_init(void) {
     // weight_zero_command = cas_zero_command;
     indicator_model = MODEL_CAS_HB_HBI;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : HB/HBI");
+  } else if (strncmp(indicator_set, "DB-1/1H", 7) == 0) {
+    // weight_zero_command = cas_zero_command;
+    indicator_model = MODEL_CAS_DB_1;
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : DB-1/1H");
   } else if (strncmp(indicator_set, "none", 4) == 0) {
     indicator_model = MODEL_NONE;
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : NONE");
   } else {
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, "모델 : ERROR");
   }
 
   // 초기 인디게이터 시리얼 설정

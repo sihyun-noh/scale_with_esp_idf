@@ -253,17 +253,6 @@ void app_main(void) {
   if (sc_ctx) {
     sc_start(sc_ctx);
   }
-  //
-  // SET_MUX_CONTROL(CH_1_SET);
-  // int result_p = 0;
-  // for (int ss = 0; ss < 20; ss++) {
-  //   LOGI(TAG, "print test %d", ss);
-  //   result_p = cas_dlp_label_weight_print_msg("2000");
-  //   if (result_p == 0) {
-  //     LOGI(TAG, "success print");
-  //   }
-  //   vTaskDelay(1000 / portTICK_PERIOD_MS);
-  // }
 
   if (lv_display_init() != 0) {
     LOGE(TAG, "LVGL setup failed!!!");

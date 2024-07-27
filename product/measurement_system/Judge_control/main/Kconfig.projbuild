@@ -43,4 +43,14 @@ menu "Smartfarm Product"
             simple msc ota
 
   endmenu
+  menu "Print regacy Configeration"
+
+    config PRINT_FORMAT_REGACY
+        bool "dlp_format_data"
+        default y
+        help
+            Select the format data for cas printer(y=custom, n=dlp)
+
+  endmenu
+
 endmenu
