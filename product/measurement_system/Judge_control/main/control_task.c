@@ -159,6 +159,7 @@ static void control_task(void *pvParameter) {
     // LOGE(TAG, "Failed to receive ctrl message form queue");
     // LOGI(TAG, "start firmware");
 
+    /////////////////// print operation logic //////////////////////
     res_printer = sysevent_get(SYSEVENT_BASE, WEIGHT_PRINTER_EVENT, printer_data_buffer, sizeof(printer_data_buffer));
 
     if (res_printer == 0) {
@@ -179,6 +180,8 @@ static void control_task(void *pvParameter) {
 
       SET_MUX_CONTROL(CH_2_SET);
     }
+
+    ////////////// read weight data /////////////////////////
     memset(&weight_data, 0x00, sizeof(weight_data));
     if (strncmp(indicator_set, "SWII-CS", 7) == 0) {
       // LOGI(TAG, "start SWII-CB");
@@ -191,6 +194,8 @@ static void control_task(void *pvParameter) {
       res = indicator_EC_D_Serise_data(&weight_data);
     } else if (strncmp(indicator_set, "HB/HBI", 6) == 0) {
       res = indicator_CAS_hb_hbi_data(&weight_data);
+    } else if (strncmp(indicator_set, "CB-SERIES", 9) == 0) {
+      res = indicator_AND_CB_12K_data(&weight_data);
     } else {
       LOGI(TAG, "No paly control task");
     }
@@ -234,7 +239,7 @@ void create_control_task(char *indicator_set) {
     uart_interrupt_config();
     xTaskCreatePinnedToCore(uart_event_task, "uart_event_task", 4096, NULL, 12, NULL, 0);
   } else if (strncmp(indicator_set, "SWII-CS", 7) == 0 || strncmp(indicator_set, "EC-D", 4) == 0 ||
-             strncmp(indicator_set, "HB/HBI", 6) == 0) {
+             strncmp(indicator_set, "HB/HBI", 6) == 0 || strncmp(indicator_set, "CB-SERIES", 9) == 0) {
     xTaskCreatePinnedToCore(control_task, "control_task", stack_size, NULL, task_priority, &control_handle, 0);
   } else {
     LOGI(TAG, "None task");

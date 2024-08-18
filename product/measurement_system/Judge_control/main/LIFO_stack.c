@@ -28,7 +28,7 @@ void push(struct StackNode** root, judge_type_t type, float weight, uint16_t cou
   struct StackNode* stackNode = newNode(type, weight, count, prod_name, time_date);
   stackNode->next = *root;
   *root = stackNode;
-  LOGI(TAG, "%.3f, %d, %d, %s ,%s pushed to stack\n", weight, type, count, prod_name, time_date);
+  LOGI(TAG, "%.4f, %d, %d, %s ,%s pushed to stack\n", weight, type, count, prod_name, time_date);
 }
 
 int pop(struct StackNode** root) {

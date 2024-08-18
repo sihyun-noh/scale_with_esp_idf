@@ -96,19 +96,19 @@ static void Judge_Comfirm_Btn_Yes_event_cb(lv_event_t *e) {
       LOGI(TAG, "Top element is %d free memory\n", peek(ui_data_ctx.stack_root));
       switch (ui_data_ctx.stack_root->type) {
         case JUDGE_NORMAL:
-          FDATA_TABLE_INDEX_JUDGE(log_table_index, BASE_PATH, "%s,%s,%s,%.3f,%d", ui_data_ctx.stack_root->time_date,
+          FDATA_TABLE_INDEX_JUDGE(log_table_index, BASE_PATH, "%s,%s,%s,%.4f,%d", ui_data_ctx.stack_root->time_date,
                                   ui_data_ctx.stack_root->prod_name, "OK", ui_data_ctx.stack_root->weight,
                                   ui_data_ctx.stack_root->count);
           break;
 
         case JUDGE_OVER:
-          FDATA_TABLE_INDEX_JUDGE(log_table_index, BASE_PATH, "%s,%s,%s,%.3f,%d", ui_data_ctx.stack_root->time_date,
+          FDATA_TABLE_INDEX_JUDGE(log_table_index, BASE_PATH, "%s,%s,%s,%.4f,%d", ui_data_ctx.stack_root->time_date,
                                   ui_data_ctx.stack_root->prod_name, "OVER", ui_data_ctx.stack_root->weight,
                                   ui_data_ctx.stack_root->count);
           break;
 
         case JUDGE_LACK:
-          FDATA_TABLE_INDEX_JUDGE(log_table_index, BASE_PATH, "%s,%s,%s,%.3f,%d", ui_data_ctx.stack_root->time_date,
+          FDATA_TABLE_INDEX_JUDGE(log_table_index, BASE_PATH, "%s,%s,%s,%.4f,%d", ui_data_ctx.stack_root->time_date,
                                   ui_data_ctx.stack_root->prod_name, "UNDER", ui_data_ctx.stack_root->weight,
                                   ui_data_ctx.stack_root->count);
           break;
@@ -169,6 +169,17 @@ static void Judge_Cancel_Btn_Yes_event_cb(lv_event_t *e) {
   lv_event_code_t code = lv_event_get_code(e);
   // LOGI(TAG, "click Judge_Cancel_Btn_Yes_event_cb!!");
   if (code == LV_EVENT_CLICKED) {
+    if (isEmpty(ui_data_ctx.stack_root)) {
+      create_custom_msg_box("작업내역이 없습니다.", ui_Screen1, NULL, LV_EVENT_CLICKED);
+      return;
+    }
+
+    while (!isEmpty(ui_data_ctx.stack_root)) {
+      // Stack remove
+      LOGI(TAG, "Top element is %d free memory\n", peek(ui_data_ctx.stack_root));
+      pop(&ui_data_ctx.stack_root);
+    }
+
     *ui_data_ctx.ptr[1] = 0;  // judge_total_count initialize.
     *ui_data_ctx.ptr[2] = 0;  // judge_over_count initialize.
     *ui_data_ctx.ptr[3] = 0;  // judge_normal_countinitialize.
@@ -177,12 +188,9 @@ static void Judge_Cancel_Btn_Yes_event_cb(lv_event_t *e) {
     lv_label_set_text(ui_Screen1_normal_Label, "정 상");
     lv_label_set_text(ui_Screen1_lack_Label, "부 족");
 
-    while (!isEmpty(ui_data_ctx.stack_root)) {
-      // Stack remove
-      LOGI(TAG, "Top element is %d free memory\n", peek(ui_data_ctx.stack_root));
-      pop(&ui_data_ctx.stack_root);
-    }
-    memory_allocation_manger();
+    create_custom_msg_box("전체작업을 삭제하였습니다.", ui_Screen1, NULL, LV_EVENT_CLICKED);
+
+    // memory_allocation_manger();
   } else {
     LOGI(TAG, "Miss loop Judge_Cancel_Btn_Yes_event_cb ");
     memory_allocation_manger();
@@ -225,7 +233,8 @@ static void Recently_Cancel_Btn_Yes_e_handler(lv_event_t *e) {
       pop(&ui_data_ctx.stack_root);
       memory_allocation_manger();
     } else {
-      lv_label_set_text(user_data_obj->target2, "직전작업이 없습니다.");
+      // lv_label_set_text(user_data_obj->target2, "직전작업이 없습니다.");
+      create_custom_msg_box("작업내역이 없습니다.", ui_Screen1, NULL, LV_EVENT_CLICKED);
       LOGI(TAG, "Empty stack!!");
     }
   }

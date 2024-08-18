@@ -46,6 +46,7 @@ char usb_mode[5] = { 0 };
 char speaker_set[5] = { 0 };
 char printer_set[5] = { 0 };
 char indicator_set[20] = { 0 };
+char model_series_set[10] = { 0 };
 
 extern "C" {
 extern void sdcard_init(void);
@@ -75,6 +76,7 @@ static void check_model(void) {
   syscfg_get(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, indicator_set, sizeof(indicator_set));
   syscfg_get(SYSCFG_I_SPEAKER, SYSCFG_N_SPEAKER, speaker_set, sizeof(speaker_set));
   syscfg_get(SYSCFG_I_PRINTER, SYSCFG_N_PRINTER, printer_set, sizeof(printer_set));
+  syscfg_get(SYSCFG_I_MODEL_SERIES_SET, SYSCFG_N_MODEL_SERIES_SET, model_series_set, sizeof(model_series_set));
   if (strcmp(usb_mode, "") == 0) {
     syscfg_get(MFG_DATA, SYSCFG_N_USB_MODE, usb_mode, sizeof(usb_mode));
     LOGI(TAG, "MFG GET usb_mode : %s", usb_mode);
@@ -95,9 +97,13 @@ static void check_model(void) {
     LOGI(TAG, "MFG GET printer_set : %s", printer_set);
     syscfg_set(SYSCFG_I_SPEAKER, SYSCFG_N_PRINTER, printer_set);
   }
-
-  LOGI(TAG, "usb_mode : %s, indicator_set : %s, speaker_set : %s, printer_set : %s", usb_mode, indicator_set,
-       speaker_set, printer_set);
+  if (strcmp(model_series_set, "") == 0) {
+    syscfg_get(MFG_DATA, SYSCFG_N_MODEL_SERIES_SET, model_series_set, sizeof(model_series_set));
+    LOGI(TAG, "MFG GET modelseries_set : %s", model_series_set);
+    syscfg_set(SYSCFG_I_MODEL_SERIES_SET, SYSCFG_N_MODEL_SERIES_SET, model_series_set);
+  }
+  LOGI(TAG, "usb_mode : %s, indicator_set : %s, model_series_set : %s, speaker_set : %s, printer_set : %s", usb_mode,
+       indicator_set, model_series_set, speaker_set, printer_set);
 }
 
 void SET_CH2_PIN() {

@@ -4,7 +4,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+// 이름에 자리수 제한 있음
 #define SYSCFG_N_USB_MODE "usb_mode"
 #define SYSCFG_S_USB_MODE 5
 #define SYSCFG_I_USB_MODE CFG_DATA
@@ -12,6 +12,10 @@ extern "C" {
 #define SYSCFG_N_INDICATOR_SET "indicator_set"
 #define SYSCFG_S_INDICATOR_SET 20
 #define SYSCFG_I_INDICATOR_SET CFG_DATA
+
+#define SYSCFG_N_MODEL_SERIES_SET "model_set"
+#define SYSCFG_S_MODEL_SERIES_SET 10
+#define SYSCFG_I_MODEL_SERIES_SET CFG_DATA
 
 #define SYSCFG_N_SPEAKER "speaker_set"
 #define SYSCFG_S_SPEAKER 5
@@ -56,6 +60,7 @@ extern char usb_mode[5];
 extern char speaker_set[5];
 extern char printer_set[5];
 extern char indicator_set[20];
+extern char model_series_set[10];
 
 #ifdef __cplusplus
 }

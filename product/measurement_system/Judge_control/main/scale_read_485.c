@@ -372,18 +372,24 @@ int indicator_CAS_sw_11_data(Common_data_t *common_data) {
 
   // Todo
   // indicator Min, Max, digit set = g unit
-  common_data->spec.scale_Max = 30000;  // 30kg
-  common_data->spec.scale_Min = 200;
-  common_data->spec.e_d = 10;
+  // common_data->spec.scale_Max = 30000;  // 30kg
+  // common_data->spec.scale_Min = 200;
+  // common_data->spec.e_d = 10;
 
   // copy to weight data
   memcpy(common_data->weight_data, read_data.data, 8);
 
   if (strncmp(read_data.unit, "kg", 2) == 0) {
     common_data->spec.unit = UNIT_KG;
+    sscanf(read_data.data, "%lf", &weight);
+
+  } else if (strncmp(read_data.unit, "g ", 2) == 0) {
+    common_data->spec.unit = UNIT_G;
+    weight = (float)(atoi(read_data.data) * 0.001);
+  } else {
+    LOGI(TAG, "invalid data");
+    return 0;
   }
-  // check weight data
-  sscanf(read_data.data, "%lf", &weight);
   // LOGI(TAG, "zero check weight = %lf", weight);
 
   /*stable state set display */
@@ -556,7 +562,8 @@ int indicator_AND_CB_12K_data(Common_data_t *common_data) {
   // Compare 2digit
   if (strncmp(read_data.unit, " g", 2) == 0) {
     // copy to weight data
-    weight = (float)(atoi(read_data.data) * 0.001);
+    // weight = (float)(atoi(read_data.data) * 0.001);
+    sscanf(read_data.data, "%lf", &weight);
     memcpy(common_data->weight_data, read_data.data, 8);
     common_data->spec.unit = UNIT_G;
   } else {
@@ -1016,11 +1023,11 @@ int indicator_BX11_data(Common_data_t *common_data) {
     case 0: common_data->DP = DP_100; break;
     case 1: common_data->DP = DP_10; break;
     case 2: common_data->DP = DP_1; break;
-    case 3: common_data->DP = DP_0_1; break;
-    case 4: common_data->DP = DP_0_01; break;
-    case 5: common_data->DP = DP_0_001; break;
-    case 6: common_data->DP = DP_0_0001; break;
-    case 7: common_data->DP = DP_0_00001; break;
+    case 3: common_data->DP = DP_KG_0_1; break;
+    case 4: common_data->DP = DP_KG_0_01; break;
+    case 5: common_data->DP = DP_KG_0_001; break;
+    case 6: common_data->DP = DP_G_0_1; break;
+    case 7: common_data->DP = DP_G_0_01; break;
     default: break;
   }
   switch (increment_size) {

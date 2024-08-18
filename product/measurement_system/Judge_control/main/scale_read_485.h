@@ -16,10 +16,24 @@ typedef enum {
   UNIT_100UP,
 } weight_unit_t;
 
+typedef enum {
+  DP_100 = 0x00,
+  DP_10,
+  DP_1,
+  DP_KG_0_1,
+  DP_KG_0_01,
+  DP_KG_0_001,
+  DP_G_1,
+  DP_G_0_1,
+  DP_G_0_01,
+  DP_G_0_001,
+} decimal_point_t;
+
 typedef struct {
   unsigned int scale_Max;
-  unsigned int scale_Min;
+  float scale_Min;
   unsigned int e_d;
+  float decial_e_d;
   weight_unit_t unit;
 } indi_mode_spac_t;
 
@@ -55,17 +69,6 @@ typedef enum {
   MODEL_CAS_HB_HBI,
   MODEL_CAS_DB_1,
 } indicator_model_t;
-
-typedef enum {
-  DP_100 = 0x00,
-  DP_10,
-  DP_1,
-  DP_0_1,
-  DP_0_01,
-  DP_0_001,
-  DP_0_0001,
-  DP_0_00001,
-} decimal_point_t;
 
 typedef enum {
   IS_X1 = 0x00,
