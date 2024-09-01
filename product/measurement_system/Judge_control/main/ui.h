@@ -221,6 +221,9 @@ LV_FONT_DECLARE(NanumBar32);
 
 void ui_init(void);
 
+int get_decimal_places(float number);
+const char *get_format_specifier(float number);
+
 #ifdef __cplusplus
 } /*extern "C"*/
 #endif

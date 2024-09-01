@@ -155,10 +155,9 @@ static void control_task(void *pvParameter) {
   char str[100] = { 0 };
   char printer_data_buffer[10] = { 0 };
   int res, res_printer = 0;
-  for (;;) {
-    // LOGE(TAG, "Failed to receive ctrl message form queue");
-    // LOGI(TAG, "start firmware");
 
+  vTaskDelay(1000 / portTICK_PERIOD_MS);  // 시간 지연
+  for (;;) {
     /////////////////// print operation logic //////////////////////
     res_printer = sysevent_get(SYSEVENT_BASE, WEIGHT_PRINTER_EVENT, printer_data_buffer, sizeof(printer_data_buffer));
 
@@ -176,12 +175,13 @@ static void control_task(void *pvParameter) {
 #else
       LOGI(TAG, "custom print format");
       weight_print_msg(printer_data_buffer, UNIT_G);
+      vTaskDelay(100 / portTICK_PERIOD_MS);  // 시간 지연
 #endif
 
       SET_MUX_CONTROL(CH_2_SET);
     }
 
-    ////////////// read weight data /////////////////////////
+    ////////////// read weight data /////////////////////////å
     memset(&weight_data, 0x00, sizeof(weight_data));
     if (strncmp(indicator_set, "SWII-CS", 7) == 0) {
       // LOGI(TAG, "start SWII-CB");
@@ -189,9 +189,15 @@ static void control_task(void *pvParameter) {
     } else if (strncmp(indicator_set, "INNOTEM-T28", 11) == 0) {
       // LOGI(TAG, "start innotem T25");
       res = indicator_INNOTEM_T25_data(&weight_data);
-      vTaskDelay(500);  // 실제 읽기 시간
+      vTaskDelay(
+          500);  // 저울에서 데이터 전송 interval이 느려 데이터가 오기전 데이터를 읽을 시 오류로 인한 실제 읽기 시간지
     } else if (strncmp(indicator_set, "EC-D", 4) == 0) {
       res = indicator_EC_D_Serise_data(&weight_data);
+    } else if (strncmp(indicator_set, "EC", 2) == 0) {
+      res = indicator_EC_data(&weight_data);
+      vTaskDelay(
+          100 /
+          portTICK_PERIOD_MS);  // 데이터 량이 많아 시간 지연이 필요 없을 시 read_bytes시 buffer에 데이터 없어서 에러남
     } else if (strncmp(indicator_set, "HB/HBI", 6) == 0) {
       res = indicator_CAS_hb_hbi_data(&weight_data);
     } else if (strncmp(indicator_set, "CB-SERIES", 9) == 0) {
@@ -234,12 +240,15 @@ void create_control_task(char *indicator_set) {
 
   if (strncmp(indicator_set, "INNOTEM-T28", 11) == 0) {
     xTaskCreatePinnedToCore(control_task, "control_task", stack_size, NULL, task_priority, &control_handle, 0);
-  } else if (strncmp(indicator_set, "MWII-H", 6) == 0 || strncmp(indicator_set, "DB-1/1H", 7) == 0) {
+  } else if (strncmp(indicator_set, "MWII-H", 6) == 0 || strncmp(indicator_set, "DB-1/1H", 7) == 0 ||
+             strncmp(indicator_set, "DB-2", 4) == 0) {
     // Create a task to handler UART event from ISR
+    LOGI(TAG, "uart_interrupt_config start");
     uart_interrupt_config();
     xTaskCreatePinnedToCore(uart_event_task, "uart_event_task", 4096, NULL, 12, NULL, 0);
   } else if (strncmp(indicator_set, "SWII-CS", 7) == 0 || strncmp(indicator_set, "EC-D", 4) == 0 ||
-             strncmp(indicator_set, "HB/HBI", 6) == 0 || strncmp(indicator_set, "CB-SERIES", 9) == 0) {
+             strncmp(indicator_set, "EC", 2) == 0 || strncmp(indicator_set, "HB/HBI", 6) == 0 ||
+             strncmp(indicator_set, "CB-SERIES", 9) == 0) {
     xTaskCreatePinnedToCore(control_task, "control_task", stack_size, NULL, task_priority, &control_handle, 0);
   } else {
     LOGI(TAG, "None task");

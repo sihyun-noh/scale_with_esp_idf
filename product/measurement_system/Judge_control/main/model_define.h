@@ -9,7 +9,7 @@ extern "C" {
 #include "scale_read_485.h"
 // clang-format off
 typedef enum {
-    SWII_30KG_200G,
+    SWII_30KG_200G = 0x01,
     SWII_15KG_100G,
     SWII_6KG_40G,
     SWII_UNKNOWN,
@@ -18,6 +18,16 @@ typedef enum {
     EK_4100G_5G,
     CB_12KG_50G,
     CB_UNKNOWN,
+    MW2_300G_0_2G,
+    MW2_3000G_5G,
+    EC_30KG_100G,
+    EC_6000G_25G,
+    EC_D_30KG_1G,
+    EC_D_6KG_0_1G,
+    HB_150KG_10G,
+    HB_70KG_5G,
+    CI_999KG_10G,
+    CI_99KG_1G,
 } model_series_t;
 // clang-format on
 
@@ -43,15 +53,35 @@ typedef struct {
 } model_series_configured_data;
 
 // CAS SWII series
-#define MODEL_SWII_30KG_200G_N "30kg/200g"
-#define MODEL_SWII_15KG_100G_N "15kg/100g"
-#define MODEL_SWII_6KG_40G_N "6kg/40g"
+#define MODEL_SWII_30KG_200G_N "30kg/10g"
+#define MODEL_SWII_15KG_100G_N "15kg/5g"
+#define MODEL_SWII_6KG_40G_N "6kg/2g"
 
-// AND SWII series
-#define MODEL_CB_310G_0_2G_N "310g/0.2g"
-#define MODEL_CB_3100G_5G_N "3100g/5g"
-#define MODEL_EK_4100G_5G_N "4000g/5g"
-#define MODEL_CB_12KG_50G_N "12kg/50g"
+// AND CB/EK series
+#define MODEL_CB_310G_0_2G_N "600g/0.01g"
+#define MODEL_CB_3100G_5G_N "3000g/0.1g"
+#define MODEL_EK_4100G_5G_N "6000g/0.1g"
+#define MODEL_CB_12KG_50G_N "12kg/1g"
+
+// CAS MWII series
+#define MODEL_MW2_300G_0_2G_N "300g,0.01g"
+#define MODEL_MW2_3000G_5G_N "3000g,0.1g"
+
+// CAS EC series
+#define MODEL_EC_30KG_100G_N "30kg,2g"
+#define MODEL_EC_6000G_25G_N "6000g,0.5g"
+
+// CAS EC -D series
+#define MODEL_EC_D_30KG_100G_N "30kg,1g"
+#define MODEL_EC_D_6KG_25G_N "6kg,0.5g"
+
+// CAS HB series
+#define MODEL_HB_150KG_500G_N "150kg/10g"
+#define MODEL_HB_75KG_250G_N "75kg/5g"
+
+// CAS HB series
+#define MODEL_CI_999KG_100G_N "999kg/10g"
+#define MODEL_CI_99KG_10G_N "99kg/1g"
 
 model_series_t get_model_series_enum(const char* model_name);
 

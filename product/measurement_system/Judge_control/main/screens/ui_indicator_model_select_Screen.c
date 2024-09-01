@@ -85,7 +85,7 @@ void model_series_btn_e_handler(lv_event_t *e) {
   char *ptr = final_model_name;
   LOGI(TAG, "receive data %s", target->model_data);
   if (event_code == LV_EVENT_CLICKED) {
-    snprintf(str, sizeof(str), "선택된 모델은 \n%s/%s 입니다.", target->series_name, target->model_data);
+    snprintf(str, sizeof(str), "선택된 모델은 \n%s/%s \n입니다.", target->series_name, target->model_data);
     LOGI(TAG, "complated(final) data %s", str);
     // SWII_30_kg_100_g_kg
     memset(ptr, 0x00, sizeof(final_model_name));
@@ -157,6 +157,46 @@ static model_series_data_t *model_list_config(char *model_series_name, indicator
       // 순서있음
       static const char *model_name_array[] = { MODEL_CB_310G_0_2G_N, MODEL_CB_3100G_5G_N, MODEL_EK_4100G_5G_N,
                                                 MODEL_CB_12KG_50G_N };
+      model_data->model_id = model_id;
+      model_name = model_name_array;
+      num_elements = sizeof(model_name_array) / sizeof(model_name_array[0]);
+      break;
+    }
+    case MODEL_CAS_MW2_H: {
+      // 순서있음
+      static const char *model_name_array[] = { MODEL_MW2_300G_0_2G_N, MODEL_MW2_3000G_5G_N };
+      model_data->model_id = model_id;
+      model_name = model_name_array;
+      num_elements = sizeof(model_name_array) / sizeof(model_name_array[0]);
+      break;
+    }
+    case MODEL_CAS_EC: {
+      // 순서있음
+      static const char *model_name_array[] = { MODEL_EC_30KG_100G_N, MODEL_EC_6000G_25G_N };
+      model_data->model_id = model_id;
+      model_name = model_name_array;
+      num_elements = sizeof(model_name_array) / sizeof(model_name_array[0]);
+      break;
+    }
+    case MODEL_CAS_EC_D_SERIES: {
+      // 순서있음
+      static const char *model_name_array[] = { MODEL_EC_D_30KG_100G_N, MODEL_EC_D_6KG_25G_N };
+      model_data->model_id = model_id;
+      model_name = model_name_array;
+      num_elements = sizeof(model_name_array) / sizeof(model_name_array[0]);
+      break;
+    }
+    case MODEL_CAS_HB_HBI: {
+      // 순서있음
+      static const char *model_name_array[] = { MODEL_HB_150KG_500G_N, MODEL_HB_75KG_250G_N };
+      model_data->model_id = model_id;
+      model_name = model_name_array;
+      num_elements = sizeof(model_name_array) / sizeof(model_name_array[0]);
+      break;
+    }
+    case MODEL_CAS_WTM500: {
+      // 순서있음
+      static const char *model_name_array[] = { MODEL_CI_999KG_100G_N, MODEL_CI_99KG_10G_N };
       model_data->model_id = model_id;
       model_name = model_name_array;
       num_elements = sizeof(model_name_array) / sizeof(model_name_array[0]);
@@ -338,9 +378,10 @@ static void event_handler(lv_event_t *e) {
       create_custom_msg_box("선택된 모델은 \nBX11 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
       syscfg_set(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, str_buf);
 
-    } else if (strncmp(str_buf, "WTM-500", 7) == 0) {
-      create_custom_msg_box("선택된 모델은 \nWTM-500 입니다.", ui_Indicator_Model_Select_Screen, NULL,
-                            LV_EVENT_CLICKED);
+    } else if (strncmp(str_buf, "CI-SERIES", 9) == 0) {
+      model_series_box(ui_Indicator_Model_Select_Screen, model_list_config("CI", MODEL_CAS_WTM500));
+      // create_custom_msg_box("선택된 모델은 \nWTM-500 입니다.", ui_Indicator_Model_Select_Screen, NULL,
+      //                       LV_EVENT_CLICKED);
       syscfg_set(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, str_buf);
 
     } else if (strncmp(str_buf, "NT-301A", 7) == 0) {
@@ -349,12 +390,17 @@ static void event_handler(lv_event_t *e) {
       syscfg_set(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, str_buf);
 
     } else if (strncmp(str_buf, "EC-D", 4) == 0) {
-      create_custom_msg_box("선택된 모델은 \nEC-D Series 입니다.", ui_Indicator_Model_Select_Screen, NULL,
-                            LV_EVENT_CLICKED);
+      model_series_box(ui_Indicator_Model_Select_Screen, model_list_config("EC-D", MODEL_CAS_EC_D_SERIES));
+      // create_custom_msg_box("선택된 모델은 \nEC-D Series 입니다.", ui_Indicator_Model_Select_Screen, NULL,
+      //                       LV_EVENT_CLICKED);
       syscfg_set(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, str_buf);
-
+    } else if (strncmp(str_buf, "EC", 2) == 0) {
+      model_series_box(ui_Indicator_Model_Select_Screen, model_list_config("EC", MODEL_CAS_EC));
+      // create_custom_msg_box("선택된 모델은 \nEC Series 입니다.", ui_Indicator_Model_Select_Screen, NULL,
+      //                       LV_EVENT_CLICKED);
+      syscfg_set(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, str_buf);
     } else if (strncmp(str_buf, "CB-SERIES", 9) == 0) {
-      model_series_box(ui_Indicator_Model_Select_Screen, model_list_config("AND_CB", MODEL_AND_CB_12K));
+      model_series_box(ui_Indicator_Model_Select_Screen, model_list_config("AND_CB/EK", MODEL_AND_CB_12K));
       syscfg_set(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, str_buf);
 
     } else if (strncmp(str_buf, "PW-200", 6) == 0) {
@@ -371,16 +417,24 @@ static void event_handler(lv_event_t *e) {
       syscfg_set(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, str_buf);
 
     } else if (strncmp(str_buf, "MWII-H", 6) == 0) {
-      create_custom_msg_box("선택된 모델은 \nMWII-H 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
+      model_series_box(ui_Indicator_Model_Select_Screen, model_list_config("MWII", MODEL_CAS_MW2_H));
+      // create_custom_msg_box("선택된 모델은 \nMWII-H 입니다.", ui_Indicator_Model_Select_Screen, NULL,
+      // LV_EVENT_CLICKED);
       syscfg_set(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, str_buf);
 
     } else if (strncmp(str_buf, "HB/HBI", 6) == 0) {
-      create_custom_msg_box("선택된 모델은 \nHB/HBI 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
+      model_series_box(ui_Indicator_Model_Select_Screen, model_list_config("HB/HBI", MODEL_CAS_HB_HBI));
+      // create_custom_msg_box("선택된 모델은 \nHB/HBI 입니다.", ui_Indicator_Model_Select_Screen, NULL,
+      // LV_EVENT_CLICKED);
       syscfg_set(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, str_buf);
 
     } else if (strncmp(str_buf, "DB-1/1H", 7) == 0) {
       create_custom_msg_box("선택된 모델은 \nDB-1/1H 입니다.", ui_Indicator_Model_Select_Screen, NULL,
                             LV_EVENT_CLICKED);
+      syscfg_set(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, str_buf);
+
+    } else if (strncmp(str_buf, "DB-2", 4) == 0) {
+      create_custom_msg_box("선택된 모델은 \nDB-2 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
       syscfg_set(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, str_buf);
 
     } else if (strncmp(str_buf, "none", 4) == 0) {
@@ -553,11 +607,13 @@ void ui_indicator_model_select_screen_init(void) {
   /*Add buttons to the list*/
   lv_obj_t *btn;
   lv_list_add_text(indicator_list, "CAS");
-  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "WTM-500");
+  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "CI-SERIES");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
-  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "NT-301A");
-  lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
+  // btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "NT-301A");
+  // lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "EC-D");
+  lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
+  btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "EC");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "SWII-CS");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
@@ -567,6 +623,8 @@ void ui_indicator_model_select_screen_init(void) {
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "DB-1/1H");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
+  // btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "DB-2");
+  // lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
 
   lv_list_add_text(indicator_list, "OTHER");
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "BX11");

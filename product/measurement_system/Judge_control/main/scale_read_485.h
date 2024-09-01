@@ -68,6 +68,8 @@ typedef enum {
   MODEL_CAS_MW2_H,
   MODEL_CAS_HB_HBI,
   MODEL_CAS_DB_1,
+  MODEL_CAS_DB_2,
+  MODEL_CAS_EC,
 } indicator_model_t;
 
 typedef enum {
@@ -131,6 +133,15 @@ int weight_uart_485_init(void);
  * @return int
  */
 
+int indicator_cas_db_2_data(Common_data_t *common_data);
+
+/**
+ * @brief
+ *
+ * @param common_data
+ * @return int
+ */
+
 int indicator_cas_db_1_1h_data(Common_data_t *common_data);
 /**
  * @brief
@@ -184,6 +195,14 @@ int indicator_ACOM_pw_200_data(Common_data_t *common_data);
 
 int indicator_AND_CB_12K_data(Common_data_t *common_data);
 
+/**
+ * @brief
+ *
+ * @param common_data
+ * @return int
+ */
+
+int indicator_EC_data(Common_data_t *common_data);
 /**
  * @brief
  *

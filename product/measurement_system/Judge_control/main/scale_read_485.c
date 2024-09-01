@@ -17,6 +17,7 @@
 #include "uart_api.h"
 #include "sysevent.h"
 #include "esp32/uart_pal.h"
+#include "driver/uart.h"
 
 // #define BUF_SIZE 23
 #define BUF_SIZE 255
@@ -41,6 +42,55 @@ int weight_uart_485_init(void) {
     LOGI(TAG, "Uart initialize success = %d", res);
   }
   return res;
+}
+
+// DLP-50 target print mode
+// format
+// ======== WEIGHT ========
+// WELCOME TO CAS
+// DATE. 2024/08/31
+// TIME. 14:02:47
+//
+//  Weight :       0.10kg
+//
+// Max 60/150kg, Min 400g, e=d=20/50g
+// 20 3d 3d 3d 3d 3d 3d 3d 3d 20 57 45 49 47 48 54
+// 20 3d 3d 3d 3d 3d 3d 3d 3d 0a 20 57 45 4c 43 4f
+// 4d 45 20 54 4f 20 43 41 53 20 20 20 20 20 20 20
+// 20 20 20 0a 20 44 41 54 45 2e 20 32 30 32 34 2f
+// 30 38 2f 33 31 0a 20 54 49 4d 45 2e 20 31 33 3a
+// 35 36 3a 33 39 0a 0a 20 20 57 65 69 67 68 74 20
+// 3a 20 20 20 20 20 20 20 30 2e 30 38 6b 67 0a 0a
+// 0a
+int indicator_cas_db_2_data(Common_data_t *common_data) {
+  int res = 0;
+  int read_buf = 120;
+  uint8_t *dtmp = (uint8_t *)malloc(read_buf);
+  if (dtmp == NULL) {
+    LOGI(TAG, "Malloc failed");
+    return -1;
+  }
+  memset(dtmp, 0x00, read_buf);
+  res = sysevent_get(SYSEVENT_BASE, WEIGHT_DATA_EVENT, dtmp, read_buf);
+  if (res == 0) {
+    LOGI(TAG, "weight data : %s", dtmp);
+    for (int a = 0; a < read_buf; a++) {
+      LOGI(TAG, "data_%d_%c", a, dtmp[a]);
+    }
+    memcpy(common_data->weight_data, dtmp + 97, 6);
+    common_data->spec.unit = UNIT_KG;
+
+    if (strncmp((char *)dtmp + 10, "W", 1) == 0) {
+      common_data->check = DATA_OK;
+    } else {
+      common_data->check = DATA_ERROR;
+    }
+
+    free(dtmp);
+    return 0;
+  }
+  free(dtmp);
+  return -1;
 }
 
 // DEP-50 target print mode
@@ -87,9 +137,10 @@ int indicator_cas_db_1_1h_data(Common_data_t *common_data) {
 // "변환" 버튼 -> print 표시
 // "설정" 버튼 -> p.print key 설정
 // "설정" 버튼 -> 현재 print 키 설정 -> auto-1 로 지정 -> "변환"으로 변경
-// "영점" 버튼 -> auto -1 설정 후 빠져 나오기
+// "영점" 버튼 -> auto -1, 또는auto-2?? 설정 후 빠져 나오기
 // 22:02:46 W:    86.1 g
 // 통신선 연결 방식은 2-2,3-3,5-5 형식으로 해야함
+// 저울에서 zero가 표시된 후 무게값을 프린트 함, zero가 안뜬 상태에서 무게를 올리면 프린트 안됨.
 //
 // I (1970-01-01 00:00:07) scale_read_485_task: data_0_
 // I (1970-01-01 00:00:07) scale_read_485_task: data_1_2
@@ -195,7 +246,7 @@ int indicator_INNOTEM_T25_data(Common_data_t *common_data) {
 
   // Todo
   // indicator Min, Max, digit set = g unit
-  common_data->spec.scale_Max = 10000;
+  common_data->spec.scale_Max = 20000;
   common_data->spec.scale_Min = 40;
   common_data->spec.e_d = 2;
 
@@ -467,8 +518,8 @@ int indicator_ACOM_pw_200_data(Common_data_t *common_data) {
   //  Todo
 
   // indicator Min, Max, digit set = g unit
-  common_data->spec.scale_Max = 6000;
-  common_data->spec.scale_Min = 40;
+  common_data->spec.scale_Max = 30000;
+  common_data->spec.scale_Min = 10;
   common_data->spec.e_d = 2;
 
   // check weight data & unit
@@ -604,7 +655,126 @@ int indicator_AND_CB_12K_data(Common_data_t *common_data) {
   free(data);
   return 0;
 }
+// 설정 키
+// 비번 101010
+// 입력버튼으로 "trn" 나올때까지
+// 설정 번호 "2" 연속데이터
+// 데이터 포멧이  저울이 안정일때 NET: (대문자), 안정이지 않을 때 net:(소문자)
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 12_N
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 13_E
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 14_T
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 15_:
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 16_
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 17_
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 18_
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 19_
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 20_
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 21_
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 22_2
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 23_5
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 24_2
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 25_
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 26_
+// I (1970-01-01 00:06:20) scale_read_485_task: read data 27_g
 
+int indicator_EC_data(Common_data_t *common_data) {
+  uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
+  static empty_format_t read_data = { 0 };
+  double weight = 0;
+  int length = 0;
+  // uart_flush(UART_PORT_NUM);
+  // vTaskDelay(100 / portTICK_PERIOD_MS);
+
+  int len = uart_read_data(UART_PORT_NUM, data, (BUF_SIZE - 1));
+  vTaskDelay(100 / portTICK_PERIOD_MS);
+  if (len <= 0) {
+    LOGE(TAG, "Invalid data. or No data ");
+    LOGE(TAG, "len = %d\n", len);
+    LOGE(TAG, "uart 485 read data = %s", data);
+    free(data);
+    return -1;
+  }
+  // LOGE(TAG, "read data len %d", len);
+  // for (int i = 0; i < 100; i++) {
+  //   LOGI(TAG, "read data %d_%c", i, data[i]);
+  // }
+
+  // 문자열 탐색 strstr()로 서브문자를 찾은 후 첫번재 인자를 받는다.
+  char *stable_position = strstr((const char *)data, "NET:");
+  char *unstable_position = strstr((const char *)data, "net:");
+  char *net_data_position = NULL;
+  memset(&read_data, 0x00, sizeof(read_data));
+  if (stable_position != NULL) {
+    net_data_position = stable_position + 6;
+    memcpy(read_data.states, "ST", 2);
+    memcpy(read_data.sign, stable_position + 5, 1);
+    memcpy(read_data.unit, stable_position + 15, 2);
+  }
+  if (unstable_position != NULL) {
+    net_data_position = unstable_position + 6;
+    memcpy(read_data.states, "US", 2);
+    memcpy(read_data.sign, unstable_position + 5, 1);
+    memcpy(read_data.unit, unstable_position + 15, 2);
+  }
+
+  // copy to weight data
+  memcpy(read_data.data, net_data_position, 7);
+
+  // LOGE(TAG, "read data %s", read_data.data);
+  // LOGE(TAG, "read data state %s", read_data.states);
+  // LOGE(TAG, "read data unit %s", read_data.unit);
+  // LOGE(TAG, "read data sign %s", read_data.sign);
+  // Compare 2digit
+  if (strncmp(read_data.unit, "g", 1) == 0) {
+    // copy to weight data
+    weight = (float)(atoi(read_data.data) * 0.001);
+    // LOGI(TAG, "g = %f", weight);
+    memcpy(common_data->weight_data, read_data.data, 8);
+    common_data->spec.unit = UNIT_G;
+
+  } else if (strncmp(read_data.unit, "kg", 2) == 0) {
+    sscanf(read_data.data, "%lf", &weight);
+    // LOGI(TAG, "kg = %f", weight);
+    memcpy(common_data->weight_data, read_data.data, 8);
+    common_data->spec.unit = UNIT_KG;
+
+  } else {
+    return -1;
+  }
+
+  /*stable state set display */
+  if (strncmp(read_data.states, "ST", 2) == 0) {
+    common_data->event[STATE_STABLE_EVENT] = STATE_STABLE_EVENT;
+  } else {
+    common_data->event[STATE_STABLE_EVENT] = STATE_NONE;
+  }
+
+  /*zero state set display */
+  if (strncmp(read_data.states, "ST", 2) == 0 && weight == 0.0) {
+    common_data->event[STATE_ZERO_EVENT] = STATE_ZERO_EVENT;
+  } else {
+    common_data->event[STATE_ZERO_EVENT] = STATE_NONE;
+  }
+
+  if (read_data.sign[0] == '-') {
+    common_data->event[STATE_SIGN_EVENT] = STATE_SIGN_EVENT;
+  } else {
+    common_data->event[STATE_SIGN_EVENT] = STATE_NONE;
+  }
+  if (strncmp(read_data.states, "ST", 2) == 0 || strncmp(read_data.states, "US", 2) == 0 ||
+      strncmp(read_data.states, "OL", 2) == 0) {
+    common_data->event[STATE_TRASH_CHECK_EVENT] = STATE_TRASH_CHECK_EVENT;
+  } else {
+    common_data->event[STATE_TRASH_CHECK_EVENT] = STATE_NONE;
+  }
+
+#if INDICATOR_DEBUG
+  LOG_BUFFER_HEXDUMP(TAG, &read_data, sizeof(read_data), LOG_INFO);
+#endif
+  free(data);
+  return 0;
+}
+// Hold the sample button for 2 to 3 seconds to enter setting mode
 // P cont mode
 // 1  | 2  | 3  |  4  |  5  |  6  | 7 ~ 14  |  15 ~ 18  | 19  |  20  |
 // ST,GS,+ 0.879 g
@@ -666,7 +836,7 @@ int indicator_EC_D_Serise_data(Common_data_t *common_data) {
     return -1;
   }
 
-  // for (int i = 0; i < 20; i++) {
+  // for (int i = 0; i < 50; i++) {
   //   LOGI(TAG, "read data %d_%c", i, data[i]);
   // }
 
@@ -677,12 +847,6 @@ int indicator_EC_D_Serise_data(Common_data_t *common_data) {
   memcpy(read_data.sign, data + 6, 1);
   memcpy(read_data.data, data + 8, 6);
   memcpy(read_data.unit, data + 15, 2);
-
-  // Todo
-  // indicator Min, Max, digit set = g unit
-  common_data->spec.scale_Max = 6000;
-  common_data->spec.scale_Min = 25;
-  common_data->spec.e_d = 1;
 
   // copy to weight data
   memcpy(common_data->weight_data, read_data.data, 8);
@@ -702,7 +866,7 @@ int indicator_EC_D_Serise_data(Common_data_t *common_data) {
     common_data->spec.unit = UNIT_KG;
 
   } else {
-    return 0;
+    return -1;
   }
 
   /*stable state set display */
@@ -1139,10 +1303,11 @@ void print_data(const printer_data_t *pdata) {
 void weight_print_msg(char *s_weight, weight_unit_t unit) {
   unsigned char print_data[40] = { 0 };
   unsigned char print_data_head[] = { 0x20, 0x20, 0x20, 0x37, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-                                      0x31, 0x20, 0x20, 0x20, 0x31, 0x33, 0x37, 0x38, 0x20, 0x20, 0x20 };
+                                      0x31, 0x20, 0x20, 0x20, 0x31, 0x33, 0x37, 0x38, 0x20, 0x20, 0x02 };
   unsigned char print_data_body[] = { 0x33, 0x32, 0x2e, 0x36, 0x30 };  // avable using data format 0.000, 00.00, 000.0
-  unsigned char print_data_tail_unit_kg[] = { 0x20, 0x6b, 0x67, 0x0d, 0x0a };  // " kg\r\n"
-  unsigned char print_data_tail_unit_g[] = { 0x20, 0x20, 0x67, 0x0d, 0x0a };   // "  g\r\n"
+  // 기존 0x02,0x6b,0x67,0x0d,0x0a 인데 6자리나오게 하려고 앞 0x02 자름, 프린트 표시 10.740kg(기존 10.740 k 만 표시됨)
+  unsigned char print_data_tail_unit_kg[] = { 0x6b, 0x67, 0x0d, 0x0a };  // " kg\r\n"
+  unsigned char print_data_tail_unit_g[] = { 0x20, 0x67, 0x0d, 0x0a };   // "  g\r\n"
 
   char *weight = s_weight;
   int weight_len = strlen(weight);

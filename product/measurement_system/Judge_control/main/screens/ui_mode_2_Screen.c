@@ -5,6 +5,7 @@
 
 #include "../ui.h"
 #include "log.h"
+#include "widgets/lv_label.h"
 
 static const char *TAG = "ui_mode_2_scr";
 static char *count_buf[] = { "  1", " 10", " 20", " 50", "100", "200" };
@@ -29,7 +30,9 @@ void ui_mode_2_scr_Panel1_Amount_Value_Label_e_handler(lv_event_t *e) {
   lv_obj_t *target = lv_event_get_target(e);
   char s_buff[30] = { 0 };
   if (code == LV_EVENT_READY) {
-    snprintf(s_buff, sizeof(s_buff), "단위 %.3f", amount_weight_value);
+    // 입력된 float 값의 소수점 자릿수를 계산하여 적절한 출력 지시자를 선택
+    snprintf(s_buff, sizeof(s_buff), "단위: %s", get_format_specifier(amount_weight_value));
+    snprintf(s_buff, sizeof(s_buff), s_buff, amount_weight_value);
     lv_label_set_text(target, s_buff);
   }
   /*Todo : */
