@@ -40,6 +40,13 @@ const model_group_info_t model_config[] = {
       }, 
     .series_count = 2 
     },
+    { .model_id = MODEL_CAS_EC_D_SERIES,
+      .series_info = {
+          { EC_D_30KG_1G, MODEL_EC_D_30KG_100G_N, 100, 30000, DP_G_1}, 
+          { EC_D_6KG_0_1G, MODEL_EC_D_6KG_25G_N, 25, 6000, DP_G_0_1}, 
+      }, 
+    .series_count = 2 
+    },
     { .model_id = MODEL_CAS_HB_HBI, 
       .series_info = {
           { HB_150KG_10G, MODEL_HB_150KG_500G_N, 500, 150000, DP_KG_0_01}, 
@@ -107,7 +114,7 @@ void get_modelSeries_refer(const char* input, char* str, model_series_configured
           configured->DP = model_config[i].series_info[j].DP;
           configured->series = model_config[i].series_info[j].series;
         } else if (model_id == MODEL_CAS_EC_D_SERIES) {
-          sprintf(str, "EC_D/%s", model_config[i].series_info[j].refer);
+          sprintf(str, "EC-D/%s", model_config[i].series_info[j].refer);
           configured->model_min = model_config[i].series_info[j].min;
           configured->model_max = model_config[i].series_info[j].max;
           configured->DP = model_config[i].series_info[j].DP;
