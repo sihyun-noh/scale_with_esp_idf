@@ -1,0 +1,20 @@
+idf_component_register(
+    SRCS
+        "wifi_configuration_ap.cpp"
+        "wifi_station.cpp"
+        "ssid_manager.cpp"
+        "dns_server.cpp"
+    INCLUDE_DIRS
+        "include"
+    EMBED_TXTFILES
+        "assets/wifi_configuration.html"
+        "assets/wifi_configuration_kokr.html"
+        "assets/wifi_configuration_done.html"
+        "assets/wifi_configuration_done_kokr.html"
+    REQUIRES
+        "esp_http_server"
+        "esp_wifi"
+        "nvs_flash"
+        "json"
+        "esp_timer"
+)

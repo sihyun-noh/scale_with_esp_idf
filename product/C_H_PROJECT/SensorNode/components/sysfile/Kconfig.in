@@ -1,0 +1,23 @@
+config SYSFILE_PACKAGE
+  bool "Sysfile package"
+  default "n"
+  help
+    Enable file system that supports to save the log message.
+
+  choice
+    prompt "Filesystem Type"
+    depends on SYSFILE_PACKAGE
+    help
+      Select filesystem type
+
+  config LITTLEFS_PACKAGE
+    bool "LittleFS package"
+    help
+      LittleFS filesystem package
+
+  config SPIFFS_PACKAGE
+    bool "SPIFFS package"
+    help
+      SPIFFS filesystem package
+
+  endchoice

@@ -1,0 +1,10 @@
+menu "NVS Configuration"
+
+    config NVS_CMD_AUTO_REGISTRATION
+        bool "Enable Console command NVS Auto-registration"
+        default y
+        help
+            Enabling this allows for the autoregistration of the Console command.
+
+
+endmenu

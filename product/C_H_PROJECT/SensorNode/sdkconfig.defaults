@@ -1,0 +1,11 @@
+
+#
+CONFIG_AUTOSTART_ARDUINO=n
+# end of Arduino ESP32
+
+#
+# FREERTOS
+#
+CONFIG_FREERTOS_HZ=1000
+# end of FREERTOS
+# end of Component config

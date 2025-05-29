@@ -1,0 +1,111 @@
+
+menu "SDI-12 Configuration"
+
+    config SDI12_BREAK_TIME_MS
+        int "Break time (ms)"
+        default 12
+        range 12 1000
+        help
+            The break time signal duration sent before a command.
+            According to SDI-12 spec, must be at least 12 ms.
+
+    config SDI12_MARKING_TIME_MS
+        int "Marking time (ms)"
+        default 9
+        range 9 1000
+        help
+            The marking time duration following the break signal.
+            According to SDI-12 spec, must be at least 8.33 ms.
+
+    config SDI12_MAX_RESPONSE_WAIT_MS
+        int "Maximum response wait time (ms)"
+        default 15
+        range 1 1000
+        help
+            The sensor must start responding within this time after a command is sent.
+
+    config SDI12_OE_PIN
+        int "Enable Output (OE) GPIO Pin"
+        default 16
+        help
+            GPIO pin used to control the Enable Output for SDI-12 transceiver.
+
+    config SDI12_RX_PIN
+        int "RX GPIO Pin"
+        default 18
+        help
+            GPIO pin connected to the RX (receive) line of the SDI-12 bus.
+
+    config SDI12_TX_PIN
+        int "TX GPIO Pin"
+        default 17
+        help
+            GPIO pin connected to the TX (transmit) line of the SDI-12 bus.
+
+    config SENSOR_BUFFER_ENABLE_PIN
+        int "Buffer Enable GPIO Pin (Active Low)"
+        default 1 
+ 
+    config SENSOR_BUFFER_S0_PIN
+        int "Buffer Select S0 GPIO Pin"
+        default 2
+
+    config SENSOR_BUFFER_S1_PIN
+        int "Buffer Select S1 GPIO Pin"
+        default 3
+
+     config SENSOR_BUFFER_S2_PIN
+        int "Buffer Select S2 GPIO Pin"
+        default 4
+
+
+    config SENSOR_PORT_0_DETECT_PIN
+        int "Sensor Port 0 Detect GPIO"
+        default 19
+
+    config SENSOR_PORT_0_CTRL_PIN
+        int "Sensor Port 0 Control GPIO"
+        default 38
+
+    config SENSOR_PORT_1_DETECT_PIN
+        int "Sensor Port 1 Detect GPIO"
+        default 20
+
+    config SENSOR_PORT_1_CTRL_PIN
+        int "Sensor Port 1 Control GPIO"
+        default 39
+
+    config SENSOR_PORT_2_DETECT_PIN
+        int "Sensor Port 2 Detect GPIO"
+        default 21
+
+    config SENSOR_PORT_2_CTRL_PIN
+        int "Sensor Port 2 Control GPIO"
+        default 40
+
+    config SENSOR_PORT_3_DETECT_PIN
+        int "Sensor Port 3 Detect GPIO"
+        default 35
+
+    config SENSOR_PORT_3_CTRL_PIN
+        int "Sensor Port 3 Control GPIO"
+        default 41
+
+    config SENSOR_PORT_4_DETECT_PIN
+        int "Sensor Port 4 Detect GPIO"
+        default 36
+
+    config SENSOR_PORT_4_CTRL_PIN
+        int "Sensor Port 4 Control GPIO"
+        default 42
+
+    config SENSOR_PORT_5_DETECT_PIN
+        int "Sensor Port 5 Detect GPIO"
+        default 37
+
+    config SENSOR_PORT_5_CTRL_PIN
+        int "Sensor Port 5 Control GPIO"
+        default 45
+
+
+endmenu

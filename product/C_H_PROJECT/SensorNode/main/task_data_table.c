@@ -1,0 +1,348 @@
+#include <string.h>
+#include "file_log.h"
+#include "stdio.h"
+#include "esp_log.h"
+#include "esp_random.h"
+#include "mqtt_publish.h"
+#include "mqtt_config.h"
+#include "littlefs_impl.h"
+#include "data_table.h"
+#include "sensor_cfg_config.h"
+
+#define PORT_DT_HANDLER(i) "port_dt_handler" #i
+static const char* TAG = "dt_task";
+
+/* void callback_fc(void* handle, datatable_event_t msg) { */
+/*   if (handle != NULL) { */
+/*     ESP_LOGI(TAG, "dt event type %d _ %s", msg.type, msg.message); */
+/*   } */
+/* } */
+/* static const datatable_event dt_1min_hdl_event = callback_fc; */
+
+typedef struct {
+  datatable_handle_t handle;
+  datatable_config_t config;
+  // 포트별 컬럼 인덱스
+  uint8_t pa_avg_col;
+  uint8_t ta_avg_col;
+  uint8_t ta_min_col;
+  uint8_t ta_max_col;
+  uint8_t td_avg_col;
+  uint8_t pressure_col;
+  uint8_t radiation_col;
+} sensor_datatable_t;
+
+static sensor_datatable_t port_tables[SENSOR_PORT_COUNT];
+
+// 센서값을 불러
+
+bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, sensor_datatable_t* dt) {
+  if (!cfg->enabled) {
+    ESP_LOGI(TAG, "Port %d disabled, skip datatable init", cfg->port);
+    return false;
+  }
+
+  datatable_config_t dt_cfg = {
+    .name = NULL,  // 아래에서 버퍼를 할당·포맷팅
+    .columns_size = cfg->columns_size,
+    .rows_size    = cfg->rows_size,
+    .data_storage_type = DATATABLE_DATA_STORAGE_MEMORY_RING,
+    .sampling_config = {
+      .name          = NULL,
+      .interval_type = TIME_INTO_INTERVAL_SEC,
+      .interval_period = cfg->sampling_period_sec,
+      .interval_offset = 0,
+    },
+    .processing_config = {
+      .name          = NULL,
+      .interval_type = TIME_INTO_INTERVAL_MIN,
+      .interval_period = cfg->processing_interval_period_min,
+      .interval_offset = 0,
+    },
+   // .event_handler = cfg->event_handler,
+  };
+
+  // 이름 버퍼는 스택 또는 힙에 할당
+  char name_buf[32];
+  snprintf(name_buf, sizeof(name_buf), "%dP_%dm_tbl", cfg->port, cfg->processing_interval_period_min);
+  dt_cfg.name = strdup(name_buf);
+
+  char samp_buf[32];
+  snprintf(samp_buf, sizeof(samp_buf), "%ds_smp", cfg->sampling_period_sec);
+  dt_cfg.sampling_config.name = strdup(samp_buf);
+
+  char proc_buf[32];
+  snprintf(proc_buf, sizeof(proc_buf), "%dm_proc", cfg->processing_interval_period_min);
+  dt_cfg.processing_config.name = strdup(proc_buf);
+
+  // 실제 초기화 호출
+  if (datatable_init(&dt_cfg, &dt->handle) != ESP_OK) {
+    ESP_LOGE(TAG, "Port %d datatable_init failed", cfg->port);
+    return false;
+  }
+
+  ESP_LOGI(TAG, "Port %d datatable initialized (handle=%p)", cfg->port, dt->handle);
+
+  switch (cfg->sensor_type) {
+    // TEROS 계열 (습도·온도·이슬점)
+    case TEROS11:
+    case TEROS12:
+    case TEROS14:
+    case TEROS21:
+      datatable_add_float_avg_column(dt->handle, "Ta_Avg", &dt->ta_avg_col);
+      datatable_add_float_min_column(dt->handle, "Ta_Min", &dt->ta_min_col);
+      datatable_add_float_max_column(dt->handle, "Ta_Max", &dt->ta_max_col);
+      datatable_add_float_avg_column(dt->handle, "Td_Avg", &dt->td_avg_col);
+      break;
+
+    // ATMOS 계열 (기압)
+    case ATMOS21:
+    case ATMOS22:
+    case ATMOS31:
+    case ATMOS41:
+    case ATMOS54: datatable_add_float_avg_column(dt->handle, "Pressure", &dt->pressure_col); break;
+
+    // Apogee 계열 (방사선)
+    case APOGEE_S2_411:
+    case APOGEE_SP_421:
+    case APOGEE_SQ_521:
+    case APOGEE_SU_221: datatable_add_float_avg_column(dt->handle, "Radiation", &dt->radiation_col); break;
+
+    default: ESP_LOGW(TAG, "Port %d: Unknown sensor type %d, no columns added", cfg->port, cfg->sensor_type); break;
+  }
+
+  ESP_LOGI(TAG, "Port %d columns: Pa@%u, Ta_avg@%u, Ta_min@%u, Ta_max@%u, Td@%u", cfg->port, dt->pa_avg_col,
+           dt->ta_avg_col, dt->ta_min_col, dt->ta_max_col, dt->td_avg_col);
+  return true;
+}
+
+void data_table_init_all(void) {
+  sensor_port_cfg_t* cfg = sensor_cfg_instance();
+  for (int i = 0; i < SENSOR_PORT_COUNT; i++) {
+    // port_tables 는 sensor_datatable_t 배열
+    init_datatable_for_port(i, &cfg[i], &port_tables[i]);
+  }
+}
+
+void dt_init_with_sensor() {
+  char tb_name_buf[20] = { 0 };
+  char tb_smp_name_buf[20] = { 0 };
+  // Get cfg instance
+  sensor_port_cfg_t* nvs_cfg = sensor_cfg_instance();
+  for (int i = 0; i < SENSOR_PORT_COUNT; i++) {
+    sensor_datatable_t* dt = &port_tables[i];
+
+    memset(tb_name_buf, 0x00, sizeof(tb_name_buf));
+    memset(tb_smp_name_buf, 0x00, sizeof(tb_smp_name_buf));
+    ESP_LOGI(TAG, "port :%d", nvs_cfg[i].port);
+    snprintf(tb_name_buf, sizeof(tb_name_buf), "%dP_%d_M_tbl", nvs_cfg[i].port,
+             nvs_cfg->processing_interval_period_min);
+    snprintf(tb_smp_name_buf, sizeof(tb_smp_name_buf), "%ds_smp", nvs_cfg->sampling_period_sec);
+
+    dt->config = (datatable_config_t){
+      /*  data-table configuration */
+      .name = tb_name_buf,
+      .columns_size = 5,
+      .rows_size = 1,
+      .data_storage_type = DATATABLE_DATA_STORAGE_MEMORY_RING,
+      .sampling_config = { .name = tb_smp_name_buf,
+                           .interval_type = TIME_INTO_INTERVAL_SEC,
+                           .interval_period = nvs_cfg[i].sampling_period_sec,
+                           .interval_offset = 0 },
+      .processing_config = { .name = "processing",
+                             .interval_type = TIME_INTO_INTERVAL_MIN,
+                             .interval_period = nvs_cfg[i].processing_interval_period_min,
+                             .interval_offset = 0 },
+      // .event_handler = dt_1min_hdl_event,
+    };
+    datatable_init(&dt->config, &dt->handle);
+  }
+}
+
+/* clang-format off */
+static datatable_handle_t       dt_1min_hdl;          /*  data-table handle */
+static datatable_config_t       dt_1min_cfg = {       /*  data-table configuration */
+    .name                       = "1min_tbl",
+    .columns_size               = 5,
+    .rows_size                  = 1,
+    .data_storage_type          = DATATABLE_DATA_STORAGE_MEMORY_RING,
+    .sampling_config            = {
+        .name                   = "10s_smp",
+        .interval_type          = TIME_INTO_INTERVAL_SEC,
+        .interval_period        = 10,
+        .interval_offset        = 0
+    },
+    .processing_config          = {
+        .name                   = "1m_proc",
+        .interval_type          = TIME_INTO_INTERVAL_MIN,
+        .interval_period        = 1,
+        .interval_offset        = 0
+    },
+ // .event_handler = dt_1min_hdl_event,
+};
+static uint8_t              dt_1min_pa_avg_col_index;     /* data-table average atmospheric pressure (pa-avg) column index reference */
+static uint8_t              dt_1min_ta_avg_col_index;     /* data-table average air temperature (ta-avg) column index reference */
+static uint8_t              dt_1min_ta_max_col_index;     /* data-table minimum air temperature (ta-min) column index reference */
+static uint8_t              dt_1min_ta_min_col_index;     /* data-table maximum air temperature (ta-max) column index reference */
+static uint8_t              dt_1min_td_avg_col_index;     /* data-table average dew-point temperature (td-avg) column index reference */
+
+/* clang-format on */
+
+// 가상의 센서 읽기 함수 (실제 센서 드라이버와 연결 가능)
+float read_temperature() {
+  // 예: 센서 드라이버에서 값 가져오기
+  return 22.0 + (esp_random() % 100) / 100.0;  // 22.0 ~ 23.0
+}
+
+float read_humidity() {
+  return 50.0 + (esp_random() % 100) / 100.0;  // 50.0 ~ 51.0
+}
+
+static char* parse_rows(const char* json_text) {
+  // 1. JSON 파싱
+  static char str[250];
+  memset(str, 0, sizeof(str));
+  cJSON* root = cJSON_Parse(json_text);
+  if (!root) {
+    ESP_LOGI(TAG, "Failed to parse JSON\n");
+    return NULL;
+  }
+
+  // 2. "rows" 배열 가져오기
+  cJSON* rows = cJSON_GetObjectItemCaseSensitive(root, "rows");
+  if (!cJSON_IsArray(rows)) {
+    ESP_LOGI(TAG, "\"rows\" is not an array\n");
+    cJSON_Delete(root);
+    return NULL;
+  }
+
+  // 3. 각 행(row) 처리
+  cJSON* row = NULL;
+  cJSON_ArrayForEach(row, rows) {
+    if (!cJSON_IsArray(row)) {
+      continue;
+    }
+
+    ESP_LOGI(TAG, "Row: ");
+    cJSON* value = NULL;
+    cJSON_ArrayForEach(value, row) {
+      if (cJSON_IsNumber(value)) {
+        ESP_LOGI(TAG, "%.3f ", value->valuedouble);
+        sprintf(str + strlen(str), "%.3f,", value->valuedouble);
+      } else if (cJSON_IsString(value)) {
+        ESP_LOGI(TAG, "%s, ", value->valuestring);
+        sprintf(str + strlen(str), "%s,", value->valuestring);
+      }
+    }
+  }
+  // 마지막 쉼표 제거
+  size_t len = strlen(str);
+  if (len > 0 && str[len - 1] == ',') {
+    str[len - 1] = '\0';
+  }
+  cJSON_Delete(root);
+  return str;
+}
+
+void data_table_init() {
+  // create a new data-table handle for the type 1
+  //
+
+  dt_init_with_sensor();
+  datatable_init(&dt_1min_cfg, &dt_1min_hdl);
+  if (dt_1min_hdl == NULL) {
+    ESP_LOGE(TAG, "datatable_new, new data-table handle failed");
+    abort();
+  }
+
+  // configure data-table columns
+  //
+  // add float average column to data-table
+  datatable_add_float_avg_column(dt_1min_hdl, "Pa_1-Avg", &dt_1min_pa_avg_col_index);  // column index 2
+  // add float average column to data-table
+  datatable_add_float_avg_column(dt_1min_hdl, "Ta_1-Avg", &dt_1min_ta_avg_col_index);  // column index 3
+  // add float minimum column to data-table
+  datatable_add_float_min_column(dt_1min_hdl, "Ta_1-Min", &dt_1min_ta_min_col_index);  // column index 4
+  // add float maximum column to data-table
+  datatable_add_float_max_column(dt_1min_hdl, "Ta_1-Max", &dt_1min_ta_max_col_index);  // column index 5
+  // add float average column to data-table
+  datatable_add_float_avg_column(dt_1min_hdl, "Td_1-Avg", &dt_1min_td_avg_col_index);  // column index 6
+}
+
+void dt_1min_smp_task(void* pvParameters) {
+  /* clang-format off */
+  int ret=0;
+  char buf[250] = { 0 };
+  char topic[MAX_TOPIC_LEN] ={ 0 };
+
+  time_into_interval_handle_t dt_1min_tii_5min_hdl;
+  time_into_interval_config_t dt_1min_tii_5min_cfg = {
+        .name               = "5min_interval",
+        .interval_type      = TIME_INTO_INTERVAL_SEC,
+        .interval_period    = 1 * 60,
+        .interval_offset    = 10
+    };
+
+  // create a new time-into-interval handle - task system clock synchronization
+    time_into_interval_init(&dt_1min_tii_5min_cfg, &dt_1min_tii_5min_hdl);
+    if (dt_1min_tii_5min_hdl == NULL) ESP_LOGE(TAG, "time_into_interval_new, new time-into-interval handle failed");
+
+  /* clang-format on */
+
+  for (;;) {
+    /* delay data-table sampling task until sampling interval has elapsed */
+    datatable_sampling_task_delay(dt_1min_hdl);
+
+    /* measure samples from sensors and set sensor variables (pa, ta, td)  */
+    float temperature = read_temperature();
+    float humidity = read_humidity();
+
+    // push samples onto the data buffer stack for processing
+    datatable_push_float_sample(dt_1min_hdl, dt_1min_pa_avg_col_index, temperature);
+    datatable_push_float_sample(dt_1min_hdl, dt_1min_ta_avg_col_index, temperature);
+    datatable_push_float_sample(dt_1min_hdl, dt_1min_ta_min_col_index, humidity);
+    datatable_push_float_sample(dt_1min_hdl, dt_1min_ta_max_col_index, humidity);
+    datatable_push_float_sample(dt_1min_hdl, dt_1min_td_avg_col_index, temperature);
+
+    // process data buffer stack samples (i.e. data-table's configured processing interval)
+    datatable_process_samples(dt_1min_hdl);
+
+    /* serialize data-table and output in json format every 5-minutes (i.e. 12:00:00, 12:05:00, 12:10:00, etc.) */
+    if (time_into_interval(dt_1min_tii_5min_hdl)) {
+      // create root object for data-table
+      cJSON* dt_1min_json = cJSON_CreateObject();
+
+      // convert the data-table to json object
+      datatable_to_json(dt_1min_hdl, &dt_1min_json);
+
+      // render json data-table object to text and print
+      char* dt_1min_json_str = cJSON_Print(dt_1min_json);
+      ESP_LOGI(TAG, "JSON Data-Table:\n%s", dt_1min_json_str);
+
+      memset(topic, 0x00, sizeof(topic));
+      if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_SENSOR) == ESP_OK) {
+        ret = publish_sensor_datatable(topic, dt_1min_json_str);
+        ESP_LOGI(TAG, "ret : %d", ret);
+      }
+
+      if (ret == -1) { /* Qos 0*/  // -1 fail,-2 box full
+        char* parsed = parse_rows(dt_1min_json_str);
+        if (parsed != NULL) {
+          memset(buf, 0x00, sizeof(buf));
+          strncpy(buf, parsed, sizeof(buf) - 1);
+          ESP_LOGI(TAG, "%s", buf);
+          //  FDATA(BASE_PATH, "%s", buf);  // write to tb data
+        } else {
+          ESP_LOGW(TAG, "Faild to parse JSON rows");
+        }
+      }
+
+      // free-up json resources
+      cJSON_free(dt_1min_json_str);
+      cJSON_Delete(dt_1min_json);
+    }
+  }
+
+  // free up task resources
+  vTaskDelete(NULL);
+}

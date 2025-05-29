@@ -1,0 +1,48 @@
+menu "C&H Sensor Node Porduct"
+  config PRODUCT_VENDOR
+      string "Product Vendor"
+      default "C&H"
+
+    config PRODUCT_NAME
+      string "Product Name"
+      default "SENSOR-SDI12"
+
+    config PRODUCT_SKU
+      string "Product SKU"
+      default ""
+
+    config SERVER_URL
+      string "Main Server Url"
+      default ""
+
+
+  menu "Ethernet Driver Configuration"
+    rsource "../components/bsp_component/ethernet_driver/Kconfig.in"
+  endmenu
+
+  menu "NVS Configuration"
+    rsource "../components/_nvs/Kconfig.in"
+  endmenu
+  
+  menu "MQTT Configuration"
+    rsource "../components/_mqtt/Kconfig.in"
+
+  endmenu
+
+  menu "SDI-12 Configuration"
+    rsource "../components/bsp_component/sdi12/Kconfig.in"
+
+  endmenu
+
+  menu "SYSFILE Configuration"
+    rsource "../components/sysfile/Kconfig.in"
+
+  endmenu
+
+  menu "OTA Configuration"
+    rsource "../components/_ota/Kconfig.in"
+
+  endmenu
+
+
+endmenu

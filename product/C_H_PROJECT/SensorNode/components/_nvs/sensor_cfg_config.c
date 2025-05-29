@@ -1,0 +1,172 @@
+
+#include "sensor_cfg_config.h"
+#include "nvs_cfg.h"
+#include "esp_log.h"
+#include "nvs.h"
+#include "cJSON.c"
+#include "esp_mac.h"
+
+#define DEVICE_ID_KEY "device_id"
+#define MAC_ADDR_LEN  18
+
+static const char *TAG = "sensor_cfg";
+
+static sensor_port_cfg_t g_sensor_cfgs[SENSOR_PORT_COUNT];
+
+// singleton instance
+sensor_port_cfg_t *sensor_cfg_instance(void) {
+  return g_sensor_cfgs;
+}
+
+esp_err_t sensor_port_cfg_load(int port, sensor_port_cfg_t *cfg) {
+  if (port < 1 || port > SENSOR_PORT_COUNT)
+    return ESP_ERR_INVALID_ARG;
+
+  char key[20];
+  snprintf(key, sizeof(key), "sensor_port_%d", port);
+  return cfg_get_blob(key, cfg, sizeof(sensor_port_cfg_t));
+}
+
+esp_err_t sensor_port_cfg_save(int port, const sensor_port_cfg_t *cfg) {
+  if (port < 1 || port > SENSOR_PORT_COUNT)
+    return ESP_ERR_INVALID_ARG;
+
+  char key[20];
+  snprintf(key, sizeof(key), "sensor_port_%d", port);
+  return cfg_set_blob(key, cfg, sizeof(sensor_port_cfg_t));
+}
+
+sensor_port_cfg_t *sensor_port_cfg_get(int port) {
+  if (port < 1 || port > SENSOR_PORT_COUNT)
+    return NULL;
+  ESP_LOGI(TAG, "get array buffer %d", port - 1);
+  return &g_sensor_cfgs[port - 1];
+}
+
+esp_err_t sensor_port_cfg_init(void) {
+  esp_err_t err = ESP_OK;
+  for (int i = 0; i < SENSOR_PORT_COUNT; ++i) {
+    sensor_port_cfg_t *cfg = &g_sensor_cfgs[i];
+    err = sensor_port_cfg_load(i + 1, cfg);
+    if (err == ESP_ERR_NVS_NOT_FOUND) {
+      cfg->enabled = 1;
+      cfg->sensor_type = 0;
+      cfg->threshold = 100;
+      cfg->dirty = 1;  // mark as dirty for first-time save
+      ESP_LOGI(TAG, "Default config set for port %d", i + 1);
+    } else if (err == ESP_OK) {
+      cfg->dirty = 0;
+      ESP_LOGI(TAG, "Loaded config for port %d", i + 1);
+      ESP_LOGI(TAG, "Read blob: port=%d, dirty=%d, enabled=%d, sensor_type=%d, threshold=%d", cfg->port, cfg->dirty,
+               cfg->enabled, cfg->sensor_type, cfg->threshold);
+    } else {
+      ESP_LOGE(TAG, "Failed to load config for port %d: %s", i + 1, esp_err_to_name(err));
+    }
+  }
+  return ESP_OK;
+}
+
+esp_err_t sensor_port_cfg_commit(void) {
+  esp_err_t err = ESP_OK;
+  for (int i = 0; i < SENSOR_PORT_COUNT; ++i) {
+    sensor_port_cfg_t *cfg = &g_sensor_cfgs[i];
+    if (cfg->dirty) {
+      err = sensor_port_cfg_save(i + 1, cfg);
+      if (err == ESP_OK) {
+        cfg->dirty = 0;
+        ESP_LOGI(TAG, "Saved port %d config to NVS(cfg)", i + 1);
+      } else {
+        ESP_LOGE(TAG, "Failed to save config for port %d: %s", i + 1, esp_err_to_name(err));
+      }
+    }
+  }
+  return err;
+}
+
+esp_err_t handle_mqtt_config_update(const char *json_payload) {
+  if (!json_payload)
+    return ESP_ERR_INVALID_ARG;
+
+  cJSON *root = cJSON_Parse(json_payload);
+  if (!root)
+    return ESP_FAIL;
+
+  cJSON *port = cJSON_GetObjectItem(root, "port");
+  if (!port || !cJSON_IsNumber(port)) {
+    ESP_LOGW(TAG, "Invalid or missing 'port'");
+    cJSON_Delete(root);
+    return ESP_FAIL;
+  }
+
+  uint8_t new_port = port->valueint;
+  if (new_port < 1 || new_port > SENSOR_PORT_COUNT) {
+    ESP_LOGW(TAG, "Port number out of range: %d", new_port);
+    cJSON_Delete(root);
+    return ESP_FAIL;
+  }
+
+  sensor_port_cfg_t *cfg = sensor_port_cfg_get(new_port);
+  if (!cfg) {
+    ESP_LOGE(TAG, "Failed to get config for port %d", new_port);
+    cJSON_Delete(root);
+    return ESP_FAIL;
+  }
+
+  cJSON *enabled = cJSON_GetObjectItem(root, "enabled");
+  cJSON *threshold = cJSON_GetObjectItem(root, "threshold");
+  cJSON *sensor_type = cJSON_GetObjectItem(root, "sensor_type");
+
+  if (enabled && cJSON_IsNumber(port)) {
+    cfg->port = port->valueint;
+    cfg->dirty = 1;
+  }
+  if (enabled && cJSON_IsNumber(enabled)) {
+    cfg->enabled = enabled->valueint;
+    cfg->dirty = 1;
+  }
+  if (threshold && cJSON_IsNumber(threshold)) {
+    cfg->threshold = threshold->valueint;
+    cfg->dirty = 1;
+  }
+  if (sensor_type && cJSON_IsNumber(sensor_type)) {
+    cfg->sensor_type = sensor_type->valueint;
+    cfg->dirty = 1;
+  }
+
+  cJSON_Delete(root);
+  return ESP_OK;
+}
+
+esp_err_t cfg_init_device_id(void) {
+  char *existing = NULL;
+  if (cfg_get_str(DEVICE_ID_KEY, &existing) == ESP_OK) {
+    ESP_LOGI(TAG, "Device ID exists: %s", existing);
+    free(existing);
+    return ESP_OK;
+  }
+
+  uint8_t mac[6];
+  esp_err_t err = esp_read_mac(mac, ESP_MAC_WIFI_STA);
+  if (err != ESP_OK) {
+    err = esp_read_mac(mac, ESP_MAC_ETH);
+  }
+  if (err != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to read MAC");
+    return err;
+  }
+
+  char mac_str[MAC_ADDR_LEN];
+  snprintf(mac_str, sizeof(mac_str), "%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+  err = cfg_set_str(DEVICE_ID_KEY, mac_str);
+  if (err == ESP_OK) {
+    ESP_LOGI(TAG, "Stored new device ID: %s", mac_str);
+  }
+  return err;
+}
+
+esp_err_t get_device_id(char **out_id) {
+  if (!out_id)
+    return ESP_ERR_INVALID_ARG;
+  return cfg_get_str(DEVICE_ID_KEY, out_id);
+}
