@@ -28,10 +28,9 @@
 
 #define FILE_LOG_MAX_BUFF_SIZE 1024
 #define FILE_LOG_MAX_MSG_SIZE  (FILE_LOG_MAX_BUFF_SIZE)
-// #define FILE_LOG_MAX_FILE_SIZE (FILE_LOG_MAX_MSG_SIZE * 500)
-#define FILE_LOG_MAX_FILE_SIZE (FILE_LOG_MAX_MSG_SIZE * 1)
+#define FILE_LOG_MAX_FILE_SIZE (FILE_LOG_MAX_MSG_SIZE * 500)
 #define DIR_COUNT              3
-#define FILE_COUNT             3
+#define FILE_COUNT             6
 #define LOG_TIMESTAMP_SIZE     64
 
 static const char *TAG = "FILE_LOG";
@@ -205,7 +204,7 @@ static int extract_seq_num(const char *filename, int *seq_num) {
  * @return 0 on success, -1 if directory cannot be opened or no valid files found
  */
 static int new_file_status_check(const char *dirpath) {
-  int min_seq = 0;
+  int min_seq = FILE_COUNT;
   int max_seq = -1;
   char filepath[300] = { 0 };
   uint8_t file_count = 0;
@@ -350,7 +349,7 @@ END:
   return 0;
 }
 
-#define CONFIG_SEQUENCE_FILE_NUMBERING
+// #define CONFIG_SEQUENCE_FILE_NUMBERING
 
 /*The system file log is saved in the file storage device using the "FLOG" macro.*/
 int file_log_write_datalogger(char *path, char *format, ...) {
@@ -381,10 +380,16 @@ int file_log_write_datalogger(char *path, char *format, ...) {
   ESP_LOGE(TAG, " file count : %d", file_ctx.file_num);
   ESP_LOGI(TAG, " path : %s", path);
   ESP_LOGI(TAG, " buff : %s", buff);
+  ESP_LOGI(TAG, " latest file name : %s", file_ctx.latest_file);
+  ESP_LOGI(TAG, " oldest file name : %s", file_ctx.oldest_file);
 
+  // 파일의 갯수만 확인 해서 루틴동작
   if (file_ctx.file_num == 0) {
 #ifdef CONFIG_SEQUENCE_FILE_NUMBERING
-    newfilepath = new_file_path_name(path, file_ctx.file_num + 1);
+
+    int new_seq = (file_ctx.next_seq_num + 1) % FILE_COUNT;
+    newfilepath = new_file_path_name(path, new_seq);
+    // newfilepath = new_file_path_name(path, file_ctx.file_num + 1);
 #else
     newfilepath = file_path_name(path);
 #endif
@@ -405,7 +410,9 @@ int file_log_write_datalogger(char *path, char *format, ...) {
     file_ctx.latest_file_size = 0;
 
 #ifdef CONFIG_SEQUENCE_FILE_NUMBERING
-    newfilepath = new_file_path_name(path, file_ctx.file_num + 1);
+    int new_seq = (file_ctx.next_seq_num + 1) % FILE_COUNT;
+    newfilepath = new_file_path_name(path, new_seq);
+    // newfilepath = new_file_path_name(path, file_ctx.file_num + 1);
 #else
     newfilepath = file_path_name(path);
 #endif

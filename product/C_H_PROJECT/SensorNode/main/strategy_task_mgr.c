@@ -14,6 +14,7 @@
 #include "ota_update.h"
 #include "sensor_auto_detect.h"
 #include "sensor_cfg_config.h"
+#include "cJSON.h"
 
 #define MAX_TASKS        10
 #define MAC_ADDR_MAX_LEN 32
@@ -22,7 +23,7 @@ static const char *TAG = "TaskManager";
 
 extern void dt_1min_smp_task(void *pvParameters);
 extern void upload_file_multipart(const char *filepath);
-extern esp_err_t file_upload_proseece(void);
+extern esp_err_t file_upload_proceed(void);
 
 // =============================
 // 구조체 정의
@@ -104,6 +105,20 @@ esp_err_t parse_topic_info(const char *topic, topic_info_t *info) {
   return ESP_OK;
 }
 
+/* json format
+ // topic : v1/device/{mac}/setting
+ // mag.payload
+    {
+      "port": 2,
+      "publish_interval": 60,
+      "threshold": {
+        "enabled": true,
+        "min": 10.0,
+        "max": 90.0
+      }
+    }
+*/
+
 void strategy_setting_from_mqtt(const mqtt_message_t *msg) {
   ESP_LOGI(TAG, "[MQTT] Received configuration message");
   topic_info_t info;
@@ -116,17 +131,36 @@ void strategy_setting_from_mqtt(const mqtt_message_t *msg) {
   }
 }
 
-void strategy_ota_start(const mqtt_message_t *msg) {
+void strategy_ota_upload_start(const mqtt_message_t *msg) {
   ESP_LOGI(TAG, "[OTA] Received OTA trigger message");
   ESP_LOGI(TAG, "[OTA] Payload: %s", msg->payload);
-  ota_start();
+  cJSON *json = cJSON_Parse(msg->payload);
+  if (!json)
+    return;
+
+  const cJSON *upload = cJSON_GetObjectItem(json, "upload");
+  const cJSON *ota = cJSON_GetObjectItem(json, "ota");
+
+  if (cJSON_IsString(upload) && cJSON_IsString(ota)) {
+    ESP_LOGI(TAG, "[JSON] Device: %s, Status: %s", upload->valuestring, ota->valuestring);
+  }
+
+  if (strcmp(upload->valuestring, "start") == 0) {
+    file_upload_proceed();  // file_upload 시작
+  }
+
+  if (strcmp(ota->valuestring, "trigger") == 0) {
+    ota_start();  // OTA 시작
+  }
+
+  cJSON_Delete(json);
 }
 
-void strategy_upload_file_start(const mqtt_message_t *msg) {
-  ESP_LOGI(TAG, "[Upload] Received file upload request");
-  ESP_LOGI(TAG, "[Upload] Payload: %s", msg->payload);
-  file_upload_proseece();
-}
+/* void strategy_upload_file_start(const mqtt_message_t *msg) { */
+/*   ESP_LOGI(TAG, "[Upload] Received file upload request"); */
+/*   ESP_LOGI(TAG, "[Upload] Payload: %s", msg->payload); */
+/*   file_upload_proceed(); */
+/* } */
 
 // =============================
 // Worker Tasks
@@ -157,23 +191,21 @@ esp_err_t strategy_register_topic(topic_type_t type, const char *task_name, stra
 }
 
 // =============================
-// app_main
+// strategy mqtt task
 // =============================
-void app_main_task(void) {
+void strategy_task_mgr_mqtt_start(void) {
   // task 4개 만들면 overflow
   // mqtt에 의해서만 동작하는 task 들만strategy로
   strategy_register_topic(TOPIC_TYPE_SETTING, "setting_task", strategy_setting_from_mqtt);
-  strategy_register_topic(TOPIC_TYPE_OTA, "ota_task", strategy_ota_start);
-  strategy_register_topic(TOPIC_TYPE_UPLOAD, "upload_file_task", strategy_upload_file_start);
+  strategy_register_topic(TOPIC_TYPE_OTA_UPLOAD, "ota_upload_task", strategy_ota_upload_start);
 
   strategy_create_task("setting_task", 4096, strategy_task, 9);
-  strategy_create_task("ota_task", 4096, strategy_task, 9);
-  strategy_create_task("upload_file_task", 8192, strategy_task, 9);
+  strategy_create_task("ota_upload_task", 8192, strategy_task, 9);
 
-  xTaskCreate(router_task, "router_task", 4096, NULL, 10, NULL);
+  // MQTT massage process task
+  xTaskCreate(router_dispatch_task, "router_task", 4096, NULL, 10, NULL);
   // Callback function register
   router_register_queue_mapper(get_task_queue_by_topic);
 
-  xTaskCreate(dt_1min_smp_task, "sensor_logger_task", 4096, NULL, 5, NULL);
-  // xTaskCreate(sensor_auto_detect_task, "sensor_auto_detect_task", 4096, NULL, 10, NULL);
+  // xTaskCreate(dt_1min_smp_task, "sensor_logger_task", 4096, NULL, 5, NULL);
 }

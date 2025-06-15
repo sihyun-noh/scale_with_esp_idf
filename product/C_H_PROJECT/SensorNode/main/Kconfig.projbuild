@@ -34,6 +34,11 @@ menu "C&H Sensor Node Porduct"
 
   endmenu
 
+  menu "GPIO Configuration"
+    rsource "../components/bsp_component/bsp_gpio/Kconfig.in"
+
+  endmenu
+
   menu "SYSFILE Configuration"
     rsource "../components/sysfile/Kconfig.in"
 

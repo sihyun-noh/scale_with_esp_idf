@@ -48,7 +48,6 @@ typedef struct {
   int portId;                   ///< Unique port identifier
   int detectPin;                ///< GPIO pin for detecting plug/unplug
   int controlPin;               ///< GPIO pin to control sensor activation
-  int oePin;                    ///< Optional OE (Output Enable) pin
   bool isSensorConnected;       ///< Current connection status
   bool hasSensorChanged;        ///< Whether sensor has changed
   sensor_info_t currentSensor;  ///< Current sensor info
@@ -85,11 +84,58 @@ bool sensor_is_connected(int portId);
  * @brief Control the sensor buffer MUX
  */
 void sensor_buffer_control_init(void);
+
+/**
+ * @brief Set control pin level for a specific sensor port.
+ *
+ * @param portId Sensor port ID (0 ~ MAX_SENSOR_PORTS-1)
+ * @param level GPIO level (0 = LOW, 1 = HIGH)
+ * @return esp_err_t
+ */
+esp_err_t sensor_control_pin_set(int portId, int level);
+
+/**
+ * @brief Get current GPIO level of control pin.
+ *
+ * @param portId Sensor port ID (0 ~ MAX_SENSOR_PORTS-1)
+ * @return int GPIO level (0 or 1), -1 if error
+ */
+int sensor_control_pin_get_level(int portId);
+
+/**
+ * @brief Selects the specified sensor port using the MUX control pins.
+ *
+ * Sets S0, S1, S2 pins based on portId (0~7) to route the buffer to the correct sensor port.
+ * Automatically disables the buffer (active-low) before switching.
+ *
+ * @param portId Target port to select (0 ~ 7)
+ * @return ESP_OK on success, ESP_FAIL on GPIO error
+ */
 esp_err_t sensor_buffer_select_port(int portId);
+
+/**
+ * @brief Disables the sensor buffer.
+ *
+ * Sets the buffer enable pin high to disable the output.
+ *
+ * @return ESP_OK on success, ESP_FAIL on GPIO error
+ */
 esp_err_t sensor_buffer_disable(void);
 
-// 싱글톤 인스턴스 가져오기
+/**
+ * @brief Returns the singleton instance of the sensor auto-detect manager.
+ *
+ * Initializes the instance on first call.
+ *
+ * @return Pointer to sensor_ad_manager_t instance
+ */
 sensor_ad_manager_t* sensor_ad_get_instance(void);
+
+/**
+ * @brief Checks if the sensor auto-detect manager is initialized.
+ *
+ * @return true if initialized, false otherwise
+ */
 bool sensor_ad_is_initialized(void);
 
 // 안전한 접근 함수들

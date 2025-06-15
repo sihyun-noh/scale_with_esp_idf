@@ -216,8 +216,21 @@ static int do_get_cfg_blob_cmd(int argc, char **argv) {
   sensor_port_cfg_t b;
   esp_err_t err = cfg_get_blob(key, &b, sizeof(b));
   if (err == ESP_OK) {
-    ESP_LOGI(TAG, "Read blob: port=%d, dirty=%d, enabled=%d, sensor_type=%d, threshold=%d", b.port, b.dirty, b.enabled,
-             b.sensor_type, b.threshold);
+    ESP_LOGI(TAG, "=== Loaded config for port %d ===", b.port);
+    ESP_LOGI(TAG, "Status     : enabled=%d, type_name=%s, status_code=%d", b.status.enabled, b.status.type_name,
+             b.status.status_code);
+    ESP_LOGI(TAG, "SensorType : %d", b.sensor_type);
+    ESP_LOGI(TAG, "CurrentState : %d", b.current_state);
+    ESP_LOGI(TAG, "Server Config:");
+    ESP_LOGI(TAG, "  - publish_interval = %d", b.server_config.publish_interval);
+    ESP_LOGI(TAG, "  - threshold_enabled = %d", b.server_config.threshold_enabled);
+    ESP_LOGI(TAG, "  - threshold_min = %.2f", b.server_config.threshold_min);
+    ESP_LOGI(TAG, "  - threshold_max = %.2f", b.server_config.threshold_max);
+    ESP_LOGI(TAG, "  - dt_name = %s", b.dt_name);
+    ESP_LOGI(TAG, "Data Shape: columns=%d, rows=%d", b.columns_size, b.rows_size);
+    ESP_LOGI(TAG, "Dirty flag: %d", b.dirty);
+  } else {
+    ESP_LOGE(TAG, "Failed to read blob from NVS: %s", esp_err_to_name(err));
   }
   return err;
 }

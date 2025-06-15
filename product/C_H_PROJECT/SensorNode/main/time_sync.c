@@ -81,37 +81,3 @@ void on_got_ip(void* arg, esp_event_base_t base, int32_t id, void* data) {
   ESP_LOGI(TAG, "Got IP, now attempting SNTP sync %s", base);
   obtain_time();
 }
-
-/* void app_main(void) */
-/* { */
-/*     // NVS 초기화 (Wi-Fi 사용을 위해 필수) */
-/*     esp_err_t ret = nvs_flash_init(); */
-/*     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) { */
-/*         ESP_ERROR_CHECK(nvs_flash_erase()); */
-/*         ret = nvs_flash_init(); */
-/*     } */
-/*     ESP_ERROR_CHECK(ret); */
-/**/
-/*     // 기본 이벤트 루프 */
-/*     ESP_ERROR_CHECK(esp_event_loop_create_default()); */
-/**/
-/*     // IP 획득 이벤트 등록 */
-/*     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &on_got_ip, NULL)); */
-/**/
-/*     // Wi-Fi 스테이션 초기화 */
-/*     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT(); */
-/*     ESP_ERROR_CHECK(esp_wifi_init(&cfg)); */
-/*     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA)); */
-/*     ESP_ERROR_CHECK(esp_wifi_start()); */
-/**/
-/*     // 여기서 SSID/PASSWORD 설정 후 esp_wifi_connect() 호출 */
-/*     // ex) */
-/*     wifi_config_t wifi_cfg = { */
-/*         .sta = { */
-/*             .ssid = "YOUR_SSID", */
-/*             .password = "YOUR_PASS", */
-/*         }, */
-/*     }; */
-/*     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_cfg)); */
-/*     ESP_ERROR_CHECK(esp_wifi_connect()); */
-/* } */

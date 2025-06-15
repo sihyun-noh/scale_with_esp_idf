@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(EXTRA_COMPONENT_DIRS
     ${CMAKE_CURRENT_LIST_DIR}/components/bsp_component/ethernet_driver
     ${CMAKE_CURRENT_LIST_DIR}/components/bsp_component/sdi12
+    ${CMAKE_CURRENT_LIST_DIR}/components/bsp_component/bsp_gpio
     ${CMAKE_CURRENT_LIST_DIR}/opensource
 )
 

@@ -15,14 +15,14 @@ extern "C" {
 #define TOPIC_PREFIX MQTT_VERSION "/device"  // ex) v1/device
 
 // Subtopics
-#define TOPIC_STATE   "state"
-#define TOPIC_CONFIG  "config"
-#define TOPIC_SENSOR  "sensor"
-#define TOPIC_CMD     "cmd"
-#define TOPIC_JSON    "json"
-#define TOPIC_OTA     "ota"
-#define TOPIC_SETTING "setting"
-#define TOPIC_UPLOAD  "upload"
+#define TOPIC_STATE      "state"
+#define TOPIC_CONFIG     "config"
+#define TOPIC_SENSOR     "sensor"
+#define TOPIC_CMD        "cmd"
+#define TOPIC_JSON       "json"
+#define TOPIC_OTA_UPLOAD "ota_upload"
+#define TOPIC_SETTING    "setting"
+#define TOPIC_UPLOAD     "upload"
 //
 #define MAX_TOPIC_LEN     128
 #define MAX_PAYLOAD_LEN   512
@@ -50,7 +50,7 @@ typedef enum {
   TOPIC_TYPE_SENSOR,
   TOPIC_TYPE_CMD,
   TOPIC_TYPE_JSON,
-  TOPIC_TYPE_OTA,
+  TOPIC_TYPE_OTA_UPLOAD,
   TOPIC_TYPE_SETTING,
   TOPIC_TYPE_UPLOAD
 } topic_type_t;
@@ -154,7 +154,7 @@ strategy_fn_t strategy_manager_find_strategy(const char *topic);
  * It should be called once during application startup to establish
  * MQTT communication.
  */
-void mqtt_app_start(void);
+void mqtt_init(void);
 
 /**
  * @brief Router task for dispatching MQTT messages.
@@ -165,7 +165,7 @@ void mqtt_app_start(void);
  *
  * @param param Pointer to a queue handle or context (if needed).
  */
-void router_task(void *param);
+void router_dispatch_task(void *param);
 
 /**
  * @brief Build MQTT topic string in the format: v1/device/{device_id}/{topic_type}.

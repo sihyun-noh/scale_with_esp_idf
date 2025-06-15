@@ -59,7 +59,7 @@ esp_err_t file_info_helper() {
   return ESP_OK;
 }
 
-esp_err_t file_upload_proseece() {
+esp_err_t file_upload_proceed() {
   char filepath[300] = { 0 };
 
   ESP_LOGI(TAG, "Starting file upload process...");

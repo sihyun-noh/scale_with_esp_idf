@@ -22,7 +22,7 @@ const char *topic_type_to_str(topic_type_t type) {
     case TOPIC_TYPE_SENSOR: return TOPIC_SENSOR;
     case TOPIC_TYPE_CMD: return TOPIC_CMD;
     case TOPIC_TYPE_JSON: return TOPIC_JSON;
-    case TOPIC_TYPE_OTA: return TOPIC_OTA;
+    case TOPIC_TYPE_OTA_UPLOAD: return TOPIC_OTA_UPLOAD;
     case TOPIC_TYPE_SETTING: return TOPIC_SETTING;
     case TOPIC_TYPE_UPLOAD: return TOPIC_UPLOAD;
     default: return "unknown";
@@ -42,7 +42,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
       if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_STATE) == ESP_OK) {
         esp_mqtt_client_subscribe(client, topic, 1);
       }
-      if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_OTA) == ESP_OK) {
+      if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_OTA_UPLOAD) == ESP_OK) {
         esp_mqtt_client_subscribe(client, topic, 1);
       }
       if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_UPLOAD) == ESP_OK) {
@@ -86,7 +86,7 @@ esp_err_t build_device_topic_ext(topic_type_t type, char *buf, size_t len) {
   return ESP_OK;
 }
 
-void mqtt_app_start(void) {
+void mqtt_init(void) {
   const esp_mqtt_client_config_t mqtt_cfg = {
     .broker.address.uri = CONFIG_MQTT_BROKER_URL,
   };
@@ -157,7 +157,7 @@ QueueHandle_t _get_task_queue_by_topic(const char *topic) {
 // RouterTask
 // =============================
 
-void router_task(void *param) {
+void router_dispatch_task(void *param) {
   router_queue = xQueueCreate(10, sizeof(mqtt_message_t));
   mqtt_message_t msg;
   while (1) {

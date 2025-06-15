@@ -1,21 +1,84 @@
 
 #include "cJSON.h"
+#include "esp_log.h"
 #include "mqtt_config.h"
+#include "sensor_cfg_config.h"
 
 static const char *TAG = "mqtt_publish";
 extern mqtt_client_ctx_t mqtt_ctx;
 
+/* void publish_device_status(esp_mqtt_client_handle_t client, const char *status) { */
+/*   char *device_id = NULL; */
+/*   get_device_id(&device_id); */
+/**/
+/*   cJSON *root = cJSON_CreateObject(); */
+/*   cJSON_AddStringToObject(root, "deviceid", device_id); */
+/**/
+/*   sensor_port_cfg_t *cfg = sensor_cfg_instance(); */
+/*   if (!cfg) { */
+/*     ESP_LOGE(TAG, "sensor_cfg_instance() returned NULL"); */
+/*     return; */
+/*   } */
+/**/
+/*   for (int i = 0; i < SENSOR_PORT_COUNT; i++) {} */
+/**/
+/*   cJSON_AddStringToObject(root, "status", status); */
+/**/
+/*   char *json_str = cJSON_PrintUnformatted(root); */
+/*   if (json_str) { */
+/*     esp_mqtt_client_publish(client, TOPIC_JSON, json_str, 0, 1, 0); */
+/*     free(json_str); */
+/*   } */
+/*   cJSON_Delete(root); */
+/* } */
+
 void publish_device_status(esp_mqtt_client_handle_t client, const char *status) {
+  char *device_id = NULL;
+  get_device_id(&device_id);  // Must be freed later if heap allocated
+
   cJSON *root = cJSON_CreateObject();
-  cJSON_AddStringToObject(root, "device", "esp32");
+  cJSON_AddStringToObject(root, "deviceid", device_id);
   cJSON_AddStringToObject(root, "status", status);
+
+  sensor_port_cfg_t *cfg = sensor_cfg_instance();
+  if (!cfg) {
+    ESP_LOGE(TAG, "sensor_cfg_instance() returned NULL");
+    cJSON_Delete(root);
+    return;
+  }
+
+  cJSON *ports_array = cJSON_CreateArray();
+  for (int i = 0; i < SENSOR_PORT_COUNT; i++) {
+    cJSON *port_obj = cJSON_CreateObject();
+
+    cJSON_AddNumberToObject(port_obj, "port", cfg[i].port);
+    cJSON_AddStringToObject(port_obj, "type", sensor_type_to_str(cfg[i].sensor_type));
+
+    const char *status_str = NULL;
+    switch (cfg[i].current_state) {
+      case SENSOR_PORT_STATUS_NONE: status_str = "disabled"; break;
+      case SENSOR_PORT_STATUS_READY: status_str = "ready"; break;
+      case SENSOR_PORT_STATUS_ERROR: status_str = "error"; break;
+      default: status_str = "unknown"; break;
+    }
+
+    cJSON_AddStringToObject(port_obj, "status", status_str);
+    cJSON_AddStringToObject(port_obj, "dt_name", cfg[i].dt_name);
+
+    cJSON_AddItemToArray(ports_array, port_obj);
+  }
+
+  cJSON_AddItemToObject(root, "ports", ports_array);
 
   char *json_str = cJSON_PrintUnformatted(root);
   if (json_str) {
     esp_mqtt_client_publish(client, TOPIC_JSON, json_str, 0, 1, 0);
     free(json_str);
   }
+
   cJSON_Delete(root);
+  if (device_id)
+    free(device_id);
 }
 
 void publish_command(esp_mqtt_client_handle_t client, const char *cmd) {

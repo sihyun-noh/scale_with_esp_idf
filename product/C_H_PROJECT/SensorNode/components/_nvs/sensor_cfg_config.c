@@ -13,9 +13,61 @@ static const char *TAG = "sensor_cfg";
 
 static sensor_port_cfg_t g_sensor_cfgs[SENSOR_PORT_COUNT];
 
+SemaphoreHandle_t cfg_mutex = NULL;
+static bool initialized = false;
+
+static sensor_cfg_manager_t sensor_cfg_mgr = { .cfg = g_sensor_cfgs, .mutex = NULL };
+
+const char *sensor_names[] = {
+  "TEROS11",       "TEROS12", "TEROS14", "TEROS21",       "ATMOS21",       "ATMOS22",
+  "ATMOS31",       "ATMOS41", "ATMOS54", "APOGEE_S2_411", "APOGEE_SP_421", "APOGEE_SQ_521",
+  "APOGEE_SU_221",  // ...
+};
+
+const char *sensor_type_to_str(sdi12_sensor_type_t type) {
+  if (type >= 0 && type < SENSOR_TYPE_COUNT) {
+    return sensor_names[type];
+  }
+  return "UNKNOWN";
+}
 // singleton instance
 sensor_port_cfg_t *sensor_cfg_instance(void) {
   return g_sensor_cfgs;
+}
+
+sensor_cfg_manager_t *sensor_cfg_get_instance(void) {
+  // 뮤텍스가 아직 생성되지 않았다면 한 번만 생성
+  if (!initialized) {
+    // 먼저 뮤텍스 생성
+    sensor_cfg_mgr.mutex = xSemaphoreCreateMutex();
+    if (sensor_cfg_mgr.mutex == NULL) {
+      ESP_LOGE(TAG, "Failed to create sensor_cfg mutex");
+      return NULL;
+    }
+    initialized = true;
+    ESP_LOGI(TAG, "sensor_cfg_manager initialized");
+  }
+  return &sensor_cfg_mgr;
+}
+
+void sensor_cfg_lock(void) {
+  sensor_cfg_manager_t *mgr = sensor_cfg_get_instance();
+  if (mgr == NULL) {
+    ESP_LOGE(TAG, "sensor_cfg_lock: manager not initialized");
+    return;
+  }
+  // 뮤텍스 획득 (무한 대기)
+  xSemaphoreTake(mgr->mutex, portMAX_DELAY);
+}
+
+void sensor_cfg_unlock(void) {
+  sensor_cfg_manager_t *mgr = sensor_cfg_get_instance();
+  if (mgr == NULL) {
+    ESP_LOGE(TAG, "sensor_cfg_unlock: manager not initialized");
+    return;
+  }
+  // 뮤텍스 반납
+  xSemaphoreGive(mgr->mutex);
 }
 
 esp_err_t sensor_port_cfg_load(int port, sensor_port_cfg_t *cfg) {
@@ -45,24 +97,49 @@ sensor_port_cfg_t *sensor_port_cfg_get(int port) {
 
 esp_err_t sensor_port_cfg_init(void) {
   esp_err_t err = ESP_OK;
-  for (int i = 0; i < SENSOR_PORT_COUNT; ++i) {
-    sensor_port_cfg_t *cfg = &g_sensor_cfgs[i];
-    err = sensor_port_cfg_load(i + 1, cfg);
+
+  // 포트 번호는 1 기반
+  // nvs 저장된 key 기반.
+  for (int i = 1; i <= SENSOR_PORT_COUNT; ++i) {
+    sensor_port_cfg_t *cfg = &g_sensor_cfgs[i - 1];
+    cfg->port = i;
+
+    err = sensor_port_cfg_load(i, cfg);  // 포트 번호는 1 기반
+
     if (err == ESP_ERR_NVS_NOT_FOUND) {
-      cfg->enabled = 1;
-      cfg->sensor_type = 0;
-      cfg->threshold = 100;
-      cfg->dirty = 1;  // mark as dirty for first-time save
-      ESP_LOGI(TAG, "Default config set for port %d", i + 1);
+      // 기본값 설정
+      cfg->status.enabled = 1;
+      strncpy(cfg->status.type_name, "UNKNOWN", sizeof(cfg->status.type_name));
+      cfg->status.status_code = SENSOR_PORT_STATUS_NONE;
+
+      cfg->sensor_type = SENSOR_TYPE_UNKNOWN;
+      cfg->current_state = SENSOR_PORT_STATUS_NONE;
+
+      // 서버 설정 기본값
+      cfg->server_config.publish_interval = 60;
+      cfg->server_config.threshold_enabled = 0;
+      cfg->server_config.threshold_min = 0.0f;
+      cfg->server_config.threshold_max = 100.0f;
+      strncpy(cfg->dt_name, "UNSET", sizeof(cfg->dt_name));
+
+      cfg->columns_size = 0;
+      cfg->rows_size = 1;
+      cfg->dirty = 1;  // 최초 저장 필요
+
+      ESP_LOGI(TAG, "Default config set for port %d", i);
     } else if (err == ESP_OK) {
       cfg->dirty = 0;
-      ESP_LOGI(TAG, "Loaded config for port %d", i + 1);
-      ESP_LOGI(TAG, "Read blob: port=%d, dirty=%d, enabled=%d, sensor_type=%d, threshold=%d", cfg->port, cfg->dirty,
-               cfg->enabled, cfg->sensor_type, cfg->threshold);
+
+      ESP_LOGI(TAG, "Loaded config for port %d", i);
+      ESP_LOGI(TAG, "Port=%d | SensorType=%d | DT=%s | Enabled=%d | State=%d | Threshold=[%d, %.2f~%.2f]", cfg->port,
+               cfg->sensor_type, cfg->dt_name, cfg->status.enabled, cfg->current_state,
+               cfg->server_config.threshold_enabled, cfg->server_config.threshold_min,
+               cfg->server_config.threshold_max);
     } else {
-      ESP_LOGE(TAG, "Failed to load config for port %d: %s", i + 1, esp_err_to_name(err));
+      ESP_LOGE(TAG, "Failed to load config for port %d: %s", i, esp_err_to_name(err));
     }
   }
+
   return ESP_OK;
 }
 
@@ -82,7 +159,7 @@ esp_err_t sensor_port_cfg_commit(void) {
   }
   return err;
 }
-
+#if 0
 esp_err_t handle_mqtt_config_update(const char *json_payload) {
   if (!json_payload)
     return ESP_ERR_INVALID_ARG;
@@ -131,6 +208,71 @@ esp_err_t handle_mqtt_config_update(const char *json_payload) {
   if (sensor_type && cJSON_IsNumber(sensor_type)) {
     cfg->sensor_type = sensor_type->valueint;
     cfg->dirty = 1;
+  }
+
+  cJSON_Delete(root);
+  return ESP_OK;
+}
+#endif
+
+esp_err_t handle_mqtt_config_update(const char *json_payload) {
+  if (!json_payload)
+    return ESP_ERR_INVALID_ARG;
+
+  cJSON *root = cJSON_Parse(json_payload);
+  if (!root) {
+    ESP_LOGE(TAG, "Failed to parse JSON");
+    return ESP_FAIL;
+  }
+
+  // Parse "port"
+  cJSON *port = cJSON_GetObjectItem(root, "port");
+  if (!port || !cJSON_IsNumber(port)) {
+    ESP_LOGW(TAG, "Invalid or missing 'port'");
+    cJSON_Delete(root);
+    return ESP_FAIL;
+  }
+
+  uint8_t new_port = port->valueint;
+  if (new_port >= SENSOR_PORT_COUNT) {
+    ESP_LOGW(TAG, "Port number out of range: %d", new_port);
+    cJSON_Delete(root);
+    return ESP_FAIL;
+  }
+
+  sensor_port_cfg_t *cfg = sensor_port_cfg_get(new_port);
+  if (!cfg) {
+    ESP_LOGE(TAG, "Failed to get config for port %d", new_port);
+    cJSON_Delete(root);
+    return ESP_FAIL;
+  }
+
+  // Parse "publish_interval"
+  cJSON *interval = cJSON_GetObjectItem(root, "publish_interval");
+  if (interval && cJSON_IsNumber(interval)) {
+    cfg->server_config.publish_interval = interval->valueint;
+    cfg->dirty = 1;
+  }
+
+  // Parse "threshold" object
+  cJSON *threshold = cJSON_GetObjectItem(root, "threshold");
+  if (threshold && cJSON_IsObject(threshold)) {
+    cJSON *enabled = cJSON_GetObjectItem(threshold, "enabled");
+    cJSON *min = cJSON_GetObjectItem(threshold, "min");
+    cJSON *max = cJSON_GetObjectItem(threshold, "max");
+
+    if (enabled && cJSON_IsBool(enabled)) {
+      cfg->server_config.threshold_enabled = cJSON_IsTrue(enabled);
+      cfg->dirty = 1;
+    }
+    if (min && cJSON_IsNumber(min)) {
+      cfg->server_config.threshold_min = (float)min->valuedouble;
+      cfg->dirty = 1;
+    }
+    if (max && cJSON_IsNumber(max)) {
+      cfg->server_config.threshold_max = (float)max->valuedouble;
+      cfg->dirty = 1;
+    }
   }
 
   cJSON_Delete(root);

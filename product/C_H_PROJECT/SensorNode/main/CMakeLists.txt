@@ -1,7 +1,13 @@
 set(req_esp esp_http_client lwip)
-set(req_ch etl ethernet_driver sdi12 _wifi _console _nvs _ota _mqtt data_table sysfile)
+set(req_custom etl ethernet_driver bsp_gpio sdi12 _wifi _console _nvs _ota _mqtt data_table sysfile)
 
-idf_component_register(SRCS "main.cpp" "task_manager.c" "task_data_table.c" "task_upload_file.c" "time_sync.c" "sdi12_task.cpp"
+idf_component_register(SRCS 
+                    "main.cpp" 
+                    "strategy_task_mgr.c" 
+                    "strategy_task_mgr_sensor.c" 
+                    "data_table_task.c" 
+                    "upload_file_task.c" 
+                    "time_sync.c" 
                     INCLUDE_DIRS "."
-                    REQUIRES ${req_esp} ${req_ch}
+                    REQUIRES ${req_esp} ${req_custom}
 )

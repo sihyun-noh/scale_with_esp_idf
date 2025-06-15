@@ -2519,6 +2519,7 @@ esp_err_t datatable_push_float_sample(datatable_handle_t datatable_handle, const
     } else {
       // increment samples count and append sample to column data buffer
       datatable_handle->processes[index]->samples_count += 1;
+      ESP_LOGE("PUSH_6", "samples_count:%d", datatable_handle->processes[index]->samples_count);
       dt_column_data->value_ts = time_into_interval_get_epoch_timestamp();
       dt_column_data->value = value;
     }

@@ -15,6 +15,8 @@
  */
 
 #include "esp_err.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -26,6 +28,7 @@ extern "C" {
 /// Get the CFG key name for a given port (e.g., "sensor_port_1")
 #define SENSOR_PORT_KEY(i) "sensor_port_" #i
 
+// @brief The sensor_type_to_str function must match the string array exactly
 typedef enum {
   TEROS11 = 0x00,
   TEROS12,
@@ -41,20 +44,82 @@ typedef enum {
   APOGEE_SQ_521,
   APOGEE_SU_221,
   SENSOR_TYPE_COUNT,
+  SENSOR_TYPE_UNKNOWN = 99,
 } sdi12_sensor_type_t;
 
-/// Structure to hold configuration for a single sensor port
+/// @brief Enum to define the current state of a sensor port.
+typedef enum {
+  SENSOR_PORT_STATUS_NONE = 0,    ///< No sensor detected or inactive
+  SENSOR_PORT_STATUS_DETECTED,    ///< Sensor detected, type known
+  SENSOR_PORT_STATUS_CONFIGURED,  ///< Configuration received from server
+  SENSOR_PORT_STATUS_READY,       ///< Fully ready for operation
+  SENSOR_PORT_STATUS_ERROR,       ///< Error during communication or parsing
+} sensor_port_status_t;
+
+/// @brief Structure to hold metadata for sending sensor port status to the server.
 typedef struct {
-  uint8_t port;
-  uint8_t enabled;                  ///< 1 if port is active, 0 if disabled
-  sdi12_sensor_type_t sensor_type;  ///< Sensor type configuration
-  uint16_t threshold;               ///< Threshold value for triggering actions
-  uint8_t dirty;                    ///< 1 if modified, 0 if clean
-  uint8_t sampling_period_sec;
-  uint8_t processing_interval_period_min;
-  uint8_t columns_size;
-  uint8_t rows_size;
+  uint8_t enabled;                   ///< 1 if the port is currently active
+  char type_name[8];                 ///< Sensor type name string (e.g., "TEROS11")
+  sensor_port_status_t status_code;  ///< Sensor port state (see enum above)
+} status_send_info_t;
+
+/// @brief Structure to hold full configuration and runtime info for a sensor port.
+typedef struct {
+  uint8_t port;               ///< Sensor port number
+  char dt_name[32];           ///< Data table or identifier name
+  status_send_info_t status;  ///< Status metadata to be sent to server
+
+  sdi12_sensor_type_t sensor_type;     ///< Detected sensor type (from aI!)
+  sensor_port_status_t current_state;  ///< Current state for runtime FSM logic
+
+  // Configuration received from the server (to be saved in NVS)
+  struct {
+    uint8_t publish_interval;   ///< Publish interval (sec)
+    uint8_t threshold_enabled;  ///< Whether to apply threshold logic
+    float threshold_min;        ///< Minimum threshold value
+    float threshold_max;        ///< Maximum threshold value
+  } server_config;
+
+  uint8_t columns_size;  ///< Expected number of columns from sensor
+  uint8_t rows_size;     ///< Expected number of rows from sensor
+
+  uint8_t dirty;  ///< 1 if modified and needs saving to NVS
 } sensor_port_cfg_t;
+
+/// @brief Structure to hold the sensor configuration array and its protective mutex
+typedef struct {
+  sensor_port_cfg_t *cfg;   ///< Pointer to the actual sensor configuration array (g_sensor_cfgs)
+  SemaphoreHandle_t mutex;  ///< Mutex to protect access to the configuration array
+} sensor_cfg_manager_t;
+
+/**
+ * @brief Returns the string representation of a given SENSOR_TYPE.
+ *
+ * @param type The sensor type enum value.
+ * @return const char* String name of the sensor type.
+ */
+const char *sensor_type_to_str(sdi12_sensor_type_t type);
+
+/**
+ * @brief Returns the instance of sensor_cfg_manager_t containing the sensor config array and mutex.
+ *
+ * Initializes the internal mutex on the first call, and reuses the same instance on subsequent calls.
+ *
+ * @return sensor_cfg_manager_t* Initialized manager instance with mutex.
+ */
+sensor_cfg_manager_t *sensor_cfg_get_instance(void);
+
+/**
+ * @brief Acquires the mutex for the entire sensor configuration array.
+ *
+ * Must be followed by a call to sensor_cfg_unlock() after access is done.
+ */
+void sensor_cfg_lock(void);
+
+/**
+ * @brief Releases the mutex for the sensor configuration array.
+ */
+void sensor_cfg_unlock(void);
 
 /**
  * @brief Load sensor port configuration from NVS.

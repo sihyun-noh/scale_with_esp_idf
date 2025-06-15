@@ -40,17 +40,19 @@ esp_err_t parse_topic_info(const char *topic, topic_info_t *info) {
   strncpy(info->mac, p, mac_end - p);
   info->mac[mac_end - p] = '\0';
 
-  /* // 이제 /port/{n}/ 찾기 */
-  /* const char *port_ptr = strstr(mac_end, "/port/"); */
-  /* if (!port_ptr) */
-  /*   return ESP_FAIL; */
-  /**/
-  /* port_ptr += strlen("/port/"); */
-  /* int port = atoi(port_ptr); */
-  /* if (port < 1 || port > SENSOR_PORT_COUNT) */
-  /*   return ESP_FAIL; */
-  /**/
-  /* info->port = port; */
+#if 0
+  // 이제 /port/{n}/ 찾기
+  const char *port_ptr = strstr(mac_end, "/port/");
+  if (!port_ptr)
+    return ESP_FAIL;
+
+  port_ptr += strlen("/port/");
+  int port = atoi(port_ptr);
+  if (port < 1 || port > SENSOR_PORT_COUNT)
+    return ESP_FAIL;
+
+  info->port = port;
+#endif
   return ESP_OK;
 }
 
