@@ -1707,6 +1707,11 @@ void ui_init(void) {
     indicator_model = MODEL_AND_CB_12K;
     get_modelSeries_refer(model_series_set, str, &model_series_configured);
     OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, str);
+  } else if (strncmp(indicator_set, "FG-SERIES", 9) == 0) {
+    // weight_zero_command = cas_zero_command;
+    indicator_model = MODEL_AND_FG;
+    get_modelSeries_refer(model_series_set, str, &model_series_configured);
+    OBJ_TEXT_SET_LABEL(ui_main_scr_Indicator_Model_Label, str);
   } else if (strncmp(indicator_set, "PW-200", 6) == 0) {
     // weight_zero_command = cas_zero_command;
     indicator_model = MODEL_ACOM_PW_200;

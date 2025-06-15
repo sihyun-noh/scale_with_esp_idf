@@ -162,6 +162,15 @@ static model_series_data_t *model_list_config(char *model_series_name, indicator
       num_elements = sizeof(model_name_array) / sizeof(model_name_array[0]);
       break;
     }
+    case MODEL_AND_FG: {
+      // 순서있음
+      static const char *model_name_array[] = { MODEL_FG_20KAM_N, MODEL_FG_30KAM_N, MODEL_FG_60KAM_N,
+                                                MODEL_FG_150KAM_N };
+      model_data->model_id = model_id;
+      model_name = model_name_array;
+      num_elements = sizeof(model_name_array) / sizeof(model_name_array[0]);
+      break;
+    }
     case MODEL_CAS_MW2_H: {
       // 순서있음
       static const char *model_name_array[] = { MODEL_MW2_300G_0_2G_N, MODEL_MW2_3000G_5G_N };
@@ -403,6 +412,10 @@ static void event_handler(lv_event_t *e) {
       model_series_box(ui_Indicator_Model_Select_Screen, model_list_config("AND_CB/EK", MODEL_AND_CB_12K));
       syscfg_set(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, str_buf);
 
+      /* } else if (strncmp(str_buf, "FG-SERIES", 9) == 0) { */
+      /*   model_series_box(ui_Indicator_Model_Select_Screen, model_list_config("AND_FG", MODEL_AND_FG)); */
+      /*   syscfg_set(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, str_buf); */
+      /**/
     } else if (strncmp(str_buf, "PW-200", 6) == 0) {
       create_custom_msg_box("선택된 모델은 \nPW-200 입니다.", ui_Indicator_Model_Select_Screen, NULL, LV_EVENT_CLICKED);
       syscfg_set(SYSCFG_I_INDICATOR_SET, SYSCFG_N_INDICATOR_SET, str_buf);
@@ -631,6 +644,8 @@ void ui_indicator_model_select_screen_init(void) {
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "CB-SERIES");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
+  /* btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "FG-SERIES"); */
+  /* lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL); */
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "PW-200");
   lv_obj_add_event_cb(btn, event_handler, LV_EVENT_CLICKED, NULL);
   btn = lv_list_add_btn(indicator_list, LV_SYMBOL_FILE, "INNOTEM-T28");

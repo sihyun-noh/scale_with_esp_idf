@@ -7,58 +7,120 @@
 
 static const char* TAG = "model_define";
 
+#define CHA_REQUEAMENT_20250615 0  // min 값 최소단위 1 digite
+// #define CHA_REQUEAMENT_20250615 1  // min max 정상버젼
+
 // clang-format off
 const model_group_info_t model_config[] = {
     { .model_id = MODEL_CAS_SW_11, 
       .series_info = {
+#if CHA_REQUEAMENT_20250615
           { SWII_30KG_200G, MODEL_SWII_30KG_200G_N, 200, 30000, DP_KG_0_001}, 
           { SWII_15KG_100G, MODEL_SWII_15KG_100G_N, 100, 15000, DP_G_1}, 
           { SWII_6KG_40G, MODEL_SWII_6KG_40G_N, 40, 6000, DP_G_1},
-      }, 
+#else
+          { SWII_30KG_200G, MODEL_SWII_30KG_200G_N, 10, 30000, DP_KG_0_001}, 
+          { SWII_15KG_100G, MODEL_SWII_15KG_100G_N, 5, 15000, DP_G_1}, 
+          { SWII_6KG_40G, MODEL_SWII_6KG_40G_N, 2, 6000, DP_G_1},
+#endif
+
+    }, 
       .series_count = 3 
     },
     { .model_id = MODEL_AND_CB_12K, 
       .series_info = {
+
+#if CHA_REQUEAMENT_20250615
           { CB_310G_0_2G, MODEL_CB_310G_0_2G_N, 0.2, 310, DP_G_0_01}, 
           { CB_3100G_5G, MODEL_CB_3100G_5G_N, 5, 3100, DP_G_0_1}, 
           { EK_4100G_5G, MODEL_EK_4100G_5G_N, 5, 4000, DP_G_0_1}, 
-          { CB_12KG_50G, MODEL_CB_12KG_50G_N, 50, 12000, DP_G_1}, 
+          { CB_12KG_50G, MODEL_CB_12KG_50G_N, 50, 12000, DP_G_1},
+#else 
+          { CB_310G_0_2G, MODEL_CB_310G_0_2G_N, 0.01, 310, DP_G_0_01}, 
+          { CB_3100G_5G, MODEL_CB_3100G_5G_N, 0.1, 3100, DP_G_0_1}, 
+          { EK_4100G_5G, MODEL_EK_4100G_5G_N, 0.1, 4000, DP_G_0_1}, 
+          { CB_12KG_50G, MODEL_CB_12KG_50G_N, 1, 12000, DP_G_1}, 
+#endif
       }, 
+    .series_count = 4 
+    },
+    { .model_id = MODEL_AND_FG, 
+      .series_info = {
+#if CHA_REQUEAMENT_20250615
+           { FG_20KAM_1G, MODEL_FG_20KAM_N, 1, 20000, DP_KG_0_001}, 
+           { FG_30KAM_5G, MODEL_FG_30KAM_N, 5, 30000, DP_KG_0_001}, 
+           { FG_60KAM_10G, MODEL_FG_60KAM_N, 10, 60000, DP_KG_0_01}, 
+           { FG_150KAM_20G, MODEL_FG_150KAM_N, 50, 150000, DP_KG_0_01}, 
+#else
+           { FG_20KAM_1G, MODEL_FG_20KAM_N, 1, 20000, DP_KG_0_001}, 
+           { FG_30KAM_5G, MODEL_FG_30KAM_N, 5, 30000, DP_KG_0_001}, 
+           { FG_60KAM_10G, MODEL_FG_60KAM_N, 10, 60000, DP_KG_0_01}, 
+           { FG_150KAM_20G, MODEL_FG_150KAM_N, 50, 150000, DP_KG_0_01}, 
+#endif
+       }, 
     .series_count = 4 
     },
     { .model_id = MODEL_CAS_MW2_H, 
       .series_info = {
+#if CHA_REQUEAMENT_20250615
           { MW2_300G_0_2G, MODEL_MW2_300G_0_2G_N, 0.2, 300, DP_G_0_01}, 
           { MW2_3000G_5G, MODEL_MW2_3000G_5G_N, 5, 3000, DP_G_0_1}, 
+#else
+          { MW2_300G_0_2G, MODEL_MW2_300G_0_2G_N, 0.01, 300, DP_G_0_01}, 
+          { MW2_3000G_5G, MODEL_MW2_3000G_5G_N, 0.1, 3000, DP_G_0_1}, 
+#endif      
       }, 
     .series_count = 2 
     },
     { .model_id = MODEL_CAS_EC, 
       .series_info = {
+#if CHA_REQUEAMENT_20250615
           { EC_30KG_100G, MODEL_EC_30KG_100G_N, 100, 30000, DP_G_1}, 
           { EC_6000G_25G, MODEL_EC_6000G_25G_N, 25, 6000, DP_G_0_1}, 
+#else
+          { EC_30KG_100G, MODEL_EC_30KG_100G_N, 2, 30000, DP_G_1}, 
+          { EC_6000G_25G, MODEL_EC_6000G_25G_N, 0.5, 6000, DP_G_0_1}, 
+#endif
       }, 
     .series_count = 2 
     },
     { .model_id = MODEL_CAS_EC_D_SERIES,
       .series_info = {
+#if CHA_REQUEAMENT_20250615
           { EC_D_30KG_1G, MODEL_EC_D_30KG_100G_N, 100, 30000, DP_G_1}, 
           { EC_D_6KG_0_1G, MODEL_EC_D_6KG_25G_N, 25, 6000, DP_G_0_1}, 
-      }, 
+#else
+          { EC_D_30KG_1G, MODEL_EC_D_30KG_100G_N, 1, 30000, DP_G_1}, 
+          { EC_D_6KG_0_1G, MODEL_EC_D_6KG_25G_N, 0.5, 6000, DP_G_0_1}, 
+#endif
+    }, 
     .series_count = 2 
     },
     { .model_id = MODEL_CAS_HB_HBI, 
       .series_info = {
+#if CHA_REQUEAMENT_20250615
           { HB_150KG_10G, MODEL_HB_150KG_500G_N, 500, 150000, DP_KG_0_01}, 
-          { EC_D_6KG_0_1G, MODEL_HB_75KG_250G_N, 250, 75000, DP_KG_0_001}, 
-      }, 
+          { HB_75KG_5G, MODEL_HB_75KG_250G_N, 250, 75000, DP_KG_0_001}, 
+#else
+          { HB_150KG_10G, MODEL_HB_150KG_500G_N, 10, 150000, DP_KG_0_01}, 
+          { HB_75KG_5G, MODEL_HB_75KG_250G_N, 5, 75000, DP_KG_0_001}, 
+#endif
+
+
+    }, 
     .series_count = 2 
     },
     { .model_id = MODEL_CAS_WTM500, 
       .series_info = {
+#if CHA_REQUEAMENT_20250615
           { CI_999KG_10G, MODEL_CI_999KG_100G_N, 100, 999000, DP_KG_0_01}, 
           { CI_99KG_1G, MODEL_CI_99KG_10G_N, 10, 99000, DP_KG_0_001}, 
-      }, 
+#else
+          { CI_999KG_10G, MODEL_CI_999KG_100G_N, 10, 999000, DP_KG_0_01}, 
+          { CI_99KG_1G, MODEL_CI_99KG_10G_N, 1, 99000, DP_KG_0_001}, 
+#endif
+
+    }, 
     .series_count = 2 
     },
 
@@ -97,6 +159,12 @@ void get_modelSeries_refer(const char* input, char* str, model_series_configured
           configured->series = model_config[i].series_info[j].series;
         } else if (model_id == MODEL_AND_CB_12K) {
           sprintf(str, "CB/EK/%s", model_config[i].series_info[j].refer);
+          configured->model_min = model_config[i].series_info[j].min;
+          configured->model_max = model_config[i].series_info[j].max;
+          configured->DP = model_config[i].series_info[j].DP;
+          configured->series = model_config[i].series_info[j].series;
+        } else if (model_id == MODEL_AND_FG) {
+          sprintf(str, "FG/%s", model_config[i].series_info[j].refer);
           configured->model_min = model_config[i].series_info[j].min;
           configured->model_max = model_config[i].series_info[j].max;
           configured->DP = model_config[i].series_info[j].DP;

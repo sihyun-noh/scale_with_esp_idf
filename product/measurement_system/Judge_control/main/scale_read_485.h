@@ -70,6 +70,7 @@ typedef enum {
   MODEL_CAS_DB_1,
   MODEL_CAS_DB_2,
   MODEL_CAS_EC,
+  MODEL_AND_FG,
 } indicator_model_t;
 
 typedef enum {
