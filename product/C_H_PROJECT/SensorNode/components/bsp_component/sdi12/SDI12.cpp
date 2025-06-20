@@ -324,6 +324,11 @@ void SDI12::begin() {
     } else {
       ESP_LOGE(TAG, "Failed to install ISR service: %s", esp_err_to_name(err));
     }
+
+    pinMode_esp((gpio_num_t)_dataPinRX, ESP_INPUT);                          // Turn off the pull-up resistor
+    gpio_set_intr_type((gpio_num_t)_dataPinRX, GPIO_INTR_ANYEDGE);           // 인터럽트 타입 설정
+    gpio_isr_handler_add((gpio_num_t)_dataPinRX, SDI12::isr_wrapper, this);  // 정적 ISR 등록
+    setPinInterrupts(false);                                                 // Interrupts disabled on data pin
   }
 
   // Set up the prescaler as needed for timers
@@ -402,16 +407,26 @@ void SDI12::handleInterrupt_idf() {
 }
 
 // a helper function to switch pin interrupts on or off
+// void SDI12::setPinInterrupts(bool enable) {
+//   // Merely need to attach the interrupt function to the pin
+//
+//   if (enable) {
+//     gpio_set_intr_type((gpio_num_t)_dataPinRX, GPIO_INTR_ANYEDGE);           // 인터럽트 타입설정
+//     gpio_isr_handler_add((gpio_num_t)_dataPinRX, SDI12::isr_wrapper, this);  // 정적 ISR 등록
+//     gpio_intr_enable((gpio_num_t)_dataPinRX);
+//   } else {
+//     gpio_intr_disable((gpio_num_t)_dataPinRX);
+//     gpio_isr_handler_remove((gpio_num_t)_dataPinRX);
+//   }
+// }
+
 void SDI12::setPinInterrupts(bool enable) {
   // Merely need to attach the interrupt function to the pin
 
   if (enable) {
-    gpio_set_intr_type((gpio_num_t)_dataPinRX, GPIO_INTR_ANYEDGE);           // 인터럽트 타입 설정
-    gpio_isr_handler_add((gpio_num_t)_dataPinRX, SDI12::isr_wrapper, this);  // 정적 ISR 등록
     gpio_intr_enable((gpio_num_t)_dataPinRX);
   } else {
     gpio_intr_disable((gpio_num_t)_dataPinRX);
-    gpio_isr_handler_remove((gpio_num_t)_dataPinRX);
   }
 }
 
@@ -429,12 +444,62 @@ void SDI12::setPinInterrupts(bool enable) {
    interrupts enabled for the pin */
 // SDI12_LISTENING
 
+// void SDI12::setState(SDI12_STATES state) {
+//   switch (state) {
+//     case SDI12_HOLDING: {
+//       // pinMode_esp((gpio_num_t)_dataPinRX, ESP_INPUT);  // Turn off the pull-up resistor
+//       // setPinInterrupts(false);                         // Interrupts disabled on data pin
+//
+//       pinMode_esp((gpio_num_t)_dataPinTX, ESP_OUTPUT);  // Pin mode = output
+//       gpio_set_level((gpio_num_t)_dataPinTX, 0);
+//
+//       pinMode_esp((gpio_num_t)_txOE, ESP_OUTPUT);  // Pin mode = input, pull-up resistor off
+//       gpio_set_level((gpio_num_t)_dataPinTX, 1);
+//       break;
+//     }
+//     case SDI12_TRANSMITTING: {
+//       pinMode_esp((gpio_num_t)_dataPinTX, ESP_OUTPUT);  // Pin mode = output
+//
+//       // pinMode_esp((gpio_num_t)_dataPinRX, ESP_INPUT);  // Turn off the pull-up resistor
+//       // setPinInterrupts(false);                         // Interrupts disabled on data pin
+//
+//       pinMode_esp((gpio_num_t)_txOE, ESP_OUTPUT);  // Pin mode = input, pull-up resistor off
+//       gpio_set_level((gpio_num_t)_txOE, 0);
+//
+//       break;
+//     }
+//     case SDI12_LISTENING: {
+//       // pinMode_esp((gpio_num_t)_dataPinRX, ESP_INPUT);  // Pin mode = input, pull-up resistor off
+//
+//       // Re-enable universal interrupts as soon as critical timing is past
+//       portENABLE_INTERRUPTS();
+//       setPinInterrupts(true);  // Enable Rx interrupts on data pin
+//       rxState = WAITING_FOR_START_BIT;
+//
+//       // pinMode_esp((gpio_num_t)_dataPinTX, ESP_INPUT);  // Pin mode = input, pull-up resistor off
+//       // pinMode_esp((gpio_num_t)_txOE, ESP_OUTPUT);      // Pin mode = input, pull-up resistor off
+//       gpio_set_level((gpio_num_t)_txOE, 1);  // Pin state = low (turns off pull-up)
+//       break;
+//     }
+//     default:  // SDI12_DISABLED or SDI12_ENABLED
+//     {
+//       // gpio_set_level((gpio_num_t)_dataPinRX, 1);       // Pin state = low (turns off pull-up)
+//       // pinMode_esp((gpio_num_t)_dataPinRX, ESP_INPUT);  // Pin mode = input, pull-up resistor off
+//       // setPinInterrupts(false);                         // Interrupts disabled on data pin
+//
+//       pinMode_esp((gpio_num_t)_dataPinTX, ESP_OUTPUT);  // Pin mode = output
+//       gpio_set_level((gpio_num_t)_dataPinTX, 0);        // Pin state = HIGH - marking
+//
+//       pinMode_esp((gpio_num_t)_txOE, ESP_OUTPUT);  // Pin mode = input, pull-up resistor off
+//       gpio_set_level((gpio_num_t)_txOE, 1);        // Pin state = low (turns off pull-up)
+//       break;
+//     }
+//   }
+// }
+
 void SDI12::setState(SDI12_STATES state) {
   switch (state) {
     case SDI12_HOLDING: {
-      pinMode_esp((gpio_num_t)_dataPinRX, ESP_INPUT);  // Turn off the pull-up resistor
-      setPinInterrupts(false);                         // Interrupts disabled on data pin
-
       pinMode_esp((gpio_num_t)_dataPinTX, ESP_OUTPUT);  // Pin mode = output
       gpio_set_level((gpio_num_t)_dataPinTX, 0);
 
@@ -444,36 +509,22 @@ void SDI12::setState(SDI12_STATES state) {
     }
     case SDI12_TRANSMITTING: {
       pinMode_esp((gpio_num_t)_dataPinTX, ESP_OUTPUT);  // Pin mode = output
-
-      pinMode_esp((gpio_num_t)_dataPinRX, ESP_INPUT);  // Turn off the pull-up resistor
-      setPinInterrupts(false);                         // Interrupts disabled on data pin
-
-      pinMode_esp((gpio_num_t)_txOE, ESP_OUTPUT);  // Pin mode = input, pull-up resistor off
+      pinMode_esp((gpio_num_t)_txOE, ESP_OUTPUT);       // Pin mode = input, pull-up resistor off
       gpio_set_level((gpio_num_t)_txOE, 0);
 
       break;
     }
     case SDI12_LISTENING: {
-      pinMode_esp((gpio_num_t)_dataPinRX, ESP_INPUT);  // Pin mode = input, pull-up resistor off
-
       // Re-enable universal interrupts as soon as critical timing is past
       portENABLE_INTERRUPTS();
-
       setPinInterrupts(true);  // Enable Rx interrupts on data pin
       rxState = WAITING_FOR_START_BIT;
 
-      pinMode_esp((gpio_num_t)_dataPinTX, ESP_INPUT);  // Pin mode = input, pull-up resistor off
-
-      pinMode_esp((gpio_num_t)_txOE, ESP_OUTPUT);  // Pin mode = input, pull-up resistor off
-      gpio_set_level((gpio_num_t)_txOE, 1);        // Pin state = low (turns off pull-up)
+      gpio_set_level((gpio_num_t)_txOE, 1);  // Pin state = low (turns off pull-up)
       break;
     }
     default:  // SDI12_DISABLED or SDI12_ENABLED
     {
-      gpio_set_level((gpio_num_t)_dataPinRX, 1);       // Pin state = low (turns off pull-up)
-      pinMode_esp((gpio_num_t)_dataPinRX, ESP_INPUT);  // Pin mode = input, pull-up resistor off
-      setPinInterrupts(false);                         // Interrupts disabled on data pin
-
       pinMode_esp((gpio_num_t)_dataPinTX, ESP_OUTPUT);  // Pin mode = output
       gpio_set_level((gpio_num_t)_dataPinTX, 0);        // Pin state = HIGH - marking
 

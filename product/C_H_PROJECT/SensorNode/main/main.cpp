@@ -107,15 +107,14 @@ extern "C" void app_main(void) {
   ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &on_got_ip, NULL));
   app_eth_init();
 
-#endif
-#if 0
+#else if
   ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &on_got_ip, NULL));
   // Get the WiFi configuration
   auto& ssid_list = SsidManager::GetInstance().GetSsidList();
   if (ssid_list.empty()) {
     // Start the WiFi configuration AP
     auto& ap = WifiConfigurationAp::GetInstance();
-    ap.SetSsidPrefix("ESP32");
+    ap.SetSsidPrefix("ESP32-C&H");
     ap.Start();
     return;
   }
@@ -165,9 +164,11 @@ extern "C" void app_main(void) {
   // Step 1: Initialize the sensor detection system
   xTaskCreate(sensor_auto_detect_task, "sensor_auto_detect_task", 4096, NULL, 5, NULL);
   sensor_ad_manager_t* mgr = sensor_ad_get_instance();
-#endif
+#else if
 
-  // sdi12_task_init();
+  sdi12_task_init();
+
+#endif
   while (1) {
     // // Step 3: Wait for sensor connection events from any port (clear bits after wait)
     // EventBits_t bits = xEventGroupGetBits(mgr->sensor_event_group);

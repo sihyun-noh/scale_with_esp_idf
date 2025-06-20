@@ -101,23 +101,47 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
 
   switch (cfg->sensor_type) {
     // TEROS 계열 (습도·온도·이슬점)
-    case TEROS11: break;
+    case TEROS11:
+      datatable_add_float_avg_column(dt->handle, "vwc", &dt->teros11_col.vwc_avg_col);
+      datatable_add_float_avg_column(dt->handle, "temp", &dt->teros11_col.ta_avg_col);
+      break;
     case TEROS12:
       datatable_add_float_avg_column(dt->handle, "vwc", &dt->teros12_col.vwc_avg_col);
       datatable_add_float_avg_column(dt->handle, "temp", &dt->teros12_col.ta_avg_col);
       datatable_add_float_avg_column(dt->handle, "ec", &dt->teros12_col.ec_avg_col);
       break;
-    case TEROS14:
+      // case TEROS14:
     case TEROS21:
       datatable_add_float_avg_column(dt->handle, "matricPotential", &dt->teros21_col.matricPotential_avg_col);
       datatable_add_float_avg_column(dt->handle, "temperature", &dt->teros21_col.temperature_avg_col);
       break;
 
     // ATMOS 계열 (기압)
-    case ATMOS21:
-    case ATMOS22:
-    case ATMOS31:
+    /* case ATMOS21: */
+    /* case ATMOS22: */
+    /* case ATMOS31: */
     case ATMOS41:
+      //  datatable_add_float_smp_column(dt->handle, "solar", &dt->at41g2_col.solar_col);
+      datatable_add_float_smp_column(dt->handle, "precipitation", &dt->at41g2_col.precipitation_col);
+      datatable_add_float_avg_column(dt->handle, "strikes", &dt->at41g2_col.strikes_col);
+      datatable_add_float_avg_column(dt->handle, "strikeDistance", &dt->at41g2_col.strikeDistance_col);
+      // datatable_add_float_min_column(dt->handle, "windSpeed", &dt->at41g2_col.windSpeed_col);
+      //  datatable_add_float_smp_column(dt->handle, "windDirection", &dt->at41g2_col.windDirection_col);
+      /* datatable_add_float_smp_column(dt->handle, "gustWindSpeed", &dt->at41g2_col.gustWindSpeed_col); */
+      /* datatable_add_float_smp_column(dt->handle, "airTemperature", &dt->at41g2_col.airTemperature_col); */
+      /* datatable_add_float_smp_column(dt->handle, "vaporPressure", &dt->at41g2_col.vaporPressure_col); */
+      /* datatable_add_float_smp_column(dt->handle, "atmosphericPressure", &dt->at41g2_col.atmosphericPressure_col); */
+      /* datatable_add_float_avg_column(dt->handle, "relativeHumidity", &dt->at41g2_col.relativeHumidity_col); */
+      /* datatable_add_float_avg_column(dt->handle, "humiditySensorTemperature", */
+      /*                                &dt->at41g2_col.humiditySensorTemperature_col); */
+      /* datatable_add_float_avg_column(dt->handle, "xOrientation", &dt->at41g2_col.xOrientation_col); */
+      /* datatable_add_float_avg_column(dt->handle, "yOrientation", &dt->at41g2_col.yOrientation_col); */
+      /* datatable_add_float_avg_column(dt->handle, "nullValue", &dt->at41g2_col.nullValue_col); */
+      /* datatable_add_float_avg_column(dt->handle, "northWindSpeed", &dt->at41g2_col.northWindSpeed_col); */
+      /* datatable_add_float_avg_column(dt->handle, "eastWindSpeed", &dt->at41g2_col.eastWindSpeed_col); */
+
+      break;
+
     case ATMOS54: datatable_add_float_avg_column(dt->handle, "Pressure", &dt->pressure_col); break;
 
     // Apogee 계열 (방사선)
@@ -188,7 +212,7 @@ void dt_init_with_sensor() {
 static datatable_handle_t       dt_1min_hdl;          /*  data-table handle */
 static datatable_config_t       dt_1min_cfg = {       /*  data-table configuration */
     .name                       = "1min_tbl",
-    .columns_size               = 3,
+    .columns_size               = 10,
     .rows_size                  = 1,
     .data_storage_type          = DATATABLE_DATA_STORAGE_MEMORY_RING,
     .sampling_config            = {
@@ -207,9 +231,9 @@ static datatable_config_t       dt_1min_cfg = {       /*  data-table configurati
 };
 static uint8_t              dt_1min_pa_avg_col_index;     /* data-table average atmospheric pressure (pa-avg) column index reference */
 static uint8_t              dt_1min_ta_avg_col_index;     /* data-table average air temperature (ta-avg) column index reference */
-//static uint8_t              dt_1min_ta_max_col_index;     /* data-table minimum air temperature (ta-min) column index reference */
+static uint8_t              dt_1min_ta_max_col_index;     /* data-table minimum air temperature (ta-min) column index reference */
 static uint8_t              dt_1min_ta_min_col_index;     /* data-table maximum air temperature (ta-max) column index reference */
-//static uint8_t              dt_1min_td_avg_col_index;     /* data-table average dew-point temperature (td-avg) column index reference */
+static uint8_t              dt_1min_td_avg_col_index;     /* data-table average dew-point temperature (td-avg) column index reference */
 
 /* clang-format on */
 
@@ -263,7 +287,7 @@ void data_table_init() {
   // create a new data-table handle for the type 1
   data_table_init_all();
 
-#if 1
+#if 0
   datatable_init(&dt_1min_cfg, &dt_1min_hdl);
   if (dt_1min_hdl == NULL) {
     ESP_LOGE(TAG, "datatable_new, new data-table handle failed");
@@ -271,17 +295,23 @@ void data_table_init() {
   }
 
   // configure data-table columns
-  //
+
   // add float average column to data-table
-  datatable_add_float_avg_column(dt_1min_hdl, "Pa_1-Avg", &dt_1min_pa_avg_col_index);  // column index 2
-  // add float average column to data-table
-  datatable_add_float_avg_column(dt_1min_hdl, "Ta_1-Avg", &dt_1min_ta_avg_col_index);  // column index 3
-  // add float minimum column to data-table
+  datatable_add_float_avg_column(dt_1min_hdl, "Pa_1-Avg",
+                                 &dt_1min_pa_avg_col_index);  // column index 2
+                                                              // add float average column to data-table
+  datatable_add_float_avg_column(dt_1min_hdl, "Ta_1-Avg",
+                                 &dt_1min_ta_avg_col_index);  // column index 3
+  datatable_add_float_avg_column(dt_1min_hdl, "Ta_1-Avg",
+                                 &dt_1min_ta_avg_col_index);  // column index 3
+  datatable_add_float_avg_column(dt_1min_hdl, "Ta_1-Avg",
+                                 &dt_1min_ta_avg_col_index);  // column index 3
+                                                              // add float minimum column to data-table
   datatable_add_float_min_column(dt_1min_hdl, "Ta_1-Min", &dt_1min_ta_min_col_index);  // column index 4
   // add float maximum column to data-table
-  // datatable_add_float_max_column(dt_1min_hdl, "Ta_1-Max", &dt_1min_ta_max_col_index);  // column index 5
+  datatable_add_float_max_column(dt_1min_hdl, "Ta_1-Max", &dt_1min_ta_max_col_index);  // column index 5
   // add float average column to data-table
-  // datatable_add_float_avg_column(dt_1min_hdl, "Td_1-Avg", &dt_1min_td_avg_col_index);  // column index 6
+  datatable_add_float_avg_column(dt_1min_hdl, "Td_1-Avg", &dt_1min_td_avg_col_index);  // column index 6
 #endif
 }
 

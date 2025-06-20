@@ -185,7 +185,8 @@ typedef uint32_t sdi12timer_t;
  * - CR is a single character
  * - LF is a single character
  */
-#define SDI12_BUFFER_SIZE 81
+// #define SDI12_BUFFER_SIZE 81   //SDI12 1.3ver buf
+#define SDI12_BUFFER_SIZE 120  //  SDI12 1.3ver buf (atros41 for)
 #endif
 
 /**
@@ -238,6 +239,7 @@ typedef uint32_t sdi12timer_t;
  *
  * @see https://github.com/SlashDevin/NeoSWSerial/pull/13
  */
+// #define RX_WINDOW_FUDGE 2
 #define RX_WINDOW_FUDGE 2
 
 #define READTIME sdi12timer.SDI12TimerRead()
