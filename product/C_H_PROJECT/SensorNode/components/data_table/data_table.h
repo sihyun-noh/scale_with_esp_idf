@@ -54,15 +54,15 @@ extern "C" {
 /*
  * ESP DATA-TABLE definitions
  */
-#define DATATABLE_NAME_MAX_SIZE (15)         //!< 15-characters for user-defined table name
-#define DATATABLE_COLUMN_NAME_SIZE (15)      //!< 15-characters for user-defined column name
-#define DATATABLE_COLUMN_NAME_MAX_SIZE (25)  //!< 25-characters for column name
-#define DATATABLE_COLUMNS_MAX (255)          //!<
-#define DATATABLE_ROWS_MAX (65535)           //!<
-#define DATATABLE_COLUMN_ID_NAME "Record ID"
-#define DATATABLE_COLUMN_TS_NAME "TS"
-#define DATATABLE_COLUMN_TII_SMP_NAME "_tii_smp"
-#define DATATABLE_COLUMN_TII_PRC_NAME "_tii_prc"
+#define DATATABLE_NAME_MAX_SIZE        (15)     //!< 15-characters for user-defined table name
+#define DATATABLE_COLUMN_NAME_SIZE     (15)     //!< 15-characters for user-defined column name
+#define DATATABLE_COLUMN_NAME_MAX_SIZE (25)     //!< 25-characters for column name
+#define DATATABLE_COLUMNS_MAX          (255)    //!<
+#define DATATABLE_ROWS_MAX             (65535)  //!<
+#define DATATABLE_COLUMN_ID_NAME       "Record ID"
+#define DATATABLE_COLUMN_TS_NAME       "TS"
+#define DATATABLE_COLUMN_TII_SMP_NAME  "_tii_smp"
+#define DATATABLE_COLUMN_TII_PRC_NAME  "_tii_prc"
 
 /*
  * ESP DATA-TABLE macro definitions

@@ -138,6 +138,8 @@ sensor_ad_manager_t* sensor_ad_get_instance(void);
  */
 bool sensor_ad_is_initialized(void);
 
+sensor_system_t* sensor_ctl_get_instance(void);
+
 // 안전한 접근 함수들
 void my_manager_set_data(int val);
 int my_manager_get_data(void);

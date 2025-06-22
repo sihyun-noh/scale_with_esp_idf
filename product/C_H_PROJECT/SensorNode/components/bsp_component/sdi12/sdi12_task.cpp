@@ -7,6 +7,7 @@
 #include "SDI12.h"  // Click to install library: // Click to install library:
 #include "sensor_auto_detect.h"
 #include "sensor_cfg_config.h"
+#include "soc/gpio_num.h"
 #include "sdi12_task.h"
 #include <cstdint>
 
@@ -254,7 +255,6 @@ static bool parse_weather_response(const char *resp, weather_at41g2_data_t *out)
     char *endptr = NULL;
     float value = strtof(ptr, &endptr);
     if (endptr == ptr)
-
       return false;
 
     switch (i) {
@@ -372,7 +372,7 @@ static char *parse_array_ctrl(char *buf, const char *target) {
   return start;             // 그 이후의 위치 포인터 반환
 }
 
-void print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_data) {
+static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_data) {
   char addr = i;
   memset(buff, 0x00, sizeof(buff));
   sdi12_get_data(addr, buff, SENSOR_TYPE, SDI_CMD_READ);
@@ -380,7 +380,12 @@ void print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_data) {
   ESP_LOGI(TAG, "[RESULTE] Value : %s", buff);
   // clean up buffer(remove : ' ', '\n', '\r', '\t'))
   trim(buff);
+  // cmd가 같이 나와서 제거함
   char *parsed = parse_array_ctrl(buff, "0R0!");
+  if (!parsed) {
+    ESP_LOGE(TAG, "Parsed response is NULL");
+    return false;
+  }
 
   switch (SENSOR_TYPE) {
     case TEROS11: {
@@ -388,30 +393,33 @@ void print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_data) {
       if (parse_teros11_response(parsed, teros11)) {
         ESP_LOGI(TAG, "[PARSED] ADDR: %c, VWC: %.2f, TEMP: %.2f", teros11->address, (float)teros11->vwc,
                  (float)teros11->temperature);
+        return true;
       } else {
         ESP_LOGE(TAG, "Failed to parse TEROS12 response.");
+        return false;
       }
-      break;
     }
     case TEROS12: {
       teros12_data_t *teros12 = (teros12_data_t *)out_data;
       if (parse_teros12_response(parsed, teros12)) {
         ESP_LOGI(TAG, "[PARSED] ADDR: %c, VWC: %.2f, TEMP: %.2f, EC: %.2f", teros12->address, (float)teros12->vwc,
                  (float)teros12->temperature, (float)teros12->ec);
+        return true;
       } else {
         ESP_LOGE(TAG, "Failed to parse TEROS12 response.");
+        return false;
       }
-      break;
     }
     case TEROS21: {
       teros21_data_t *teros21 = (teros21_data_t *)out_data;
       if (parse_teros21_response(parsed, teros21)) {
         ESP_LOGI(TAG, "[PARSED] ADDR: %c, MATRICPOTENTIAL: %.2f, TEMP: %.2f", teros21->address,
                  (float)teros21->matricPotential, (float)teros21->temperature);
+        return true;
       } else {
         ESP_LOGE(TAG, "Failed to parse TEROS21 response.");
+        return false;
       }
-      break;
     }
     case ATMOS41: {
       weather_at41g2_data_t *at41g2 = (weather_at41g2_data_t *)out_data;
@@ -421,13 +429,14 @@ void print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_data) {
                  "WIND: %.2f m/s (%.1f°) | RAIN: %.2f mm",
                  at41g2->address, at41g2->airTemperature, at41g2->relativeHumidity, at41g2->atmosphericPressure,
                  at41g2->windSpeed, at41g2->windDirection, at41g2->precipitation);
+        return true;
       } else {
         ESP_LOGE(TAG, "Failed to parse ATMOS41 response.");
+        return false;
       }
-      break;
     }
 
-    default: ESP_LOGW(TAG, "Unknown sensor type"); break;
+    default: ESP_LOGW(TAG, "Unknown sensor type"); return false;
   }
 }
 
@@ -460,7 +469,10 @@ teros11_data_t *sdi12_read_start_teros11(uint8_t portId) {
 
   vTaskDelay(pdMS_TO_TICKS(450));
   mySDI12.begin();
-  print_sdi12_data('0', TEROS11, &teros11);
+  if (!print_sdi12_data('0', TEROS11, &teros11)) {
+    ESP_LOGE(TAG, "Sensor data parsing failed for address '0'");
+    return NULL;
+  }
   mySDI12.end();
 
   // It disables the connection.
@@ -485,7 +497,10 @@ teros12_data_t *sdi12_read_start_teros12(uint8_t portId) {
 
   vTaskDelay(pdMS_TO_TICKS(450));
   mySDI12.begin();
-  print_sdi12_data('0', TEROS12, &teros12);
+  if (!print_sdi12_data('0', TEROS12, &teros12)) {
+    ESP_LOGE(TAG, "Sensor data parsing failed for address '0'");
+    return NULL;
+  }
   mySDI12.end();
 
   // It disables the connection.
@@ -509,7 +524,10 @@ teros21_data_t *sdi12_read_start_teros21(uint8_t portId) {
 
   vTaskDelay(pdMS_TO_TICKS(1000));
   mySDI12.begin();
-  print_sdi12_data('0', TEROS21, &teros21);
+  if (!print_sdi12_data('0', TEROS21, &teros21)) {
+    ESP_LOGE(TAG, "Sensor data parsing failed for address '0'");
+    return NULL;
+  }
   mySDI12.end();
 
   // It disables the connection.
@@ -523,26 +541,55 @@ teros21_data_t *sdi12_read_start_teros21(uint8_t portId) {
 
 // TEROS41G2 READ
 weather_at41g2_data_t *sdi12_read_start_teros41(uint8_t portId) {
-  static weather_at41g2_data_t teros41;
+  static uint8_t control_pin_flag = 0;
+  static weather_at41g2_data_t atmos41;
+  sensor_system_t *sensorSys = sensor_ctl_get_instance();
+
+  if (sensorSys == NULL) {
+    ESP_LOGE(TAG, "sensorSys() returned NULL ");
+    return NULL;
+  }
+
   ESP_LOGI(TAG, "[SDI12] Data Read");
   // buffer clear
-  memset(&teros41, 0x00, sizeof(weather_at41g2_data_t));
+  memset(&atmos41, 0x00, sizeof(weather_at41g2_data_t));
   // TODO: This is the control point for buffer and power management
   // Sets the MUX to match the data line and power control for the specified port.
   ESP_ERROR_CHECK(sensor_buffer_select_port(portId));
-  ESP_ERROR_CHECK(sensor_control_pin_set(portId, 1));
-  vTaskDelay(pdMS_TO_TICKS(4000));
+
+  int detechPin = sensorSys->ports[portId].detectPin;
+  int level = gpio_get_level((gpio_num_t)detechPin);
+  ESP_LOGW(TAG, "control pin %d level %d", detechPin, level);
+  // pin level low is deteched
+  // NOTE:weather station is always turned on
+  if (!control_pin_flag) {
+    control_pin_flag = 1;
+    ESP_ERROR_CHECK(sensor_control_pin_set(portId, 1));
+    ESP_LOGW(TAG, "Set control pin %d", portId);
+    vTaskDelay(pdMS_TO_TICKS(4000));  // booting delay
+  }
+
+  vTaskDelay(pdMS_TO_TICKS(1000));
   mySDI12.begin();
-  print_sdi12_data('0', ATMOS41, &teros41);
+  // NOTE:weather station is always turned on
+  if (!print_sdi12_data('0', ATMOS41, &atmos41)) {
+    ESP_LOGE(TAG, "Sensor data parsing failed for address '0'");
+    return NULL;
+  }
   mySDI12.end();
 
   // It disables the connection.
   ESP_ERROR_CHECK(sensor_buffer_disable());
-  ESP_ERROR_CHECK(sensor_control_pin_set(portId, 0));
+
+  // pin level low is deteched
+  if (level) {
+    ESP_ERROR_CHECK(sensor_control_pin_set(portId, 0));
+    ESP_LOGW(TAG, "Clear control pin %d", portId);
+  }
 
   ESP_LOGI(TAG, "End Search for SDI-12 Devices.");
 
-  return &teros41;
+  return &atmos41;
 }
 
 sdi12_sensor_info_t *sdi12_info_start(uint8_t portId) {
@@ -587,9 +634,9 @@ void sdi12_app_main(void *param) {
     // gpio_set_level((gpio_num_t)38, 1);  // power port1 on
     vTaskDelay(pdMS_TO_TICKS(2000));
 
-    mySDI12.begin();
-    print_sdi12_info('0', TEROS12, &info);
-    mySDI12.end();
+    // mySDI12.begin();
+    // print_sdi12_info('0', TEROS12, &info);
+    // mySDI12.end();
 
     //     // if (strcmp(info.model, "AT41G2") == 0) {
     //     // if (strstr(info.model, "AT41G2") != NULL) {
@@ -651,8 +698,28 @@ void sdi12_app_main(void *param) {
     //     }
 
     mySDI12.begin();
-    ESP_LOGI(TAG, "0R0!");
-    mySDI12.sendCommand("0R0!");  // read data
+    ESP_LOGI(TAG, "0M3!");
+    mySDI12.clearBuffer();
+    mySDI12.sendCommand("0M3!");  // read data
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    while (mySDI12.available_esp()) {
+      int c = mySDI12.read_esp();
+      buf[len++] = c;
+#ifdef SDI12_DEBUG_SET
+      ESP_LOGI(TAG, "[RESP] Char = '%c' (0x%02X)", c >= 32 ? c : '.', c);
+#endif
+      vTaskDelay(pdMS_TO_TICKS(10));  // 1 character ~ 7.5ms.
+    }
+    ESP_LOGI(TAG, "[RESULTE] value : %s", buf);
+    len = 0;
+    memset(buf, 0x00, sizeof(buf));
+
+    ESP_LOGI(TAG, "4 sec delay");
+    vTaskDelay(pdMS_TO_TICKS(4000));
+
+    ESP_LOGI(TAG, "0D0!");
+    mySDI12.sendCommand("0D0!");  // read data
     mySDI12.clearBuffer();
 
     // teros12 delay 87ms for read
@@ -675,9 +742,64 @@ void sdi12_app_main(void *param) {
     }
 
     ESP_LOGI(TAG, "[RESULTE] value : %s", buf);
+
+    vTaskDelay(pdMS_TO_TICKS(500));
+    ESP_LOGI(TAG, "0D1!");
+    mySDI12.sendCommand("0D1!");  // read data
+    mySDI12.clearBuffer();
+
+    // teros12 delay 87ms for read
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    avail = mySDI12.available_esp();
+    if (avail > 0) {
+      ESP_LOGI(TAG, "[RESP] Data available: %d bytes", avail);
+      while (mySDI12.available_esp()) {
+        int c = mySDI12.read_esp();
+        buf[len++] = c;
+
+#ifdef SDI12_DEBUG_SET
+        ESP_LOGI(TAG, "[RESP] Char = '%c' (0x%02X)", c >= 32 ? c : '.', c);
+#endif
+        vTaskDelay(pdMS_TO_TICKS(10));  // 1 character ~ 7.5ms.
+      }
+    } else {
+      ESP_LOGW(TAG, "[RESP] No response from sensor");
+    }
+
+    ESP_LOGI(TAG, "[RESULTE] value : %s", buf);
+
+    vTaskDelay(pdMS_TO_TICKS(500));
+    ESP_LOGI(TAG, "0D2!");
+    mySDI12.sendCommand("0D2!");  // read data
+    mySDI12.clearBuffer();
+
+    // teros12 delay 87ms for read
+    vTaskDelay(pdMS_TO_TICKS(100));
+
+    avail = mySDI12.available_esp();
+    if (avail > 0) {
+      ESP_LOGI(TAG, "[RESP] Data available: %d bytes", avail);
+      while (mySDI12.available_esp()) {
+        int c = mySDI12.read_esp();
+        buf[len++] = c;
+
+#ifdef SDI12_DEBUG_SET
+        ESP_LOGI(TAG, "[RESP] Char = '%c' (0x%02X)", c >= 32 ? c : '.', c);
+#endif
+        vTaskDelay(pdMS_TO_TICKS(10));  // 1 character ~ 7.5ms.
+      }
+    } else {
+      ESP_LOGW(TAG, "[RESP] No response from sensor");
+    }
+
+    ESP_LOGI(TAG, "[RESULTE] value : %s", buf);
+
+    mySDI12.end();
+
     weather_at41g2_data_t weather;
     parse_weather_response(buf, &weather);
-    mySDI12.end();
+
     // ESP_LOGI(TAG, "%.2f, %.2f", teros21.matricPotential, teros21.temperature);
     ESP_LOGI(TAG, "%.2f, %.2f", weather.airTemperature, weather.atmosphericPressure);
     ESP_LOGI(TAG, "End Search for SDI-12 Devices.");
@@ -690,19 +812,36 @@ void sdi12_app_main_2(void *param) {
   ESP_LOGI(TAG, "Start main 2");
 
   uint8_t portId = 0;
+  sdi12_sensor_info_t *info = sdi12_info_start((uint8_t)portId);
+  ESP_LOGI(TAG, "Menufanture : %s", info->model);
   while (1) {
-    sdi12_sensor_info_t *info = sdi12_info_start((uint8_t)portId);
-    ESP_LOGI(TAG, "Menufanture : %s", info->model);
+    // sdi12_sensor_info_t *info = sdi12_info_start((uint8_t)portId);
+    // ESP_LOGI(TAG, "Menufanture : %s", info->model);
 
     if (strcmp(info->model, "TER12") == 0) {
       teros12_data_t *teros12 = sdi12_read_start_teros12(portId);
-      ESP_LOGE(TAG, "[TEROS12] SUCSSES : %.2f", teros12->temperature);
+      if (teros12 != NULL) {
+        ESP_LOGE(TAG, "[TEROS12] SUCSSES : %.2f", teros12->temperature);
+      } else {
+        ESP_LOGE(TAG, "[TEROS12] READ FAILED");
+      }
+
     } else if (strcmp(info->model, "TER21") == 0) {
       teros21_data_t *teros21 = sdi12_read_start_teros21(portId);
-      ESP_LOGE(TAG, "[TEROS21] SUCSSES : %.2f", teros21->temperature);
+      if (teros21 != NULL) {
+        ESP_LOGE(TAG, "[TEROS21] SUCSSES : %.2f", teros21->temperature);
+      } else {
+        ESP_LOGE(TAG, "[TEROS21] READ FAILED");
+      }
+
     } else if (strcmp(info->model, "ATMOS41") == 0) {
       weather_at41g2_data_t *weather = sdi12_read_start_teros41(portId);
-      ESP_LOGE(TAG, "[TEROS41] weather station : %.2f", weather->airTemperature);
+      if (weather != NULL) {
+        ESP_LOGE(TAG, "[ATMOS41] weather station : %.2f", weather->airTemperature);
+      } else {
+        ESP_LOGE(TAG, "[ATMOS41] READ FAILED");
+      }
+
     } else {
       ESP_LOGW("TAG", "[INFO] No matching model found for the given sensor type.");
     }

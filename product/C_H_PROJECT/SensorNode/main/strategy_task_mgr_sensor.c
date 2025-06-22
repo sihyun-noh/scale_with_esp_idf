@@ -222,7 +222,6 @@ static void handle_teros12(void* param) {
     }
 
     ESP_LOGI(TAG, "[%s] Pushed samples to data table", sensor_type);
-
     ESP_LOGI(TAG, "[%s] sampling_count: %d / max: %d", sensor_type, dt[array_num].handle->sampling_count,
              dt[array_num].handle->samples_maximum_size);
 
@@ -236,7 +235,7 @@ static void handle_teros12(void* param) {
     int retry_count = 0;
     while (dt[array_num].handle->sampling_count >= 3) {
       datatable_process_samples(dt[array_num].handle);
-      ESP_LOGI(TAG, "[%s] Processed samples in data table... count %d ", sensor_type, retry_count);
+      // ESP_LOGI(TAG, "[%s] Processed samples in data table... count %d ", sensor_type, retry_count);
       retry_count += 1;
       vTaskDelay(pdMS_TO_TICKS(200));
       // vTaskDelay(pdMS_TO_TICKS(50));
@@ -319,46 +318,44 @@ static void handle_atmos41(void* param) {
   weather_at41g2_data_t* data_at41g2 = sdi12_read_start_teros41(array_num);  // 데이터 읽기
   if (!data_at41g2) {
     ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
-    return;
+    // return;
+    goto next;
   }
 
   // 데이터 테이블에 샘플 푸시
   if (dt[array_num].handle) {
-    /* datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.solar_col, data_at41g2->solar); */
+    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.solar_col, data_at41g2->solar);
     datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.precipitation_col,
                                 data_at41g2->precipitation);
     datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.strikes_col, data_at41g2->strikes);
     datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.strikeDistance_col,
                                 data_at41g2->strikeDistance);
-    /* datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.windSpeed_col,
-     * data_at41g2->windSpeed); */
-    /* datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.windDirection_col, */
-    /*                             data_at41g2->windDirection); */
-    /* datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.gustWindSpeed_col, */
-    /*                             data_at41g2->gustWindSpeed); */
-    /* datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.airTemperature_col, */
-    /*                             data_at41g2->airTemperature); */
-    /* datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.vaporPressure_col, */
-    /*                             data_at41g2->vaporPressure); */
-    /* datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.atmosphericPressure_col, */
-    /*                             data_at41g2->atmosphericPressure); */
-    /* datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.relativeHumidity_col, */
-    /*                             data_at41g2->relativeHumidity); */
-    /* datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.humiditySensorTemperature_col, */
-    /*                             data_at41g2->humiditySensorTemperature); */
-    /* datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.xOrientation_col, */
-    /*                             data_at41g2->xOrientation); */
-    /* datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.yOrientation_col, */
-    /*                             data_at41g2->yOrientation); */
-    /* datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.nullValue_col,
-     * data_at41g2->nullValue); */
-    /* datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.northWindSpeed_col, */
-    /*                             data_at41g2->northWindSpeed); */
-    /* datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.eastWindSpeed_col, */
-    /*                              data_at41g2->eastWindSpeed); */
+    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.windSpeed_col, data_at41g2->windSpeed);
+    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.windDirection_col,
+                                data_at41g2->windDirection);
+    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.gustWindSpeed_col,
+                                data_at41g2->gustWindSpeed);
+    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.airTemperature_col,
+                                data_at41g2->airTemperature);
+    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.vaporPressure_col,
+                                data_at41g2->vaporPressure);
+    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.atmosphericPressure_col,
+                                data_at41g2->atmosphericPressure);
+    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.relativeHumidity_col,
+                                data_at41g2->relativeHumidity);
+    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.humiditySensorTemperature_col,
+                                data_at41g2->humiditySensorTemperature);
+    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.xOrientation_col,
+                                data_at41g2->xOrientation);
+    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.yOrientation_col,
+                                data_at41g2->yOrientation);
+    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.nullValue_col, data_at41g2->nullValue);
+    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.northWindSpeed_col,
+                                data_at41g2->northWindSpeed);
+    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.eastWindSpeed_col,
+                                data_at41g2->eastWindSpeed);
 
     ESP_LOGI(TAG, "[%s] Pushed samples to data table", sensor_type);
-
     ESP_LOGI(TAG, "[%s] sampling_count: %d / max: %d", sensor_type, dt[array_num].handle->sampling_count,
              dt[array_num].handle->samples_maximum_size);
 
@@ -369,15 +366,17 @@ static void handle_atmos41(void* param) {
     // NOTE: 무조건 samples 데이터 처리해야 동작해. 아님. free 중복으로 에러남
     // 1분마다 samples 처리하도록 설정이 되어있음 data_table config에
     // 지금은 내부 internal time과 동기화가 되어 있지 않아서 수동으로 맞춰야 함.
+
     int retry_count = 0;
     while (dt[array_num].handle->sampling_count >= 3) {
       datatable_process_samples(dt[array_num].handle);
-      ESP_LOGI(TAG, "[%s] Processed samples in data table... count %d ", sensor_type, retry_count);
+      // ESP_LOGI(TAG, "[%s] Processed samples in data table... count %d ", sensor_type, retry_count);
       retry_count += 1;
       vTaskDelay(pdMS_TO_TICKS(200));
       // vTaskDelay(pdMS_TO_TICKS(50));
     }
 
+  next:
     /* serialize data-table and output in json format every 5-minutes (i.e. 12:00:00,
      * 12:05:00, 12:10:00, etc.) */
     if (time_into_interval(dt[array_num].publish_interval.handle)) {

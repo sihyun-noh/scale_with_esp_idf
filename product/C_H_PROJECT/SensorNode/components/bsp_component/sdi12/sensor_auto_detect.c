@@ -37,6 +37,10 @@ typedef struct {
   int portId;
 } sensor_event_t;
 
+sensor_system_t *sensor_ctl_get_instance(void) {
+  return &sensorSys;
+}
+
 sensor_ad_manager_t *sensor_ad_get_instance(void) {
   // 초기화 보호
   if (singleton_mutex == NULL) {
@@ -464,7 +468,7 @@ void sensor_auto_detect_task(void *arg) {
               cfg[portId].port = portId + 1;  // 포트번호는 1번부터
               cfg[portId].sensor_type = type;
               cfg[portId].current_state = SENSOR_PORT_STATUS_READY;
-              cfg[portId].columns_size = 10;
+              cfg[portId].columns_size = 17;
               cfg[portId].rows_size = 1;
               cfg[portId].server_config.publish_interval = 1;
               cfg[portId].dirty = 1;

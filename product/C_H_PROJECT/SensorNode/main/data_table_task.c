@@ -59,7 +59,8 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
       .name          = NULL,
       .interval_type = TIME_INTO_INTERVAL_SEC,
 //      .interval_period = cfg->sampling_period_sec,
-      .interval_period = 20, // static 20초1번씩 
+     // .interval_period = 20, // static 20초1번씩 
+      .interval_period = 50, // static 60초1번씩 -> 기상대
       .interval_offset = 0,
     },
     .processing_config = {
@@ -102,18 +103,18 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
   switch (cfg->sensor_type) {
     // TEROS 계열 (습도·온도·이슬점)
     case TEROS11:
-      datatable_add_float_avg_column(dt->handle, "vwc", &dt->teros11_col.vwc_avg_col);
-      datatable_add_float_avg_column(dt->handle, "temp", &dt->teros11_col.ta_avg_col);
+      datatable_add_float_smp_column(dt->handle, "vwc", &dt->teros11_col.vwc_avg_col);
+      datatable_add_float_smp_column(dt->handle, "temp", &dt->teros11_col.ta_avg_col);
       break;
     case TEROS12:
-      datatable_add_float_avg_column(dt->handle, "vwc", &dt->teros12_col.vwc_avg_col);
-      datatable_add_float_avg_column(dt->handle, "temp", &dt->teros12_col.ta_avg_col);
-      datatable_add_float_avg_column(dt->handle, "ec", &dt->teros12_col.ec_avg_col);
+      datatable_add_float_smp_column(dt->handle, "vwc", &dt->teros12_col.vwc_avg_col);
+      datatable_add_float_smp_column(dt->handle, "temp", &dt->teros12_col.ta_avg_col);
+      datatable_add_float_smp_column(dt->handle, "ec", &dt->teros12_col.ec_avg_col);
       break;
       // case TEROS14:
     case TEROS21:
-      datatable_add_float_avg_column(dt->handle, "matricPotential", &dt->teros21_col.matricPotential_avg_col);
-      datatable_add_float_avg_column(dt->handle, "temperature", &dt->teros21_col.temperature_avg_col);
+      datatable_add_float_smp_column(dt->handle, "matricPotential", &dt->teros21_col.matricPotential_avg_col);
+      datatable_add_float_smp_column(dt->handle, "temperature", &dt->teros21_col.temperature_avg_col);
       break;
 
     // ATMOS 계열 (기압)
@@ -121,25 +122,23 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
     /* case ATMOS22: */
     /* case ATMOS31: */
     case ATMOS41:
-      //  datatable_add_float_smp_column(dt->handle, "solar", &dt->at41g2_col.solar_col);
+      datatable_add_float_smp_column(dt->handle, "solar", &dt->at41g2_col.solar_col);
       datatable_add_float_smp_column(dt->handle, "precipitation", &dt->at41g2_col.precipitation_col);
-      datatable_add_float_avg_column(dt->handle, "strikes", &dt->at41g2_col.strikes_col);
-      datatable_add_float_avg_column(dt->handle, "strikeDistance", &dt->at41g2_col.strikeDistance_col);
-      // datatable_add_float_min_column(dt->handle, "windSpeed", &dt->at41g2_col.windSpeed_col);
-      //  datatable_add_float_smp_column(dt->handle, "windDirection", &dt->at41g2_col.windDirection_col);
-      /* datatable_add_float_smp_column(dt->handle, "gustWindSpeed", &dt->at41g2_col.gustWindSpeed_col); */
-      /* datatable_add_float_smp_column(dt->handle, "airTemperature", &dt->at41g2_col.airTemperature_col); */
-      /* datatable_add_float_smp_column(dt->handle, "vaporPressure", &dt->at41g2_col.vaporPressure_col); */
-      /* datatable_add_float_smp_column(dt->handle, "atmosphericPressure", &dt->at41g2_col.atmosphericPressure_col); */
-      /* datatable_add_float_avg_column(dt->handle, "relativeHumidity", &dt->at41g2_col.relativeHumidity_col); */
-      /* datatable_add_float_avg_column(dt->handle, "humiditySensorTemperature", */
-      /*                                &dt->at41g2_col.humiditySensorTemperature_col); */
-      /* datatable_add_float_avg_column(dt->handle, "xOrientation", &dt->at41g2_col.xOrientation_col); */
-      /* datatable_add_float_avg_column(dt->handle, "yOrientation", &dt->at41g2_col.yOrientation_col); */
-      /* datatable_add_float_avg_column(dt->handle, "nullValue", &dt->at41g2_col.nullValue_col); */
-      /* datatable_add_float_avg_column(dt->handle, "northWindSpeed", &dt->at41g2_col.northWindSpeed_col); */
-      /* datatable_add_float_avg_column(dt->handle, "eastWindSpeed", &dt->at41g2_col.eastWindSpeed_col); */
-
+      datatable_add_float_smp_column(dt->handle, "strikes", &dt->at41g2_col.strikes_col);
+      datatable_add_float_smp_column(dt->handle, "strikeDistance", &dt->at41g2_col.strikeDistance_col);
+      datatable_add_float_smp_column(dt->handle, "windSpeed", &dt->at41g2_col.windSpeed_col);
+      datatable_add_float_smp_column(dt->handle, "windDirection", &dt->at41g2_col.windDirection_col);
+      datatable_add_float_smp_column(dt->handle, "gustWindSpeed", &dt->at41g2_col.gustWindSpeed_col);
+      datatable_add_float_smp_column(dt->handle, "airTemperature", &dt->at41g2_col.airTemperature_col);
+      datatable_add_float_smp_column(dt->handle, "vaporPressure", &dt->at41g2_col.vaporPressure_col);
+      datatable_add_float_smp_column(dt->handle, "phericPressure", &dt->at41g2_col.atmosphericPressure_col);
+      datatable_add_float_smp_column(dt->handle, "relativeHumi", &dt->at41g2_col.relativeHumidity_col);
+      datatable_add_float_smp_column(dt->handle, "humiSensorTemp", &dt->at41g2_col.humiditySensorTemperature_col);
+      datatable_add_float_smp_column(dt->handle, "xOrientation", &dt->at41g2_col.xOrientation_col);
+      datatable_add_float_smp_column(dt->handle, "yOrientation", &dt->at41g2_col.yOrientation_col);
+      datatable_add_float_smp_column(dt->handle, "nullValue", &dt->at41g2_col.nullValue_col);
+      datatable_add_float_smp_column(dt->handle, "northWindSpeed", &dt->at41g2_col.northWindSpeed_col);
+      datatable_add_float_smp_column(dt->handle, "eastWindSpeed", &dt->at41g2_col.eastWindSpeed_col);
       break;
 
     case ATMOS54: datatable_add_float_avg_column(dt->handle, "Pressure", &dt->pressure_col); break;
@@ -166,8 +165,8 @@ void data_table_init_all(void) {
   }
   for (int i = 0; i < SENSOR_PORT_COUNT; i++) {
     // port_tables 는 sensor_datatable_t 배열
-    ESP_LOGW(TAG, "cfg[%d]  Set_port[%d] Set_type[%d] (cfg.state=%d)", i, cfg[i].port, cfg[i].sensor_type,
-             cfg[i].current_state);
+    ESP_LOGW(TAG, "cfg[%d]  Set_port[%d] Set_type[%d] (cfg.state=%d), columns_size[%d]", i, cfg[i].port,
+             cfg[i].sensor_type, cfg[i].current_state, cfg[i].columns_size);
     init_datatable_for_port(i, &cfg[i], &port_tables[i]);
   }
 }

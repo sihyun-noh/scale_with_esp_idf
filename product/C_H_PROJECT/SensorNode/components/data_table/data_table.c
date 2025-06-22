@@ -1991,6 +1991,9 @@ static inline esp_err_t datatable_add_float_column(datatable_handle_t datatable_
   /* lock the mutex */
   xSemaphoreTake(datatable_handle->mutex_handle, portMAX_DELAY);
 
+  ESP_LOGE("CHECK_TEST", "columns_size : %d", datatable_handle->columns_size);
+  ESP_LOGE("CHECK_TEST", "columns_count : %d", datatable_handle->columns_count);
+
   /* validate columns size */
   ESP_GOTO_ON_FALSE((datatable_handle->columns_count + 1 <= datatable_handle->columns_size), ESP_ERR_INVALID_SIZE,
                     err_arg, TAG, "unable to add columns to data-table for add float column");
