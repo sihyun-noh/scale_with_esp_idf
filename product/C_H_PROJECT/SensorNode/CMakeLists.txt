@@ -25,9 +25,10 @@ set(PROJECT_VERSION_FILE "${PROJECT_VERSION_MAJOR}_${PROJECT_VERSION_MINOR}_${PR
 set(PROJECT_STAGE "DVT")
 
 # Set project name
+#set(PROJECT_NAME "LOG_$ENV{CURRENT_PROJECT}")
 set(PROJECT_NAME "LOG_$ENV{CURRENT_PROJECT}")
 message("project name : ${PROJECT_NAME}")
-set(PROJECT_TYPE "SENSOR-SDI12")
+set(PROJECT_TYPE "CnH_LOG_P6")
 
 # Get the current commit hash
 execute_process(
@@ -37,7 +38,8 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 # Pass the FW version to the source code to write the version string to flash (mfg_data).
-set(FW_VERSION "${PROJECT_NAME}_${PROJECT_VERSION}-${GIT_COMMIT_HASH}-${PROJECT_STAGE}")
+#set(FW_VERSION "${PROJECT_NAME}_${PROJECT_VERSION}-${GIT_COMMIT_HASH}-${PROJECT_STAGE}")
+set(FW_VERSION "${PROJECT_TYPE}-${PROJECT_VERSION}-${GIT_COMMIT_HASH}-${PROJECT_STAGE}")
 add_definitions(-DFW_VERSION="${FW_VERSION}")
 configure_file(version_config.h.in ${CMAKE_BINARY_DIR}/version_config.h)
 include_directories(${CMAKE_BINARY_DIR})

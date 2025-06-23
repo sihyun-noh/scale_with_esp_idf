@@ -13,7 +13,8 @@ static const char *TAG = "mqtt_app";
 mqtt_client_ctx_t mqtt_ctx;
 QueueHandle_t router_queue;
 
-char topic[MAX_TOPIC_LEN];
+char topic[MAX_TOPIC_LEN] = { 0 };
+char prefix_buff[MAX_TOPIC_LEN] = { 0 };
 
 const char *topic_type_to_str(topic_type_t type) {
   switch (type) {
@@ -36,7 +37,9 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     case MQTT_EVENT_CONNECTED:
       ESP_LOGI(TAG, "MQTT connected");
 
-      publish_device_status(client, "connected");
+      memset(prefix_buff, 0x00, sizeof(prefix_buff));
+      BUILD_DEVICE_TOPIC(prefix_buff, TOPIC_TYPE_STATE);
+      publish_device_status(client, "connected", prefix_buff);
       publish_command(client, "init");
 
       if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_STATE) == ESP_OK) {

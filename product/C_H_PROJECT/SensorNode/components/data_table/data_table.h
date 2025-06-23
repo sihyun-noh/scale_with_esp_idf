@@ -54,7 +54,7 @@ extern "C" {
 /*
  * ESP DATA-TABLE definitions
  */
-#define DATATABLE_NAME_MAX_SIZE        (15)     //!< 15-characters for user-defined table name
+#define DATATABLE_NAME_MAX_SIZE        (20)     //!< 15-characters for user-defined table name
 #define DATATABLE_COLUMN_NAME_SIZE     (15)     //!< 15-characters for user-defined column name
 #define DATATABLE_COLUMN_NAME_MAX_SIZE (25)     //!< 25-characters for column name
 #define DATATABLE_COLUMNS_MAX          (255)    //!<

@@ -76,7 +76,8 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
 
   // 이름 버퍼는 스택 또는 힙에 할당
   char name_buf[32];
-  snprintf(name_buf, sizeof(name_buf), "%dP_%dm_tbl", cfg->port, cfg->server_config.publish_interval);
+  const char* type_name = sensor_type_to_str(cfg->sensor_type);
+  snprintf(name_buf, sizeof(name_buf), "%dP_%dm_%s", cfg->port, cfg->server_config.publish_interval, type_name);
   dt_cfg.name = strdup(name_buf);
 
   char samp_buf[32];

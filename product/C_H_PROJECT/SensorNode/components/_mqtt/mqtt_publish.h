@@ -17,8 +17,9 @@ extern "C" {
  *
  * @param client The MQTT client handle.
  * @param status The status string to include in the JSON payload.
+ * @param topic string.
  */
-void publish_device_status(esp_mqtt_client_handle_t client, const char *status);
+void publish_device_status(esp_mqtt_client_handle_t client, const char *status, const char *topic);
 
 /**
  * @brief Publish a command string to the command topic.
@@ -32,6 +33,9 @@ void publish_device_status(esp_mqtt_client_handle_t client, const char *status);
 void publish_command(esp_mqtt_client_handle_t client, const char *cmd);
 
 int publish_sensor_datatable(const char *topic, const char *data_table);
+
+int publish_data(const char *topic, const char *json_data);
+
 #ifdef __cplusplus
 }
 #endif

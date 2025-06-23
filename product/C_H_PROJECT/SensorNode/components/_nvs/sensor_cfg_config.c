@@ -19,7 +19,8 @@ static bool initialized = false;
 static sensor_cfg_manager_t sensor_cfg_mgr = { .cfg = g_sensor_cfgs, .mutex = NULL };
 /* clang-format off */
 const char *sensor_names[] = {
-  "TEROS11", "TEROS12",
+  "TEROS11", 
+  "TEROS12",
   // "TEROS14",
   "TEROS21",
   // "ATMOS21",

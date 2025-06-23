@@ -272,7 +272,7 @@ static void handle_teros12(void* param) {
           //  count,date,vwc,temperature,ec,sensor_type,port
           sprintf(buf + len, ",%s,%d", sensor_type, config->port);  // 여기는 실제 포트번호
           ESP_LOGI(TAG, "[FDATA] %s", buf);
-          FDATA(BASE_PATH, "%s", buf);  // write to tb data
+          FDATA(BASE_PATH, "%s", buf);  // write to nvs data
         } else {
           ESP_LOGW(TAG, "Faild to parse JSON rows");
         }
