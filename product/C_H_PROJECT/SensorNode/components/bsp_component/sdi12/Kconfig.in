@@ -61,51 +61,51 @@ menu "SDI-12 Configuration"
 
     config SENSOR_PORT_0_DETECT_PIN
         int "Sensor Port 0 Detect GPIO"
-        default 19
+        default 35
 
     config SENSOR_PORT_0_CTRL_PIN
         int "Sensor Port 0 Control GPIO"
-        default 38
+        default 5
 
     config SENSOR_PORT_1_DETECT_PIN
         int "Sensor Port 1 Detect GPIO"
-        default 20
+        default 36
 
     config SENSOR_PORT_1_CTRL_PIN
         int "Sensor Port 1 Control GPIO"
-        default 39
+        default 6
 
     config SENSOR_PORT_2_DETECT_PIN
         int "Sensor Port 2 Detect GPIO"
-        default 21
+        default 37
 
     config SENSOR_PORT_2_CTRL_PIN
         int "Sensor Port 2 Control GPIO"
-        default 40
+        default 7
 
     config SENSOR_PORT_3_DETECT_PIN
         int "Sensor Port 3 Detect GPIO"
-        default 35
+        default 38
 
     config SENSOR_PORT_3_CTRL_PIN
         int "Sensor Port 3 Control GPIO"
-        default 41
+        default 8
 
     config SENSOR_PORT_4_DETECT_PIN
         int "Sensor Port 4 Detect GPIO"
-        default 36
+        default 39
 
     config SENSOR_PORT_4_CTRL_PIN
         int "Sensor Port 4 Control GPIO"
-        default 42
+        default 15
 
     config SENSOR_PORT_5_DETECT_PIN
         int "Sensor Port 5 Detect GPIO"
-        default 37
+        default 40
 
     config SENSOR_PORT_5_CTRL_PIN
         int "Sensor Port 5 Control GPIO"
-        default 45
+        default 19
 
 
 endmenu

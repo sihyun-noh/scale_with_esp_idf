@@ -4,7 +4,6 @@
 #include "sdi12_task.h"
 #include "stdio.h"
 #include "esp_log.h"
-#include "esp_random.h"
 #include "mqtt_publish.h"
 #include "mqtt_config.h"
 #include "file_log.h"
@@ -284,10 +283,10 @@ static char* parse_rows(const char* json_text) {
 }
 
 void data_table_init() {
-  // create a new data-table handle for the type 1
   data_table_init_all();
 
 #if 0
+  // create a new data-table handle for the type 1
   datatable_init(&dt_1min_cfg, &dt_1min_hdl);
   if (dt_1min_hdl == NULL) {
     ESP_LOGE(TAG, "datatable_new, new data-table handle failed");

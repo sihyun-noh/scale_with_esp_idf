@@ -140,17 +140,6 @@ extern "C" void app_main(void) {
   // Port-wise Sensing Strategy Initialization
   //----------------------------------------------------------------//
 
-  // structure protective
-  // sensor_cfg_lock();
-  // // This must be set up before use.
-  // cfg_mgr->cfg[5].port = 6;
-  // cfg_mgr->cfg[5].current_state = SENSOR_PORT_STATUS_READY;
-  // cfg_mgr->cfg[5].sensor_type = TEROS12;
-  // cfg_mgr->cfg[5].columns_size = 3;
-  // cfg_mgr->cfg[5].rows_size = 1;
-  // cfg_mgr->cfg[5].server_config.publish_interval = 1;
-  // sensor_cfg_unlock();
-
   // data_table Initialize
   data_table_init();
   // strategy task Initialize
@@ -170,57 +159,7 @@ extern "C" void app_main(void) {
 
 #endif
   while (1) {
-    // // Step 3: Wait for sensor connection events from any port (clear bits after wait)
-    // EventBits_t bits = xEventGroupGetBits(mgr->sensor_event_group);
-    //
-    // // Step 4: Process each port if event occurred and sensor is connected
-    // for (int portId = 0; portId < MAX_SENSOR_PORTS; portId++) {
-    //   if (bits & SENSOR_PORT_EVENT_BIT(portId)) {
-    //     if (sensor_is_connected(portId)) {
-    //       ESP_LOGI(TAG, "[PORT %d] Sensor connected, start measurement...", portId);
-    //
-    //       ESP_ERROR_CHECK(sensor_buffer_select_port(portId));
-    //       vTaskDelay(pdMS_TO_TICKS(20));
-    //
-    //       // TODO: Add actual measurement routine here
-    //       // e.g., SDI12_StartMeasurement(...) + SDI12_SendData(...)
-    //
-    //       ESP_ERROR_CHECK(sensor_buffer_disable());
-    //
-    //     } else {
-    //       ESP_LOGW(TAG, "[PORT %d] Event triggered but sensor is not connected. --> Skip", portId);
-    //     }
-    //   }
-    // }
-
-    // Optional: Delay between event checks
-
     // print_heap_summary();
-
-    // EventBits_t bits = xEventGroupGetBits(mgr->sensor_event_group);
-    //
-    // if (bits & BIT0) {
-    //   ESP_LOGI(TAG, "BIT0 is SET");
-    // } else {
-    //   ESP_LOGI(TAG, "BIT0 is CLEAR");
-    // }
-    //
-    // if (bits & BIT1) {
-    //   ESP_LOGI(TAG, "BIT1 is SET");
-    // } else {
-    //   ESP_LOGI(TAG, "BIT1 is CLEAR");
-    // }
-    // if (bits & BIT2) {
-    //   ESP_LOGI(TAG, "BIT2 is SET");
-    // } else {
-    //   ESP_LOGI(TAG, "BIT2 is CLEAR");
-    // }
-    // if (bits & BIT5) {
-    //   ESP_LOGI(TAG, "BIT5 is SET");
-    // } else {
-    //   ESP_LOGI(TAG, "BIT5 is CLEAR");
-    // }
-    //
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 

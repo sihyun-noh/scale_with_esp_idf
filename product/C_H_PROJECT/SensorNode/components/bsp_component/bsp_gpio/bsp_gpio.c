@@ -22,7 +22,8 @@ esp_err_t bsp_gpio_init() {
   gpio_config_t o_conf = { .pin_bit_mask = (1ULL << CONFIG_STATUS_LED_BLUE_PIN) |
                                            (1ULL << CONFIG_STATUS_LED_GREEN_PIN) | (1ULL << CONFIG_STATUS_LED_RED_PIN),
                            .mode = GPIO_MODE_INPUT_OUTPUT,
-                           .pull_up_en = GPIO_PULLUP_ENABLE,
+                           .pull_up_en = GPIO_PULLUP_DISABLE,
+                           //                           .pull_up_en = GPIO_PULLUP_ENABLE,
                            .intr_type = GPIO_INTR_DISABLE };
   gpio_config(&o_conf);
 
@@ -42,9 +43,11 @@ esp_err_t bsp_gpio_init() {
 }
 
 /// @brief Predefined list of status LEDs (Blue, Green, Red)
-static const status_led_t status_leds[] = { { .pin = GPIO_NUM_2, .color_name = "BLUE", .mask = LED_BLUE },
-                                            { .pin = GPIO_NUM_4, .color_name = "GREEN", .mask = LED_GREEN },
-                                            { .pin = GPIO_NUM_5, .color_name = "RED", .mask = LED_RED } };
+static const status_led_t status_leds[] = {
+  { .pin = CONFIG_STATUS_LED_GREEN_PIN, .color_name = "GREEN", .mask = LED_GREEN },
+  { .pin = CONFIG_STATUS_LED_RED_PIN, .color_name = "RED", .mask = LED_RED },
+  { .pin = CONFIG_STATUS_LED_BLUE_PIN, .color_name = "BLUE", .mask = LED_BLUE }
+};
 
 /// @brief Blink each status LED in sequence with 1s delay.
 void blink_status_leds(void) {

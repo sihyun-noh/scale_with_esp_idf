@@ -632,6 +632,8 @@ void strategy_task_mgr_sensor_start(void) {
 }
 
 /* clang-format off */
+
+ #define MAX_TIME_OUT_COUNT 6
 typedef enum { 
   TRIGGER_STATE_INIT, 
   TRIGGER_STATE_WAIT, 
@@ -648,6 +650,8 @@ typedef struct {
 
 static void trigger_task_loop(void* pvParameters) {
  
+
+  uint8_t time_out_count = 0;
   TickType_t task_start_time = 0;
   trigger_fsm_t fsm = { 
     .current_index = 0, 
@@ -712,6 +716,10 @@ static void trigger_task_loop(void* pvParameters) {
           ESP_LOGW(TAG, "[FSM] Task %s completed in %lu ms", task->task_name, (unsigned long)duration_ms);
         } else {
           ESP_LOGW(TAG, "[FSM] Task %s timeout after %lu ms", task->task_name, (unsigned long)duration_ms);
+          time_out_count++;
+          if (time_out_count == MAX_TIME_OUT_COUNT) {
+            esp_restart();
+          }
         }
 
         fsm.current_index++;

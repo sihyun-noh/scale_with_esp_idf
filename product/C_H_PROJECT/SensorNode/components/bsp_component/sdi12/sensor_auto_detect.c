@@ -320,15 +320,14 @@ void sensor_auto_detect_task(void *arg) {
         int info_call_count = 0;
 
         vTaskDelay(pdMS_TO_TICKS(1000));
-        ESP_LOGW(TAG, "while 문 시작");
         // NOTE:여기에 센서 뽑지 말게 하거나. 다른거 못하도록 상태 표시 해야 함.RGB LED로.
         //
 
         while (1) {
           // NOTE: info 상태 확인LED
-          blink_status_set_leds(LED_RED | LED_RED);
+          blink_status_set_leds(LED_RED);
           vTaskDelay(pdMS_TO_TICKS(500));
-          blink_status_clear_leds(LED_BLUE | LED_RED);
+          blink_status_clear_leds(LED_RED);
 
           // 공백제거
           trim(new_sensor_info->manufacturer);
@@ -357,9 +356,9 @@ void sensor_auto_detect_task(void *arg) {
             new_sensor_info = sdi12_info_start(portId);
             info_call_count++;
             if (info_call_count == 10) {
-              blink_status_set_leds(LED_RED);
+              blink_status_set_leds(LED_BLUE);
               vTaskDelay(pdMS_TO_TICKS(1500));
-              blink_status_clear_leds(LED_RED);
+              blink_status_clear_leds(LED_BLUE);
               esp_restart();
             }
           }

@@ -2,15 +2,15 @@ menu "BSP GPIO Configuration"
 
     config STATUS_LED_BLUE_PIN
         int "LED BLUE Control GPIO"
-        default 5
+        default 41
 
     config STATUS_LED_GREEN_PIN
         int "LED GREEM Control GPIO"
-        default 6
+        default 42
 
     config STATUS_LED_RED_PIN
         int "LED RED Control GPIO"
-        default 7
+        default 45
 
     config WIFI_SELECT_PIN
         int "WIFI SELECT PIN GPIO"
