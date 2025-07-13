@@ -23,7 +23,6 @@ extern "C" {
 #define SENSOR_PORT_EVENT_BIT(portId) (1 << (portId))
 
 extern SemaphoreHandle_t sensor_mutex;
-// extern EventGroupHandle_t sensor_event_group;
 
 typedef struct {
   int data;
@@ -138,6 +137,11 @@ sensor_ad_manager_t* sensor_ad_get_instance(void);
  */
 bool sensor_ad_is_initialized(void);
 
+/**
+ * @brief Get the singleton instance of the sensor system controller.
+ *
+ * @return Pointer to the sensor_system_t instance.
+ */
 sensor_system_t* sensor_ctl_get_instance(void);
 
 // 안전한 접근 함수들

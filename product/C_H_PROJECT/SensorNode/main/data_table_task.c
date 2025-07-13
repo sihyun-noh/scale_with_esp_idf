@@ -1,4 +1,5 @@
 #include <string.h>
+#include "esp_err.h"
 #include "freertos/idf_additions.h"
 #include "freertos/projdefs.h"
 #include "sdi12_task.h"
@@ -13,14 +14,17 @@
 
 #define PORT_DT_HANDLER(i) "port_dt_handler" #i
 
-static const char* TAG = "dataTable_task";
+static const char* TAG = "[dataTable_task]";
 
-/* void callback_fc(void* handle, datatable_event_t msg) { */
-/*   if (handle != NULL) { */
-/*     ESP_LOGI(TAG, "dt event type %d _ %s", msg.type, msg.message); */
-/*   } */
-/* } */
-/* static const datatable_event dt_1min_hdl_event = callback_fc; */
+#if 0
+void callback_fc(void* handle, datatable_event_t msg) {
+  if (handle != NULL) {
+    ESP_LOGI(TAG, "dt event type %d _ %s", msg.type, msg.message);
+  }
+}
+
+static const datatable_event dt_1min_hdl_event = callback_fc;
+#endif
 
 static sensor_datatable_t port_tables[SENSOR_PORT_COUNT];
 
@@ -73,7 +77,6 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
   };
   /* clang-format on */
 
-  // 이름 버퍼는 스택 또는 힙에 할당
   char name_buf[32];
   const char* type_name = sensor_type_to_str(cfg->sensor_type);
   snprintf(name_buf, sizeof(name_buf), "%dP_%dm_%s", cfg->port, cfg->server_config.publish_interval, type_name);
@@ -90,6 +93,7 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
   // data table 실제 초기화 호출
   if (datatable_init(&dt_cfg, &dt->handle) != ESP_OK) {
     ESP_LOGE(TAG, "Port %d datatable_init failed", cfg->port);
+    ESP_LOGE(TAG, "table name : %s ", dt_cfg.name);
     return false;
   }
 
@@ -101,7 +105,7 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
   ESP_LOGI(TAG, "Port %d datatable initialized (handle=%p)", cfg->port, dt->handle);
 
   switch (cfg->sensor_type) {
-    // TEROS 계열 (습도·온도·이슬점)
+    /* TEROS TYPE */
     case TEROS11:
       datatable_add_float_smp_column(dt->handle, "vwc", &dt->teros11_col.vwc_avg_col);
       datatable_add_float_smp_column(dt->handle, "temp", &dt->teros11_col.ta_avg_col);
@@ -117,9 +121,32 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
       datatable_add_float_smp_column(dt->handle, "temperature", &dt->teros21_col.temperature_avg_col);
       break;
 
-    // ATMOS 계열 (기압)
+    case TEROS54:
+      datatable_add_float_smp_column(dt->handle, "vwc1", &dt->teros54_col.vwc1_col);
+      datatable_add_float_smp_column(dt->handle, "temperature1", &dt->teros54_col.temp1_col);
+      datatable_add_float_smp_column(dt->handle, "vwc2", &dt->teros54_col.vwc2_col);
+      datatable_add_float_smp_column(dt->handle, "temperature2", &dt->teros54_col.temp2_col);
+      datatable_add_float_smp_column(dt->handle, "vwc3", &dt->teros54_col.vwc3_col);
+      datatable_add_float_smp_column(dt->handle, "temperature3", &dt->teros54_col.temp3_col);
+      datatable_add_float_smp_column(dt->handle, "vwc4", &dt->teros54_col.vwc4_col);
+      datatable_add_float_smp_column(dt->handle, "temperature4", &dt->teros54_col.temp4_col);
+      break;
+
+    /* ATMOS TYPE */
+
     /* case ATMOS21: */
-    /* case ATMOS22: */
+    case ATMOS22:
+      datatable_add_float_smp_column(dt->handle, "windSpeed", &dt->atmos22_col.windSpeed_col);
+      datatable_add_float_smp_column(dt->handle, "windDirection", &dt->atmos22_col.windDirection_col);
+      datatable_add_float_smp_column(dt->handle, "gustWindSpeed", &dt->atmos22_col.gustWindSpeed_col);
+      datatable_add_float_smp_column(dt->handle, "airTemperature", &dt->atmos22_col.airTemperature_col);
+      datatable_add_float_smp_column(dt->handle, "xOrientation", &dt->atmos22_col.xOrientation_col);
+      datatable_add_float_smp_column(dt->handle, "yOrientation", &dt->atmos22_col.yOrientation_col);
+      datatable_add_float_smp_column(dt->handle, "nullValue", &dt->atmos22_col.nullValue_col);
+      datatable_add_float_smp_column(dt->handle, "northWindSpeed", &dt->atmos22_col.northWindSpeed_col);
+      datatable_add_float_smp_column(dt->handle, "eastWindSpeed", &dt->atmos22_col.eastWindSpeed_col);
+      break;
+
     /* case ATMOS31: */
     case ATMOS41:
       datatable_add_float_smp_column(dt->handle, "solar", &dt->at41g2_col.solar_col);
@@ -141,71 +168,43 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
       datatable_add_float_smp_column(dt->handle, "eastWindSpeed", &dt->at41g2_col.eastWindSpeed_col);
       break;
 
-    case ATMOS54: datatable_add_float_avg_column(dt->handle, "Pressure", &dt->pressure_col); break;
-
-    // Apogee 계열 (방사선)
-    case APOGEE_S2_411:
-    case APOGEE_SP_421:
+    /* APOGEE TYPE */
+    case APOGEE_S2_412:
+      datatable_add_float_smp_column(dt->handle, "NDVI", &dt->apogee_data_col.NDVI);
+      break;
+      // case APOGEE_SP_421:
     case APOGEE_SQ_521:
-    case APOGEE_SU_221: datatable_add_float_avg_column(dt->handle, "Radiation", &dt->radiation_col); break;
+      datatable_add_float_smp_column(dt->handle, "PPFD", &dt->apogee_data_col.PPFD);
+      break;
+      // case APOGEE_SU_221: datatable_add_float_avg_column(dt->handle, "Radiation", &dt->radiation_col); break;
 
     default: ESP_LOGW(TAG, "Port %d: Unknown sensor type %d, no columns added", cfg->port, cfg->sensor_type); break;
   }
 
   ESP_LOGI(TAG, "Port %d columns: Pa@%u, Ta_avg@%u, Ta_min@%u, Ta_max@%u, Td@%u", cfg->port, dt->pa_avg_col,
            dt->ta_avg_col, dt->ta_min_col, dt->ta_max_col, dt->td_avg_col);
+
   return true;
 }
 
-void data_table_init_all(void) {
+esp_err_t data_table_init_all(void) {
   sensor_port_cfg_t* cfg = sensor_cfg_instance();
   if (!cfg) {
     ESP_LOGE(TAG, "sensor_cfg_instance() returned NULL");
-    return;
+    return ESP_FAIL;
   }
   for (int i = 0; i < SENSOR_PORT_COUNT; i++) {
     // port_tables 는 sensor_datatable_t 배열
     ESP_LOGW(TAG, "cfg[%d]  Set_port[%d] Set_type[%d] (cfg.state=%d), columns_size[%d]", i, cfg[i].port,
              cfg[i].sensor_type, cfg[i].current_state, cfg[i].columns_size);
-    init_datatable_for_port(i, &cfg[i], &port_tables[i]);
-  }
-}
-#if 0
-void dt_init_with_sensor() {
-  char tb_name_buf[20] = { 0 };
-  char tb_smp_name_buf[20] = { 0 };
-  // Get cfg instance
-  sensor_port_cfg_t* nvs_cfg = sensor_cfg_instance();
-  for (int i = 0; i < SENSOR_PORT_COUNT; i++) {
-    sensor_datatable_t* dt = &port_tables[i];
+    if (!init_datatable_for_port(i, &cfg[i], &port_tables[i])) {
+      ESP_LOGE(TAG, "Table initialized fail![port : %d]", i + 1);
 
-    memset(tb_name_buf, 0x00, sizeof(tb_name_buf));
-    memset(tb_smp_name_buf, 0x00, sizeof(tb_smp_name_buf));
-    ESP_LOGI(TAG, "port :%d", nvs_cfg[i].port);
-    snprintf(tb_name_buf, sizeof(tb_name_buf), "%dP_%d_M_tbl", nvs_cfg[i].port,
-             nvs_cfg->processing_interval_period_min);
-    snprintf(tb_smp_name_buf, sizeof(tb_smp_name_buf), "%ds_smp", nvs_cfg->sampling_period_sec);
-
-    dt->config = (datatable_config_t){
-      /*  data-table configuration */
-      .name = tb_name_buf,
-      .columns_size = 5,
-      .rows_size = 1,
-      .data_storage_type = DATATABLE_DATA_STORAGE_MEMORY_RING,
-      .sampling_config = { .name = tb_smp_name_buf,
-                           .interval_type = TIME_INTO_INTERVAL_SEC,
-                           .interval_period = nvs_cfg[i].sampling_period_sec,
-                           .interval_offset = 0 },
-      .processing_config = { .name = "processing",
-                             .interval_type = TIME_INTO_INTERVAL_MIN,
-                             .interval_period = nvs_cfg[i].processing_interval_period_min,
-                             .interval_offset = 0 },
-      // .event_handler = dt_1min_hdl_event,
-    };
-    datatable_init(&dt->config, &dt->handle);
+      // return ESP_FAIL;
+    }
   }
+  return ESP_OK;
 }
-#endif
 
 /* clang-format off */
 static datatable_handle_t       dt_1min_hdl;          /*  data-table handle */
@@ -282,8 +281,8 @@ static char* parse_rows(const char* json_text) {
   return str;
 }
 
-void data_table_init() {
-  data_table_init_all();
+esp_err_t data_table_init() {
+  return data_table_init_all();
 
 #if 0
   // create a new data-table handle for the type 1
@@ -341,7 +340,7 @@ void dt_1min_smp_task(void* pvParameters) {
     /* measure samples from sensors and set sensor variables (pa, ta, td)  */
 
     uint8_t portId = 1;
-    teros12_data_t* tero12 = sdi12_read_start_teros12(portId);
+    teros12_data_t* tero12 = sdi12_read_teros12(portId);
 
     // push samples onto the data buffer stack for processing
     datatable_push_float_sample(dt_1min_hdl, dt_1min_pa_avg_col_index, tero12->vwc);

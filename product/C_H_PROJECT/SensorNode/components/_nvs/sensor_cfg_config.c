@@ -9,30 +9,31 @@
 #define DEVICE_ID_KEY "device_id"
 #define MAC_ADDR_LEN  18
 
-static const char *TAG = "sensor_cfg";
+static const char *TAG = "[sensor_cfg]";
 
 static sensor_port_cfg_t g_sensor_cfgs[SENSOR_PORT_COUNT];
-
 SemaphoreHandle_t cfg_mutex = NULL;
 static bool initialized = false;
 
 static sensor_cfg_manager_t sensor_cfg_mgr = { .cfg = g_sensor_cfgs, .mutex = NULL };
 /* clang-format off */
 const char *sensor_names[] = {
+  "INFO", 
   "TEROS11", 
   "TEROS12",
   // "TEROS14",
   "TEROS21",
+  "TEROS54",
   // "ATMOS21",
-  // "ATMOS22",
+   "ATMOS22",
   //  "ATMOS31",
   "ATMOS41", 
-  "ATMOS54", 
-  "APOGEE_S2_411", 
-  "APOGEE_SP_421", 
-  "APOGEE_SQ_521",
-  "APOGEE_SU_221",  // ...
+  "APO_S2_412", 
+  //"APOGEE_SP_421", 
+  "APO_SQ_521",
+  //"APOGEE_SU_221",  // ...
 };
+
 /* clang-format on */
 const char *sensor_type_to_str(sdi12_sensor_type_t type) {
   if (type >= 0 && type < SENSOR_TYPE_COUNT) {
@@ -40,6 +41,7 @@ const char *sensor_type_to_str(sdi12_sensor_type_t type) {
   }
   return "UNKNOWN";
 }
+
 // singleton instance
 sensor_port_cfg_t *sensor_cfg_instance(void) {
   return g_sensor_cfgs;
@@ -108,13 +110,12 @@ sensor_port_cfg_t *sensor_port_cfg_get(int port) {
 esp_err_t sensor_port_cfg_init(void) {
   esp_err_t err = ESP_OK;
 
-  // 포트 번호는 1 기반
   // nvs 저장된 key 기반.
   for (int i = 1; i <= SENSOR_PORT_COUNT; ++i) {
     sensor_port_cfg_t *cfg = &g_sensor_cfgs[i - 1];
     cfg->port = i;
 
-    err = sensor_port_cfg_load(i, cfg);  // 포트 번호는 1 기반
+    err = sensor_port_cfg_load(i, cfg);
 
     if (err == ESP_ERR_NVS_NOT_FOUND) {
       // 기본값 설정

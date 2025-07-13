@@ -18,13 +18,11 @@
 #include "sensor_cfg_config.h"
 #include "bsp_gpio.h"
 
-#define DEBOUNCE_TIME_MS 100  // 디바운스 임계 시간
-
-static const char *TAG = "Sensor_AutoDetect";
+#define DEBOUNCE_TIME_MS 100
+static const char *TAG = "[sensorAutoDetect]";
 
 static sensor_system_t sensorSys;
 SemaphoreHandle_t sensor_mutex = NULL;
-// EventGroupHandle_t sensor_event_group = NULL;
 
 static sensor_ad_manager_t instance;
 static SemaphoreHandle_t singleton_mutex = NULL;
@@ -36,6 +34,39 @@ static int isr_port_ids[MAX_SENSOR_PORTS];  // ISR에 넘길 고정된 포인터
 typedef struct {
   int portId;
 } sensor_event_t;
+
+/* clang-format off */
+/**
+ * @brief Sensor model mapping tables and structure.
+ *
+ * Defines a mapping between reported sensor model names,
+ * internal sensor types, and expected column sizes.
+ *
+ * Includes separate tables for METER and APOGEE manufacturers,
+ * enabling automatic sensor configuration when detected.
+ */
+typedef struct {
+  const char *model;
+  sdi12_sensor_type_t type;
+  uint8_t columns_size;
+} sensor_model_map_t;
+
+// METER Model map
+static const sensor_model_map_t meter_model_map[] = {
+  { "TER11", TEROS11, 2 },
+  { "TER12", TEROS12, 3 },
+  { "TER21", TEROS21, 2 },
+  { "TER54", TEROS54, 8 },
+  { "ATMOS22", ATMOS22, 9 },
+  { "ATMOS41", ATMOS41, 17 },
+};
+
+// APOGEE Model map
+static const sensor_model_map_t apogee_model_map[] = {
+  { "S2-412", APOGEE_S2_412, 1 },  // NDVI
+  { "SQ-521", APOGEE_SQ_521, 1 },  // PPFD
+};
+/* clang-format on */
 
 sensor_system_t *sensor_ctl_get_instance(void) {
   return &sensorSys;
@@ -64,7 +95,6 @@ sensor_ad_manager_t *sensor_ad_get_instance(void) {
         return NULL;
       }
 
-      // 싱글톤 시 뮤택스 초기화
       instance.data_mutex = xSemaphoreCreateMutex();
       if (instance.data_mutex == NULL) {
         ESP_LOGE(TAG, "Failed to create data mutex");
@@ -258,6 +288,58 @@ int sensor_control_pin_get_level(int portId) {
   return level;
 }
 
+static void update_sensor_port_config(sensor_port_cfg_t *cfg, int portId, sdi12_sensor_type_t type,
+                                      uint8_t columns_size) {
+  /**
+   * @brief Update and lock sensor configuration for the given port.
+   *
+   * This section updates the sensor configuration table (cfg) for the specified portId.
+   * The function ensures thread safety by locking the configuration before making changes,
+   * and unlocking it afterward.
+   *
+   * Fields set:
+   *  - port: Logical port number (1-based index)
+   *  - sensor_type: Type of the connected SDI-12 sensor
+   *  - current_state: Marks port as ready
+   *  - columns_size: Number of data columns for this sensor type
+   *  - rows_size: Fixed to 1 (single row of data)
+   *  - publish_interval: Default interval for server publishing
+   *  - dirty: Marks this configuration as modified for persistence
+   */
+  sensor_cfg_lock();
+  cfg[portId].port = portId + 1;
+  cfg[portId].sensor_type = type;
+  cfg[portId].current_state = SENSOR_PORT_STATUS_READY;
+  cfg[portId].columns_size = columns_size;
+  cfg[portId].rows_size = 1;
+  cfg[portId].server_config.publish_interval = 1;
+  cfg[portId].dirty = 1;
+  sensor_cfg_unlock();
+
+  // Save to NVS
+  sensor_port_cfg_commit();
+
+  // Blink LED
+  blink_status_set_leds(LED_GREEN);
+  vTaskDelay(pdMS_TO_TICKS(1000));
+  blink_status_clear_leds(LED_GREEN);
+
+  // Force reboot
+  esp_restart();
+}
+
+static bool find_model_mapping(const sensor_model_map_t *table, size_t table_size, const char *model,
+                               sdi12_sensor_type_t *type_out, uint8_t *columns_out) {
+  for (size_t i = 0; i < table_size; ++i) {
+    if (strcmp(model, table[i].model) == 0) {
+      *type_out = table[i].type;
+      *columns_out = table[i].columns_size;
+      return true;
+    }
+  }
+  return false;
+}
+
 void sensor_auto_detect_task(void *arg) {
   sensor_ad_manager_t *mgr = sensor_ad_get_instance();
   sensor_event_t evt;
@@ -266,13 +348,16 @@ void sensor_auto_detect_task(void *arg) {
 
   while (1) {
     if (xQueueReceive(sensor_event_queue, &evt, portMAX_DELAY)) {
-      vTaskDelay(pdMS_TO_TICKS(1000));  // 정전시 port data 없어짐 방지
+      // NOTE:
+      // Delay to prevent transient ISR triggers, e.g., during power loss.
+      vTaskDelay(pdMS_TO_TICKS(1000));
 
       int portId = evt.portId;
       ESP_LOGE(TAG, "[PORT %d] ISR detected", portId);
 
       int64_t now = esp_timer_get_time() / 1000;  // in ms
-      // 디바운스: 마지막 이벤트 이후 일정 시간 이내면 무시
+
+      // Debounce: ignore if within a certain time after the last event
       if (now - last_event_time[portId] < DEBOUNCE_TIME_MS) {
         vTaskDelay(pdMS_TO_TICKS(10));  // 추가
         continue;
@@ -283,7 +368,6 @@ void sensor_auto_detect_task(void *arg) {
       int previous_level = last_pin_level[portId];
       last_pin_level[portId] = current_level;
 
-      // WARN: 확인용
       if (previous_level == 1 && current_level == 0) {
         ESP_LOGI(TAG, "[PORT %d] FALLING EDGE detected", portId);
       } else if (previous_level == 0 && current_level == 1) {
@@ -300,31 +384,25 @@ void sensor_auto_detect_task(void *arg) {
       // 비교하기 위한 변수
       sensor_port_cfg_t *cmp_empty = &cfg[portId];
 
-      // NOTE: current_level check
       if (current_level == 0) {
-        // falling edge 감지: 센서 연결됨
-        // strategy Tesk에서 동작중이 task 모두 멈춤
-
+        // NOTE: Falling edge detection: indicates sensor is connected
+        //  Stop all tasks currently executing in the strategy task
         ESP_LOGW(TAG, "[Auto_Detect] Enable connected port [%d] ", portId + 1);
-
         sensor_ad_manager_t *mgr = sensor_ad_get_instance();
         for (int i = 0; i < SENSOR_PORT_COUNT; ++i) {
           ESP_LOGW(TAG, "[Auto_Detect] clear bit [%d] ", i);
           xEventGroupClearBits(mgr->sensor_event_group, SENSOR_PORT_EVENT_BIT(i));
         }
 
-        // mux control
+        // MUX control
         sensor_buffer_select_port(portId);
-        // 여기서는 0I! 센서 정보 확인하기
-        sdi12_sensor_info_t *new_sensor_info = sdi12_info_start(portId);
         int info_call_count = 0;
-
+        sdi12_sensor_info_t *new_sensor_info = sdi12_info_start(portId);
         vTaskDelay(pdMS_TO_TICKS(1000));
-        // NOTE:여기에 센서 뽑지 말게 하거나. 다른거 못하도록 상태 표시 해야 함.RGB LED로.
-        //
 
         while (1) {
-          // NOTE: info 상태 확인LED
+          // TODO: State LED
+          // Operation to retrieve SDI-12 sensor information
           blink_status_set_leds(LED_RED);
           vTaskDelay(pdMS_TO_TICKS(500));
           blink_status_clear_leds(LED_RED);
@@ -343,16 +421,13 @@ void sensor_auto_detect_task(void *arg) {
           printf("\n");
 
           if (strcmp(new_sensor_info->manufacturer, "METER") == 0) {
-            // fet off
             ESP_LOGW(TAG, "Sensor manufacturer : %s", new_sensor_info->manufacturer);
             ESP_LOGW(TAG, "Sensor type : %s", new_sensor_info->model);
             break;
           } else if (strcmp(new_sensor_info->manufacturer, "APOGEE") == 0) {
-            // fet off
             ESP_LOGW(TAG, "Sensor type : %s", new_sensor_info->manufacturer);
             break;
           } else {
-            // NOTE: power on off 하면서 해야
             new_sensor_info = sdi12_info_start(portId);
             info_call_count++;
             if (info_call_count == 10) {
@@ -364,179 +439,59 @@ void sensor_auto_detect_task(void *arg) {
           }
         };
 
-        // TODO:....설정을 하고 nvs에 저장을 할지...그리고 다시 reboot을 해야 할지.
-        // [1단계] : sdi12 센서의 정보를 확인하여 센서의 타입을 알아내야 한다.
-        //           그리고 획득한 정보를 바탕으로 sensor_port_cfg에 센서의 타입과 현재 상태를 매핑한다.
-        if (strcmp(new_sensor_info->manufacturer, "METER") == 0) {
-          if (strcmp(new_sensor_info->model, "TER11") == 0) {
-            // 기존 포트에 등록 포트센서 정보와 다를시 다시 업데이트 함
-            sdi12_sensor_type_t type = TEROS11;
-            if (cmp_empty->sensor_type != type) {
-              ESP_LOGW(TAG, "Target sensor type miss macth, current type:%d, set type:%d )", cmp_empty->sensor_type,
-                       type);
-              sensor_cfg_lock();
-              cfg[portId].port = portId + 1;  // 포트번호는 1번부터
-              cfg[portId].sensor_type = type;
-              cfg[portId].current_state = SENSOR_PORT_STATUS_READY;
-              cfg[portId].columns_size = 2;
-              cfg[portId].rows_size = 1;
-              cfg[portId].server_config.publish_interval = 1;
-              cfg[portId].dirty = 1;
-              sensor_cfg_unlock();
-              // nvs saved
-              sensor_port_cfg_commit();
-              blink_status_set_leds(LED_GREEN);
-              vTaskDelay(pdMS_TO_TICKS(1000));
-              blink_status_clear_leds(LED_GREEN);
-              // force restart LED 점등으로 확인할것
-              // NOTE: 센서 연결이 일어날 경우 무조건 리셋 한다.
-              esp_restart();
-            } else {
-              ESP_LOGW(TAG, "Target sensor type macthed:[%d]", cmp_empty->sensor_type);
-              blink_status_set_leds(LED_BLUE);
-              vTaskDelay(pdMS_TO_TICKS(1000));
-              blink_status_clear_leds(LED_BLUE);
-            }
-          } else if (strcmp(new_sensor_info->model, "TER12") == 0) {
-            // 기존 포트에 등록 포트센서 정보와 다를시 다시 업데이트 함
-            sdi12_sensor_type_t type = TEROS12;
-            if (cmp_empty->sensor_type != type) {
-              ESP_LOGW(TAG, "Target sensor type miss macth, current type:%d, set type:%d )", cmp_empty->sensor_type,
-                       type);
-              sensor_cfg_lock();
-              cfg[portId].port = portId + 1;  // 포트번호는 1번부터
-              cfg[portId].sensor_type = type;
-              cfg[portId].current_state = SENSOR_PORT_STATUS_READY;
-              cfg[portId].columns_size = 3;
-              cfg[portId].rows_size = 1;
-              cfg[portId].server_config.publish_interval = 1;
-              cfg[portId].dirty = 1;
-              sensor_cfg_unlock();
-              // nvs saved
-              sensor_port_cfg_commit();
-              blink_status_set_leds(LED_GREEN);
-              vTaskDelay(pdMS_TO_TICKS(1000));
-              blink_status_clear_leds(LED_GREEN);
-              // force restart LED 점등으로 확인할것
-              // NOTE: 센서 연결이 일어날 경우 무조건 리셋 한다.
-              esp_restart();
-            } else {
-              ESP_LOGW(TAG, "Target sensor type macthed:[%d]", cmp_empty->sensor_type);
-              blink_status_set_leds(LED_BLUE);
-              vTaskDelay(pdMS_TO_TICKS(1000));
-              blink_status_clear_leds(LED_BLUE);
-            }
-          } else if (strcmp(new_sensor_info->model, "TER21") == 0) {
-            // 기존 포트에 등록 포트센서 정보와 다를시 다시 업데이트 함
-            sdi12_sensor_type_t type = TEROS21;
-            if (cmp_empty->sensor_type != type) {
-              ESP_LOGW(TAG, "Target sensor type miss macth, current type:%d, set type:%d )", cmp_empty->sensor_type,
-                       type);
-              sensor_cfg_lock();
-              cfg[portId].port = portId + 1;  // 포트번호는 1번부터
-              cfg[portId].sensor_type = type;
-              cfg[portId].current_state = SENSOR_PORT_STATUS_READY;
-              cfg[portId].columns_size = 2;
-              cfg[portId].rows_size = 1;
-              cfg[portId].server_config.publish_interval = 1;
-              cfg[portId].dirty = 1;
-              sensor_cfg_unlock();
-              // nvs saved
-              sensor_port_cfg_commit();
-              blink_status_set_leds(LED_GREEN);
-              vTaskDelay(pdMS_TO_TICKS(1000));
-              blink_status_clear_leds(LED_GREEN);
-              // force restart LED 점등으로 확인할것
-              // NOTE: 센서 연결이 일어날 경우 무조건 리셋 한다.
-              esp_restart();
-            }
+        // TODO: Check sensor information, save it to NVS, then reboot.
+        // The saved configuration type is sensor_port_cfg.
+        // Structure that works based on a table map
+        if (strcmp(new_sensor_info->manufacturer, "METER") == 0 ||
+            strcmp(new_sensor_info->manufacturer, "APOGEE") == 0) {
+          const sensor_model_map_t *map_table = NULL;
+          size_t map_size = 0;
 
-            else {
-              ESP_LOGW(TAG, "Target sensor type macthed:[%d]", cmp_empty->sensor_type);
-              blink_status_set_leds(LED_BLUE);
-              vTaskDelay(pdMS_TO_TICKS(1000));
-              blink_status_clear_leds(LED_BLUE);
-            }
-          } else if (strcmp(new_sensor_info->model, "ATMOS41") == 0) {
-            // 기존 포트에 등록 포트센서 정보와 다를시 다시 업데이트 함
-            sdi12_sensor_type_t type = ATMOS41;
-            if (cmp_empty->sensor_type != type) {
-              ESP_LOGW(TAG, "Target sensor type miss macth, current type:%d, set type:%d )", cmp_empty->sensor_type,
-                       type);
-              sensor_cfg_lock();
-              cfg[portId].port = portId + 1;  // 포트번호는 1번부터
-              cfg[portId].sensor_type = type;
-              cfg[portId].current_state = SENSOR_PORT_STATUS_READY;
-              cfg[portId].columns_size = 17;
-              cfg[portId].rows_size = 1;
-              cfg[portId].server_config.publish_interval = 1;
-              cfg[portId].dirty = 1;
-              sensor_cfg_unlock();
-              // nvs saved
-              sensor_port_cfg_commit();
-              blink_status_set_leds(LED_GREEN);
-              vTaskDelay(pdMS_TO_TICKS(1000));
-              blink_status_clear_leds(LED_GREEN);
-              // force restart LED 점등으로 확인할것
-              // NOTE: 센서 연결이 일어날 경우 무조건 리셋 한다.
-              esp_restart();
-            } else {
-              ESP_LOGW(TAG, "Target sensor type macthed:[%d]", cmp_empty->sensor_type);
-              blink_status_set_leds(LED_BLUE);
-              vTaskDelay(pdMS_TO_TICKS(1000));
-              blink_status_clear_leds(LED_BLUE);
-            }
+          if (strcmp(new_sensor_info->manufacturer, "METER") == 0) {
+            map_table = meter_model_map;
+            map_size = sizeof(meter_model_map) / sizeof(sensor_model_map_t);
+          } else if (strcmp(new_sensor_info->manufacturer, "APOGEE") == 0) {
+            map_table = apogee_model_map;
+            map_size = sizeof(apogee_model_map) / sizeof(sensor_model_map_t);
           }
 
-          else {
-            ESP_LOGE(TAG, "Miss info data : %s", new_sensor_info->model);
+          sdi12_sensor_type_t detected_type;
+          uint8_t columns_size;
+
+          if (find_model_mapping(map_table, map_size, new_sensor_info->model, &detected_type, &columns_size)) {
+            if (cmp_empty->sensor_type != detected_type) {
+              ESP_LOGW(TAG, "Target sensor type mismatch, current:%d, detected:%d", cmp_empty->sensor_type,
+                       detected_type);
+              update_sensor_port_config(cfg, portId, detected_type, columns_size);
+            } else {
+              ESP_LOGW(TAG, "Target sensor type matched:[%d]", cmp_empty->sensor_type);
+              blink_status_set_leds(LED_BLUE);
+              vTaskDelay(pdMS_TO_TICKS(1000));
+              blink_status_clear_leds(LED_BLUE);
+            }
+          } else {
+            ESP_LOGE(TAG, "Unknown model for %s: %s", new_sensor_info->manufacturer, new_sensor_info->model);
           }
+        } else {
+          ESP_LOGE(TAG, "Unsupported manufacturer: %s", new_sensor_info->manufacturer);
         }
 
         sensor_buffer_disable();
-        /*  port->isSensorConnected = true; */
-        /* sensor_info_t newSensor; */
-        /* // TODO:아직 왜 아래 코드가 필요한지 모름.. 확인해야 함 */
-        /* if (!wasConnected) { */
-        /*   ESP_LOGI(TAG, "[PORT %d] Sensor connected (addr: %s)", portId, newSensor.addr); */
-        /* } */
-        /**/
-        /* port->hasSensorChanged = memcmp(&newSensor, &port->currentSensor, sizeof(sensor_info_t)) != 0; */
-        /* if (port->hasSensorChanged) { */
-        /*   port->lastSensor = port->currentSensor; */
-        /*   port->currentSensor = newSensor; */
-        /*   ESP_LOGI(TAG, "[PORT %d] Sensor updated (type: %s)", portId, newSensor.type); */
-        /* } */
-        /**/
-        /* xEventGroupSetBits(mgr->sensor_event_group, SENSOR_PORT_EVENT_BIT(portId)); */
 
       } else {
-        // NOTE: 연결해 해제 되면 해당 Task는 동작을 중지한다.
-        //  falling edge 감지: 센서 연결 해제됨
-        //  port->isSensorConnected = false;
-
         ESP_LOGW(TAG, "[Auto_Detect] Disable connected port [%d] ", portId + 1);
         sensor_cfg_lock();
         cfg[portId].port = portId + 1;
         cfg[portId].sensor_type = SENSOR_TYPE_UNKNOWN;
         cfg[portId].current_state = SENSOR_PORT_STATUS_NONE;
-        cfg[portId].dirty = 1;  // updated flag bit.
+        cfg[portId].dirty = 1;  // NVS updated flag bit.
         sensor_cfg_unlock();
 
-        // nvs saved
-        //  TODO:....설정을 하고 nvs에 저장을 할지...
+        // NVS Save
         ESP_LOGW(TAG, "[Auto_Detect] Disable connected port [%d] ", portId + 1);
-
         sensor_port_cfg_commit();
-
         ESP_LOGW(TAG, "[Auto_Detect] Set bit [%d] ", portId);
         xEventGroupSetBits(mgr->sensor_event_group, SENSOR_PORT_EVENT_BIT(portId));
-
-        /* if (wasConnected) { */
-        /*   ESP_LOGW(TAG, "[PORT %d] Sensor disconnected", portId); */
-        /*   memset(&port->currentSensor, 0, sizeof(sensor_info_t)); */
-        /*   xEventGroupClearBits(mgr->sensor_event_group, SENSOR_PORT_EVENT_BIT(portId)); */
-        /* } */
       }
     }  // xQueueReceive
 

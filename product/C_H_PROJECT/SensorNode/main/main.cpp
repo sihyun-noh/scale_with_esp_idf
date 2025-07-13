@@ -32,7 +32,7 @@
 #include "bsp_gpio.h"
 #include "sdi12_task.h"
 
-static const char* TAG = "main_app";
+static const char* TAG = "[main_app]";
 
 extern "C" {
 extern void strategy_task_mgr_mqtt_start(void);
@@ -43,10 +43,10 @@ extern void strategy_task_mgr_sensor_start(void);
 extern void strategy_trigger_task_start(void);
 }
 
-int do_user_cmd(int argc, char** argv) {
-  printf("Hello from user command.\n");
-  return 0;
-}
+// int do_user_cmd(int argc, char** argv) {
+//   printf("Hello from user command.\n");
+//   return 0;
+// }
 
 void print_heap_summary() {
   multi_heap_info_t info;
@@ -80,7 +80,7 @@ extern "C" void app_main(void) {
   ESP_ERROR_CHECK(console_cmd_init());
 
   // Register user command
-  ESP_ERROR_CHECK(console_cmd_user_register("user", do_user_cmd));
+  // ESP_ERROR_CHECK(console_cmd_user_register("user", do_user_cmd));
 
   // Register all the plugin commands added to this example
   ESP_ERROR_CHECK(console_cmd_all_register());
@@ -107,7 +107,7 @@ extern "C" void app_main(void) {
   ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &on_got_ip, NULL));
   app_eth_init();
 
-#else if
+#else
   ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &on_got_ip, NULL));
   // Get the WiFi configuration
   auto& ssid_list = SsidManager::GetInstance().GetSsidList();
@@ -127,6 +127,7 @@ extern "C" void app_main(void) {
   blink_status_leds();
 
   // cfg instance Initialize
+  // TODO: Debug and verify configuration manager settings.
   sensor_cfg_manager_t* cfg_mgr = sensor_cfg_get_instance();
 
   sensor_auto_detect_init();
@@ -152,12 +153,14 @@ extern "C" void app_main(void) {
   //----------------------------------------------------------------//
   // Step 1: Initialize the sensor detection system
   xTaskCreate(sensor_auto_detect_task, "sensor_auto_detect_task", 4096, NULL, 5, NULL);
+  // TODO: Debug and verify configuration manager settings.
   sensor_ad_manager_t* mgr = sensor_ad_get_instance();
-#else if
-
+#else
+  // sdi12 test task
   sdi12_task_init();
 
 #endif
+
   while (1) {
     // print_heap_summary();
     vTaskDelay(pdMS_TO_TICKS(1000));

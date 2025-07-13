@@ -13,7 +13,7 @@
 #include "driver/spi_master.h"
 #endif  // CONFIG_ETH_USE_SPI_ETHERNET
 
-static const char *TAG = "eth_driver";
+static const char *TAG = "[ethDriver]";
 
 #if CONFIG_BSP_SPI_ETHERNETS_NUM
 #define SPI_ETHERNETS_NUM CONFIG_BSP_SPI_ETHERNETS_NUM

@@ -1,12 +1,8 @@
 /**
  * @file sysfile.c
  *
- * To obtain a license, please contact Greenlabs.
+ * To obtain a license, please contact C&H.
 
- * THESE MATERIALS ARE PROVIDED ON AN "AS IS" BASIS. GREENLABS SPECIFICALLY
- * DISCLAIMS, WITH RESPECT TO THESE MATERIALS, ALL WARRANTIES, EXPRESS,
- * IMPLIED, OR STATUTORY, INCLUDING THE IMPLIED WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
  */
 #include "sdkconfig.h"
 #include "sys_file.h"

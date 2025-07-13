@@ -21,13 +21,11 @@
 #include "data_table_task.h"
 #include "sensor_auto_detect.h"
 
-static const char* TAG = "SensorStrategy";
+static const char* TAG = "[sensorStrategy]";
 #define MAX_SENSOR_TASKS SENSOR_PORT_COUNT
 
-// TRIGGER_BIT: 태스크 시작을 위한 트리거 비트
-// DONE_BIT: 태스크 완료 알림 비트
-#define TASK_TRIGGER_BIT BIT0
-#define TASK_DONE_BIT    BIT1
+#define TASK_TRIGGER_BIT BIT0  // TRIGGER_BIT: 태스크 시작을 위한 트리거 비트
+#define TASK_DONE_BIT    BIT1  // DONE_BIT: 태스크 완료 알림 비트
 
 EventGroupHandle_t done_group;  ///< FSM waits on this group for task completion (e.g. DONE_BIT)
 
@@ -35,16 +33,25 @@ EventGroupHandle_t done_group;  ///< FSM waits on this group for task completion
 static sensor_port_cfg_t* cfg = NULL;
 static sensor_datatable_t* dt = NULL;
 
-/// @brief 전략 함수 타입 (센서 동작 수행 함수)
+// @brief Strategy function type (sensor action execution function)
 typedef void (*sensor_action_fn_t)(void* param);
 
-/// @brief 전략 엔트리 정의 구조체
+/*
+// Example table structure for storing sensor data.
+static const sensor_strategy_entry_t sensor_strategies[] = {
+  { SENSOR_TYPE_TEROS11, BIT0, handle_teros11, "Teros11Task" },
+  { SENSOR_TYPE_PYRANOMETER, BIT1, handle_pyranometer, "PyranoTask" },
+  { SENSOR_TYPE_CO2, BIT2, handle_co2, "CO2Task" },
+};
+*/
+
+/// @brief Structure defining a sensor strategy entry.
 typedef struct {
-  uint8_t port;
-  sdi12_sensor_type_t type;   ///< 센서 타입
-  EventBits_t trigger_bit;    ///< Task에서 대기할 이벤트 비트
-  sensor_action_fn_t action;  ///< 실행할 전략 함수
-  const char* task_name;      ///< 생성할 Task 이름
+  uint8_t port;               ///< Sensor port number
+  sdi12_sensor_type_t type;   ///< Sensor type
+  EventBits_t trigger_bit;    ///< Event bit the task waits for
+  sensor_action_fn_t action;  ///< Strategy function to execute
+  const char* task_name;      ///< Name of the task to create
 } sensor_strategy_entry_t;
 
 typedef struct {
@@ -60,32 +67,28 @@ typedef struct {
 } sensor_task_t;
 
 /**
- * @brief 전략 테이블 기반으로 Task를 생성한다.
+ * @brief Creates tasks based on the strategy table.
  *
- * @return true - 성공, false - 실패
+ * @return true on success, false on failure.
  */
 bool strategy_create_tasks(void);
 
 /**
- * @brief 센서 타입에 해당하는 전략을 트리거한다.
+ * @brief Triggers the strategy corresponding to the sensor type.
  *
- * @param type 센서 타입 (SENSOR_TYPE_TEROS11 등)
- * @param status 트리거 상태 확인
+ * @param type Sensor type (e.g., SENSOR_TYPE_TEROS11).
+ * @param status Trigger status indicator.
  */
 void sensor_strategy_trigger(sdi12_sensor_type_t type, bool status);
 
-/*
-static const sensor_strategy_entry_t sensor_strategies[] = {
-  { SENSOR_TYPE_TEROS11, BIT0, handle_teros11, "Teros11Task" },
-  { SENSOR_TYPE_PYRANOMETER, BIT1, handle_pyranometer, "PyranoTask" },
-  { SENSOR_TYPE_CO2, BIT2, handle_co2, "CO2Task" },
-};
-*/
+/** @brief Array of registered sensor strategy entries. */
 static sensor_strategy_entry_t sensor_strategies[6] = { 0 };
-static int strategy_entry_count = 0;  // 실제 등록된 전략 개수
+
+/** @brief Actual number of registered strategies. */
+static int strategy_entry_count = 0;
 
 // =============================
-// helper 함수
+// helper function
 // =============================
 
 static inline int NUM_SENSOR_STRATEGIES() {
@@ -139,8 +142,8 @@ static char* parse_rows(const char* json_text) {
 }
 
 // =============================
-// 전략 테이블 선언
 // NOTE:
+// strategy table define
 // Even though the same function is shared across multiple tasks,
 // there is no risk of resource contention because the FSM calls each task sequentially.
 // Therefore, no additional synchronization mechanisms like mutexes or semaphores are required.
@@ -163,7 +166,7 @@ static void handle_teros12(void* param) {
 
   sensor_task_t* config = (sensor_task_t*)param;
   sensor_datatable_t* dt = config->dt;
-  // NOTE: 실제 배열 번호는 port -1
+  // NOTE: starts at array address 0
   int array_num = config->port - 1;
 
   const char* sensor_type = sensor_type_to_str(config->cfg[array_num].sensor_type);
@@ -177,16 +180,17 @@ static void handle_teros12(void* param) {
   teros12_data_t* data_teros11 = NULL;
   teros12_data_t* data_teros12 = NULL;
   teros21_data_t* data_teros21 = NULL;
+  teros54_data_t* data_teros54 = NULL;
 
   if (config->cfg[array_num].sensor_type == TEROS11) {
-    data_teros11 = sdi12_read_start_teros11(array_num);  // 데이터 읽기
+    data_teros11 = sdi12_read_teros11(array_num);  // 데이터 읽기
     if (!data_teros11) {
       ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
       return;
     }
     ESP_LOGI(TAG, "[%s] Raw data - VWC: %.2f, Temp: %.2f", sensor_type, data_teros11->vwc, data_teros11->temperature);
   } else if (config->cfg[array_num].sensor_type == TEROS12) {
-    data_teros12 = sdi12_read_start_teros12(array_num);  // 데이터 읽기
+    data_teros12 = sdi12_read_teros12(array_num);  // 데이터 읽기
     if (!data_teros12) {
       ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
       return;
@@ -194,16 +198,23 @@ static void handle_teros12(void* param) {
     ESP_LOGI(TAG, "[%s] Raw data - VWC: %.2f, Temp: %.2f, EC: %.2f", sensor_type, data_teros12->vwc,
              data_teros12->temperature, data_teros12->ec);
   } else if (config->cfg[array_num].sensor_type == TEROS21) {
-    data_teros21 = sdi12_read_start_teros21(array_num);  // 데이터 읽기
+    data_teros21 = sdi12_read_teros21(array_num);  // 데이터 읽기
     if (!data_teros21) {
       ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
       return;
     }
     ESP_LOGI(TAG, "[%s] Raw data - matricPotential: %.2f, Temp: %.2f", sensor_type, data_teros21->matricPotential,
              data_teros21->temperature);
+  } else if (config->cfg[array_num].sensor_type == TEROS54) {
+    data_teros54 = sdi12_read_teros54(array_num);  // 데이터 읽기
+    if (!data_teros54) {
+      ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
+      return;
+    }
+    ESP_LOGI(TAG, "[%s] Raw data - Vwc1: %.2f, Temp1: %.2f", sensor_type, data_teros54->vwc1, data_teros54->temp1);
   }
 
-  // 데이터 테이블에 샘플 푸시
+  // Push to table(Append to the table)
   if (dt[array_num].handle) {
     if (config->cfg[array_num].sensor_type == TEROS11) {
       datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros11_col.vwc_avg_col, data_teros11->vwc);
@@ -219,6 +230,15 @@ static void handle_teros12(void* param) {
                                   data_teros21->matricPotential);
       datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros21_col.temperature_avg_col,
                                   data_teros21->temperature);
+    } else if (config->cfg[array_num].sensor_type == TEROS54) {
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros54_col.vwc1_col, data_teros54->vwc1);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros54_col.temp1_col, data_teros54->temp1);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros54_col.vwc2_col, data_teros54->vwc2);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros54_col.temp2_col, data_teros54->temp2);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros54_col.vwc3_col, data_teros54->vwc3);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros54_col.temp3_col, data_teros54->temp3);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros54_col.vwc4_col, data_teros54->vwc4);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros54_col.temp4_col, data_teros54->temp4);
     }
 
     ESP_LOGI(TAG, "[%s] Pushed samples to data table", sensor_type);
@@ -247,7 +267,6 @@ static void handle_teros12(void* param) {
       cJSON* dt_json = cJSON_CreateObject();
 
       // convert the data-table to json object
-
       datatable_to_json(dt[array_num].handle, &dt_json);
 
       // render json data-table object to text and print
@@ -304,7 +323,6 @@ static void handle_atmos41(void* param) {
 
   sensor_task_t* config = (sensor_task_t*)param;
   sensor_datatable_t* dt = config->dt;
-  // NOTE: 실제 배열 번호는 port -1
   int array_num = config->port - 1;
 
   const char* sensor_type = sensor_type_to_str(config->cfg[array_num].sensor_type);
@@ -315,45 +333,76 @@ static void handle_atmos41(void* param) {
   ESP_LOGI(TAG, "[%s] Starting SDI-12  ", sensor_type);
   ESP_LOGI(TAG, "[%s] Starting SDI-12 read...port[%d] ", sensor_type, config->port);
 
-  weather_at41g2_data_t* data_at41g2 = sdi12_read_start_teros41(array_num);  // 데이터 읽기
-  if (!data_at41g2) {
-    ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
-    // return;
-    goto next;
+  weather_at41g2_data_t* data_at41g2 = NULL;    // 데이터 읽기
+  weather_atmos22_data_t* data_atmos22 = NULL;  // 데이터 읽기
+
+  if (config->cfg[array_num].sensor_type == ATMOS41) {
+    data_at41g2 = sdi12_read_atmos41(array_num);  // 데이터 읽기
+    if (!data_at41g2) {
+      ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
+      goto next;
+    }
+  } else if (config->cfg[array_num].sensor_type == ATMOS22) {
+    data_atmos22 = sdi12_read_atmos22(array_num);  // 데이터 읽기
+    if (!data_atmos22) {
+      ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
+      goto next;
+    }
   }
 
   // 데이터 테이블에 샘플 푸시
   if (dt[array_num].handle) {
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.solar_col, data_at41g2->solar);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.precipitation_col,
-                                data_at41g2->precipitation);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.strikes_col, data_at41g2->strikes);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.strikeDistance_col,
-                                data_at41g2->strikeDistance);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.windSpeed_col, data_at41g2->windSpeed);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.windDirection_col,
-                                data_at41g2->windDirection);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.gustWindSpeed_col,
-                                data_at41g2->gustWindSpeed);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.airTemperature_col,
-                                data_at41g2->airTemperature);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.vaporPressure_col,
-                                data_at41g2->vaporPressure);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.atmosphericPressure_col,
-                                data_at41g2->atmosphericPressure);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.relativeHumidity_col,
-                                data_at41g2->relativeHumidity);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.humiditySensorTemperature_col,
-                                data_at41g2->humiditySensorTemperature);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.xOrientation_col,
-                                data_at41g2->xOrientation);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.yOrientation_col,
-                                data_at41g2->yOrientation);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.nullValue_col, data_at41g2->nullValue);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.northWindSpeed_col,
-                                data_at41g2->northWindSpeed);
-    datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.eastWindSpeed_col,
-                                data_at41g2->eastWindSpeed);
+    if (config->cfg[array_num].sensor_type == ATMOS41) {
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.solar_col, data_at41g2->solar);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.precipitation_col,
+                                  data_at41g2->precipitation);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.strikes_col, data_at41g2->strikes);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.strikeDistance_col,
+                                  data_at41g2->strikeDistance);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.windSpeed_col, data_at41g2->windSpeed);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.windDirection_col,
+                                  data_at41g2->windDirection);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.gustWindSpeed_col,
+                                  data_at41g2->gustWindSpeed);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.airTemperature_col,
+                                  data_at41g2->airTemperature);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.vaporPressure_col,
+                                  data_at41g2->vaporPressure);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.atmosphericPressure_col,
+                                  data_at41g2->atmosphericPressure);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.relativeHumidity_col,
+                                  data_at41g2->relativeHumidity);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.humiditySensorTemperature_col,
+                                  data_at41g2->humiditySensorTemperature);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.xOrientation_col,
+                                  data_at41g2->xOrientation);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.yOrientation_col,
+                                  data_at41g2->yOrientation);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.nullValue_col, data_at41g2->nullValue);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.northWindSpeed_col,
+                                  data_at41g2->northWindSpeed);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].at41g2_col.eastWindSpeed_col,
+                                  data_at41g2->eastWindSpeed);
+    } else if (config->cfg[array_num].sensor_type == ATMOS22) {
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].atmos22_col.windSpeed_col,
+                                  data_atmos22->windSpeed);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].atmos22_col.windDirection_col,
+                                  data_atmos22->windDirection);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].atmos22_col.gustWindSpeed_col,
+                                  data_atmos22->gustWindSpeed);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].atmos22_col.airTemperature_col,
+                                  data_atmos22->airTemperature);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].atmos22_col.xOrientation_col,
+                                  data_atmos22->xOrientation);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].atmos22_col.yOrientation_col,
+                                  data_atmos22->yOrientation);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].atmos22_col.nullValue_col,
+                                  data_atmos22->nullValue);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].atmos22_col.northWindSpeed_col,
+                                  data_atmos22->northWindSpeed);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].atmos22_col.eastWindSpeed_col,
+                                  data_atmos22->eastWindSpeed);
+    }
 
     ESP_LOGI(TAG, "[%s] Pushed samples to data table", sensor_type);
     ESP_LOGI(TAG, "[%s] sampling_count: %d / max: %d", sensor_type, dt[array_num].handle->sampling_count,
@@ -429,11 +478,127 @@ static void handle_atmos41(void* param) {
   ESP_LOGI(TAG, "[TEROS12] Task completed");
 }
 
-/* static void handle_atmos41(void* param) { */
-/*   ESP_LOGI(TAG, "Handling CO2..."); */
-/*   xEventGroupSetBits(done_group, TASK_DONE_BIT); */
-/*   vTaskDelay(pdMS_TO_TICKS(2000)); */
-/* } */
+static void handle_apogee_sensor(void* param) {
+  int ret = 0;
+  char buf[250] = { 0 };
+  char topic[MAX_TOPIC_LEN] = { 0 };
+
+  if (!param) {
+    ESP_LOGE(TAG, "[APOGEE_DATA] Invalid param (NULL)");
+    return;
+  }
+
+  sensor_task_t* config = (sensor_task_t*)param;
+  sensor_datatable_t* dt = config->dt;
+  int array_num = config->port - 1;
+
+  const char* sensor_type = sensor_type_to_str(config->cfg[array_num].sensor_type);
+
+  if (strcmp(sensor_type, "UNKNOWN") == 0) {
+    ESP_LOGW(TAG, "Unrecognized sensor type: %s", sensor_type);
+  }
+  ESP_LOGI(TAG, "[%s] Starting SDI-12  ", sensor_type);
+  ESP_LOGI(TAG, "[%s] Starting SDI-12 read...port[%d] ", sensor_type, config->port);
+
+  apogee_sensor_t* data_S2_412 = NULL;
+  apogee_sensor_t* data_SQ_521 = NULL;
+
+  if (config->cfg[array_num].sensor_type == APOGEE_S2_412) {
+    data_S2_412 = sdi12_read_S2_412(array_num);  // 데이터 읽기
+    if (!data_S2_412) {
+      ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
+      goto next;
+    }
+  } else if (config->cfg[array_num].sensor_type == APOGEE_SQ_521) {
+    data_SQ_521 = sdi12_read_SQ_521(array_num);  // 데이터 읽기
+    if (!data_SQ_521) {
+      ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
+      goto next;
+    }
+  }
+
+  // push in to data-table
+  if (dt[array_num].handle) {
+    if (config->cfg[array_num].sensor_type == APOGEE_S2_412) {
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].apogee_data_col.NDVI, data_S2_412->NDVI);
+
+    } else if (config->cfg[array_num].sensor_type == APOGEE_SQ_521) {
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].apogee_data_col.PPFD, data_SQ_521->PPFD);
+    }
+
+    ESP_LOGI(TAG, "[%s] Pushed samples to data table", sensor_type);
+    ESP_LOGI(TAG, "[%s] sampling_count: %d / max: %d", sensor_type, dt[array_num].handle->sampling_count,
+             dt[array_num].handle->samples_maximum_size);
+
+    // 데이터 처리 (평균, 필터링 등)
+    datatable_process_samples(dt[array_num].handle);
+    ESP_LOGI(TAG, "[%s] Processed samples in data table", sensor_type);
+
+    // NOTE: 무조건 samples 데이터 처리해야 동작해. 아님. free 중복으로 에러남
+    // 1분마다 samples 처리하도록 설정이 되어있음 data_table config에
+    // 지금은 내부 internal time과 동기화가 되어 있지 않아서 수동으로 맞춰야 함.
+
+    int retry_count = 0;
+    while (dt[array_num].handle->sampling_count >= 3) {
+      datatable_process_samples(dt[array_num].handle);
+      // ESP_LOGI(TAG, "[%s] Processed samples in data table... count %d ", sensor_type, retry_count);
+      retry_count += 1;
+      vTaskDelay(pdMS_TO_TICKS(200));
+      // vTaskDelay(pdMS_TO_TICKS(50));
+    }
+
+  next:
+    /* serialize data-table and output in json format every 5-minutes (i.e. 12:00:00,
+     * 12:05:00, 12:10:00, etc.) */
+    if (time_into_interval(dt[array_num].publish_interval.handle)) {
+      // create root object for data-table
+      cJSON* dt_json = cJSON_CreateObject();
+
+      // convert the data-table to json object
+
+      datatable_to_json(dt[array_num].handle, &dt_json);
+
+      // render json data-table object to text and print
+      char* dt_json_str = cJSON_Print(dt_json);
+      ESP_LOGI(TAG, "[%s] JSON Data-Table:\n%s", sensor_type, dt_json_str);
+
+      memset(topic, 0x00, sizeof(topic));
+      if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_SENSOR) == ESP_OK) {
+        ret = publish_sensor_datatable(topic, dt_json_str);
+        ESP_LOGI(TAG, "ret : %d", ret);
+      }
+
+      if (ret == -1) { /* Qos 0*/  // -1 fail,-2 box full
+        char* parsed = parse_rows(dt_json_str);
+        if (parsed != NULL) {
+          memset(buf, 0x00, sizeof(buf));
+          strncpy(buf, parsed, sizeof(buf) - 1);
+          int len = strlen(buf);
+          // TODO: Retry loop triggered when message sending fails
+          //  Saved to internal flash when the network is disconnected and message sending
+          //  fails append sensor_type string to the end of parsed buffer
+          //  count,date,vwc,temperature,ec,sensor_type,port
+          sprintf(buf + len, ",%s,%d", sensor_type, config->port);  // 여기는 실제 포트번호
+          ESP_LOGI(TAG, "[FDATA] %s", buf);
+          FDATA(BASE_PATH, "%s", buf);  // write to tb data
+        } else {
+          ESP_LOGW(TAG, "Faild to parse JSON rows");
+        }
+      }
+
+      // free-up json resources
+      cJSON_free(dt_json_str);
+      cJSON_Delete(dt_json);
+    }
+
+  } else {
+    ESP_LOGW(TAG, "[APOGEE DATA] dt->handle is NULL, cannot push/process samples");
+  }
+  // 작업 완료 알림
+  xEventGroupSetBits(done_group, TASK_DONE_BIT);
+  ESP_LOGI(TAG, "[%s] Task done, DONE_BIT set", sensor_type);
+  ESP_LOGI(TAG, "[APOGEE DATA] Task completed");
+}
 
 // =============================
 // 내부 Task 실행 구조
@@ -605,10 +770,38 @@ void strategy_task_mgr_sensor_start(void) {
           entry->port = cfg[i].port;
           break;
 
+        case TEROS54:
+          entry->type = TEROS54;
+          entry->action = handle_teros12;
+          entry->task_name = sensor_type_to_str(TEROS54);
+          entry->port = cfg[i].port;
+          break;
+
+        case ATMOS22:
+          entry->type = ATMOS22;
+          entry->action = handle_atmos41;
+          entry->task_name = sensor_type_to_str(ATMOS22);
+          entry->port = cfg[i].port;
+          break;
+
         case ATMOS41:
           entry->type = ATMOS41;
           entry->action = handle_atmos41;
           entry->task_name = sensor_type_to_str(ATMOS41);
+          entry->port = cfg[i].port;
+          break;
+
+        case APOGEE_S2_412:
+          entry->type = APOGEE_S2_412;
+          entry->action = handle_apogee_sensor;
+          entry->task_name = sensor_type_to_str(APOGEE_S2_412);
+          entry->port = cfg[i].port;
+          break;
+
+        case APOGEE_SQ_521:
+          entry->type = APOGEE_SQ_521;
+          entry->action = handle_apogee_sensor;
+          entry->task_name = sensor_type_to_str(APOGEE_SQ_521);
           entry->port = cfg[i].port;
           break;
 
@@ -716,7 +909,9 @@ static void trigger_task_loop(void* pvParameters) {
           ESP_LOGW(TAG, "[FSM] Task %s completed in %lu ms", task->task_name, (unsigned long)duration_ms);
         } else {
           ESP_LOGW(TAG, "[FSM] Task %s timeout after %lu ms", task->task_name, (unsigned long)duration_ms);
+          // NOTE: if timeout occur continuously, reboot
           time_out_count++;
+          ESP_LOGE(TAG, "current_count [%d]", time_out_count);
           if (time_out_count == MAX_TIME_OUT_COUNT) {
             esp_restart();
           }

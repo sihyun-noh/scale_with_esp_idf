@@ -17,7 +17,7 @@
 
 #define FILENAME_ON_SERVER "example.txt"  // 서버에 보낼 파일 이름
 
-static const char* TAG = "UPLOAD_FILE";
+static const char* TAG = "[uploadFile]";
 extern const uint8_t server_cert_pem_start[] asm("_binary_ca_cert_pem_start");
 extern const uint8_t server_cert_pem_end[] asm("_binary_ca_cert_pem_end");
 

@@ -10,25 +10,17 @@ extern "C" {
 
 // #define SDI12_DEBUG_SET
 
-typedef enum {
-  SDI_CMD_INFO = 0,
-  SDI_CMD_ADDR,
-  SDI_CMD_READ,
-  SDI_CMD_R3,
-  SDI_CMD_XO,
-  SDI_CMD_COUNT  // 명령 개수
-} sdi12_cmd_type_t;
+typedef enum { SDI_CMD_INFO = 0, SDI_CMD_ADDR, SDI_CMD_READ, SDI_CMD_M, SDI_CMD_D, SDI_CMD_COUNT } sdi12_cmd_type_t;
 
 typedef struct {
-  const char *cmd_format;  // "I!", "R0!" 등
-  int wait_delay_ms;       // 100, 50 등
+  const char *cmd_format;  // "I!", "R0!"
+  int wait_delay_ms;       // Delay time
 } sdi12_cmd_template_t;
 
 typedef struct {
   char address;
   float vwc;
   float temperature;
-  float ec;
 } teros11_data_t;
 
 typedef struct {
@@ -43,6 +35,32 @@ typedef struct {
   float matricPotential;
   float temperature;
 } teros21_data_t;
+
+typedef struct {
+  char address;
+  float vwc1;
+  float temp1;
+  float vwc2;
+  float temp2;
+  float vwc3;
+  float temp3;
+  float vwc4;
+  float temp4;
+} teros54_data_t;
+
+// ATMOS22
+typedef struct {
+  char address;
+  float windSpeed;
+  float windDirection;
+  float gustWindSpeed;
+  float airTemperature;
+  float xOrientation;
+  float yOrientation;
+  float nullValue;
+  float northWindSpeed;
+  float eastWindSpeed;
+} weather_atmos22_data_t;
 
 // ATMOS41G2
 typedef struct {
@@ -67,6 +85,13 @@ typedef struct {
 } weather_at41g2_data_t;
 
 typedef struct {
+  char address;
+  unsigned type;
+  float PPFD;
+  float NDVI;
+} apogee_sensor_t;
+
+typedef struct {
   char manufacturer[9];  // 8 + null
   char model[9];         // 8 + null
   char version[9];       // 8 + null
@@ -85,50 +110,106 @@ typedef struct {
 sdi12_sensor_info_t *sdi12_info_start(uint8_t portId);
 
 /**
- * @brief Reads sensor measurement data from a TEROS11 sensor using the "R0!" SDI-12 command.
+ * @brief Reads measurement data from a TEROS11 sensor using the "R0!" SDI-12 command.
  *
- * This function sends the SDI-12 "R0!" command to the given port, waits for the sensor to respond,
- * and parses the data into a teros12_data_t structure, including volumetric water content (VWC),
- * temperature
+ * Sends the "R0!" command to the specified port, waits for the response,
+ * and parses the result into a teros11_data_t structure containing
+ * volumetric water content (VWC) and temperature.
  *
- * @param portId Sensor port ID (0–N) to select the correct SDI-12 bus or multiplexer channel.
- *
- * @return Pointer to statically allocated teros11_data_t structure containing parsed sensor data.
+ * @param portId Sensor port ID (0–N) selecting the SDI-12 bus or multiplexer channel.
+ * @return Pointer to a statically allocated teros11_data_t structure with parsed data.
  */
-teros11_data_t *sdi12_read_start_teros11(uint8_t portId);
+teros11_data_t *sdi12_read_teros11(uint8_t portId);
 
 /**
- * @brief Reads sensor measurement data from a TEROS12 sensor using the "R0!" SDI-12 command.
+ * @brief Reads measurement data from a TEROS12 sensor using the "R0!" SDI-12 command.
  *
- * This function sends the SDI-12 "R0!" command to the given port, waits for the sensor to respond,
- * and parses the data into a teros12_data_t structure, including volumetric water content (VWC),
+ * Sends the "R0!" command to the specified port, waits for the response,
+ * and parses it into a teros12_data_t structure containing volumetric water content (VWC),
  * temperature, and electrical conductivity (EC).
  *
- * @param portId Sensor port ID (0–N) to select the correct SDI-12 bus or multiplexer channel.
- *
- * @return Pointer to statically allocated teros12_data_t structure containing parsed sensor data.
+ * @param portId Sensor port ID (0–N) selecting the SDI-12 bus or multiplexer channel.
+ * @return Pointer to a statically allocated teros12_data_t structure with parsed data.
  */
-teros12_data_t *sdi12_read_start_teros12(uint8_t portId);
+teros12_data_t *sdi12_read_teros12(uint8_t portId);
 
 /**
- * @brief Reads data from a TEROS21 sensor connected to the given port.
+ * @brief Reads measurement data from a TEROS21 sensor using the "R0!" SDI-12 command.
  *
- * @param portId ID of the sensor port (0–5 typically).
- * @return Pointer to the populated teros21_data_t structure, or NULL on failure.
+ * Sends the "R0!" command to the specified port, waits for the response,
+ * and parses it into a teros21_data_t structure containing matric potential and temperature values.
+ *
+ * @param portId Sensor port ID (0–N) selecting the SDI-12 bus or multiplexer channel.
+ * @return Pointer to a statically allocated teros21_data_t structure with parsed data.
  */
-teros21_data_t *sdi12_read_start_teros21(uint8_t portId);
+teros21_data_t *sdi12_read_teros21(uint8_t portId);
 
 /**
- * @brief Reads data from an ATMOS41 (AT41G2) weather sensor on the specified port.
+ * @brief Reads measurement data from an ATMOS41 (AT41G2) sensor using the "R0!" SDI-12 command.
  *
- * @param portId ID of the sensor port (0–5 typically).
- * @return Pointer to the populated weather_at41g2_data_t structure, or NULL on failure.
+ * Sends the "R0!" command to the specified port, waits for the response,
+ * and parses it into a weather_at41g2_data_t structure containing weather parameters.
+ *
+ * @param portId Sensor port ID (0–N) selecting the SDI-12 bus or multiplexer channel.
+ * @return Pointer to a statically allocated weather_at41g2_data_t structure with parsed data.
  */
-weather_at41g2_data_t *sdi12_read_start_teros41(uint8_t portId);
+weather_at41g2_data_t *sdi12_read_atmos41(uint8_t portId);
 
-// clean up buffer
+/**
+ * @brief Reads measurement data from a TEROS54 sensor using the "R0!" SDI-12 command.
+ *
+ * Sends the "R0!" command to the specified port, waits for the response,
+ * and parses it into a teros54_data_t structure containing measurements from
+ * four positions: VWC1, Temp1, VWC2, Temp2, VWC3, Temp3, VWC4, Temp4.
+ *
+ * @param portId Sensor port ID (0–N) selecting the SDI-12 bus or multiplexer channel.
+ * @return Pointer to a statically allocated teros54_data_t structure with parsed data.
+ */
+teros54_data_t *sdi12_read_teros54(uint8_t portId);
+
+/**
+ * @brief Reads measurement data from an ATMOS22 sensor using the "R0!" SDI-12 command.
+ *
+ * Sends the "R0!" command to the specified port, waits for the response,
+ * and parses it into a weather_atmos22_data_t structure containing weather parameters.
+ *
+ * @param portId Sensor port ID (0–N) selecting the SDI-12 bus or multiplexer channel.
+ * @return Pointer to a statically allocated weather_atmos22_data_t structure with parsed data.
+ */
+weather_atmos22_data_t *sdi12_read_atmos22(uint8_t portId);
+
+/**
+ * @brief Reads measurement data from an Apogee S2-412 sensor using "M!" and "D!" SDI-12 commands.
+ *
+ * Issues the "M!" command to initiate measurement and then "D!" to retrieve the result,
+ * parsing it into an apogee_sensor_t structure containing NDVI (Normalized Difference Vegetation Index) data.
+ *
+ * @param portId Sensor port ID (0–N) selecting the SDI-12 bus or multiplexer channel.
+ * @return Pointer to a statically allocated apogee_sensor_t structure with parsed NDVI data.
+ */
+apogee_sensor_t *sdi12_read_S2_412(uint8_t portId);
+
+/**
+ * @brief Reads measurement data from an Apogee SQ-521 sensor using "M!" and "D!" SDI-12 commands.
+ *
+ * Issues the "M!" command to initiate measurement and then "D!" to retrieve the result,
+ * parsing it into an apogee_sensor_t structure containing PPFD (Photosynthetic Photon Flux Density) data.
+ *
+ * @param portId Sensor port ID (0–N) selecting the SDI-12 bus or multiplexer channel.
+ * @return Pointer to a statically allocated apogee_sensor_t structure with parsed PPFD data.
+ */
+apogee_sensor_t *sdi12_read_SQ_521(uint8_t portId);
+
+/**
+ * @brief clean up buffer
+ *
+ */
 char *trim(char *str);
 
+/**
+ * @brief Test task
+ *
+ */
 void sdi12_task_init(void);
 
 #ifdef __cplusplus

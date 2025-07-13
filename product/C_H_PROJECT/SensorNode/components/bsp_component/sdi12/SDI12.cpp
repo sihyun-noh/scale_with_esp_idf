@@ -50,7 +50,8 @@
 #include "SDI12.h"  //  Header file for this library
 #include "soc/gpio_num.h"
 #include "esp_log.h"
-static const char* TAG = "SDI12";
+
+static const char* TAG = "[sdi12Main]";
 
 /* ================  Set static constants ===========================================*/
 

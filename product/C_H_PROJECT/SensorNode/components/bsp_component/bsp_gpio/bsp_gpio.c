@@ -5,7 +5,7 @@
 
 #include "bsp_gpio.h"
 
-static const char *TAG = "gpio_init";
+static const char *TAG = "[gpioInit]";
 
 /// @brief Status LED configuration structure.
 

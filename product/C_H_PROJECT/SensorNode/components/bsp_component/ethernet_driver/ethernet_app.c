@@ -18,7 +18,7 @@
 #include "ethernet_driver.h"
 #include "sdkconfig.h"
 
-static const char *TAG = "ethernet_app";
+static const char *TAG = "[ethernetApp]";
 
 /** Event handler for Ethernet events */
 static void eth_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {

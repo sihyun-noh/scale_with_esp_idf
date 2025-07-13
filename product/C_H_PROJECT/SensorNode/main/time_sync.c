@@ -7,7 +7,7 @@
 #include "esp_sntp.h"
 #include <sys/time.h>
 
-static const char* TAG = "TIME_SYNC";
+static const char* TAG = "[timeSync]";
 
 // 1) SNTP 초기화
 static void initialize_sntp(void) {

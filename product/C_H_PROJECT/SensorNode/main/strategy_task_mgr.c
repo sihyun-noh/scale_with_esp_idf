@@ -19,14 +19,14 @@
 #define MAX_TASKS        10
 #define MAC_ADDR_MAX_LEN 32
 
-static const char *TAG = "TaskManager";
+static const char *TAG = "[taskManager]";
 
 extern void dt_1min_smp_task(void *pvParameters);
 extern void upload_file_multipart(const char *filepath);
 extern esp_err_t file_upload_proceed(void);
 
 // =============================
-// 구조체 정의
+// structure defined
 // =============================
 
 typedef struct {
@@ -156,12 +156,6 @@ void strategy_ota_upload_start(const mqtt_message_t *msg) {
   cJSON_Delete(json);
 }
 
-/* void strategy_upload_file_start(const mqtt_message_t *msg) { */
-/*   ESP_LOGI(TAG, "[Upload] Received file upload request"); */
-/*   ESP_LOGI(TAG, "[Upload] Payload: %s", msg->payload); */
-/*   file_upload_proceed(); */
-/* } */
-
 // =============================
 // Worker Tasks
 // =============================
@@ -194,7 +188,6 @@ esp_err_t strategy_register_topic(topic_type_t type, const char *task_name, stra
 // strategy mqtt task
 // =============================
 void strategy_task_mgr_mqtt_start(void) {
-  // task 4개 만들면 overflow
   // mqtt에 의해서만 동작하는 task 들만strategy로
   strategy_register_topic(TOPIC_TYPE_SETTING, "setting_task", strategy_setting_from_mqtt);
   strategy_register_topic(TOPIC_TYPE_OTA_UPLOAD, "ota_upload_task", strategy_ota_upload_start);
@@ -206,6 +199,4 @@ void strategy_task_mgr_mqtt_start(void) {
   xTaskCreate(router_dispatch_task, "router_task", 4096, NULL, 10, NULL);
   // Callback function register
   router_register_queue_mapper(get_task_queue_by_topic);
-
-  // xTaskCreate(dt_1min_smp_task, "sensor_logger_task", 4096, NULL, 5, NULL);
 }
