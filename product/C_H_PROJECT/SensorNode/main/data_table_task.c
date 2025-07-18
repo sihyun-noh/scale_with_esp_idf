@@ -40,8 +40,8 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
     dt->status = 0;  // 1: Active, 0: deactivate
     return false;
   }
-  // dt status active
-  // This check is performed in the strategy_task
+  // NOTE: dt status active
+  //  This check is performed in the strategy_task
   dt->status = 1;
 
   /* clang-format off */

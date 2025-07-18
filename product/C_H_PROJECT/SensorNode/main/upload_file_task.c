@@ -9,7 +9,8 @@
 #define CHUNK_SIZE 1024  // 1KB씩 읽기
 // #define SERVER_URL "http://192.168.50.12:1880/upload"
 // #define SERVER_URL       "https://192.168.50.12:1880/upload"
-#define SERVER_URL       "https://" CONFIG_SERVER_URL "/upload"
+// #define SERVER_URL       "https://" CONFIG_SERVER_URL "/upload"
+#define SERVER_URL       "http://" CONFIG_SERVER_URL "/upload"
 #define FILESTORAGE      "/storage"
 #define READ_BUFFER_SIZE 128
 
@@ -57,6 +58,18 @@ esp_err_t file_info_helper() {
   }
 
   return ESP_OK;
+}
+
+file_data_ctx_t* file_info_data() {
+  static file_data_ctx_t file_info;
+  read_file_info(&file_info);
+
+  uint8_t nfiles = file_info.nfiles;
+  if (nfiles == 0) {
+    ESP_LOGW(TAG, "No files to load");
+    return NULL;
+  }
+  return &file_info;
 }
 
 esp_err_t file_upload_proceed() {

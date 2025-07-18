@@ -1,5 +1,50 @@
 /**
  * @file SDI12.cpp
+ * @copyright (c) 2013-2020 Stroud Water Research Center (SWRC)
+ *                          and the EnviroDIY Development Team
+ * @date August 2013
+ * @author Kevin M.Smith <SDI12@ethosengineering.org>
+ *
+ * @brief This file implements the main class for the SDI-12 implementation.
+ *
+ * ========================== Arduino SDI-12 ==================================
+ *
+ * An Arduino library for SDI-12 communication with a wide variety of environmental
+ * sensors. This library provides a general software solution, without requiring any
+ * additional hardware.
+ *
+ * ======================== Attribution & License =============================
+ *
+ * Copyright (C) 2013  Stroud Water Research Center
+ * Available at https://github.com/EnviroDIY/Arduino-SDI-12
+ *
+ * Authored initially in August 2013 by:
+ *          Kevin M. Smith (http://ethosengineering.org)
+ *          Inquiries: SDI12@ethosengineering.org
+ *
+ * Modified 2017 by Manuel Jimenez Buendia to work with ARM based processors (Arduino
+ * Zero)
+ *
+ * Maintenance and merging 2017 by Sara Damiano
+ *
+ * based on the SoftwareSerial library (formerly NewSoftSerial), authored by:
+ *         ladyada (http://ladyada.net)
+ *         Mikal Hart (http://www.arduiniana.org)
+ *         Paul Stoffregen (http://www.pjrc.com)
+ *         Garrett Mace (http://www.macetech.com)
+ *         Brett Hagman (http://www.roguerobotics.com/)
+ *
+ * This library is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License as published by the Free Software
+ * Foundation; either version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with
+ * this library; if not, write to the Free Software Foundation, Inc., 51 Franklin
+ * Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
 #include "SDI12.h"  //  Header file for this library
@@ -69,6 +114,14 @@ int SDI12::available_esp() {
   return (_rxBufferTail + SDI12_BUFFER_SIZE - _rxBufferHead) % SDI12_BUFFER_SIZE;
 }
 
+// reveals the next character in the buffer without consuming
+
+// int SDI12::peek() {
+//   if (_rxBufferHead == _rxBufferTail)
+//     return -1;                      // Empty buffer? If yes, -1
+//   return _rxBuffer[_rxBufferHead];  // Otherwise, read from "head"
+// }
+
 // a public function that clears the buffer contents and resets the status of the buffer
 // overflow.
 void SDI12::clearBuffer() {
@@ -86,12 +139,124 @@ int SDI12::read_esp() {
   return nextChar;                                          // return the char
 }
 
+// // Add for RUI.
+// int SDI12::timedPeek() {
+//   unsigned long startMillis;  // used for timeout measurement
+//   int c;
+//   startMillis = millis();
+//   do {
+//     c = peek();
+//     if (c >= 0)
+//       return c;
+//     yield();  // running TinyUSB task
+//   } while (millis() - startMillis < 150);
+//   return -1;  // -1 indicates timeout
+// }
+//
+// // these functions hide the stream equivalents to return a custom timeout value
+// int SDI12::peekNextDigit(LookaheadMode lookahead, bool detectDecimal) {
+//   int c;
+//   while (1) {
+//     c = timedPeek();
+//
+//     if (c < 0 || c == '-' || (c >= '0' && c <= '9') || (detectDecimal && c == '.'))
+//       return c;
+//
+//     switch (lookahead) {
+//       case SKIP_NONE: return -1;  // Fail code.
+//       case SKIP_WHITESPACE:
+//         switch (c) {
+//           case ' ':
+//           case '\t':
+//           case '\r':
+//           case '\n': break;
+//           default: return -1;  // Fail code.
+//         }
+//       case SKIP_ALL: break;
+//     }
+//     read();  // discard non-numeric
+//   }
+// }
+//
+// long SDI12::parseInt(LookaheadMode lookahead, char ignore) {
+//   bool isNegative = false;
+//   uint16_t value = 0;
+//   int c;
+//
+//   c = peekNextDigit(lookahead, false);
+//   // ignore non numeric leading characters
+//   if (c < 0)
+//     return TIMEOUT;  // TIMEOUT returned if timeout
+//   //  THIS IS THE ONLY DIFFERENCE BETWEEN THIS FUNCTION AND THE STREAM DEFAULT!
+//
+//   do {
+//     if (c == ignore) {  // ignore this character
+//     } else if (c == '-') {
+//       isNegative = true;
+//     } else if (c >= '0' && c <= '9') {  // is c a digit?
+//       value = value * 10 + c - '0';
+//     }
+//     read();  // consume the character we got with peek
+//     c = timedPeek();
+//   } while ((c >= '0' && c <= '9') || c == ignore);
+//
+//   if (isNegative)
+//     value = -value;
+//   return value;
+// }
+//
+// // the same as parseInt but returns a floating point value
+// float SDI12::parseFloat(LookaheadMode lookahead, char ignore) {
+//   bool isNegative = false;
+//   bool isFraction = false;
+//   long value = 0;
+//   int c;
+//   float fraction = 1.0;
+//
+//   c = peekNextDigit(lookahead, true);
+//   // ignore non numeric leading characters
+//   if (c < 0)
+//     return TIMEOUT;  // TIMEOUT returned if timeout
+//   //  THIS IS THE ONLY DIFFERENCE BETWEEN THIS FUNCTION AND THE STREAM DEFAULT!
+//
+//   do {
+//     if (c == ignore) {  // ignore
+//     } else if (c == '-') {
+//       isNegative = true;
+//     } else if (c == '.') {
+//       isFraction = true;
+//     } else if (c >= '0' && c <= '9') {  // is c a digit?
+//       value = value * 10 + c - '0';
+//       if (isFraction)
+//         fraction *= 0.1;
+//     }
+//     read();  // consume the character we got with peek
+//     c = timedPeek();
+//   } while ((c >= '0' && c <= '9') || (c == '.' && !isFraction) || c == ignore);
+//
+//   if (isNegative)
+//     value = -value;
+//   if (isFraction)
+//     return value * fraction;
+//   else
+//     return value;
+// }
+
 /* ================ Constructor, Destructor, begin(), end(), and timeout ============*/
 // Constructor
 SDI12::SDI12() {
   _dataPinRX = -1;
   _dataPinTX = -1;
   _bufferOverflow = false;
+  // SDI-12 protocol says sensors must respond within 15 milliseconds
+  // We'll bump that up to 150, just for good measure, but we don't want to
+  // wait the whole stream default of 1s for a response.
+  // setTimeout(150);
+  // Because SDI-12 is mostly used for environmental sensors, we want to be able
+  // to distinguish between the '0' that parseInt and parseFloat usually return
+  // on timeouts and a real measured 0 value.  So we force the timeout response
+  // to be -9999, which is not a common value for most variables measured by
+  // in-site environmental sensors.
   setTimeoutValue(-9999);
 }
 SDI12::SDI12(int8_t dataPinRX, int8_t dataPinTX, int8_t txOE) {
@@ -99,6 +264,16 @@ SDI12::SDI12(int8_t dataPinRX, int8_t dataPinTX, int8_t txOE) {
   _dataPinTX = dataPinTX;
   _txOE = txOE;
   _bufferOverflow = false;
+  // SDI-12 protocol says sensors must respond within 15 milliseconds
+  // We'll bump that up to 150, just for good measure, but we don't want to
+  // wait the whole stream default of 1s for a response.
+  // setTimeout(150);
+  // Because SDI-12 is mostly used for environmental sensors, we want to be able
+  // to distinguish between the '0' that parseInt and parseFloat usually return
+  // on timeouts and a real measured 0 value.  So we force the timeout response
+  // to be -9999, which is not a common value for most variables measured by
+  // in-site environmental sensors.
+  // setTimeoutValue(-9999);
 }
 
 // Destructor
@@ -130,7 +305,7 @@ void pinMode_esp(gpio_num_t pin, esp_gpio_mode_t mode) {
       io_conf.mode = GPIO_MODE_INPUT;
       io_conf.pull_down_en = GPIO_PULLDOWN_ENABLE;
       break;
-    default: return;
+    default: return;  // 잘못된 모드 처리
   }
 
   gpio_config(&io_conf);
@@ -151,10 +326,10 @@ void SDI12::begin() {
       ESP_LOGE(TAG, "Failed to install ISR service: %s", esp_err_to_name(err));
     }
 
-    pinMode_esp((gpio_num_t)_dataPinRX, ESP_INPUT);
-    gpio_set_intr_type((gpio_num_t)_dataPinRX, GPIO_INTR_ANYEDGE);
-    gpio_isr_handler_add((gpio_num_t)_dataPinRX, SDI12::isr_wrapper, this);
-    setPinInterrupts(false);  // Interrupts disabled on data pin
+    pinMode_esp((gpio_num_t)_dataPinRX, ESP_INPUT);                          // Turn off the pull-up resistor
+    gpio_set_intr_type((gpio_num_t)_dataPinRX, GPIO_INTR_ANYEDGE);           // 인터럽트 타입 설정
+    gpio_isr_handler_add((gpio_num_t)_dataPinRX, SDI12::isr_wrapper, this);  // 정적 ISR 등록
+    setPinInterrupts(false);                                                 // Interrupts disabled on data pin
   }
 
   // Set up the prescaler as needed for timers
@@ -211,7 +386,8 @@ bool SDI12::isActive() {
 
 /* ================ Data Line States ================================================*/
 // Processor specific parity and interrupts
-
+// Added MJB: parity function to replace the one specific for AVR from util/parity.h
+// http://graphics.stanford.edu/~seander/bithacks.html#ParityNaive
 uint8_t SDI12::parity_even_bit(uint8_t v) {
   uint8_t parity = 0;
   while (v) {
@@ -223,13 +399,27 @@ uint8_t SDI12::parity_even_bit(uint8_t v) {
 
 void IRAM_ATTR SDI12::isr_wrapper(void* arg) {
   if (arg) {
-    static_cast<SDI12*>(arg)->handleInterrupt_idf();
+    static_cast<SDI12*>(arg)->handleInterrupt_idf();  // 비정적 멤버 함수 호출
   }
 }
 
 void SDI12::handleInterrupt_idf() {
-  receiveISR();
+  receiveISR();  // 기존 내부 인터럽트 처리 로직
 }
+
+// a helper function to switch pin interrupts on or off
+// void SDI12::setPinInterrupts(bool enable) {
+//   // Merely need to attach the interrupt function to the pin
+//
+//   if (enable) {
+//     gpio_set_intr_type((gpio_num_t)_dataPinRX, GPIO_INTR_ANYEDGE);           // 인터럽트 타입설정
+//     gpio_isr_handler_add((gpio_num_t)_dataPinRX, SDI12::isr_wrapper, this);  // 정적 ISR 등록
+//     gpio_intr_enable((gpio_num_t)_dataPinRX);
+//   } else {
+//     gpio_intr_disable((gpio_num_t)_dataPinRX);
+//     gpio_isr_handler_remove((gpio_num_t)_dataPinRX);
+//   }
+// }
 
 void SDI12::setPinInterrupts(bool enable) {
   // Merely need to attach the interrupt function to the pin
@@ -240,6 +430,73 @@ void SDI12::setPinInterrupts(bool enable) {
     gpio_intr_disable((gpio_num_t)_dataPinRX);
   }
 }
+
+// sets the state of the SDI-12 object.
+/** SDI-12 is disabled, pin mode INPUT, interrupts disabled for the pin */
+// SDI12_DISABLED,
+/** SDI-12 is enabled, pin mode INPUT, interrupts disabled for the pin */
+// SDI12_ENABLED,
+/** The line is being held LOW, pin mode OUTPUT, interrupts disabled for the pin */
+// SDI12_HOLDING,
+/** Data is being transmitted by the SDI-12 master, pin mode OUTPUT, interrupts
+   disabled for the pin */
+// SDI12_TRANSMITTING,
+/** The SDI-12 master is listening for a response from the slave, pin mode INPUT,
+   interrupts enabled for the pin */
+// SDI12_LISTENING
+
+// void SDI12::setState(SDI12_STATES state) {
+//   switch (state) {
+//     case SDI12_HOLDING: {
+//       // pinMode_esp((gpio_num_t)_dataPinRX, ESP_INPUT);  // Turn off the pull-up resistor
+//       // setPinInterrupts(false);                         // Interrupts disabled on data pin
+//
+//       pinMode_esp((gpio_num_t)_dataPinTX, ESP_OUTPUT);  // Pin mode = output
+//       gpio_set_level((gpio_num_t)_dataPinTX, 0);
+//
+//       pinMode_esp((gpio_num_t)_txOE, ESP_OUTPUT);  // Pin mode = input, pull-up resistor off
+//       gpio_set_level((gpio_num_t)_dataPinTX, 1);
+//       break;
+//     }
+//     case SDI12_TRANSMITTING: {
+//       pinMode_esp((gpio_num_t)_dataPinTX, ESP_OUTPUT);  // Pin mode = output
+//
+//       // pinMode_esp((gpio_num_t)_dataPinRX, ESP_INPUT);  // Turn off the pull-up resistor
+//       // setPinInterrupts(false);                         // Interrupts disabled on data pin
+//
+//       pinMode_esp((gpio_num_t)_txOE, ESP_OUTPUT);  // Pin mode = input, pull-up resistor off
+//       gpio_set_level((gpio_num_t)_txOE, 0);
+//
+//       break;
+//     }
+//     case SDI12_LISTENING: {
+//       // pinMode_esp((gpio_num_t)_dataPinRX, ESP_INPUT);  // Pin mode = input, pull-up resistor off
+//
+//       // Re-enable universal interrupts as soon as critical timing is past
+//       portENABLE_INTERRUPTS();
+//       setPinInterrupts(true);  // Enable Rx interrupts on data pin
+//       rxState = WAITING_FOR_START_BIT;
+//
+//       // pinMode_esp((gpio_num_t)_dataPinTX, ESP_INPUT);  // Pin mode = input, pull-up resistor off
+//       // pinMode_esp((gpio_num_t)_txOE, ESP_OUTPUT);      // Pin mode = input, pull-up resistor off
+//       gpio_set_level((gpio_num_t)_txOE, 1);  // Pin state = low (turns off pull-up)
+//       break;
+//     }
+//     default:  // SDI12_DISABLED or SDI12_ENABLED
+//     {
+//       // gpio_set_level((gpio_num_t)_dataPinRX, 1);       // Pin state = low (turns off pull-up)
+//       // pinMode_esp((gpio_num_t)_dataPinRX, ESP_INPUT);  // Pin mode = input, pull-up resistor off
+//       // setPinInterrupts(false);                         // Interrupts disabled on data pin
+//
+//       pinMode_esp((gpio_num_t)_dataPinTX, ESP_OUTPUT);  // Pin mode = output
+//       gpio_set_level((gpio_num_t)_dataPinTX, 0);        // Pin state = HIGH - marking
+//
+//       pinMode_esp((gpio_num_t)_txOE, ESP_OUTPUT);  // Pin mode = input, pull-up resistor off
+//       gpio_set_level((gpio_num_t)_txOE, 1);        // Pin state = low (turns off pull-up)
+//       break;
+//     }
+//   }
+// }
 
 void SDI12::setState(SDI12_STATES state) {
   switch (state) {
@@ -292,6 +549,16 @@ void SDI12::forceListen() {
 /* ================ Waking Up and Talking To Sensors ================================*/
 // this function wakes up the entire sensor bus
 void SDI12::wakeSensors(int8_t extraWakeTime) {
+  //  setState(SDI12_TRANSMITTING);
+  //  // Universal interrupts can be on while the break and marking happen because
+  //  // timings for break and from the recorder are not critical.
+  //  // Interrupts on the pin are disabled for the entire transmitting state
+  //  digitalWrite(_dataPin, HIGH);         // break is HIGH
+  //  delayMicroseconds(lineBreak_micros);  // Required break of 12 milliseconds (12,000 µs)
+  //  delay(extraWakeTime);                 // allow the sensors to wake
+  //  digitalWrite(_dataPin, LOW);          // marking is LOW
+  //  delayMicroseconds(marking_micros);  // Required marking of 8.33 milliseconds(8,333 µs)
+
   setState(SDI12_TRANSMITTING);
   // Universal interrupts can be on while the break and marking happen because
   // timings for break and from the recorder are not critical.
@@ -375,6 +642,15 @@ size_t SDI12::write(uint8_t byte) {
   setState(SDI12_LISTENING);  // listen for reply
   return 1;                   // 1 character sent
 }
+
+// this function sends out the characters of the String cmd, one by one
+// void SDI12::sendCommand(String& cmd, int8_t extraWakeTime) {
+//   wakeSensors(extraWakeTime);  // wake up sensors
+//   for (int unsigned i = 0; i < cmd.length(); i++) {
+//     writeChar(cmd[i]);  // write each character
+//   }
+//   setState(SDI12_LISTENING);  // listen for reply
+// }
 
 void SDI12::sendCommand(const char* cmd, int8_t extraWakeTime) {
   wakeSensors(extraWakeTime);  // wake up sensors
@@ -537,3 +813,7 @@ void SDI12::charToBuffer(uint8_t c) {
     _rxBufferTail = (_rxBufferTail + 1) % SDI12_BUFFER_SIZE;
   }
 }
+
+// Define AVR interrupts
+// Check if the various interrupt vectors are defined.  If they are the ISR is
+// instructed to call handleInterrupt() when they trigger.

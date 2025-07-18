@@ -2,14 +2,16 @@
 #include <stdio.h>
 #include <string.h>
 #include "esp_log.h"
+#include "mqtt_client.h"
 #include "mqtt_config.h"
 #include "mqtt_handler.h"
 #include "mqtt_publish.h"
 #include "sensor_cfg_config.h"
 #include "sdkconfig.h"
 
-static const char *TAG = "mqtt_app";
+static const char *TAG = "[mqttApp]";
 
+esp_mqtt_client_handle_t mqtt_client;
 mqtt_client_ctx_t mqtt_ctx;
 QueueHandle_t router_queue;
 
@@ -35,16 +37,18 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
   switch ((esp_mqtt_event_id_t)event_id) {
     case MQTT_EVENT_CONNECTED:
-      ESP_LOGI(TAG, "MQTT connected");
+      ESP_LOGI(TAG, "[MQTT_Broker]MQTT connected");
+      // Set the MQTT connected event bit
+      xEventGroupSetBits(mqtt_ctx.mqtt_event_bit, MQTT_EVENT_CONNECTED);
 
       memset(prefix_buff, 0x00, sizeof(prefix_buff));
       BUILD_DEVICE_TOPIC(prefix_buff, TOPIC_TYPE_STATE);
       publish_device_status(client, "connected", prefix_buff);
       publish_command(client, "init");
 
-      if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_STATE) == ESP_OK) {
-        esp_mqtt_client_subscribe(client, topic, 1);
-      }
+      //     if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_STATE) == ESP_OK) {
+      //       esp_mqtt_client_subscribe(client, topic, 1);
+      //     }
       if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_OTA_UPLOAD) == ESP_OK) {
         esp_mqtt_client_subscribe(client, topic, 1);
       }
@@ -54,11 +58,14 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
       if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_SETTING) == ESP_OK) {
         esp_mqtt_client_subscribe(client, topic, 1);
       }
+      if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_CMD) == ESP_OK) {
+        esp_mqtt_client_subscribe(client, topic, 1);
+      }
 
       break;
 
     case MQTT_EVENT_DATA: {
-      ESP_LOGI(TAG, "MQTT event data");
+      ESP_LOGI(TAG, "[MQTT_broker]Received data !!");
       mqtt_message_t msg = { 0 };
       memcpy(msg.topic, event->topic, event->topic_len);
       msg.topic[event->topic_len] = '\0';
@@ -89,15 +96,57 @@ esp_err_t build_device_topic_ext(topic_type_t type, char *buf, size_t len) {
   return ESP_OK;
 }
 
-void mqtt_init(void) {
+mqtt_client_ctx_t *mqtt_handler_get_instance(void) {
+  return &mqtt_ctx;
+}
+
+/* void mqtt_init(void) { */
+/*   const esp_mqtt_client_config_t mqtt_cfg = { */
+/*     .broker.address.uri = CONFIG_MQTT_BROKER_URL, */
+/*   }; */
+/**/
+/*   mqtt_client = esp_mqtt_client_init(&mqtt_cfg); */
+/*   esp_mqtt_client_register_event(mqtt_client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL); */
+/*   esp_mqtt_client_start(mqtt_client); */
+/*   mqtt_ctx.client = mqtt_client; */
+/*   mqtt_ctx.mqtt_event_bit = xEventGroupCreate(); */
+/*   if (mqtt_ctx.mqtt_event_bit == NULL) { */
+/*     ESP_LOGE(TAG, "Failed to create MQTT event group"); */
+/*   } */
+/* } */
+
+esp_err_t mqtt_init(void) {
   const esp_mqtt_client_config_t mqtt_cfg = {
     .broker.address.uri = CONFIG_MQTT_BROKER_URL,
   };
 
-  esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
-  esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
-  esp_mqtt_client_start(client);
-  mqtt_ctx.client = client;
+  mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
+  if (mqtt_client == NULL) {
+    ESP_LOGE(TAG, "Failed to init mqtt client");
+    return ESP_FAIL;
+  }
+
+  esp_err_t err = esp_mqtt_client_register_event(mqtt_client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
+  if (err != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to register mqtt event");
+    return err;
+  }
+
+  err = esp_mqtt_client_start(mqtt_client);
+  if (err != ESP_OK) {
+    ESP_LOGE(TAG, "Failed to start mqtt client");
+    return err;
+  }
+
+  mqtt_ctx.client = mqtt_client;
+  mqtt_ctx.mqtt_event_bit = xEventGroupCreate();
+  if (mqtt_ctx.mqtt_event_bit == NULL) {
+    ESP_LOGE(TAG, "Failed to create MQTT event group");
+    return ESP_ERR_NO_MEM;
+  }
+
+  ESP_LOGI(TAG, "MQTT initialized successfully");
+  return ESP_OK;
 }
 
 // =============================
@@ -148,7 +197,7 @@ const char *strategy_manager_get_task_name_for_topic(const char *topic) {
 static topic_router_fn_t _queue_mapper = NULL;
 
 void router_register_queue_mapper(topic_router_fn_t fn) {
-  ESP_LOGW(TAG, "queue mapper!!");
+  ESP_LOGW(TAG, "[MQTT strategy]queue mapper!!");
   _queue_mapper = fn;
 }
 
@@ -165,12 +214,12 @@ void router_dispatch_task(void *param) {
   mqtt_message_t msg;
   while (1) {
     if (xQueueReceive(router_queue, &msg, portMAX_DELAY)) {
-      ESP_LOGW(TAG, "receive topic: %s", msg.topic);
+      ESP_LOGW(TAG, "[MQTT strategy]receive topic: %s", msg.topic);
       QueueHandle_t target = _get_task_queue_by_topic(msg.topic);
       if (target) {
         xQueueSend(target, &msg, 0);
       } else {
-        ESP_LOGW(TAG, "No task found for topic: %s", msg.topic);
+        ESP_LOGW(TAG, "[MQTT strategy] No task found for topic: %s", msg.topic);
       }
     }
   }

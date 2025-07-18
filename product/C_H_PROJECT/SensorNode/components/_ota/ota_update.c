@@ -17,6 +17,7 @@
 #include "protocol_examples_common.h"
 #include "string.h"
 #ifdef CONFIG_OTA_USE_CERT_BUNDLE
+#else if
 #include "esp_crt_bundle.h"
 #endif
 
@@ -27,7 +28,8 @@
 #endif
 
 #ifdef CONFIG_SERVER_URL
-#define OTA_FIRMWARE_URL "https://" CONFIG_SERVER_URL "/ota_firmware/SensorNode.bin"
+// #define OTA_FIRMWARE_URL "https://" CONFIG_SERVER_URL "/ota_firmware/SensorNode.bin"
+#define OTA_FIRMWARE_URL "http://" CONFIG_SERVER_URL "/ota_firmware/SensorNode.bin"
 #endif
 #define HASH_LEN 32
 
@@ -78,9 +80,9 @@ void ota_start() {
     // .url = CONFIG_OTA_FIRMWARE_UPGRADE_URL,
     .url = OTA_FIRMWARE_URL,
 #ifdef CONFIG_OTA_USE_CERT_BUNDLE
-    .crt_bundle_attach = esp_crt_bundle_attach,
-#else
     .cert_pem = (char *)server_cert_pem_start,
+#else
+    .crt_bundle_attach = esp_crt_bundle_attach,
 #endif /* CONFIG_OTA_USE_CERT_BUNDLE */
     .event_handler = _http_event_handler,
     .keep_alive_enable = true,

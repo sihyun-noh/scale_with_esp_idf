@@ -6,6 +6,7 @@
 #include "freertos/idf_additions.h"
 #include "freertos/projdefs.h"
 #include "hal/gpio_types.h"
+#include "mqtt_client.h"
 #include "nvs_flash.h"
 #include "esp_event.h"
 #include "freertos/event_groups.h"
@@ -43,11 +44,6 @@ extern void strategy_task_mgr_sensor_start(void);
 extern void strategy_trigger_task_start(void);
 }
 
-// int do_user_cmd(int argc, char** argv) {
-//   printf("Hello from user command.\n");
-//   return 0;
-// }
-
 void print_heap_summary() {
   multi_heap_info_t info;
   heap_caps_get_info(&info, MALLOC_CAP_8BIT);
@@ -79,9 +75,6 @@ extern "C" void app_main(void) {
   // Initialize console REPL
   ESP_ERROR_CHECK(console_cmd_init());
 
-  // Register user command
-  // ESP_ERROR_CHECK(console_cmd_user_register("user", do_user_cmd));
-
   // Register all the plugin commands added to this example
   ESP_ERROR_CHECK(console_cmd_all_register());
 
@@ -93,7 +86,6 @@ extern "C" void app_main(void) {
 
   vTaskDelay(pdMS_TO_TICKS(100));
 
-  // fm_file_list(BASE_PATH);
   ESP_ERROR_CHECK(file_info_helper());
 
   //---------------fm_init ----------------------------------//
@@ -129,13 +121,29 @@ extern "C" void app_main(void) {
   // cfg instance Initialize
   // TODO: Debug and verify configuration manager settings.
   sensor_cfg_manager_t* cfg_mgr = sensor_cfg_get_instance();
-
   sensor_auto_detect_init();
 //----------------------------------------------------------------//
 // MQTT Publishing Strategy Initialization
 //----------------------------------------------------------------//
 #if 1
-  mqtt_init();
+
+  if (mqtt_init() != ESP_OK) {
+    ESP_LOGE(TAG, "MQTT initialization failed. System halt.");
+    // handle or abort
+  }
+
+  mqtt_client_ctx_t* mqtt_ctx = mqtt_handler_get_instance();
+  EventBits_t bits = xEventGroupWaitBits(mqtt_ctx->mqtt_event_bit, MQTT_CONNECTED_BIT,
+                                         pdTRUE,                 // clear on exit
+                                         pdFALSE,                // wait any
+                                         pdMS_TO_TICKS(30000));  // 최대 30초 대기
+
+  if (bits & MQTT_CONNECTED_BIT) {
+    ESP_LOGI(TAG, "[MAIN INIT] MQTT broker connected.");
+  } else {
+    ESP_LOGW(TAG, "[MAIN INIT] MQTT broker connection timed out.");
+  }
+
   strategy_task_mgr_mqtt_start();
   //----------------------------------------------------------------//
   // Port-wise Sensing Strategy Initialization

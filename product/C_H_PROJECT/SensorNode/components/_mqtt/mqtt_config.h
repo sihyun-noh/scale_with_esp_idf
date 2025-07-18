@@ -2,6 +2,8 @@
 #ifndef MQTT_CONFIG_H
 #define MQTT_CONFIG_H
 
+#include "esp_err.h"
+#include "freertos/idf_additions.h"
 #include "mqtt_client.h"
 
 #ifdef __cplusplus
@@ -23,7 +25,7 @@ extern "C" {
 #define TOPIC_OTA_UPLOAD "ota_upload"
 #define TOPIC_SETTING    "setting"
 #define TOPIC_UPLOAD     "upload"
-//
+
 #define MAX_TOPIC_LEN     128
 #define MAX_PAYLOAD_LEN   512
 #define MAX_STRATEGIES    10
@@ -55,8 +57,11 @@ typedef enum {
   TOPIC_TYPE_UPLOAD
 } topic_type_t;
 
+#define MQTT_CONNECTED_BIT BIT0
+
 typedef struct {
   esp_mqtt_client_handle_t client;
+  EventGroupHandle_t mqtt_event_bit;
 } mqtt_client_ctx_t;
 
 typedef struct {
@@ -83,6 +88,14 @@ typedef struct {
   strategy_entry_t table[MAX_STRATEGIES];
   int count;
 } strategy_manager_t;
+
+/**
+ * @brief Returns the singleton instance of the mqtt context structure.
+ *
+ * @return Pointer to the global strategy_manager_t instance.
+ */
+
+mqtt_client_ctx_t *mqtt_handler_get_instance(void);
 
 /**
  * @brief Returns the singleton instance of the strategy manager.
@@ -149,12 +162,16 @@ strategy_fn_t strategy_manager_find_strategy(const char *topic);
 /**
  * @brief Initialize and start the MQTT client.
  *
- * This function sets up the MQTT client with the configured broker URI,
- * registers the event handler for MQTT events, and starts the client.
- * It should be called once during application startup to establish
- * MQTT communication.
+ * This function sets up the MQTT client using the URI defined in the configuration,
+ * registers the MQTT event handler, starts the client, and creates the associated
+ * EventGroup used to signal MQTT connection state (e.g., MQTT_CONNECTED_BIT).
+ *
+ * Returns `ESP_OK` on successful initialization, or an appropriate error code
+ * if the client fails to initialize, start, or allocate required resources.
+ *
+ * @return esp_err_t ESP_OK on success, or an error code on failure.
  */
-void mqtt_init(void);
+esp_err_t mqtt_init(void);
 
 /**
  * @brief Router task for dispatching MQTT messages.

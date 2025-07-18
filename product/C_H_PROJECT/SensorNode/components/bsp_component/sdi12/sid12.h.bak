@@ -1,5 +1,52 @@
 /**
- *@file SDI12.h
+ * @file SDI12.h
+ * @copyright (c) 2013-2020 Stroud Water Research Center (SWRC)
+ *                          and the EnviroDIY Development Team
+ * @date August 2013
+ * @author Kevin M.Smith <SDI12@ethosengineering.org>
+ *
+ * @brief This file contains the main class for the SDI-12 implementation.
+ *
+ * ========================== Arduino SDI-12 ==================================
+ *
+ * An Arduino library for SDI-12 communication with a wide variety of environmental
+ * sensors. This library provides a general software solution, without requiring any
+ * additional hardware.
+ *
+ * ======================== Attribution & License =============================
+ *
+ * Copyright (C) 2013  Stroud Water Research Center
+ * Available at https://github.com/EnviroDIY/Arduino-SDI-12
+ *
+ * Authored initially in August 2013 by:
+ *          Kevin M. Smith (http://ethosengineering.org)
+ *          Inquiries: SDI12@ethosengineering.org
+ *
+ * Modified 2017 by Manuel Jimenez Buendia to work with ARM based processors (Arduino
+ * Zero)
+ *
+ * Maintenance and merging 2017 by Sara Damiano
+ *
+ * based on the SoftwareSerial library (formerly NewSoftSerial), authored by:
+ *         ladyada (http://ladyada.net)
+ *         Mikal Hart (http://www.arduiniana.org)
+ *         Paul Stoffregen (http://www.pjrc.com)
+ *         Garrett Mace (http://www.macetech.com)
+ *         Brett Hagman (http://www.roguerobotics.com/)
+ *
+ * This library is free software; you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License as published by the Free Software
+ * Foundation; either version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License along with
+ * this library; if not, write to the Free Software Foundation, Inc., 51 Franklin
+ * Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+/**
  * @page specifications Notes on SDI-12, Specification v1.4
  *
  * @tableofcontents
@@ -143,6 +190,35 @@ typedef uint32_t sdi12timer_t;
 #endif
 
 /**
+ * @brief This enumeration provides the lookahead options for parseInt(), parseFloat().
+ *
+ * The rules set out here are used until either the first valid character is found or a
+ * time out occurs due to lack of input.
+ *
+ * This enum is part of the Stream parent class, but is missing from the ESP8266 and
+ * ESP32 cores.
+ */
+// enum LookaheadMode {
+//   /** All invalid characters are ignored. */
+//   SKIP_ALL,
+//   /** Nothing is skipped, and the stream is not touched unless the first waiting
+//      character is valid. */
+//   SKIP_NONE,
+//   /** Only tabs, spaces, line feeds & carriage returns are skipped.*/
+//   SKIP_WHITESPACE
+// };
+/**
+ * @brief The function or macro used to read the clock timer value.
+ *
+ * @note  The ESP32 and ESP8266 are fast enough processors that they can take the
+ * time to read the core 'micros()' function still complete the other processing needed
+ * on the serial bits.  All of the other processors using the Arduino core also have the
+ * micros function, but the rest are not fast enough to waste the processor cycles to
+ * use the micros function and must use the faster assembly macros to read the
+ * processor timer directly.
+ */
+
+/**
  * @brief The number of "ticks" of the timer that occur within the timing of one bit
  * at the SDI-12 baud rate of 1200 bits/second.
  *
@@ -178,18 +254,34 @@ class SDI12Timer {
    * @brief Set the processor timer prescaler such that the 10 bits of an SDI-12
    * character are divided into the rollover time of the timer.
    *
+   * @note  The ESP32 and ESP8266 are fast enough processors that they can take the
+   * time to read the core 'micros()' function still complete the other processing
+   * needed on the serial bits.  All of the other processors using the Arduino core also
+   * have the micros function, but the rest are not fast enough to waste the processor
+   * cycles to use the micros function and must manually configure the processor timer
+   * and use the faster assembly macros to read that processor timer directly.
    */
   void configSDI12TimerPrescale(void);
   /**
    * @brief Reset the processor timer prescaler to whatever it was prior to being
    * adjusted for this library.
    *
+   * @note The prescaler is *NOT* set back to initial values for SAMD boards!  On those
+   * processors, generic clock generator 4 will remain configured for SDI-12 until it is
+   * reset outside of this library.
    */
   void resetSDI12TimerPrescale(void);
 
   /**
    * @brief Read the processor micros and right shift 6 bits (ie, divide by 64) to get a
    * 64µs tick.
+   *
+   * @note  The ESP32 and ESP8266 are fast enough processors that they can take the time
+   * to read the core 'micros()' function still complete the other processing needed on
+   * the serial bits.  All of the other processors using the Arduino core also have the
+   * micros function, but the rest are not fast enough to waste the processor cycles to
+   * use the micros function and must use the faster assembly macros to read the
+   * processor timer directly.
    *
    * @return **sdi12timer_t** The current processor micros
    */
@@ -300,7 +392,31 @@ class SDI12 {
    * @see https://github.com/SlashDevin/NeoSWSerial/pull/13#issuecomment-315463522
    */
   static uint16_t bitTimes(uint8_t dt);
+  /**@}*/
 
+  /**
+   * @anchor sdi12_buffer
+   * @name Buffer Setup
+   *
+   * @brief Creating a circular buffer for incoming data.
+   *
+   * The buffer is used to store characters from the SDI-12 data line.  Characters are
+   * read into the buffer when an interrupt is received on the data line. The buffer
+   * uses a circular implementation with pointers to both the head and the tail. All
+   * SDI-12 instances share the same buffer.
+   *
+   * The default buffer size is the maximum length of a response to a normal SDI-12
+   * command, which is 81 characters:
+   * - address is a single (1) character
+   * - values has a maximum value of 75 characters
+   * - CRC is 3 characters
+   * - CR is a single character
+   * - LF is a single character
+   *
+   * For more information on circular buffers:
+   * http://en.wikipedia.org/wiki/Circular_buffer
+   */
+  /**@{*/
   private:
   /**
    * @brief A single incoming character buffer for ALL SDI-12 objects (Rx buffer)
@@ -323,7 +439,28 @@ class SDI12 {
    * @brief The buffer overflow status
    */
   bool _bufferOverflow;
+  /**@}*/
 
+  /**
+   * @anchor reading_buffer
+   * @name Reading from the SDI-12 Buffer
+   *
+   * @brief These functions are for reading incoming data stored in the SDI-12 buffer.
+   *
+   * @see <a href="class_s_d_i12.html#buffer-setup">Buffer Setup</a>
+   *
+   * @note peakNextDigit(), parseInt() and parseFloat() are fully implemented in the
+   * parent Stream class but we don't want to them use as they are inherited.  Although
+   * they are not virtual and cannot be overridden, recreating them here hides the
+   * stream default versions to allow for a custom timeout return value.  The default
+   * value for the Stream class is to return 0.  This makes distinguishing timeouts from
+   * true zero readings impossible. Therefore the default value has been set to -9999 in
+   * the being function.  The value returned by a timeout (SDI12::TIMEOUT) is a public
+   * variable and can be changed dynamically within a program by calling
+   * `mySDI12.TIMEOUT = (int) newValue` or using SDI12::setTimeoutValue(int16_t value).
+   *
+   */
+  /**@{*/
   public:
   /**
    * @brief Return the number of bytes available in the Rx buffer
@@ -368,9 +505,22 @@ class SDI12 {
    *
    * If there has been a buffer overflow, available() will return -1.
    */
+  // TODO:Arduino
+  //  int available() override;
 
   int available_esp();
-
+  /**
+   * @brief Reveal next byte in the Rx buffer without consuming it.
+   *
+   * @return @m_span{m-type} int @m_endspan The next byte in the character buffer.
+   *
+   * peek() is a public function that allows the user to look at the character that is
+   * at the head of the buffer. Unlike read() it does not consume the character (i.e.
+   * the index addressed by _rxBufferHead is not changed). peek() returns -1 if there
+   * are no characters to show.
+   */
+  // TODO:Arduino
+  // int peek() override;
   /**
    * @brief Clear the Rx buffer by setting the head and tail pointers to the same value.
    *
@@ -388,8 +538,86 @@ class SDI12 {
    * not be read from the buffer again. If you would rather see the character, but leave
    * the index to head intact, you should use peek();
    */
+  // TODO:Arduino
+  // int read() override;
   int read_esp();
+  /**
+   * @brief Wait for sending to finish - because no TX buffering, does nothing
+   */
 
+  // TODO:Arduino
+  // void flush() override {}
+
+  /**
+   * @brief Return the first valid (long) integer value from the current position.
+   *
+   * The value of lookahead determines how parseInt looks ahead in the stream.
+   * See LookaheadMode enumeration at the top of the file.
+   * Lookahead is terminated by the first character that is not a valid part of an
+   * integer.
+   * Once parsing commences, 'ignore' will be skipped in the stream.
+   *
+   * @param lookahead the mode to use to look ahead in the
+   * stream, default is LookaheadMode::SKIP_ALL
+   * @param ignore a character to ignore in the stream, default is '\\x01'
+   * @return @m_span{m-type} long @m_endspan The first valid integer in the stream
+   *
+   * @note This function _hides_ the Stream class function to allow a custom value to be
+   * returned on timeout.  It cannot overwrite the Stream function because it is not
+   * virtual.
+   * @see @ref SDI12::LookaheadMode
+   */
+
+  // TODO:Arduino
+  // long parseInt(LookaheadMode lookahead = SKIP_ALL, char ignore = NO_IGNORE_CHAR);
+
+  /**
+   * @brief Return the first valid float value from the current position.
+   *
+   * The value of lookahead determines how parseInt looks ahead in the stream.
+   * See LookaheadMode enumeration at the top of the file.
+   * Lookahead is terminated by the first character that is not a valid part of an
+   * integer.
+   * Once parsing commences, 'ignore' will be skipped in the stream.
+   *
+   * @param lookahead the mode to use to look ahead in the
+   * stream, default is LookaheadMode::SKIP_ALL
+   * @param ignore a character to ignore in the stream, default is '\\x01'
+   * @return @m_span{m-type} long @m_endspan The first valid float in the stream
+   *
+   * @note This function _hides_ the Stream class function to allow a custom value to be
+   * returned on timeout.  It cannot overwrite the Stream function because it is not
+   * virtual.
+   * @see @ref SDI12::LookaheadMode
+   */
+
+  // TODO:Arduino
+  //   float parseFloat(LookaheadMode lookahead = SKIP_ALL, char ignore = NO_IGNORE_CHAR);
+
+  protected:
+  // TODO:Arduino
+  // int timedPeek();
+  /**
+   * @brief Return the next numeric digit in the stream or -1 if timeout
+   *
+   * @param lookahead the mode to use to look ahead in the
+   * stream
+   * @param detectDecimal True to accept a decimal point ('.') as part of a
+   * number
+   * @return @m_span{m-type} int @m_endspan The next numeric digit in the stream
+   */
+
+  // TODO:Arduino
+  //   int peekNextDigit(LookaheadMode lookahead, bool detectDecimal);
+  /**@}*/
+
+  /**
+   * @anchor ctor
+   * @name Constructor, Destructor, Begins, and Setters
+   *
+   * @brief These functions set up the SDI-12 object and prepare it for use.
+   */
+  /**@{*/
   private:
   /**
    * @brief reference to the data pin
@@ -402,6 +630,9 @@ class SDI12 {
   /**
    * @brief Construct a new SDI12 instance with no data pin set.
    *
+   * Before using the SDI-12 instance, the data pin must be set with
+   * SDI12::setDataPin(dataPin) or SDI12::begin(dataPin). This empty constructor is
+   * provided for easier integration with other Arduino libraries.
    *
    * When the constructor is called it resets the buffer overflow status to FALSE.
    */
@@ -419,6 +650,13 @@ class SDI12 {
   /**
    * @brief Destroy the SDI12 object.
    *
+   * When the destructor is called, it's main task is to disable any interrupts that had
+   * been previously assigned to the pin, so that the pin will behave as expected when
+   * used for other purposes. This is achieved by putting the SDI-12 object in the
+   * SDI12_DISABLED state.  After disabling interrupts, the pointer to the current
+   * active SDI-12 instance is set to null if it had pointed to the destroyed object.
+   * Finally, for AVR board, the timer prescaler is set back to whatever it had been
+   * prior to creating the SDI-12 object.
    */
   ~SDI12();
   /**
@@ -442,6 +680,9 @@ class SDI12 {
   /**
    * @brief Disable the SDI-12 object (but do not destroy it).
    *
+   * Set the SDI-12 state to disabled, set the pointer to the current active instance
+   * to null, and then, for AVR boards, unset the timer prescaler.
+   *
    * This can be called to temporarily cease all functionality of the SDI-12 object. It
    * is not as harsh as destroying the object with the destructor, as it will maintain
    * the memory buffer.
@@ -451,11 +692,24 @@ class SDI12 {
    * @brief The value to return if a parse or read times out with no return from the
    * sensor.
    *
+   * The timeout return for an Arduino stream object when no character is available in
+   * the Rx buffer is "0."  For enviromental sensors (the typical SDI-12 users) 0 is a
+   * common result value.  To better distinguish between a timeout because of no
+   * sensor response and a true zero return, the timeout should be set to some value
+   * that is NOT a possible return from that sensor.  If the timeout is not set, -9999
+   * is used.
    */
   int16_t TIMEOUT;
   /**
    * @brief Set the value to return if a parse int or parse float times out with no
    * return from the sensor.
+   *
+   * The "standard" timeout return for an Arduino stream object when no character is
+   * available in the Rx buffer is "0."  For enviromental sensors (the typical SDI-12
+   * users) 0 is a common result value.  To better distinguish between a timeout because
+   * of no sensor response and a true zero return, the timeout should be set to some
+   * value that is NOT a possible return from that sensor.  If the timeout is not set,
+   * -9999 is used.
    *
    * @param value the value to return on timeout
    */
@@ -472,7 +726,39 @@ class SDI12 {
    * @param dataPin  The data pin's digital pin number
    */
   void setDataPin(int8_t dataPinRX, int8_t dataPinTX);
+  /**@}*/
 
+  /**
+   * @anchor multiple_objects
+   * @name Using more than one SDI-12 Object
+   *
+   * @brief Functions needed for multiple instances of the SDI12 class.
+   *
+   * This library is allows for multiple instances of itself running on the same or
+   * different pins.  SDI-12 can support up to 62 sensors on a single pin/bus, so it is
+   * not necessary to use an instance for each sensor.
+   *
+   * Because we are using pin change interrupts there can only be one active object at a
+   * time (since this is the only reliable way to determine which pin the interrupt
+   * occurred on).  The active object is the only object that will respond properly to
+   * interrupts.  However promoting another instance to Active status does not
+   * automatically remove the interrupts on the other pin. For proper behavior it is
+   * recommended to use this pattern:
+   *
+   * @code{.cpp}
+   *     mySDI12.forceHold();
+   *     myOtherSDI12.setActive();
+   * @endcode
+   *
+   * @note
+   * - Promoting an object into the Active state will set it as `SDI12_HOLDING`.
+   * - Calling mySDI12.begin() will assert mySDI12 as the new active object, until
+   * another instance calls myOtherSDI12.begin() or myOtherSDI12.setActive().
+   * - Calling mySDI12.end() does NOT hand-off active status to another SDI-12 instance.
+   * - You can check on the active object by calling mySDI12.isActive(), which will
+   * return a boolean value TRUE if active or FALSE if inactive.
+   */
+  /**@{*/
   public:
   /**
    * @brief Set this instance as the active SDI-12 instance
@@ -508,7 +794,7 @@ class SDI12 {
    *
    * @brief Functions for maintaining the proper data line state.
    *
-   * The responsible for managing communication with the sensors.  Since all
+   * The Arduino is responsible for managing communication with the sensors.  Since all
    * the data transfer happens on the same line, the state of the data line is very
    * important.
    *
@@ -575,11 +861,22 @@ class SDI12 {
     SDI12_LISTENING
   } SDI12_STATES;
 
+#ifndef __AVR__
   /**
    * @brief Calculate the parity value for a character using even parity.
    *
+   * @param v **uint8_t (char)** the character to calculate the parity of
+   * @return @m_span{m-type} uint8_t @m_endspan the input character with the 8th bit set
+   * to the even parity value for that character
+   *
+   * Sets up parity and interrupts for different processor types - that is, imports the
+   * interrupts and parity for the AVR processors where they exist.
+   *
+   * This function is defined in the Arduino core for AVR processors, but must be
+   * defined here for SAMD and ESP cores.
    */
   static uint8_t parity_even_bit(uint8_t v);
+#endif
 
   /**
    * @brief Set the pin interrupts to be on (enabled) or off (disabled)
@@ -710,7 +1007,9 @@ class SDI12 {
    * the sensor is ready for a command by the end of the 12ms break.  Per protocol, the
    * wake time must be less than 100 ms.
    */
-
+  // TODO:Arduino
+  //  void sendCommand(String& cmd, int8_t extraWakeTime = SDI12_WAKE_DELAY);
+  /// @copydoc SDI12::sendCommand(String&, int8_t)
   void sendCommand(const char* cmd, int8_t extraWakeTime = SDI12_WAKE_DELAY);
   /// @copydoc SDI12::sendCommand(String&, int8_t)
   //  void sendCommand(FlashString cmd, int8_t extraWakeTime = SDI12_WAKE_DELAY);
@@ -725,6 +1024,9 @@ class SDI12 {
    * SDI-12 device itself, not as a recorder for another SDI-12 device.
    */
 
+  // TODO:Arduino
+  // void sendResponse(String& resp);
+  /// @copydoc SDI12::sendResponse(String& resp)
   void sendResponse(const char* resp);
   /// @copydoc SDI12::sendResponse(String& resp)
   // void sendResponse(FlashString resp);
@@ -777,6 +1079,10 @@ class SDI12 {
   static void handleInterrupt();
   void handleInterrupt_idf();
   static void IRAM_ATTR isr_wrapper(void* arg);  // ISR 포인터 등록용
+
+  /** on AVR boards, uncomment to use your own PCINT ISRs */
+  // #define SDI12_EXTERNAL_PCINT
+  /**@}*/
 };
 
 #ifdef __cplusplus

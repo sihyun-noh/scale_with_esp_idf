@@ -154,7 +154,7 @@ static void handle_teros11(void* param) {
   vTaskDelay(pdMS_TO_TICKS(2000));
 }
 
-static void handle_teros12(void* param) {
+static void handle_teros_series(void* param) {
   int ret = 0;
   char buf[250] = { 0 };
   char topic[MAX_TOPIC_LEN] = { 0 };
@@ -252,6 +252,24 @@ static void handle_teros12(void* param) {
     // NOTE: 무조건 samples 데이터 처리해야 동작해. 아님. free 중복으로 에러남
     // 1분마다 samples 처리하도록 설정이 되어있음 data_table config에
     // 지금은 내부 internal time과 동기화가 되어 있지 않아서 수동으로 맞춰야 함.
+    //
+
+    /**
+     * @brief Enforces periodic processing of sample data to prevent memory errors.
+     *
+     * Sample data must be consumed and cleared regularly; otherwise, duplicate `free()`
+     * or memory corruption issues may occur. According to the data_table configuration,
+     * samples are expected to be processed every 1 minute.
+     *
+     * Currently, this timing is not automatically synchronized with the internal time system,
+     * so manual alignment is required to ensure sample processing occurs at the correct interval.
+     *
+     * Notes:
+     * - Sample lifecycle must be managed carefully to avoid double-free or memory leaks.
+     * - Timing should match the data_table's configuration (typically 60-second interval).
+     * - Internal clock synchronization is planned but not implemented.
+     */
+
     int retry_count = 0;
     while (dt[array_num].handle->sampling_count >= 3) {
       datatable_process_samples(dt[array_num].handle);
@@ -303,15 +321,15 @@ static void handle_teros12(void* param) {
     }
 
   } else {
-    ESP_LOGW(TAG, "[TEROS12] dt->handle is NULL, cannot push/process samples");
+    ESP_LOGW(TAG, "[%s] dt->handle is NULL, cannot push/process samples", sensor_type);
   }
   // 작업 완료 알림
   xEventGroupSetBits(done_group, TASK_DONE_BIT);
   ESP_LOGI(TAG, "[%s] Task done, DONE_BIT set", sensor_type);
-  ESP_LOGI(TAG, "[TEROS12] Task completed");
+  ESP_LOGI(TAG, "[%s] Task completed", sensor_type);
 }
 
-static void handle_atmos41(void* param) {
+static void handle_atmos_series(void* param) {
   int ret = 0;
   char buf[250] = { 0 };
   char topic[MAX_TOPIC_LEN] = { 0 };
@@ -333,8 +351,8 @@ static void handle_atmos41(void* param) {
   ESP_LOGI(TAG, "[%s] Starting SDI-12  ", sensor_type);
   ESP_LOGI(TAG, "[%s] Starting SDI-12 read...port[%d] ", sensor_type, config->port);
 
-  weather_at41g2_data_t* data_at41g2 = NULL;    // 데이터 읽기
-  weather_atmos22_data_t* data_atmos22 = NULL;  // 데이터 읽기
+  weather_at41g2_data_t* data_at41g2 = NULL;
+  weather_atmos22_data_t* data_atmos22 = NULL;
 
   if (config->cfg[array_num].sensor_type == ATMOS41) {
     data_at41g2 = sdi12_read_atmos41(array_num);  // 데이터 읽기
@@ -416,6 +434,22 @@ static void handle_atmos41(void* param) {
     // 1분마다 samples 처리하도록 설정이 되어있음 data_table config에
     // 지금은 내부 internal time과 동기화가 되어 있지 않아서 수동으로 맞춰야 함.
 
+    /**
+     * @brief Enforces periodic processing of sample data to prevent memory errors.
+     *
+     * Sample data must be consumed and cleared regularly; otherwise, duplicate `free()`
+     * or memory corruption issues may occur. According to the data_table configuration,
+     * samples are expected to be processed every 1 minute.
+     *
+     * Currently, this timing is not automatically synchronized with the internal time system,
+     * so manual alignment is required to ensure sample processing occurs at the correct interval.
+     *
+     * Notes:
+     * - Sample lifecycle must be managed carefully to avoid double-free or memory leaks.
+     * - Timing should match the data_table's configuration (typically 60-second interval).
+     * - Internal clock synchronization is planned but not implemented.
+     */
+
     int retry_count = 0;
     while (dt[array_num].handle->sampling_count >= 3) {
       datatable_process_samples(dt[array_num].handle);
@@ -470,15 +504,15 @@ static void handle_atmos41(void* param) {
     }
 
   } else {
-    ESP_LOGW(TAG, "[TEROS12] dt->handle is NULL, cannot push/process samples");
+    ESP_LOGW(TAG, "[%s] dt->handle is NULL, cannot push/process samples", sensor_type);
   }
   // 작업 완료 알림
   xEventGroupSetBits(done_group, TASK_DONE_BIT);
   ESP_LOGI(TAG, "[%s] Task done, DONE_BIT set", sensor_type);
-  ESP_LOGI(TAG, "[TEROS12] Task completed");
+  ESP_LOGI(TAG, "[%s] Task completed", sensor_type);
 }
 
-static void handle_apogee_sensor(void* param) {
+static void handle_apogee_series(void* param) {
   int ret = 0;
   char buf[250] = { 0 };
   char topic[MAX_TOPIC_LEN] = { 0 };
@@ -592,23 +626,39 @@ static void handle_apogee_sensor(void* param) {
     }
 
   } else {
-    ESP_LOGW(TAG, "[APOGEE DATA] dt->handle is NULL, cannot push/process samples");
+    ESP_LOGW(TAG, "[%s] dt->handle is NULL, cannot push/process samples", sensor_type);
   }
   // 작업 완료 알림
   xEventGroupSetBits(done_group, TASK_DONE_BIT);
   ESP_LOGI(TAG, "[%s] Task done, DONE_BIT set", sensor_type);
-  ESP_LOGI(TAG, "[APOGEE DATA] Task completed");
+  ESP_LOGI(TAG, "[%s] Task completed", sensor_type);
 }
-
-// =============================
-// 내부 Task 실행 구조
-// =============================
-static sensor_task_t sensor_tasks[MAX_SENSOR_TASKS];
-static int task_count = 0;
 
 // =============================
 // Task Entry Function
 // =============================
+
+/**
+ * @brief Sensor task loop that waits for trigger and port detection events.
+ *
+ * Each sensor task waits for a specific trigger bit from a shared event group (trigger_group).
+ * Once triggered, it checks the corresponding sensor port's detection bit from the AutoDetect manager's
+ * event group (sensor_event_group). If the port is active (bit is set), the task invokes the registered
+ * action callback.
+ *
+ * This design allows each task to:
+ * - Be triggered externally (e.g., from FSM or AutoDetect controller)
+ * - Wait for a valid sensor connection state on its assigned port
+ * - Execute a port-specific action when ready
+ *
+ * Notes:
+ * - During initialization, all sensor port bits (0–5) are set to simulate connected state
+ * - The task runs indefinitely, handling one trigger-action cycle per loop
+ * - Uses FreeRTOS event groups for synchronization and signaling
+ */
+
+static sensor_task_t sensor_tasks[MAX_SENSOR_TASKS];
+static int task_count = 0;
 
 void sensor_set_all_ports_connected(void) {
   sensor_ad_manager_t* mgr = sensor_ad_get_instance();
@@ -626,38 +676,53 @@ static void sensor_task_entry(void* pvParameters) {
   ESP_LOGI(TAG, "[%s] Task started. Waiting on bit 0x%02X...", config->task_name, (unsigned int)config->bit);
 
   sensor_ad_manager_t* mgr = sensor_ad_get_instance();
-  // 초기에는 set으로 동작하도록 진행
+  // AutoDetect Event bit 초기화: 모든 포트를 연결된 상태로 설정 (PORT 0~5)
   for (int i = 0; i < 6; ++i) {
     xEventGroupSetBits(mgr->sensor_event_group, SENSOR_PORT_EVENT_BIT(i));
   }
 
   while (true) {
-    // NOTE: AutoDetect에서 센서가 감지되면 모든 센서 중단
+    // Bit used to trigger the strategy task (set by FSM as an event signal)
+    ESP_LOGW(TAG, "[FSM -> Task] Waiting started: PORT[%d]_%s, BitMask: 0x%04X", config->port, config->task_name,
+             SENSOR_PORT_EVENT_BIT((unsigned int)config->port - 1));
 
-    // strategy task trigger bit
     xEventGroupWaitBits(config->trigger_group, config->bit,
                         pdTRUE,   // clear on exit
-                                  /*                      pdFALSE,  // Not clear*/
                         pdFALSE,  // wait any
                         portMAX_DELAY);
 
-    ESP_LOGW(TAG, "[AutoDetect -> Task] Waiting started: PORT[%d]_%s, BitMask: 0x%04X", config->port, config->task_name,
-             SENSOR_PORT_EVENT_BIT((unsigned int)config->port - 1));
-
     EventBits_t wait_mask = SENSOR_PORT_EVENT_BIT(config->port - 1);
 
-    // 현재 비트 상태 확인 (대기 전)
+    /**
+     * @brief Wait for sensor port detection before proceeding to avoid task conflict.
+     *
+     * This section ensures that the task only proceeds when its assigned sensor port
+     * is marked as connected (bit is set) by the AutoDetect system. By waiting for
+     * the corresponding bit in the sensor_event_group, this logic prevents the task
+     * from executing prematurely while AutoDetect is still probing or another task
+     * is using the same port.
+     *
+     * Purpose:
+     * - Prevent sensor task conflict or race conditions during sensor detection.
+     * - Synchronize sensor task execution with AutoDetect status.
+     * - Ensure the port is ready before reading actual sensor data.
+     *
+     * Notes:
+     * - Wait is blocking (portMAX_DELAY) until the event bit is set externally.
+     * - Bits are NOT cleared after wait; they must be cleared manually by the controller.
+     */
+
     EventBits_t current_bits = xEventGroupGetBits(mgr->sensor_event_group);
-    ESP_LOGI(TAG, "[AutoDetect] Current bits: 0x%04X, Waiting for: 0x%04X", (unsigned int)current_bits,
+    ESP_LOGI(TAG, "[AutoDetect -> Task] Current bits: 0x%04X, Waiting for: 0x%04X", (unsigned int)current_bits,
              (unsigned int)wait_mask);
 
-    // 비트 대기 (감지 대기)
+    // AutoDetect wait event bit group
     EventBits_t result_bits = xEventGroupWaitBits(mgr->sensor_event_group, wait_mask,
                                                   pdFALSE,  // 대기 후 클리어하지 않음 (수동 클리어 필요)
                                                   pdFALSE,  // 하나라도 Set되면 대기 해제
                                                   portMAX_DELAY);
 
-    // 대기 해제 후 실제 어떤 비트가 Set되었는지 확인
+    // Checking Event group bit
     ESP_LOGW(TAG, "[AutoDetect] Wake-up triggered: PORT[%d]_%s, ResultBits: 0x%04X", config->port, config->task_name,
              (unsigned int)result_bits);
 
@@ -751,56 +816,56 @@ void strategy_task_mgr_sensor_start(void) {
       switch (cfg[i].sensor_type) {
         case TEROS11:
           entry->type = TEROS11;
-          entry->action = handle_teros12;
+          entry->action = handle_teros_series;
           entry->task_name = sensor_type_to_str(TEROS11);
           entry->port = cfg[i].port;
           break;
 
         case TEROS12:
           entry->type = TEROS12;
-          entry->action = handle_teros12;
+          entry->action = handle_teros_series;
           entry->task_name = sensor_type_to_str(TEROS12);
           entry->port = cfg[i].port;
           break;
 
         case TEROS21:
           entry->type = TEROS21;
-          entry->action = handle_teros12;
+          entry->action = handle_teros_series;
           entry->task_name = sensor_type_to_str(TEROS21);
           entry->port = cfg[i].port;
           break;
 
         case TEROS54:
           entry->type = TEROS54;
-          entry->action = handle_teros12;
+          entry->action = handle_teros_series;
           entry->task_name = sensor_type_to_str(TEROS54);
           entry->port = cfg[i].port;
           break;
 
         case ATMOS22:
           entry->type = ATMOS22;
-          entry->action = handle_atmos41;
+          entry->action = handle_atmos_series;
           entry->task_name = sensor_type_to_str(ATMOS22);
           entry->port = cfg[i].port;
           break;
 
         case ATMOS41:
           entry->type = ATMOS41;
-          entry->action = handle_atmos41;
+          entry->action = handle_atmos_series;
           entry->task_name = sensor_type_to_str(ATMOS41);
           entry->port = cfg[i].port;
           break;
 
         case APOGEE_S2_412:
           entry->type = APOGEE_S2_412;
-          entry->action = handle_apogee_sensor;
+          entry->action = handle_apogee_series;
           entry->task_name = sensor_type_to_str(APOGEE_S2_412);
           entry->port = cfg[i].port;
           break;
 
         case APOGEE_SQ_521:
           entry->type = APOGEE_SQ_521;
-          entry->action = handle_apogee_sensor;
+          entry->action = handle_apogee_series;
           entry->task_name = sensor_type_to_str(APOGEE_SQ_521);
           entry->port = cfg[i].port;
           break;
@@ -824,6 +889,38 @@ void strategy_task_mgr_sensor_start(void) {
   }
 }
 
+/**
+ * @brief Finite State Machine (FSM) task loop to coordinate sensor sampling triggers.
+ *
+ * This FSM coordinates the triggering of multiple sensor tasks in sequence
+ * to ensure sufficient samples are collected for data-table mapping.
+ *
+ * - The data-table (DT) needs 3 samples per minute (mapping 3 times in 1 minute).
+ * - To guarantee at least 3 valid samples even with potential delays,
+ *   the FSM triggers 4 cycles per minute.
+ * - Each sensor task is triggered in order; the FSM waits for task completion (TASK_DONE_BIT).
+ * - If a task takes too long (timeout), the FSM increments a timeout counter.
+ * - If timeouts exceed MAX_TIME_OUT_COUNT, the system reboots via esp_restart().
+ * - Between cycles, the FSM ensures a fixed delay (trigger_interval) before restarting.
+ *
+ * Key behavior:
+ * - Sequentially triggers sensor tasks and waits for completion.
+ * - Manages delays to align with data-table sampling requirements.
+ * - Protects against indefinite blocking via timeout & restart mechanism.
+ *
+ * States:
+ * - TRIGGER_STATE_INIT: Reset index, mark start time.
+ * - TRIGGER_STATE_TRIGGER_ONE: Trigger next sensor task.
+ * - TRIGGER_STATE_WAIT_ONE: Wait for task to signal done or timeout.
+ * - TRIGGER_STATE_DONE: All tasks in this cycle done.
+ * - TRIGGER_STATE_WAIT: Wait for next cycle interval before restarting.
+ *
+ * Notes:
+ * - Avoids sample loss due to delays by over-triggering (4 triggers for 3 needed).
+ * - Sequential triggering prevents simultaneous task congestion.
+ * - Timeout guard prevents system hang.
+ */
+
 /* clang-format off */
 
  #define MAX_TIME_OUT_COUNT 6
@@ -841,8 +938,7 @@ typedef struct {
   trigger_state_t state;
 } trigger_fsm_t;
 
-static void trigger_task_loop(void* pvParameters) {
- 
+static void fsm_task_loop(void* pvParameters) {
 
   uint8_t time_out_count = 0;
   TickType_t task_start_time = 0;
@@ -852,11 +948,6 @@ static void trigger_task_loop(void* pvParameters) {
     .state = TRIGGER_STATE_INIT
   };
   /* clang-format on */
-  // NOTE: data-table sample 갯수와 맞추기 위한 delay
-  // DT는 20초 주기로 1분동안 3번 데이터를 mapping 즉 1분안에 3개의 데이터가 필요함.
-  // 각 task는 최소 3번의 샘플이 필요함으로 4번 trigger를 해서 샘플갯수를 확보하려고함
-  // 순차적으로 trigger되는데 각 테스크에서 테스크 동작 시간이 길어지면 모든 테스크가 지연되고,
-  // sample 갯수 확보가 이루어 지지 않을 수 있음 -> abort()
   const TickType_t trigger_interval = pdMS_TO_TICKS(15000);    // 전체 트리거 주기
   const TickType_t inter_task_timeout = pdMS_TO_TICKS(30000);  // 태스크 실행 최대 대기시간
 
@@ -881,11 +972,8 @@ static void trigger_task_loop(void* pvParameters) {
         if (fsm.current_index < task_count) {
           sensor_task_t* task = &sensor_tasks[fsm.current_index];
 
-          // 기존 DONE_BIT 클리어
           xEventGroupClearBits(done_group, TASK_DONE_BIT);
-          // 시작 시간 기록
           task_start_time = xTaskGetTickCount();
-          // 트리거 실행
           xEventGroupSetBits(task->trigger_group, task->bit);
           ESP_LOGI(TAG, "[FSM] Triggered task: %s", task->task_name);
 
@@ -940,5 +1028,5 @@ static void trigger_task_loop(void* pvParameters) {
 }
 
 void strategy_trigger_task_start(void) {
-  xTaskCreatePinnedToCore(trigger_task_loop, "TriggerTask", 4096, NULL, 5, NULL, 1);
+  xTaskCreatePinnedToCore(fsm_task_loop, "TriggerTask", 4096, NULL, 5, NULL, 1);
 }

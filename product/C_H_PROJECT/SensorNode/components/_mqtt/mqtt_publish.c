@@ -7,37 +7,12 @@
 static const char *TAG = "mqtt_publish";
 extern mqtt_client_ctx_t mqtt_ctx;
 
-/* void publish_device_status(esp_mqtt_client_handle_t client, const char *status) { */
-/*   char *device_id = NULL; */
-/*   get_device_id(&device_id); */
-/**/
-/*   cJSON *root = cJSON_CreateObject(); */
-/*   cJSON_AddStringToObject(root, "deviceid", device_id); */
-/**/
-/*   sensor_port_cfg_t *cfg = sensor_cfg_instance(); */
-/*   if (!cfg) { */
-/*     ESP_LOGE(TAG, "sensor_cfg_instance() returned NULL"); */
-/*     return; */
-/*   } */
-/**/
-/*   for (int i = 0; i < SENSOR_PORT_COUNT; i++) {} */
-/**/
-/*   cJSON_AddStringToObject(root, "status", status); */
-/**/
-/*   char *json_str = cJSON_PrintUnformatted(root); */
-/*   if (json_str) { */
-/*     esp_mqtt_client_publish(client, TOPIC_JSON, json_str, 0, 1, 0); */
-/*     free(json_str); */
-/*   } */
-/*   cJSON_Delete(root); */
-/* } */
-
 void publish_device_status(esp_mqtt_client_handle_t client, const char *status, const char *topic) {
   char *device_id = NULL;
   get_device_id(&device_id);  // Must be freed later if heap allocated
 
   cJSON *root = cJSON_CreateObject();
-  cJSON_AddStringToObject(root, "deviceid", device_id);
+  cJSON_AddStringToObject(root, "deviceId", device_id);
   cJSON_AddStringToObject(root, "status", status);
   cJSON_AddStringToObject(root, "fw_ver", FW_VERSION);
 
