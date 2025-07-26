@@ -100,21 +100,6 @@ mqtt_client_ctx_t *mqtt_handler_get_instance(void) {
   return &mqtt_ctx;
 }
 
-/* void mqtt_init(void) { */
-/*   const esp_mqtt_client_config_t mqtt_cfg = { */
-/*     .broker.address.uri = CONFIG_MQTT_BROKER_URL, */
-/*   }; */
-/**/
-/*   mqtt_client = esp_mqtt_client_init(&mqtt_cfg); */
-/*   esp_mqtt_client_register_event(mqtt_client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL); */
-/*   esp_mqtt_client_start(mqtt_client); */
-/*   mqtt_ctx.client = mqtt_client; */
-/*   mqtt_ctx.mqtt_event_bit = xEventGroupCreate(); */
-/*   if (mqtt_ctx.mqtt_event_bit == NULL) { */
-/*     ESP_LOGE(TAG, "Failed to create MQTT event group"); */
-/*   } */
-/* } */
-
 esp_err_t mqtt_init(void) {
   const esp_mqtt_client_config_t mqtt_cfg = {
     .broker.address.uri = CONFIG_MQTT_BROKER_URL,

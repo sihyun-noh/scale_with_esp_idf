@@ -102,6 +102,14 @@ esp_err_t sensor_control_pin_set(int portId, int level);
 int sensor_control_pin_get_level(int portId);
 
 /**
+ * @brief Get current GPIO level of detect pin.
+ *
+ * @param portId Sensor port ID (0 ~ MAX_SENSOR_PORTS-1)
+ * @return int GPIO level (0 or 1), -1 if error
+ */
+int sensor_detect_pin_get_level(int portId);
+
+/**
  * @brief Selects the specified sensor port using the MUX control pins.
  *
  * Sets S0, S1, S2 pins based on portId (0~7) to route the buffer to the correct sensor port.
@@ -143,6 +151,16 @@ bool sensor_ad_is_initialized(void);
  * @return Pointer to the sensor_system_t instance.
  */
 sensor_system_t* sensor_ctl_get_instance(void);
+
+/**
+ * @brief Starts the sensor auto-detection task.
+ *
+ * This function creates the FreeRTOS task responsible for detecting
+ * connected sensors on each port. The task handle is stored internally
+ * and logged for verification. It is a key component of the dynamic
+ * sensor configuration system.
+ */
+void strategy_autodetect_task_start(void);
 
 // 안전한 접근 함수들
 void my_manager_set_data(int val);

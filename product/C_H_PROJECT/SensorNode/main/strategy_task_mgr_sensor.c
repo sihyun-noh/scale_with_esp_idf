@@ -1027,6 +1027,28 @@ static void fsm_task_loop(void* pvParameters) {
   }
 }
 
+/**
+ * @brief Starts the trigger FSM task for controlling sensor strategy execution.
+ *
+ * This function creates a FreeRTOS task pinned to core 1 that runs the FSM
+ * responsible for triggering sensor strategy tasks based on conditions.
+ * Logs the result and stores the task handle locally for debugging or future use.
+ */
 void strategy_trigger_task_start(void) {
-  xTaskCreatePinnedToCore(fsm_task_loop, "TriggerTask", 4096, NULL, 5, NULL, 1);
+  static TaskHandle_t trigger_task_handle = NULL;
+
+  BaseType_t result = xTaskCreatePinnedToCore(fsm_task_loop,         // Task function
+                                              "TriggerTask",         // Name
+                                              4096,                  // Stack size
+                                              NULL,                  // Parameters
+                                              5,                     // Priority
+                                              &trigger_task_handle,  // Task handle
+                                              1                      // Core ID
+  );
+
+  if (result == pdPASS) {
+    ESP_LOGI(TAG, "[TriggerTask] Task created. Handle = %p", trigger_task_handle);
+  } else {
+    ESP_LOGE(TAG, "[TriggerTask] Failed to create task.");
+  }
 }

@@ -6,6 +6,7 @@ idf_component_register(SRCS
                         "SDI12.cpp" 
                         "sensor_auto_detect.c"
                         "sdi12_task.cpp" 
+                        "sensor_config.c"
                        INCLUDE_DIRS 
                         "."
                        REQUIRES ${req} ${req_custom}

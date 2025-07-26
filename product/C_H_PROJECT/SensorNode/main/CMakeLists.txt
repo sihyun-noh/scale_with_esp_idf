@@ -10,4 +10,5 @@ idf_component_register(SRCS
                     "time_sync.c" 
                     INCLUDE_DIRS "."
                     REQUIRES ${req_esp} ${req_custom}
+                    EMBED_TXTFILES ${project_dir}/main/server_certs/ca_cert.pem
 )

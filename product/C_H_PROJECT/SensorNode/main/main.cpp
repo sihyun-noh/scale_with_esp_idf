@@ -81,62 +81,96 @@ extern "C" void app_main(void) {
   // start console REPL
   ESP_ERROR_CHECK(console_cmd_start());
 
-  //---------------fm_init ----------------------------------//
+  //------------------------------------------------------
+  // File Manager (LittleFS / SPIFFS)
+  //------------------------------------------------------
   fm_init(PARTITION_NAME, BASE_PATH);
-
   vTaskDelay(pdMS_TO_TICKS(100));
-
   ESP_ERROR_CHECK(file_info_helper());
 
-  //---------------fm_init ----------------------------------//
-
-  // ---------------ota-------------//
-
+  //------------------------------------------------------
+  // OTA Partition SHA256 정보 획득
+  //------------------------------------------------------
   get_sha256_of_partitions();
-  //  ---------------ota-------------//
 
-#if 1
+  //------------------------------------------------------
+  // Network Initialization (Ethernet or Wi-Fi)
+  //------------------------------------------------------
+#if 1  // Ethernet 사용
   ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &on_got_ip, NULL));
   app_eth_init();
-
-#else
+#else  // Wi-Fi + SSID 매니저 기반 연결
   ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &on_got_ip, NULL));
-  // Get the WiFi configuration
   auto& ssid_list = SsidManager::GetInstance().GetSsidList();
   if (ssid_list.empty()) {
-    // Start the WiFi configuration AP
     auto& ap = WifiConfigurationAp::GetInstance();
-    ap.SetSsidPrefix("ESP32-C&H");
+    ap.SetSsidPrefix("C&H-DataLogger");
     ap.Start();
     return;
   }
-
-  // Otherwise, connect to the WiFi network
   WifiStation::GetInstance().Start();
 #endif
 
+  //------------------------------------------------------
+  // GPIO / LED
+  //------------------------------------------------------
   ESP_ERROR_CHECK(bsp_gpio_init());
   blink_status_leds();
 
-  // cfg instance Initialize
-  // TODO: Debug and verify configuration manager settings.
+  //------------------------------------------------------
+  // Sensor Config Manager & Auto-Detect Init
+  //------------------------------------------------------
   sensor_cfg_manager_t* cfg_mgr = sensor_cfg_get_instance();
   sensor_auto_detect_init();
-//----------------------------------------------------------------//
-// MQTT Publishing Strategy Initialization
-//----------------------------------------------------------------//
-#if 1
 
+  //------------------------------------------------------
+  // Check Detect Pin Status & Update Only If Needed
+  //------------------------------------------------------
+  int level = 0;
+  for (int portId = 0; portId < MAX_SENSOR_PORTS; portId++) {
+    level = sensor_detect_pin_get_level(portId);
+    vTaskDelay(pdMS_TO_TICKS(10));  // Optional debounce delay
+
+    if (level) {  // HIGH = disconnected
+
+      sensor_cfg_lock();
+
+      if (cfg_mgr->cfg[portId].sensor_type != SENSOR_TYPE_UNKNOWN) {
+        // Only reset if previously known sensor was registered
+        cfg_mgr->cfg[portId].port = portId + 1;
+        cfg_mgr->cfg[portId].sensor_type = SENSOR_TYPE_UNKNOWN;
+        cfg_mgr->cfg[portId].current_state = SENSOR_PORT_STATUS_NONE;
+        cfg_mgr->cfg[portId].dirty = 1;
+
+        ESP_LOGW(TAG, "[DetectCheck] Sensor disconnected on port %d, resetting config", portId + 1);
+
+        sensor_cfg_unlock();
+        sensor_port_cfg_commit();  // Only commit if we changed something
+      } else {
+        // Already UNKNOWN, no need to reset or save
+        sensor_cfg_unlock();
+        ESP_LOGI(TAG, "[DetectCheck] Port %d already in UNKNOWN state, skipping", portId + 1);
+      }
+
+    } else {
+      ESP_LOGI(TAG, "[DetectCheck] Sensor connected on port %d", portId + 1);
+    }
+  }
+
+//------------------------------------------------------
+// MQTT Initialization
+//------------------------------------------------------
+#if 1
   if (mqtt_init() != ESP_OK) {
     ESP_LOGE(TAG, "MQTT initialization failed. System halt.");
-    // handle or abort
+    // 예외 처리 필요 시 return 또는 오류 상태 저장
   }
 
   mqtt_client_ctx_t* mqtt_ctx = mqtt_handler_get_instance();
   EventBits_t bits = xEventGroupWaitBits(mqtt_ctx->mqtt_event_bit, MQTT_CONNECTED_BIT,
                                          pdTRUE,                 // clear on exit
                                          pdFALSE,                // wait any
-                                         pdMS_TO_TICKS(30000));  // 최대 30초 대기
+                                         pdMS_TO_TICKS(30000));  // 30초 대기
 
   if (bits & MQTT_CONNECTED_BIT) {
     ESP_LOGI(TAG, "[MAIN INIT] MQTT broker connected.");
@@ -144,35 +178,37 @@ extern "C" void app_main(void) {
     ESP_LOGW(TAG, "[MAIN INIT] MQTT broker connection timed out.");
   }
 
+  //------------------------------------------------------
+  // MQTT 처리 초기화
+  //------------------------------------------------------
   strategy_task_mgr_mqtt_start();
-  //----------------------------------------------------------------//
-  // Port-wise Sensing Strategy Initialization
-  //----------------------------------------------------------------//
 
-  // data_table Initialize
+  //------------------------------------------------------
+  // Sensor 처리작업 초기화 (포트 기반)
+  //------------------------------------------------------
   data_table_init();
-  // strategy task Initialize
   strategy_task_mgr_sensor_start();
-  // strategy task trigger Initialize
   strategy_trigger_task_start();
 
-  //----------------------------------------------------------------//
-  // Auto-Detection Strategy Initialization
-  //----------------------------------------------------------------//
-  // Step 1: Initialize the sensor detection system
-  xTaskCreate(sensor_auto_detect_task, "sensor_auto_detect_task", 4096, NULL, 5, NULL);
-  // TODO: Debug and verify configuration manager settings.
-  sensor_ad_manager_t* mgr = sensor_ad_get_instance();
-#else
-  // sdi12 test task
-  sdi12_task_init();
+  //------------------------------------------------------
+  // Auto-Detect Task 시작
+  //------------------------------------------------------
 
+  strategy_autodetect_task_start();
+  sensor_ad_manager_t* mgr = sensor_ad_get_instance();
+
+#else
+  //------------------------------------------------------
+  // (테스트용) SDI-12 통신 태스크
+  //------------------------------------------------------
+  sdi12_task_init();
 #endif
 
+  //------------------------------------------------------
+  // Main loop
+  //------------------------------------------------------
   while (1) {
-    // print_heap_summary();
+    // print_heap_summary();  // 디버깅 용
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
-
-  return;
 }

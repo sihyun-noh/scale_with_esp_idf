@@ -28,9 +28,14 @@
 #endif
 
 #ifdef CONFIG_SERVER_URL
-// #define OTA_FIRMWARE_URL "https://" CONFIG_SERVER_URL "/ota_firmware/SensorNode.bin"
+
+#ifdef CONFIG_OTA_USE_CERT_BUNDLE
+#define OTA_FIRMWARE_URL "https://" CONFIG_SERVER_URL "/ota_firmware/SensorNode.bin"
+#else
 #define OTA_FIRMWARE_URL "http://" CONFIG_SERVER_URL "/ota_firmware/SensorNode.bin"
 #endif
+#endif
+
 #define HASH_LEN 32
 
 #ifdef CONFIG_OTA_FIRMWARE_UPGRADE_BIND_IF

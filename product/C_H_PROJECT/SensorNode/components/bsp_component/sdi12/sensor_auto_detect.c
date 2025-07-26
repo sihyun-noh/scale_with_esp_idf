@@ -157,7 +157,7 @@ static void IRAM_ATTR gpio_isr_handler(void *arg) {
     ESP_EARLY_LOGW(TAG, "Failed to send event to queue from ISR");
   }
   if (xHigherPriorityTaskWoken) {
-    portYIELD_FROM_ISR();  // 컨텍스트 스위칭
+    portYIELD_FROM_ISR();
   }
 }
 
@@ -244,7 +244,7 @@ void sensor_auto_detect_init(void) {
     gpio_config(&io_conf);
 
     if (i == 0) {
-      gpio_install_isr_service(0);  // 최초 한 번만 설치
+      gpio_install_isr_service(0);
     }
 
     isr_port_ids[i] = i;
@@ -285,6 +285,21 @@ int sensor_control_pin_get_level(int portId) {
   gpio_num_t pin = sensorSys.ports[portId].controlPin;
   int level = gpio_get_level(pin);
   ESP_LOGI(TAG, "Read control pin %d (port %d): %s", pin, portId, level ? "HIGH" : "LOW");
+  return level;
+}
+
+/**
+ * @brief Get current GPIO level of control pin.
+ */
+int sensor_detect_pin_get_level(int portId) {
+  if (portId < 0 || portId >= MAX_SENSOR_PORTS) {
+    ESP_LOGE(TAG, "Invalid portId: %d", portId);
+    return -1;
+  }
+
+  gpio_num_t pin = sensorSys.ports[portId].detectPin;
+  int level = gpio_get_level(pin);
+  ESP_LOGI(TAG, "Read detect pin %d (port %d): %s", pin, portId, level ? "HIGH" : "LOW");
   return level;
 }
 
@@ -404,7 +419,7 @@ void sensor_auto_detect_task(void *arg) {
           // TODO: State LED
           // Operation to retrieve SDI-12 sensor information
           blink_status_set_leds(LED_RED);
-          vTaskDelay(pdMS_TO_TICKS(500));
+          vTaskDelay(pdMS_TO_TICKS(1000));
           blink_status_clear_leds(LED_RED);
 
           // 공백제거
@@ -503,4 +518,18 @@ bool sensor_is_connected(int portId) {
   if (portId < 0 || portId >= sensorSys.portCount)
     return false;
   return sensorSys.ports[portId].isSensorConnected;
+}
+
+// static TaskHandle_t autodetect_task_handle = NULL;
+
+void strategy_autodetect_task_start(void) {
+  static TaskHandle_t autodetect_task_handle = NULL;
+  BaseType_t result =
+      xTaskCreate(sensor_auto_detect_task, "sensor_auto_detect_task", 4096, NULL, 5, &autodetect_task_handle);
+
+  if (result == pdPASS) {
+    ESP_LOGI(TAG, "[AutoDetect] Task created. Handle = %p", autodetect_task_handle);
+  } else {
+    ESP_LOGE(TAG, "[AutoDetect] Failed to create task.");
+  }
 }

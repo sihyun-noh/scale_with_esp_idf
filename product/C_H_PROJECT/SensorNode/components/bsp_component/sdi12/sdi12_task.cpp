@@ -90,6 +90,13 @@ sdi12_cmd_template_t cmd_table[SENSOR_TYPE_COUNT][SDI_CMD_COUNT] = {
     [SDI_CMD_ADDR]  = { "A!",  100 },
     [SDI_CMD_READ]  = { "R0!", 20 },
   },
+  [APOGEE_S2_411] = {
+    [SDI_CMD_INFO]  = { "I!",  30 },
+    [SDI_CMD_ADDR]  = { "A!",  100 },
+    [SDI_CMD_READ]  = { "R0!", 50 },
+    [SDI_CMD_M]  = { "M2!", 50 },     // read to NDVI measurement command 
+    [SDI_CMD_D]  = { "D0!", 50 },
+  },
   [APOGEE_S2_412] = {
     [SDI_CMD_INFO]  = { "I!",  30 },
     [SDI_CMD_ADDR]  = { "A!",  100 },
@@ -104,7 +111,6 @@ sdi12_cmd_template_t cmd_table[SENSOR_TYPE_COUNT][SDI_CMD_COUNT] = {
     [SDI_CMD_M]  = { "M0!", 50 },
     [SDI_CMD_D]  = { "D0!", 50 },
   },
-
 
 };
 
@@ -571,8 +577,8 @@ static char *parse_array_ctrl(char *buf, const char *target) {
     return NULL;  // target 문자열이 없으면 NULL 반환
   }
 
-  start += strlen(target);  // target 문자열 길이만큼 건너뜀
-  return start;             // 그 이후의 위치 포인터 반환
+  start += strlen(target);
+  return start;
 }
 
 static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_data) {

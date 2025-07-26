@@ -16,31 +16,6 @@ SemaphoreHandle_t cfg_mutex = NULL;
 static bool initialized = false;
 
 static sensor_cfg_manager_t sensor_cfg_mgr = { .cfg = g_sensor_cfgs, .mutex = NULL };
-/* clang-format off */
-const char *sensor_names[] = {
-  "INFO", 
-  "TEROS11", 
-  "TEROS12",
-  // "TEROS14",
-  "TEROS21",
-  "TEROS54",
-  // "ATMOS21",
-   "ATMOS22",
-  //  "ATMOS31",
-  "ATMOS41", 
-  "APO_S2_412", 
-  //"APOGEE_SP_421", 
-  "APO_SQ_521",
-  //"APOGEE_SU_221",  // ...
-};
-
-/* clang-format on */
-const char *sensor_type_to_str(sdi12_sensor_type_t type) {
-  if (type >= 0 && type < SENSOR_TYPE_COUNT) {
-    return sensor_names[type];
-  }
-  return "UNKNOWN";
-}
 
 // singleton instance
 sensor_port_cfg_t *sensor_cfg_instance(void) {
@@ -50,7 +25,6 @@ sensor_port_cfg_t *sensor_cfg_instance(void) {
 sensor_cfg_manager_t *sensor_cfg_get_instance(void) {
   // 뮤텍스가 아직 생성되지 않았다면 한 번만 생성
   if (!initialized) {
-    // 먼저 뮤텍스 생성
     sensor_cfg_mgr.mutex = xSemaphoreCreateMutex();
     if (sensor_cfg_mgr.mutex == NULL) {
       ESP_LOGE(TAG, "Failed to create sensor_cfg mutex");
@@ -68,7 +42,6 @@ void sensor_cfg_lock(void) {
     ESP_LOGE(TAG, "sensor_cfg_lock: manager not initialized");
     return;
   }
-  // 뮤텍스 획득 (무한 대기)
   xSemaphoreTake(mgr->mutex, portMAX_DELAY);
 }
 
@@ -78,7 +51,6 @@ void sensor_cfg_unlock(void) {
     ESP_LOGE(TAG, "sensor_cfg_unlock: manager not initialized");
     return;
   }
-  // 뮤텍스 반납
   xSemaphoreGive(mgr->mutex);
 }
 

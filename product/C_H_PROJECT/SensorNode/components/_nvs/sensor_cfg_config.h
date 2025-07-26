@@ -19,6 +19,7 @@
 #include "freertos/semphr.h"
 #include <stdint.h>
 
+#include "sensor_config.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,26 +28,6 @@ extern "C" {
 
 /// Get the CFG key name for a given port (e.g., "sensor_port_1")
 #define SENSOR_PORT_KEY(i) "sensor_port_" #i
-
-// @brief The sensor_type_to_str function must match the string array exactly
-typedef enum {
-  INFO_INDEX = 0x00,
-  TEROS11,
-  TEROS12,
-  // TEROS14,
-  TEROS21,
-  TEROS54,
-  // ATMOS21,
-  ATMOS22,
-  // ATMOS31,
-  ATMOS41,
-  APOGEE_S2_412,
-  //  APOGEE_SP_421,
-  APOGEE_SQ_521,
-  // APOGEE_SU_221,
-  SENSOR_TYPE_COUNT,
-  SENSOR_TYPE_UNKNOWN = 99,
-} sdi12_sensor_type_t;
 
 /// @brief Enum to define the current state of a sensor port.
 typedef enum {
@@ -92,14 +73,6 @@ typedef struct {
   sensor_port_cfg_t *cfg;   ///< Pointer to the actual sensor configuration array (g_sensor_cfgs)
   SemaphoreHandle_t mutex;  ///< Mutex to protect access to the configuration array
 } sensor_cfg_manager_t;
-
-/**
- * @brief Returns the string representation of a given SENSOR_TYPE.
- *
- * @param type The sensor type enum value.
- * @return const char* String name of the sensor type.
- */
-const char *sensor_type_to_str(sdi12_sensor_type_t type);
 
 /**
  * @brief Returns the instance of sensor_cfg_manager_t containing the sensor config array and mutex.

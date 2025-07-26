@@ -5,12 +5,27 @@
 #include "esp_http_client.h"
 #include "esp_log.h"
 #include "file_manager.h"
+#include "sdkconfig.h"
 
 #define CHUNK_SIZE 1024  // 1KB씩 읽기
 // #define SERVER_URL "http://192.168.50.12:1880/upload"
 // #define SERVER_URL       "https://192.168.50.12:1880/upload"
-// #define SERVER_URL       "https://" CONFIG_SERVER_URL "/upload"
-#define SERVER_URL       "http://" CONFIG_SERVER_URL "/upload"
+#if CONFIG_USE_HTTPS
+#define SERVER_URL "https://" CONFIG_SERVER_URL "/upload"
+#if CONFIG_USE_CERT_BUNDLE
+// extern const uint8_t server_cert_pem_start[] asm("_binary_ca_cert_pem_start");
+// extern const uint8_t server_cert_pem_end[] asm("_binary_ca_cert_pem_end");
+extern const uint8_t server_cert_pem_start[] asm("_binary_" CONFIG_CERT_BUNDLE_NAME "_start");
+extern const uint8_t server_cert_pem_end[] asm("_binary_" CONFIG_CERT_BUNDLE_NAME "_end");
+#define CERT_PEM (const char*)server_cert_pem_start
+#else
+#define CERT_PEM NULL
+#endif
+#else
+#define SERVER_URL "http://" CONFIG_SERVER_URL "/upload"
+#define CERT_PEM   NULL
+#endif
+
 #define FILESTORAGE      "/storage"
 #define READ_BUFFER_SIZE 128
 
@@ -19,8 +34,6 @@
 #define FILENAME_ON_SERVER "example.txt"  // 서버에 보낼 파일 이름
 
 static const char* TAG = "[uploadFile]";
-extern const uint8_t server_cert_pem_start[] asm("_binary_ca_cert_pem_start");
-extern const uint8_t server_cert_pem_end[] asm("_binary_ca_cert_pem_end");
 
 esp_err_t upload_file_multipart(const char* filepath, const char* filename);
 
@@ -146,7 +159,11 @@ esp_err_t upload_file_multipart(const char* filepath, const char* filename) {
 
   esp_http_client_config_t config = {
     .url = SERVER_URL,
-    .cert_pem = (char*)server_cert_pem_start,
+
+#if CONFIG_USE_HTTPS
+    .cert_pem = CERT_PEM,
+  //.cert_pem = (char*)server_cert_pem_start,
+#endif
   };
   esp_http_client_handle_t client = esp_http_client_init(&config);
 

@@ -11,10 +11,40 @@ menu "C&H Sensor Node Porduct"
       string "Product SKU"
       default ""
 
-    config SERVER_URL
-      string "Main Server Url"
-      default ""
+menu "Main Server Configuration"
 
+config SERVER_URL
+    string "Main Server URL"
+    default ""
+    help
+        Specify the base URL of the main server.
+        Example: 192.168.1.100:1880
+
+config USE_HTTPS
+    bool "Use HTTPS for Upload"
+    default y
+    help
+        Enable this option to use HTTPS instead of HTTP
+        when performing file uploads or OTA firmware updates.
+
+config USE_CERT_BUNDLE
+    bool "Use TLS Certificate PEM Bundle"
+    depends on USE_HTTPS
+    default y
+    help
+        Enable this option to include a TLS certificate bundle (PEM format)
+        for verifying the server during HTTPS communication.
+
+config CERT_BUNDLE_NAME
+    string "Server certificate symbol name"
+    depends on USE_CERT_BUNDLE
+    default "ca_cert_pem"
+    help
+        Specify the symbol name used to reference the embedded certificate.
+        For example, if the file is named `ca_cert.pem` and included via CMake,
+        it will typically be available as `_binary_ca_cert_pem_start`.
+
+endmenu
 
   menu "Ethernet Driver Configuration"
     rsource "../components/bsp_component/ethernet_driver/Kconfig.in"

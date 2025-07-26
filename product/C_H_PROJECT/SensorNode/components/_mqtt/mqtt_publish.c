@@ -32,8 +32,8 @@ void publish_device_status(esp_mqtt_client_handle_t client, const char *status, 
 
     const char *status_str = NULL;
     switch (cfg[i].current_state) {
-      case SENSOR_PORT_STATUS_NONE: status_str = "disabled"; break;
-      case SENSOR_PORT_STATUS_READY: status_str = "ready"; break;
+      case SENSOR_PORT_STATUS_NONE: status_str = "Disabled"; break;
+      case SENSOR_PORT_STATUS_READY: status_str = "Ready"; break;
       case SENSOR_PORT_STATUS_ERROR: status_str = "error"; break;
       default: status_str = "unknown"; break;
     }
