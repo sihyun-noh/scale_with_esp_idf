@@ -81,6 +81,10 @@ extern "C" void app_main(void) {
   // start console REPL
   ESP_ERROR_CHECK(console_cmd_start());
 
+  // ESP_LOG_WARN: The minimum log level that will be shown. Messages with levels below WARN (e.g., INFO or DEBUG) will
+  // be suppressed.
+  esp_log_level_set("gpio", ESP_LOG_WARN);
+
   //------------------------------------------------------
   // File Manager (LittleFS / SPIFFS)
   //------------------------------------------------------

@@ -63,6 +63,7 @@ static const sensor_model_map_t meter_model_map[] = {
 
 // APOGEE Model map
 static const sensor_model_map_t apogee_model_map[] = {
+  { "S2-411", APOGEE_S2_411, 1 },  // NDVI
   { "S2-412", APOGEE_S2_412, 1 },  // NDVI
   { "SQ-521", APOGEE_SQ_521, 1 },  // PPFD
 };
@@ -206,7 +207,10 @@ esp_err_t sensor_buffer_select_port(int portId) {
 esp_err_t sensor_buffer_disable(void) {
   esp_err_t ret;
   ret = gpio_set_level(CONFIG_SENSOR_BUFFER_ENABLE_PIN, 1);
+
+#ifdef SDI12_DEBUG_SET
   ESP_LOGI(TAG, "Buffer disabled.");
+#endif
   return ret;
 }
 

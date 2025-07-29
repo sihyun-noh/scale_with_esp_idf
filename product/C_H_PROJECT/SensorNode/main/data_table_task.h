@@ -75,7 +75,8 @@ typedef struct {
 
 typedef struct {
   uint8_t PPFD;
-  uint8_t NDVI;
+  uint8_t NDVI_UP_WARD;
+  uint8_t NDVI_DOWN_WARD;
 } apogee_sensor_col_t;
 
 typedef struct {

@@ -7,6 +7,7 @@
 #include "SDI12.h"
 #include "sensor_auto_detect.h"
 #include "sensor_cfg_config.h"
+#include "sensor_config.h"
 #include "soc/gpio_num.h"
 #include "sdi12_task.h"
 
@@ -210,6 +211,11 @@ bool parse_sdi12_info(const char *resp, sdi12_sensor_info_t *out) {
     ESP_LOGE(TAG, "[INFO] Model S2-412");
     strcpy(out->manufacturer, "APOGEE");
     strcpy(out->model, "S2-412");
+
+  } else if (strstr(resp, "S2-411") != 0) {
+    ESP_LOGE(TAG, "[INFO] Model S2-411");
+    strcpy(out->manufacturer, "APOGEE");
+    strcpy(out->model, "S2-411");
 
   } else {
     ESP_LOGW(TAG, "[INFO] Not matching model found.");
@@ -499,8 +505,10 @@ static bool parse_apogee_response(const char *resp, apogee_sensor_t *out, sdi12_
       case 0: {
         if (type == APOGEE_SQ_521)
           out->PPFD = value;
+        else if (type == APOGEE_S2_411)
+          out->NDVI_UP_WARD = value;
         else if (type == APOGEE_S2_412)
-          out->NDVI = value;
+          out->NDVI_DOWN_WARD = value;
         break;
       }
     }
@@ -526,12 +534,15 @@ static void sdi12_get_data(const char addr, char *buf, sdi12_sensor_type_t SENS_
     snprintf(full_cmd, sizeof(full_cmd), "%c%s", addr, sen_template->cmd_format);  // 예: "0I!"
     int delay_ms = sen_template->wait_delay_ms;
 
+#ifdef SDI12_DEBUG_SET
     ESP_LOGI(TAG, "[CMD] Sensor:  %s, Command: %s, Wait: %dms", sensor_type_to_str(SENS_TYPE), full_cmd, delay_ms);
-
+#endif
     mySDI12.clearBuffer();
     mySDI12.sendCommand(full_cmd);  // read data
 
+#ifdef SDI12_DEBUG_SET
     ESP_LOGI(TAG, "[CMD] Sent command. Waiting for %d ms...", delay_ms);
+#endif
     vTaskDelay(pdMS_TO_TICKS(delay_ms));
 
     int avail = mySDI12.available_esp();
@@ -586,21 +597,27 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
   char removeStr[5] = { 0 };
   memset(buff, 0x00, sizeof(buff));
 
-  if (SENSOR_TYPE == APOGEE_SQ_521 || SENSOR_TYPE == APOGEE_S2_412) {
+  if (SENSOR_TYPE == APOGEE_SQ_521 || SENSOR_TYPE == APOGEE_S2_411 || SENSOR_TYPE == APOGEE_S2_412) {
     sdi12_get_data(addr, buff, SENSOR_TYPE, SDI_CMD_M);
+#ifdef SDI12_DEBUG_SET
     ESP_LOGI(TAG, "[RESULTE] Command \"M\" value : %s", buff);
+#endif
     trim(buff);
     vTaskDelay(pdMS_TO_TICKS(1000));
     memset(buff, 0x00, sizeof(buff));
     sdi12_get_data(addr, buff, SENSOR_TYPE, SDI_CMD_D);
-    ESP_LOGI(TAG, "[RESULTE] Command \"D0\" value : %s", buff);
+#ifdef SDI12_DEBUG_SET
+    ESP_LOGI(TAG, "[RESULTE] Value \"D0\" value : %s", buff);
+#endif
     trim(buff);
     strncpy(removeStr, "0D0!", 4);
 
   } else {
     // meter group sensor
     sdi12_get_data(addr, buff, SENSOR_TYPE, SDI_CMD_READ);
+#ifdef SDI12_DEBUG_SET
     ESP_LOGI(TAG, "[RESULTE] Value : %s", buff);
+#endif
     // clean up buffer(remove : ' ', '\n', '\r', '\t'))
     trim(buff);
     strncpy(removeStr, "0R0!", 4);
@@ -612,7 +629,9 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
     ESP_LOGE(TAG, "Parsed response is NULL");
     return false;
   } else {
+#ifdef SDI12_DEBUG_SET
     ESP_LOGW(TAG, "[PARSED] Cleaned result: %s", parsed);
+#endif
   }
 
   switch (SENSOR_TYPE) {
@@ -690,11 +709,21 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
         return false;
       }
     }
+    case APOGEE_S2_411: {
+      apogee_sensor_t *s2_411 = (apogee_sensor_t *)out_data;
+      if (parse_apogee_response(parsed, s2_411, APOGEE_S2_411)) {
+        ESP_LOGI(TAG, "[PARSED] ADDR: %c, NDVI Upward : %.4f", s2_411->address, s2_411->NDVI_UP_WARD);
+        return true;
+      } else {
+        ESP_LOGE(TAG, "Failed to parse apogee S2-411 response.");
+        return false;
+      }
+    }
 
     case APOGEE_S2_412: {
       apogee_sensor_t *s2_412 = (apogee_sensor_t *)out_data;
       if (parse_apogee_response(parsed, s2_412, APOGEE_S2_412)) {
-        ESP_LOGI(TAG, "[PARSED] ADDR: %c, NDVI: %.4f", s2_412->address, s2_412->NDVI);
+        ESP_LOGI(TAG, "[PARSED] ADDR: %c, NDVI Downward : %.4f", s2_412->address, s2_412->NDVI_DOWN_WARD);
         return true;
       } else {
         ESP_LOGE(TAG, "Failed to parse apogee S2-412 response.");
@@ -839,13 +868,18 @@ teros54_data_t *sdi12_read_teros54(uint8_t portId) {
 #else
   int detechPin = sensorSys->ports[portId].detectPin;
   int level = gpio_get_level((gpio_num_t)detechPin);
+
+#ifdef SDI12_DEBUG_SET
   ESP_LOGW(TAG, "control pin %d level %d", detechPin, level);
-  // pin level low is deteched
-  // NOTE:weather station is always turned on
+#endif
+  //  pin level low is deteched
+  //  NOTE:weather station is always turned on
   if (!control_pin_flag) {
     control_pin_flag = 1;
     ESP_ERROR_CHECK(sensor_control_pin_set(portId, 1));
+#ifdef SDI12_DEBUG_SET
     ESP_LOGW(TAG, "Set control pin %d", portId);
+#endif
     vTaskDelay(pdMS_TO_TICKS(1000));  // booting delay
   }
 #endif
@@ -895,13 +929,17 @@ weather_atmos22_data_t *sdi12_read_atmos22(uint8_t portId) {
 
   int detechPin = sensorSys->ports[portId].detectPin;
   int level = gpio_get_level((gpio_num_t)detechPin);
+#ifdef SDI12_DEBUG_SET
   ESP_LOGW(TAG, "control pin %d level %d", detechPin, level);
-  // pin level low is deteched
-  // NOTE:weather station is always turned on
+#endif
+  //  pin level low is deteched
+  //  NOTE:weather station is always turned on
   if (!control_pin_flag) {
     control_pin_flag = 1;
     ESP_ERROR_CHECK(sensor_control_pin_set(portId, 1));
+#ifdef SDI12_DEBUG_SET
     ESP_LOGW(TAG, "Set control pin %d", portId);
+#endif
     vTaskDelay(pdMS_TO_TICKS(1000));  // booting delay
   }
 
@@ -947,13 +985,17 @@ weather_at41g2_data_t *sdi12_read_atmos41(uint8_t portId) {
 
   int detechPin = sensorSys->ports[portId].detectPin;
   int level = gpio_get_level((gpio_num_t)detechPin);
+#ifdef SDI12_DEBUG_SET
   ESP_LOGW(TAG, "control pin %d level %d", detechPin, level);
-  // pin level low is deteched
-  // NOTE:weather station is always turned on
+#endif
+  //  pin level low is deteched
+  //  NOTE:weather station is always turned on
   if (!control_pin_flag) {
     control_pin_flag = 1;
     ESP_ERROR_CHECK(sensor_control_pin_set(portId, 1));
+#ifdef SDI12_DEBUG_SET
     ESP_LOGW(TAG, "Set control pin %d", portId);
+#endif
     vTaskDelay(pdMS_TO_TICKS(4000));  // booting delay
   }
 
@@ -1003,12 +1045,16 @@ apogee_sensor_t *sdi12_read_SQ_521(uint8_t portId) {
   // NOTE: apogee sensor is always turned on
   int detechPin = sensorSys->ports[portId].detectPin;
   int level = gpio_get_level((gpio_num_t)detechPin);
+#ifdef SDI12_DEBUG_SET
   ESP_LOGW(TAG, "control pin %d level %d", detechPin, level);
-  // pin level low is deteched
+#endif
+  //  pin level low is deteched
   if (!control_pin_flag) {
     control_pin_flag = 1;
     ESP_ERROR_CHECK(sensor_control_pin_set(portId, 1));
+#ifdef SDI12_DEBUG_SET
     ESP_LOGW(TAG, "Set control pin %d", portId);
+#endif
     vTaskDelay(pdMS_TO_TICKS(1000));  // booting delay
   }
 #endif
@@ -1037,10 +1083,10 @@ apogee_sensor_t *sdi12_read_SQ_521(uint8_t portId) {
   return &apogee_sq_521;
 }
 
-// S2-412 is always turned on
-apogee_sensor_t *sdi12_read_S2_412(uint8_t portId) {
+// S2-411 and S2-412 (NDVI) sensors are always powered on and cannot be dynamically turned off via GPIO.
+apogee_sensor_t *sdi12_read_S2_411_412(uint8_t portId, sdi12_sensor_type_t type) {
   static uint8_t control_pin_flag = 0;
-  static apogee_sensor_t apogee_s2_412;
+  static apogee_sensor_t apogee_s2_data;
   sensor_system_t *sensorSys = sensor_ctl_get_instance();
 
   if (sensorSys == NULL) {
@@ -1048,9 +1094,15 @@ apogee_sensor_t *sdi12_read_S2_412(uint8_t portId) {
     return NULL;
   }
 
-  ESP_LOGI(TAG, "[SDI12] Data Read to S2-412");
-  // buffer clear
-  memset(&apogee_s2_412, 0x00, sizeof(apogee_sensor_t));
+  if (type != APOGEE_S2_411 && type != APOGEE_S2_412) {
+    ESP_LOGE(TAG, "Unsupported sensor type: %d", type);
+    return NULL;
+  }
+
+  ESP_LOGI(TAG, "[SDI12] Reading from Apogee %s", (type == APOGEE_S2_411) ? "S2-411" : "S2-412");
+
+  // Clear data buffer
+  memset(&apogee_s2_data, 0x00, sizeof(apogee_sensor_t));
   // TODO: This is the control point for buffer and power management
   // Sets the MUX to match the data line and power control for the specified port.
   ESP_ERROR_CHECK(sensor_buffer_select_port(portId));
@@ -1061,19 +1113,23 @@ apogee_sensor_t *sdi12_read_S2_412(uint8_t portId) {
   // NOTE: apogee sensor is always turned on
   int detechPin = sensorSys->ports[portId].detectPin;
   int level = gpio_get_level((gpio_num_t)detechPin);
+#ifdef SDI12_DEBUG_SET
   ESP_LOGW(TAG, "control pin %d level %d", detechPin, level);
-  // pin level low is deteched
+#endif
+  //  pin level low is deteched
   if (!control_pin_flag) {
     control_pin_flag = 1;
     ESP_ERROR_CHECK(sensor_control_pin_set(portId, 1));
+#ifdef SDI12_DEBUG_SET
     ESP_LOGW(TAG, "Set control pin %d", portId);
+#endif
     vTaskDelay(pdMS_TO_TICKS(1000));  // booting delay
   }
 #endif
 
   vTaskDelay(pdMS_TO_TICKS(450));
   mySDI12.begin();
-  if (!print_sdi12_data('0', APOGEE_S2_412, &apogee_s2_412)) {
+  if (!print_sdi12_data('0', type, &apogee_s2_data)) {
     ESP_LOGE(TAG, "Sensor data parsing failed for address '0'");
     return NULL;
   }
@@ -1092,7 +1148,7 @@ apogee_sensor_t *sdi12_read_S2_412(uint8_t portId) {
 #endif
   ESP_LOGI(TAG, "End Search for SDI-12 Devices.");
 
-  return &apogee_s2_412;
+  return &apogee_s2_data;
 }
 
 sdi12_sensor_info_t *sdi12_info_start(uint8_t portId) {
@@ -1306,15 +1362,25 @@ void sdi12_app_main_2(void *param) {
         ESP_LOGW(TAG, "[APOGEE_SQ_521] READ FAILED");
       }
 
+    } else if (strcmp(info->model, "S2-411") == 0) {
+      apogee_sensor_t *apogee_s2_411 = sdi12_read_S2_411_412(portId, APOGEE_S2_411);
+      if (apogee_s2_411 != NULL) {
+        ESP_LOGW(TAG, "[APOGEE_S2_411] Estimated NDVI Upward value : %.4f", apogee_s2_411->NDVI_UP_WARD);
+      } else {
+        ESP_LOGW(TAG, "[APOGEE_S2_411] READ FAILED");
+      }
+
     } else if (strcmp(info->model, "S2-412") == 0) {
-      apogee_sensor_t *apogee_s2_412 = sdi12_read_S2_412(portId);
+      apogee_sensor_t *apogee_s2_412 = sdi12_read_S2_411_412(portId, APOGEE_S2_412);
       if (apogee_s2_412 != NULL) {
-        ESP_LOGW(TAG, "[APOGEE_S2_412] Estimated NDVI value : %.4f", apogee_s2_412->NDVI);
+        ESP_LOGW(TAG, "[APOGEE_S2_412] Estimated NDVI Downward value : %.4f", apogee_s2_412->NDVI_DOWN_WARD);
       } else {
         ESP_LOGW(TAG, "[APOGEE_S2_412] READ FAILED");
       }
 
-    } else {
+    }
+
+    else {
       ESP_LOGW("TAG", "[INFO] No matching model found for the given sensor type.");
     }
 

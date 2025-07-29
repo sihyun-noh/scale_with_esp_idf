@@ -20,6 +20,7 @@
 #include "sensor_cfg_config.h"
 #include "data_table_task.h"
 #include "sensor_auto_detect.h"
+#include "sensor_config.h"
 
 static const char* TAG = "[sensorStrategy]";
 #define MAX_SENSOR_TASKS SENSOR_PORT_COUNT
@@ -174,7 +175,6 @@ static void handle_teros_series(void* param) {
   if (strcmp(sensor_type, "UNKNOWN") == 0) {
     ESP_LOGW(TAG, "Unrecognized sensor type: %s", sensor_type);
   }
-  ESP_LOGI(TAG, "[%s] Starting SDI-12  ", sensor_type);
   ESP_LOGI(TAG, "[%s] Starting SDI-12 read...port[%d] ", sensor_type, config->port);
 
   teros12_data_t* data_teros11 = NULL;
@@ -241,10 +241,12 @@ static void handle_teros_series(void* param) {
       datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros54_col.temp4_col, data_teros54->temp4);
     }
 
+#ifdef SDI12_DEBUG_SET
     ESP_LOGI(TAG, "[%s] Pushed samples to data table", sensor_type);
     ESP_LOGI(TAG, "[%s] sampling_count: %d / max: %d", sensor_type, dt[array_num].handle->sampling_count,
              dt[array_num].handle->samples_maximum_size);
 
+#endif
     // 데이터 처리 (평균, 필터링 등)
     datatable_process_samples(dt[array_num].handle);
     ESP_LOGI(TAG, "[%s] Processed samples in data table", sensor_type);
@@ -289,12 +291,13 @@ static void handle_teros_series(void* param) {
 
       // render json data-table object to text and print
       char* dt_json_str = cJSON_Print(dt_json);
+#ifdef SDI12_DEBUG_SET
       ESP_LOGI(TAG, "[%s] JSON Data-Table:\n%s", sensor_type, dt_json_str);
-
+#endif
       memset(topic, 0x00, sizeof(topic));
       if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_SENSOR) == ESP_OK) {
         ret = publish_sensor_datatable(topic, dt_json_str);
-        ESP_LOGI(TAG, "ret : %d", ret);
+        //  ESP_LOGI(TAG, "ret : %d", ret);
       }
 
       if (ret == -1) { /* Qos 0*/  // -1 fail,-2 box full
@@ -325,8 +328,10 @@ static void handle_teros_series(void* param) {
   }
   // 작업 완료 알림
   xEventGroupSetBits(done_group, TASK_DONE_BIT);
+#ifdef SDI12_DEBUG_SET
   ESP_LOGI(TAG, "[%s] Task done, DONE_BIT set", sensor_type);
   ESP_LOGI(TAG, "[%s] Task completed", sensor_type);
+#endif
 }
 
 static void handle_atmos_series(void* param) {
@@ -348,7 +353,6 @@ static void handle_atmos_series(void* param) {
   if (strcmp(sensor_type, "UNKNOWN") == 0) {
     ESP_LOGW(TAG, "Unrecognized sensor type: %s", sensor_type);
   }
-  ESP_LOGI(TAG, "[%s] Starting SDI-12  ", sensor_type);
   ESP_LOGI(TAG, "[%s] Starting SDI-12 read...port[%d] ", sensor_type, config->port);
 
   weather_at41g2_data_t* data_at41g2 = NULL;
@@ -422,10 +426,11 @@ static void handle_atmos_series(void* param) {
                                   data_atmos22->eastWindSpeed);
     }
 
+#ifdef SDI12_DEBUG_SET
     ESP_LOGI(TAG, "[%s] Pushed samples to data table", sensor_type);
     ESP_LOGI(TAG, "[%s] sampling_count: %d / max: %d", sensor_type, dt[array_num].handle->sampling_count,
              dt[array_num].handle->samples_maximum_size);
-
+#endif
     // 데이터 처리 (평균, 필터링 등)
     datatable_process_samples(dt[array_num].handle);
     ESP_LOGI(TAG, "[%s] Processed samples in data table", sensor_type);
@@ -472,12 +477,14 @@ static void handle_atmos_series(void* param) {
 
       // render json data-table object to text and print
       char* dt_json_str = cJSON_Print(dt_json);
-      ESP_LOGI(TAG, "[%s] JSON Data-Table:\n%s", sensor_type, dt_json_str);
 
+#ifdef SDI12_DEBUG_SET
+      ESP_LOGI(TAG, "[%s] JSON Data-Table:\n%s", sensor_type, dt_json_str);
+#endif
       memset(topic, 0x00, sizeof(topic));
       if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_SENSOR) == ESP_OK) {
         ret = publish_sensor_datatable(topic, dt_json_str);
-        ESP_LOGI(TAG, "ret : %d", ret);
+        // ESP_LOGI(TAG, "ret : %d", ret);
       }
 
       if (ret == -1) { /* Qos 0*/  // -1 fail,-2 box full
@@ -508,8 +515,10 @@ static void handle_atmos_series(void* param) {
   }
   // 작업 완료 알림
   xEventGroupSetBits(done_group, TASK_DONE_BIT);
+#ifdef SDI12_DEBUG_SET
   ESP_LOGI(TAG, "[%s] Task done, DONE_BIT set", sensor_type);
   ESP_LOGI(TAG, "[%s] Task completed", sensor_type);
+#endif
 }
 
 static void handle_apogee_series(void* param) {
@@ -531,39 +540,46 @@ static void handle_apogee_series(void* param) {
   if (strcmp(sensor_type, "UNKNOWN") == 0) {
     ESP_LOGW(TAG, "Unrecognized sensor type: %s", sensor_type);
   }
-  ESP_LOGI(TAG, "[%s] Starting SDI-12  ", sensor_type);
   ESP_LOGI(TAG, "[%s] Starting SDI-12 read...port[%d] ", sensor_type, config->port);
 
-  apogee_sensor_t* data_S2_412 = NULL;
-  apogee_sensor_t* data_SQ_521 = NULL;
+  apogee_sensor_t* apogee_sensor_data = NULL;
 
-  if (config->cfg[array_num].sensor_type == APOGEE_S2_412) {
-    data_S2_412 = sdi12_read_S2_412(array_num);  // 데이터 읽기
-    if (!data_S2_412) {
-      ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
-      goto next;
-    }
+  if (config->cfg[array_num].sensor_type == APOGEE_S2_411) {
+    apogee_sensor_data = sdi12_read_S2_411_412(array_num, APOGEE_S2_411);  // 데이터 읽기
+
+  } else if (config->cfg[array_num].sensor_type == APOGEE_S2_412) {
+    apogee_sensor_data = sdi12_read_S2_411_412(array_num, APOGEE_S2_412);  // 데이터 읽기
+
   } else if (config->cfg[array_num].sensor_type == APOGEE_SQ_521) {
-    data_SQ_521 = sdi12_read_SQ_521(array_num);  // 데이터 읽기
-    if (!data_SQ_521) {
-      ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
-      goto next;
-    }
+    apogee_sensor_data = sdi12_read_SQ_521(array_num);  // 데이터 읽기
+
+  } else {
+    ESP_LOGE(TAG, "[%s] Unsupported Apogee sensor type", sensor_type);
+    goto next;
+  }
+
+  if (!apogee_sensor_data) {
+    ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
+    goto next;
   }
 
   // push in to data-table
   if (dt[array_num].handle) {
-    if (config->cfg[array_num].sensor_type == APOGEE_S2_412) {
-      datatable_push_float_sample(dt[array_num].handle, dt[array_num].apogee_data_col.NDVI, data_S2_412->NDVI);
-
+    if (config->cfg[array_num].sensor_type == APOGEE_S2_411) {
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].apogee_data_col.NDVI_UP_WARD,
+                                  apogee_sensor_data->NDVI_UP_WARD);
+    } else if (config->cfg[array_num].sensor_type == APOGEE_S2_412) {
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].apogee_data_col.NDVI_DOWN_WARD,
+                                  apogee_sensor_data->NDVI_DOWN_WARD);
     } else if (config->cfg[array_num].sensor_type == APOGEE_SQ_521) {
-      datatable_push_float_sample(dt[array_num].handle, dt[array_num].apogee_data_col.PPFD, data_SQ_521->PPFD);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].apogee_data_col.PPFD, apogee_sensor_data->PPFD);
     }
 
+#ifdef SDI12_DEBUG_SET
     ESP_LOGI(TAG, "[%s] Pushed samples to data table", sensor_type);
     ESP_LOGI(TAG, "[%s] sampling_count: %d / max: %d", sensor_type, dt[array_num].handle->sampling_count,
              dt[array_num].handle->samples_maximum_size);
-
+#endif
     // 데이터 처리 (평균, 필터링 등)
     datatable_process_samples(dt[array_num].handle);
     ESP_LOGI(TAG, "[%s] Processed samples in data table", sensor_type);
@@ -594,12 +610,13 @@ static void handle_apogee_series(void* param) {
 
       // render json data-table object to text and print
       char* dt_json_str = cJSON_Print(dt_json);
+#ifdef SDI12_DEBUG_SET
       ESP_LOGI(TAG, "[%s] JSON Data-Table:\n%s", sensor_type, dt_json_str);
-
+#endif
       memset(topic, 0x00, sizeof(topic));
       if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_SENSOR) == ESP_OK) {
         ret = publish_sensor_datatable(topic, dt_json_str);
-        ESP_LOGI(TAG, "ret : %d", ret);
+        // ESP_LOGI(TAG, "ret : %d", ret);
       }
 
       if (ret == -1) { /* Qos 0*/  // -1 fail,-2 box full
@@ -630,8 +647,11 @@ static void handle_apogee_series(void* param) {
   }
   // 작업 완료 알림
   xEventGroupSetBits(done_group, TASK_DONE_BIT);
+
+#ifdef SDI12_DEBUG_SET
   ESP_LOGI(TAG, "[%s] Task done, DONE_BIT set", sensor_type);
   ESP_LOGI(TAG, "[%s] Task completed", sensor_type);
+#endif
 }
 
 // =============================
@@ -853,6 +873,13 @@ void strategy_task_mgr_sensor_start(void) {
           entry->type = ATMOS41;
           entry->action = handle_atmos_series;
           entry->task_name = sensor_type_to_str(ATMOS41);
+          entry->port = cfg[i].port;
+          break;
+
+        case APOGEE_S2_411:
+          entry->type = APOGEE_S2_411;
+          entry->action = handle_apogee_series;
+          entry->task_name = sensor_type_to_str(APOGEE_S2_411);
           entry->port = cfg[i].port;
           break;
 

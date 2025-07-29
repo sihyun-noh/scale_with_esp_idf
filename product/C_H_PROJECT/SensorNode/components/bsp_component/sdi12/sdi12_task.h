@@ -3,6 +3,7 @@
 #define SDI12_OPER_H
 
 #include "stdio.h"
+#include "sensor_config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -88,7 +89,8 @@ typedef struct {
   char address;
   unsigned type;
   float PPFD;
-  float NDVI;
+  float NDVI_UP_WARD;
+  float NDVI_DOWN_WARD;
 } apogee_sensor_t;
 
 typedef struct {
@@ -178,16 +180,37 @@ teros54_data_t *sdi12_read_teros54(uint8_t portId);
  */
 weather_atmos22_data_t *sdi12_read_atmos22(uint8_t portId);
 
+// /**
+//  * @brief Reads measurement data from an Apogee S2-412 sensor using "M!" and "D!" SDI-12 commands.
+//  *
+//  * Issues the "M!" command to initiate measurement and then "D!" to retrieve the result,
+//  * parsing it into an apogee_sensor_t structure containing NDVI (Normalized Difference Vegetation Index) data.
+//  *
+//  * @param portId Sensor port ID (0–N) selecting the SDI-12 bus or multiplexer channel.
+//  * @return Pointer to a statically allocated apogee_sensor_t structure with parsed NDVI data.
+//  */
+// apogee_sensor_t *sdi12_read_S2_412(uint8_t portId);
+//
+
 /**
- * @brief Reads measurement data from an Apogee S2-412 sensor using "M!" and "D!" SDI-12 commands.
+ * @brief Reads measurement data from an Apogee S2-411 or S2-412 NDVI sensor using "M!" and "D!" SDI-12 commands.
  *
  * Issues the "M!" command to initiate measurement and then "D!" to retrieve the result,
- * parsing it into an apogee_sensor_t structure containing NDVI (Normalized Difference Vegetation Index) data.
+ * parsing it into an `apogee_sensor_t` structure containing NDVI (Normalized Difference Vegetation Index) data.
+ *
+ * - **S2-411**: Upward-facing sensor (sky-facing), typically installed pointing toward the sky.
+ * - **S2-412**: Downward-facing sensor (canopy-facing), typically installed facing vegetation.
+ *
+ * These sensors are typically always powered on or initialized once at boot and do not support
+ * dynamic power control via GPIO. A delay is included after power initialization to allow for proper boot-up.
  *
  * @param portId Sensor port ID (0–N) selecting the SDI-12 bus or multiplexer channel.
- * @return Pointer to a statically allocated apogee_sensor_t structure with parsed NDVI data.
+ * @param type Sensor type: APOGEE_S2_411 or APOGEE_S2_412
+ * @return Pointer to a statically allocated `apogee_sensor_t` structure with parsed NDVI data,
+ *         or NULL if parsing fails.
  */
-apogee_sensor_t *sdi12_read_S2_412(uint8_t portId);
+
+apogee_sensor_t *sdi12_read_S2_411_412(uint8_t portId, sdi12_sensor_type_t type);
 
 /**
  * @brief Reads measurement data from an Apogee SQ-521 sensor using "M!" and "D!" SDI-12 commands.

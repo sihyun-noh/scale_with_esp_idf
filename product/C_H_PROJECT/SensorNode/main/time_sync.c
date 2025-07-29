@@ -9,14 +9,12 @@
 
 static const char* TAG = "[timeSync]";
 
-// 1) SNTP 초기화
 static void initialize_sntp(void) {
   ESP_LOGI(TAG, "Initializing SNTP");
   if (esp_sntp_enabled()) {
     esp_sntp_stop();
   }
   esp_sntp_setoperatingmode(SNTP_OPMODE_POLL);
-  // NTP 서버를 원하는 대로 바꿀 수 있습니다.
   esp_sntp_setservername(0, "pool.ntp.org");
   esp_sntp_init();
 }
@@ -37,12 +35,10 @@ static void initialize_sntp_kst(void) {
   tzset();
 }
 
-// 2) 시간 동기화 수행 및 fallback 처리
 static void obtain_time(void) {
   // initialize_sntp();
   initialize_sntp_kst();
 
-  // 최대 10회(약 20초) 동안 동기화 대기
   int retry = 0;
   const int retry_count = 10;
   while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && retry < retry_count) {
@@ -66,7 +62,6 @@ static void obtain_time(void) {
     settimeofday(&tv, NULL);
   }
 
-  // 최종 설정된 시간 로그 출력
   time_t now;
   struct tm timeinfo;
   time(&now);
@@ -75,7 +70,7 @@ static void obtain_time(void) {
            timeinfo.tm_mday, timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
 }
 
-// 3) IP 이벤트 핸들러: STA가 IP를 획득하면 시간 동기화 시작
+// 이벤트 핸들러: STA가 IP를 획득하면 시간 동기화 시작
 
 void on_got_ip(void* arg, esp_event_base_t base, int32_t id, void* data) {
   ESP_LOGI(TAG, "Got IP, now attempting SNTP sync %s", base);

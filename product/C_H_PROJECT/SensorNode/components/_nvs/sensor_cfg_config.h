@@ -147,27 +147,6 @@ sensor_port_cfg_t *sensor_cfg_instance(void);
 esp_err_t sensor_port_cfg_commit(void);
 
 /**
- * @brief Update sensor port configuration from JSON payload.
- *
- * Parses the provided JSON string and updates the corresponding fields
- * in the given sensor_port_cfg_t structure (enabled, threshold, mode).
- * If any field is updated, the `dirty` flag is set to 1.
- *
- * Example JSON:
- * {
- *   "enabled": 1,
- *   "threshold": 150,
- *   "mode": 2
- * }
- *
- * @param[in,out] cfg Pointer to the sensor port configuration to update.
- * @param[in] json_payload Null-terminated JSON string received via MQTT.
- *
- * @return void
- */
-// void handle_mqtt_config_update(sensor_port_cfg_t *cfg, const char *json_payload);
-
-/**
  * @brief Handle incoming MQTT configuration JSON and update sensor port settings.
  *
  * Parses the given JSON payload and updates the corresponding sensor port configuration,

@@ -168,9 +168,12 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
       datatable_add_float_smp_column(dt->handle, "eastWindSpeed", &dt->at41g2_col.eastWindSpeed_col);
       break;
 
-    /* APOGEE TYPE */
+      /* APOGEE TYPE */
+    case APOGEE_S2_411:
+      datatable_add_float_smp_column(dt->handle, "NDVI_Upward", &dt->apogee_data_col.NDVI_UP_WARD);
+      break;
     case APOGEE_S2_412:
-      datatable_add_float_smp_column(dt->handle, "NDVI", &dt->apogee_data_col.NDVI);
+      datatable_add_float_smp_column(dt->handle, "NDVI_Downward", &dt->apogee_data_col.NDVI_DOWN_WARD);
       break;
       // case APOGEE_SP_421:
     case APOGEE_SQ_521:

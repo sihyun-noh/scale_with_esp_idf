@@ -2663,7 +2663,7 @@ esp_err_t datatable_process_samples(datatable_handle_t datatable_handle) {
     if (datatable_handle->rows_count > datatable_handle->rows_size) {
       datatable_handle->rows_count -= 1;
 
-      ESP_LOGE(TAG, "datatable_process_samples rows_count %d", datatable_handle->rows_count);
+      // ESP_LOGE(TAG, "datatable_process_samples rows_count %d", datatable_handle->rows_count);
 
       switch (datatable_handle->data_storage_type) {
         case DATATABLE_DATA_STORAGE_MEMORY_RING:
