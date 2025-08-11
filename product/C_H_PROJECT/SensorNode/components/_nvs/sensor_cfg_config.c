@@ -6,8 +6,9 @@
 #include "cJSON.c"
 #include "esp_mac.h"
 
-#define DEVICE_ID_KEY "device_id"
-#define MAC_ADDR_LEN  18
+#define DEVICE_ID_KEY    "device_id"
+#define NETWORK_TYPE_KEY "network_type"
+#define MAC_ADDR_LEN     18
 
 static const char *TAG = "[sensor_cfg]";
 
@@ -294,4 +295,39 @@ esp_err_t get_device_id(char **out_id) {
   if (!out_id)
     return ESP_ERR_INVALID_ARG;
   return cfg_get_str(DEVICE_ID_KEY, out_id);
+}
+
+esp_err_t cfg_set_network_type(const char *type_str) {
+  if (!type_str)
+    return ESP_ERR_INVALID_ARG;
+
+  char *existing = NULL;
+  esp_err_t err = cfg_get_str(NETWORK_TYPE_KEY, &existing);
+
+  if (err == ESP_OK) {
+    bool same = (strcmp(existing, type_str) == 0);
+    free(existing);
+
+    if (same) {
+      ESP_LOGW(TAG, "Network type unchanged: %s", type_str);
+      return ESP_OK;
+    }
+  } else if (err != ESP_ERR_NVS_NOT_FOUND) {
+    // ESP_ERR_NVS_NOT_FOUND 외 다른 오류면.
+    ESP_LOGE(TAG, "cfg_get_str failed: %s", esp_err_to_name(err));
+    return err;
+  }
+  err = cfg_set_str(NETWORK_TYPE_KEY, type_str);
+  if (err == ESP_OK) {
+    ESP_LOGW(TAG, "Stored new network type: %s", type_str);
+  } else {
+    ESP_LOGE(TAG, "cfg_set_str failed: %s", esp_err_to_name(err));
+  }
+  return err;
+}
+
+esp_err_t cfg_get_network_type(char **out_type) {
+  if (!out_type)
+    return ESP_ERR_INVALID_ARG;
+  return cfg_get_str(NETWORK_TYPE_KEY, out_type);
 }

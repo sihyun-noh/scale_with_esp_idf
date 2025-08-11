@@ -1,15 +1,22 @@
 menu "C&H Sensor Node Porduct"
   config PRODUCT_VENDOR
-      string "Product Vendor"
-      default "C&H"
+    string "Product Vendor"
+    default "C&H"
 
-    config PRODUCT_NAME
-      string "Product Name"
-      default "SENSOR-SDI12"
+  config PRODUCT_NAME
+    string "Product Name"
+    default "SENSOR-SDI12"
 
-    config PRODUCT_SKU
-      string "Product SKU"
-      default ""
+  config PRODUCT_SKU
+    string "Product SKU"
+    default ""
+
+  config ENABLE_ETHERNET_INTERFACE
+      bool "Enable Ethernet connection"
+      default y
+      help
+        Enable this option to use a wired Ethernet (LAN) connection for network access.
+        If disabled, the device will operate in Wi-Fi mode by default.
 
 menu "Main Server Configuration"
 

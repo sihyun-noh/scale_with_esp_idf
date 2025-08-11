@@ -1,5 +1,5 @@
 set(req_esp esp_http_client lwip)
-set(req_custom etl ethernet_driver bsp_gpio sdi12 _wifi _console _nvs _ota _mqtt data_table sysfile)
+set(req_custom ethernet_driver bsp_gpio sdi12 _wifi _console _nvs _ota _mqtt data_table sysfile)
 
 idf_component_register(SRCS 
                     "main.cpp" 

@@ -15,10 +15,11 @@
 #include "esp_system.h"
 #include "driver/gpio.h"
 
-#include "etl/vector.h"
+// #include "etl/vector.h"
 #include "ethernet_app.h"
 #include "Wifi_Station.h"
 #include "Wifi_Configuration_ap.h"
+#include "sdkconfig.h"
 #include "sensor_cfg_config.h"
 #include "ssid_manager.h"
 #include "config.h"
@@ -57,6 +58,39 @@ void print_heap_summary() {
   ESP_LOGI("HEAP", "Alloc count(block)    : %u", info.allocated_blocks);
   ESP_LOGI("HEAP", "Free count(blocks)     : %u", info.free_blocks);
   ESP_LOGI("HEAP", "total count(blocks)     : %u", info.total_blocks);
+}
+
+static void start_lan() {
+  ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &on_got_ip, NULL));
+  app_eth_init();
+}
+
+static void start_wifi() {
+  ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &on_got_ip, NULL));
+  auto& ssid_list = SsidManager::GetInstance().GetSsidList();
+  if (ssid_list.empty()) {
+    auto& ap = WifiConfigurationAp::GetInstance();
+    ap.SetSsidPrefix("C&H-DataLogger");
+    ap.Start();
+    return;
+  }
+  WifiStation::GetInstance().Start();
+}
+
+static void blink_status_blink(led_color_t color, uint8_t times) {
+  const TickType_t period = pdMS_TO_TICKS(500);
+
+  blink_status_clear_leds(color);
+
+  for (uint8_t i = 0; i < times; i++) {
+    // ON
+    blink_status_set_leds(color);
+    vTaskDelay(period);
+
+    // OFF
+    blink_status_clear_leds(color);
+    vTaskDelay(period);
+  }
 }
 
 extern "C" void app_main(void) {
@@ -98,28 +132,59 @@ extern "C" void app_main(void) {
   get_sha256_of_partitions();
 
   //------------------------------------------------------
-  // Network Initialization (Ethernet or Wi-Fi)
-  //------------------------------------------------------
-#if 1  // Ethernet 사용
-  ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &on_got_ip, NULL));
-  app_eth_init();
-#else  // Wi-Fi + SSID 매니저 기반 연결
-  ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &on_got_ip, NULL));
-  auto& ssid_list = SsidManager::GetInstance().GetSsidList();
-  if (ssid_list.empty()) {
-    auto& ap = WifiConfigurationAp::GetInstance();
-    ap.SetSsidPrefix("C&H-DataLogger");
-    ap.Start();
-    return;
-  }
-  WifiStation::GetInstance().Start();
-#endif
-
-  //------------------------------------------------------
   // GPIO / LED
   //------------------------------------------------------
   ESP_ERROR_CHECK(bsp_gpio_init());
   blink_status_leds();
+
+  //------------------------------------------------------
+  // Network Initialization (Ethernet or Wi-Fi)
+  //------------------------------------------------------
+
+  bool lan_sel = !gpio_get_level((gpio_num_t)CONFIG_LAN_SELECT_PIN);
+  bool wifi_sel = !gpio_get_level((gpio_num_t)CONFIG_WIFI_SELECT_PIN);
+
+  ESP_LOGI(TAG, "LAN select: %d, WIFI select: %d", lan_sel, wifi_sel);
+
+  if (lan_sel && !wifi_sel) {
+    // LAN only
+    start_lan();
+    cfg_set_network_type("Ethernet(LAN)");
+    blink_status_blink(LED_BLUE, 2);
+  } else if (!lan_sel && wifi_sel) {
+    // Wi-Fi only
+    start_wifi();
+    cfg_set_network_type("Wifi");
+    blink_status_blink(LED_RED, 2);
+  } else if (lan_sel && wifi_sel) {
+    ESP_LOGW(TAG, "Both LAN and Wi-Fi selected, defaulting to LAN.");
+    start_lan();
+    cfg_set_network_type("Ethernet(LAN)");
+    blink_status_blink(LED_GREEN, 2);
+    blink_status_blink(LED_BLUE, 2);
+  } else {
+    ESP_LOGW(TAG, "No network selected, defaulting to Wi-Fi.");
+    start_wifi();
+    cfg_set_network_type("Wifi");
+    blink_status_blink(LED_GREEN, 2);
+    blink_status_blink(LED_RED, 2);
+  }
+
+  // #if CONFIG_ENABLE_ETHERNET_INTERFACE
+  //   // Ethernet 사용
+  //   ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_ETH_GOT_IP, &on_got_ip, NULL));
+  //   app_eth_init();
+  // #else  // Wi-Fi + SSID 매니저 기반 연결
+  //   ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &on_got_ip, NULL));
+  //   auto& ssid_list = SsidManager::GetInstance().GetSsidList();
+  //   if (ssid_list.empty()) {
+  //     auto& ap = WifiConfigurationAp::GetInstance();
+  //     ap.SetSsidPrefix("C&H-DataLogger");
+  //     ap.Start();
+  //     return;
+  //   }
+  //   WifiStation::GetInstance().Start();
+  // #endif
 
   //------------------------------------------------------
   // Sensor Config Manager & Auto-Detect Init

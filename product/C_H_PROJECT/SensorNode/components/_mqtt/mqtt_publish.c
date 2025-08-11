@@ -9,12 +9,15 @@ extern mqtt_client_ctx_t mqtt_ctx;
 
 void publish_device_status(esp_mqtt_client_handle_t client, const char *status, const char *topic) {
   char *device_id = NULL;
+  char *network_type = NULL;
   get_device_id(&device_id);  // Must be freed later if heap allocated
+  cfg_get_network_type(&network_type);
 
   cJSON *root = cJSON_CreateObject();
   cJSON_AddStringToObject(root, "deviceId", device_id);
   cJSON_AddStringToObject(root, "status", status);
   cJSON_AddStringToObject(root, "fw_ver", FW_VERSION);
+  cJSON_AddStringToObject(root, "networkType", network_type);
 
   sensor_port_cfg_t *cfg = sensor_cfg_instance();
   if (!cfg) {
@@ -55,6 +58,9 @@ void publish_device_status(esp_mqtt_client_handle_t client, const char *status, 
   cJSON_Delete(root);
   if (device_id)
     free(device_id);
+
+  if (network_type)
+    free(network_type);
 }
 
 void publish_command(esp_mqtt_client_handle_t client, const char *cmd) {

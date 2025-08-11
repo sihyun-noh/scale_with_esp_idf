@@ -63,8 +63,8 @@ static const sensor_model_map_t meter_model_map[] = {
 
 // APOGEE Model map
 static const sensor_model_map_t apogee_model_map[] = {
-  { "S2-411", APOGEE_S2_411, 1 },  // NDVI
-  { "S2-412", APOGEE_S2_412, 1 },  // NDVI
+  { "S2-411", APOGEE_S2_411, 1 },  // NDVI upward
+  { "S2-412", APOGEE_S2_412, 1 },  // NDVI downward
   { "SQ-521", APOGEE_SQ_521, 1 },  // PPFD
 };
 /* clang-format on */

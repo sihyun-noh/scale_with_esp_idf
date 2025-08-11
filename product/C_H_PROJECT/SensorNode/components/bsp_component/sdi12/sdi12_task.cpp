@@ -1085,7 +1085,8 @@ apogee_sensor_t *sdi12_read_SQ_521(uint8_t portId) {
 
 // S2-411 and S2-412 (NDVI) sensors are always powered on and cannot be dynamically turned off via GPIO.
 apogee_sensor_t *sdi12_read_S2_411_412(uint8_t portId, sdi12_sensor_type_t type) {
-  static uint8_t control_pin_flag = 0;
+  static uint8_t control_pin_flag[2] = { 0 };
+  uint8_t *ptr = NULL;
   static apogee_sensor_t apogee_s2_data;
   sensor_system_t *sensorSys = sensor_ctl_get_instance();
 
@@ -1100,6 +1101,12 @@ apogee_sensor_t *sdi12_read_S2_411_412(uint8_t portId, sdi12_sensor_type_t type)
   }
 
   ESP_LOGI(TAG, "[SDI12] Reading from Apogee %s", (type == APOGEE_S2_411) ? "S2-411" : "S2-412");
+
+  if (type == APOGEE_S2_411) {
+    ptr = &control_pin_flag[0];
+  } else {
+    ptr = &control_pin_flag[1];
+  }
 
   // Clear data buffer
   memset(&apogee_s2_data, 0x00, sizeof(apogee_sensor_t));
@@ -1117,8 +1124,8 @@ apogee_sensor_t *sdi12_read_S2_411_412(uint8_t portId, sdi12_sensor_type_t type)
   ESP_LOGW(TAG, "control pin %d level %d", detechPin, level);
 #endif
   //  pin level low is deteched
-  if (!control_pin_flag) {
-    control_pin_flag = 1;
+  if (*ptr == 0) {
+    *ptr = 1;
     ESP_ERROR_CHECK(sensor_control_pin_set(portId, 1));
 #ifdef SDI12_DEBUG_SET
     ESP_LOGW(TAG, "Set control pin %d", portId);

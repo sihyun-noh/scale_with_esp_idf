@@ -181,6 +181,23 @@ esp_err_t cfg_init_device_id(void);
  */
 esp_err_t get_device_id(char **out_id);
 
+/**
+ * @brief Save network type to NVS only if it differs from the existing value.
+ *
+ * @param type_str   Network type string to store (e.g., "LAN", "WIFI").
+ * @return ESP_OK on success, or appropriate esp_err_t code on failure.
+ */
+esp_err_t cfg_set_network_type(const char *type_str);
+
+/**
+ * @brief Retrieve the current network type from NVS.
+ *
+ * @param out_type Pointer to char* to receive the allocated network type string.
+ *                 Caller must free() the returned string.
+ * @return ESP_OK on success, or appropriate esp_err_t code on failure.
+ */
+esp_err_t cfg_get_network_type(char **out_type);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,4 +1,5 @@
-set(req esp_littlefs)
+#set(req esp_littlefs)
+set(req joltwallet__littlefs)
 
 set(srcs)
 set(includes)
