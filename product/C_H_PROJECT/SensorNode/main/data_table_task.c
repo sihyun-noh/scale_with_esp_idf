@@ -134,6 +134,14 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
 
     /* ATMOS TYPE */
 
+    /* case ATMOS14: */
+    case ATMOS14:
+      datatable_add_float_smp_column(dt->handle, "vaporPressure", &dt->atmos14_col.vaporPressure_col);
+      datatable_add_float_smp_column(dt->handle, "temperature", &dt->atmos14_col.temperature_col);
+      datatable_add_float_smp_column(dt->handle, "relativeHumi", &dt->atmos14_col.relativeHumidity_col);
+      datatable_add_float_smp_column(dt->handle, "phericPressure", &dt->atmos14_col.atmosphericPressure_col);
+      break;
+
     /* case ATMOS21: */
     case ATMOS22:
       datatable_add_float_smp_column(dt->handle, "windSpeed", &dt->atmos22_col.windSpeed_col);

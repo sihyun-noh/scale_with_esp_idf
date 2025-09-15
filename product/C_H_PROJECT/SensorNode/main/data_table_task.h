@@ -41,6 +41,13 @@ typedef struct {
 } teros54_col_t;
 
 typedef struct {
+  uint8_t vaporPressure_col;
+  uint8_t temperature_col;
+  uint8_t relativeHumidity_col;
+  uint8_t atmosphericPressure_col;
+} weather_atmos14_col_t;
+
+typedef struct {
   uint8_t windSpeed_col;
   uint8_t windDirection_col;
   uint8_t gustWindSpeed_col;
@@ -94,6 +101,8 @@ typedef struct {
   uint8_t radiation_col;
   weather_at41g2_data_t at41g2;
   weather_at41g2_col_t at41g2_col;
+  weather_atmos14_data_t atmos14;
+  weather_atmos14_col_t atmos14_col;
   weather_atmos22_data_t atmos22;
   weather_atmos22_col_t atmos22_col;
   teros11_col_t teros11_col;

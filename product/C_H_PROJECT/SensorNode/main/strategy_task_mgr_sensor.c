@@ -352,11 +352,13 @@ static void handle_atmos_series(void* param) {
   // const char* sensor_type = sensor_type_to_str(TEROS12);
   if (strcmp(sensor_type, "UNKNOWN") == 0) {
     ESP_LOGW(TAG, "Unrecognized sensor type: %s", sensor_type);
+    goto next;
   }
   ESP_LOGI(TAG, "[%s] Starting SDI-12 read...port[%d] ", sensor_type, config->port);
 
   weather_at41g2_data_t* data_at41g2 = NULL;
   weather_atmos22_data_t* data_atmos22 = NULL;
+  weather_atmos14_data_t* data_atmos14 = NULL;
 
   if (config->cfg[array_num].sensor_type == ATMOS41) {
     data_at41g2 = sdi12_read_atmos41(array_num);  // 데이터 읽기
@@ -367,6 +369,12 @@ static void handle_atmos_series(void* param) {
   } else if (config->cfg[array_num].sensor_type == ATMOS22) {
     data_atmos22 = sdi12_read_atmos22(array_num);  // 데이터 읽기
     if (!data_atmos22) {
+      ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
+      goto next;
+    }
+  } else if (config->cfg[array_num].sensor_type == ATMOS14) {
+    data_atmos14 = sdi12_read_atmos14(array_num);  // 데이터 읽기
+    if (!data_atmos14) {
       ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
       goto next;
     }
@@ -424,6 +432,15 @@ static void handle_atmos_series(void* param) {
                                   data_atmos22->northWindSpeed);
       datatable_push_float_sample(dt[array_num].handle, dt[array_num].atmos22_col.eastWindSpeed_col,
                                   data_atmos22->eastWindSpeed);
+    } else if (config->cfg[array_num].sensor_type == ATMOS14) {
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].atmos14_col.vaporPressure_col,
+                                  data_atmos14->vaporPressure);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].atmos14_col.temperature_col,
+                                  data_atmos14->temperature);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].atmos14_col.relativeHumidity_col,
+                                  data_atmos14->relativeHumidity);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].atmos14_col.atmosphericPressure_col,
+                                  data_atmos14->atmosphericPressure);
     }
 
 #ifdef SDI12_DEBUG_SET
@@ -859,6 +876,13 @@ void strategy_task_mgr_sensor_start(void) {
           entry->type = TEROS54;
           entry->action = handle_teros_series;
           entry->task_name = sensor_type_to_str(TEROS54);
+          entry->port = cfg[i].port;
+          break;
+
+        case ATMOS14:
+          entry->type = ATMOS14;
+          entry->action = handle_atmos_series;
+          entry->task_name = sensor_type_to_str(ATMOS14);
           entry->port = cfg[i].port;
           break;
 
