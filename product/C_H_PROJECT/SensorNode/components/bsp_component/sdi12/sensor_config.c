@@ -9,6 +9,7 @@ const char *sensor_names[] = {
   // "TEROS14",
   "TEROS21",
   "TEROS54",
+  "ATMOS14",
   // "ATMOS21",
    "ATMOS22",
   //  "ATMOS31",

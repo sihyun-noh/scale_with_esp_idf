@@ -81,7 +81,12 @@ sdi12_cmd_template_t cmd_table[SENSOR_TYPE_COUNT][SDI_CMD_COUNT] = {
     [SDI_CMD_ADDR]  = { "A!",  100 },
     [SDI_CMD_READ]  = { "R0!", 50 },
   },
-  [ATMOS22] = {
+ [ATMOS14] = {
+    [SDI_CMD_INFO]  = { "I!",  30 },
+    [SDI_CMD_ADDR]  = { "A!",  100 },
+    [SDI_CMD_READ]  = { "R0!", 30 },
+  },
+ [ATMOS22] = {
     [SDI_CMD_INFO]  = { "I!",  30 },
     [SDI_CMD_ADDR]  = { "A!",  100 },
     [SDI_CMD_READ]  = { "R0!", 30 },
@@ -191,6 +196,11 @@ bool parse_sdi12_info(const char *resp, sdi12_sensor_info_t *out) {
     ESP_LOGE(TAG, "[INFO] Model TER54(TEROS54)");
     strcpy(out->manufacturer, "METER");
     strcpy(out->model, "TER54");
+
+  } else if (strstr(resp, "ATM14") != 0) {
+    ESP_LOGE(TAG, "[INFO] Model ATM14(ATMOS14)");
+    strcpy(out->manufacturer, "METER");
+    strcpy(out->model, "ATMOS14");
 
   } else if (strstr(resp, "ATM22") != 0) {
     ESP_LOGE(TAG, "[INFO] Model ATM22(ATMOS22)");
@@ -377,6 +387,45 @@ static bool parse_teros54_response(const char *resp, teros54_data_t *out) {
       case 5: out->temp3 = value; break;
       case 6: out->vwc4 = value; break;
       case 7: out->temp4 = value; break;
+    }
+
+    ptr = endptr;
+  }
+
+  return true;
+}
+
+// atmos14 data parsed
+static bool parse_atmos14_response(const char *resp, weather_atmos14_data_t *out) {
+  if (!resp || !out)
+    return false;
+
+  char *ptr = (char *)resp;
+
+  // 1. Sensor address (1 char)
+  out->address = *ptr++;
+
+  // 2. Parse the 9 float/int values
+  for (int i = 0; i < 4; i++) {
+    // Skip unexpected characters
+    if (*ptr != '+' && *ptr != '-')
+      return false;  // sign 체크
+    char *endptr = NULL;
+    float value = strtof(ptr, &endptr);
+    if (endptr == ptr)
+      return false;
+
+    // Handle sensor 'no data' value -9999
+    if (value <= -9999.0f) {
+      ESP_LOGW(TAG, "Field %d is invalid (-9999). Replacing with 0.0", i);
+      return false;
+    }
+
+    switch (i) {
+      case 0: out->vaporPressure = value; break;
+      case 1: out->temperature = value; break;
+      case 2: out->relativeHumidity = value; break;
+      case 3: out->atmosphericPressure = value; break;
     }
 
     ptr = endptr;
@@ -679,6 +728,23 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
         return false;
       }
     }
+
+    case ATMOS14: {
+      weather_atmos14_data_t *atmos14 = (weather_atmos14_data_t *)out_data;
+      if (parse_atmos14_response(parsed, atmos14)) {
+        ESP_LOGI(TAG,
+                 "[PARSED] ADDR: %c | vaporPres: %.3f | TEMP: %.2f°C  | relativeHumidity: %.2f | atmosphericPressure "
+                 ": %.3f",
+                 atmos14->address, atmos14->vaporPressure, atmos14->temperature, atmos14->relativeHumidity,
+                 atmos14->atmosphericPressure);
+
+        return true;
+      } else {
+        ESP_LOGE(TAG, "Failed to parse ATMOS22 response.");
+        return false;
+      }
+    }
+
     case ATMOS22: {
       weather_atmos22_data_t *atmos22 = (weather_atmos22_data_t *)out_data;
       if (parse_atmos22_response(parsed, atmos22)) {
@@ -907,6 +973,62 @@ teros54_data_t *sdi12_read_teros54(uint8_t portId) {
   ESP_LOGI(TAG, "End Search for SDI-12 Devices.");
 
   return &teros54;
+}
+
+// ATMOS14 is always turned on
+weather_atmos14_data_t *sdi12_read_atmos14(uint8_t portId) {
+  static uint8_t control_pin_flag = 0;
+  static weather_atmos14_data_t atmos14;
+  sensor_system_t *sensorSys = sensor_ctl_get_instance();
+
+  if (sensorSys == NULL) {
+    ESP_LOGE(TAG, "sensorSys() returned NULL ");
+    return NULL;
+  }
+
+  ESP_LOGI(TAG, "[SDI12] Data Read to ATMOS14");
+  // buffer clear
+  memset(&atmos14, 0x00, sizeof(weather_atmos14_data_t));
+  // TODO: This is the control point for buffer and power management
+  // Sets the MUX to match the data line and power control for the specified port.
+  ESP_ERROR_CHECK(sensor_buffer_select_port(portId));
+
+  int detechPin = sensorSys->ports[portId].detectPin;
+  int level = gpio_get_level((gpio_num_t)detechPin);
+#ifdef SDI12_DEBUG_SET
+  ESP_LOGW(TAG, "control pin %d level %d", detechPin, level);
+#endif
+  //  pin level low is deteched
+  //  NOTE:weather station is always turned on
+  if (!control_pin_flag) {
+    control_pin_flag = 1;
+    ESP_ERROR_CHECK(sensor_control_pin_set(portId, 1));
+#ifdef SDI12_DEBUG_SET
+    ESP_LOGW(TAG, "Set control pin %d", portId);
+#endif
+    vTaskDelay(pdMS_TO_TICKS(1000));  // booting delay
+  }
+
+  vTaskDelay(pdMS_TO_TICKS(1000));
+  mySDI12.begin();
+  if (!print_sdi12_data('0', ATMOS14, &atmos14)) {
+    ESP_LOGE(TAG, "Sensor data parsing failed for address '0'");
+    return NULL;
+  }
+  mySDI12.end();
+
+  // It disables the connection.
+  ESP_ERROR_CHECK(sensor_buffer_disable());
+
+  // pin level low is deteched
+  if (level) {
+    ESP_ERROR_CHECK(sensor_control_pin_set(portId, 0));
+    ESP_LOGW(TAG, "Clear control pin %d", portId);
+  }
+
+  ESP_LOGI(TAG, "End Search for SDI-12 Devices.");
+
+  return &atmos14;
 }
 
 // ATMOS22 is always turned on
@@ -1343,6 +1465,14 @@ void sdi12_app_main_2(void *param) {
         ESP_LOGW(TAG, "[TEROS54] SUCSSES : %.2f", teros54->temp1);
       } else {
         ESP_LOGW(TAG, "[TEROS54] READ FAILED");
+      }
+
+    } else if (strcmp(info->model, "ATMOS14") == 0) {
+      weather_atmos14_data_t *atmos14_data = sdi12_read_atmos14(portId);
+      if (atmos14_data != NULL) {
+        ESP_LOGW(TAG, "[ATMOS14] Read Sensor data(temperature) : %.2f", atmos14_data->temperature);
+      } else {
+        ESP_LOGW(TAG, "[ATMOS14] READ FAILED");
       }
 
     } else if (strcmp(info->model, "ATMOS22") == 0) {

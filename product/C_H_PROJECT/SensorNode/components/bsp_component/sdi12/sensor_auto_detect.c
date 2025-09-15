@@ -57,6 +57,7 @@ static const sensor_model_map_t meter_model_map[] = {
   { "TER12", TEROS12, 3 },
   { "TER21", TEROS21, 2 },
   { "TER54", TEROS54, 8 },
+  { "ATMOS14", ATMOS14, 4 },
   { "ATMOS22", ATMOS22, 9 },
   { "ATMOS41", ATMOS41, 17 },
 };

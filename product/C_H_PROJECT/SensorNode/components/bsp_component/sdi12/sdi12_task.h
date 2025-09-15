@@ -49,6 +49,16 @@ typedef struct {
   float temp4;
 } teros54_data_t;
 
+// ATMOS14
+
+typedef struct {
+  char address;
+  float vaporPressure;
+  float temperature;
+  float relativeHumidity;
+  float atmosphericPressure;
+} weather_atmos14_data_t;
+
 // ATMOS22
 typedef struct {
   char address;
@@ -179,6 +189,17 @@ teros54_data_t *sdi12_read_teros54(uint8_t portId);
  * @return Pointer to a statically allocated weather_atmos22_data_t structure with parsed data.
  */
 weather_atmos22_data_t *sdi12_read_atmos22(uint8_t portId);
+
+/**
+ * @brief Reads measurement data from an ATMOS14 sensor using the "R0!" SDI-12 command.
+ *
+ * Sends the "R0!" command to the specified port, waits for the response,
+ * and parses it into a weather_atmos14_data_t structure containing weather parameters.
+ *
+ * @param portId Sensor port ID (0–N) selecting the SDI-12 bus or multiplexer channel.
+ * @return Pointer to a statically allocated weather_atmos14_data_t structure with parsed data.
+ */
+weather_atmos14_data_t *sdi12_read_atmos14(uint8_t portId);
 
 // /**
 //  * @brief Reads measurement data from an Apogee S2-412 sensor using "M!" and "D!" SDI-12 commands.
