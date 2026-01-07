@@ -13,10 +13,11 @@
 #include "esp_log.h"
 #include "lvgl.h"
 #include "lcd_panel_rgb_gt911.h"
-#include "config.h"
+// #include "config.h"
 #include "LCD_Wifi_Manager.h"
 #include "ui/ui.h"
 #include "mqtt.h"
+#include "CAN_comn.h"
 
 static const char *TAG = "main_app";
 
@@ -89,6 +90,7 @@ void lv_tick_task(void *arg) {
     }
   }
 }
+
 extern "C" {
 void app_main(void) {
   // ap_httpserver_start();
@@ -116,8 +118,11 @@ void app_main(void) {
   lvgl_acquire();
   wifi_scan_btn();
   lvgl_release();
+  //  mqtt_app_start();
 
+  ESP_ERROR_CHECK(waveshare_twai_init());  // Initialize the TWAI interface and check for errors
   while (1) {
+    ESP_ERROR_CHECK(waveshare_twai_receive());  // Receive messages via TWAI and check for errors
     vTaskDelay(xDelay);
   }
 }
