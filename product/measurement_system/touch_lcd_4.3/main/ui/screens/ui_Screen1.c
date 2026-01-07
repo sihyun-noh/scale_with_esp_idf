@@ -4,6 +4,7 @@
 // Project name: wifi_manual_SquareLine_Project
 
 #include "../ui.h"
+#include "lv_conf_internal.h"
 
 void ui_Screen1_screen_init(void) {
   ui_Screen1 = lv_obj_create(NULL);
@@ -94,6 +95,20 @@ void ui_Screen1_screen_init(void) {
   lv_obj_set_style_text_color(ui_Label2, lv_color_hex(0x030000), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_text_opa(ui_Label2, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+  ui_mainPanel_btn_up = lv_btn_create(ui_mainpanel1);
+  lv_obj_set_width(ui_mainPanel_btn_up, 100);
+  lv_obj_set_height(ui_mainPanel_btn_up, 50);
+  lv_obj_set_x(ui_mainPanel_btn_up, 0);
+  lv_obj_set_y(ui_mainPanel_btn_up, -120);
+  lv_obj_set_align(ui_mainPanel_btn_up, LV_ALIGN_CENTER);
+  lv_obj_add_flag(ui_mainPanel_btn_up, LV_OBJ_FLAG_SCROLL_ON_FOCUS);  /// Flags
+  lv_obj_clear_flag(ui_mainPanel_btn_up, LV_OBJ_FLAG_SCROLLABLE);     /// Flags
+  lv_obj_set_style_radius(ui_mainPanel_btn_up, 40, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_color(ui_mainPanel_btn_up, lv_color_hex(0x46DD19), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_bg_opa(ui_mainPanel_btn_up, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_color(ui_mainPanel_btn_up, lv_color_hex(0x40773E), LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_shadow_opa(ui_mainPanel_btn_up, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+
   ui_mainpanel2 = lv_obj_create(ui_Screen1);
   lv_obj_set_width(ui_mainpanel2, 593);
   lv_obj_set_height(ui_mainpanel2, 380);
@@ -174,7 +189,7 @@ void ui_Screen1_screen_init(void) {
   lv_label_set_text(ui_Label1, "Light");
   lv_obj_set_style_text_color(ui_Label1, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
   lv_obj_set_style_text_opa(ui_Label1, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-  lv_obj_set_style_text_font(ui_Label1, &lv_font_montserrat_22, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_obj_set_style_text_font(ui_Label1, LV_FONT_MONTSERRAT_22, LV_PART_MAIN | LV_STATE_DEFAULT);
 
   ui_ImgButton1 = lv_imgbtn_create(ui_Screen1);
   lv_imgbtn_set_src(ui_ImgButton1, LV_IMGBTN_STATE_RELEASED, NULL, &ui_img_2105472862, NULL);

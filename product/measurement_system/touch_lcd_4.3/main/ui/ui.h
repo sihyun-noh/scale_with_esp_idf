@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-    #include "lvgl.h"
+#include "lvgl.h"
 
 #include "ui_helpers.h"
 #include "components/ui_comp.h"
@@ -20,13 +20,13 @@ extern "C" {
 void ui_Screen1_screen_init(void);
 extern lv_obj_t *ui_Screen1;
 extern lv_obj_t *ui_Side_Panel;
-void ui_event_Side_Panel_Btn1( lv_event_t * e);
+void ui_event_Side_Panel_Btn1(lv_event_t *e);
 extern lv_obj_t *ui_Side_Panel_Btn1;
 extern lv_obj_t *ui_Main_Panel_Btn1_Label;
-void ui_event_Side_Panel_Btn2( lv_event_t * e);
+void ui_event_Side_Panel_Btn2(lv_event_t *e);
 extern lv_obj_t *ui_Side_Panel_Btn2;
 extern lv_obj_t *ui_Main_Panel_Btn2_Label;
-void ui_event_Side_Panel_Btn3( lv_event_t * e);
+void ui_event_Side_Panel_Btn3(lv_event_t *e);
 extern lv_obj_t *ui_Side_Panel_Btn3;
 extern lv_obj_t *ui_Main_Panel_Btn3_Label;
 extern lv_obj_t *ui_mainpanel1;
@@ -40,17 +40,19 @@ extern lv_obj_t *ui_Panel4;
 extern lv_obj_t *ui_Panel5;
 extern lv_obj_t *ui_Panel6;
 extern lv_obj_t *ui_Label1;
-void ui_event_ImgButton1( lv_event_t * e);
+void ui_event_ImgButton1(lv_event_t *e);
 extern lv_obj_t *ui_ImgButton1;
 extern lv_obj_t *ui____initial_actions0;
 
-LV_IMG_DECLARE( ui_img_2105472862);   // assets/Icon-Small-50@2x.png
-LV_IMG_DECLARE( ui_img_77785195);   // assets/Icon-Small-50@2x 복사본.png
+extern lv_obj_t *ui_mainPanel_btn_up;
 
-LV_FONT_DECLARE( ui_font_Display16);
-LV_FONT_DECLARE( ui_font_Display24);
-LV_FONT_DECLARE( ui_font_Display40);
-LV_FONT_DECLARE( ui_font_Display90);
+LV_IMG_DECLARE(ui_img_2105472862);  // assets/Icon-Small-50@2x.png
+LV_IMG_DECLARE(ui_img_77785195);    // assets/Icon-Small-50@2x 복사본.png
+
+LV_FONT_DECLARE(ui_font_Display16);
+LV_FONT_DECLARE(ui_font_Display24);
+LV_FONT_DECLARE(ui_font_Display40);
+LV_FONT_DECLARE(ui_font_Display90);
 
 void ui_init(void);
 
