@@ -4,7 +4,80 @@
 // Project name: wifi_manual_SquareLine_Project
 
 #include "../ui.h"
+#include "../ui_events.h"
 #include "lv_conf_internal.h"
+
+#define UI_LABEL_CREATE(lbl, parent, x_, y_, text_)                                             \
+  do {                                                                                          \
+    (lbl) = lv_label_create((parent));                                                          \
+    lv_obj_set_size((lbl), LV_SIZE_CONTENT, LV_SIZE_CONTENT);                                   \
+    lv_obj_set_pos((lbl), (x_), (y_));                                                          \
+    lv_obj_set_align((lbl), LV_ALIGN_CENTER);                                                   \
+    lv_label_set_text((lbl), (text_));                                                          \
+    lv_obj_set_style_text_font((lbl), &lv_font_montserrat_16, LV_PART_MAIN | LV_STATE_DEFAULT); \
+  } while (0)
+
+#define UI_DROPDOWN_CREATE_DRIVER(obj, posx, posy, index, evt_cb, user_data)           \
+  do {                                                                                 \
+    (obj) = lv_dropdown_create(ui_mainpanel2);                                         \
+    lv_dropdown_set_options((obj), (index));                                           \
+    lv_obj_add_style((obj), &style_sel, LV_PART_MAIN);                                 \
+    lv_obj_set_width((obj), 100);                                                      \
+    lv_obj_align((obj), LV_ALIGN_CENTER, (posx), (posy));                              \
+    lv_obj_add_event_cb((obj), (evt_cb), LV_EVENT_VALUE_CHANGED, (void *)(user_data)); \
+    lv_dropdown_set_selected((obj), 1);                                                \
+  } while (0)
+
+static void op1_evt_handler(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *obj = lv_event_get_target(e);
+
+  ui_src_t src = (ui_src_t)(uintptr_t)lv_event_get_user_data(e);
+
+  if (code == LV_EVENT_VALUE_CHANGED) {
+    static char buf[32];
+    lv_dropdown_get_selected_str(obj, buf, sizeof(buf));
+    // clang-format off
+    lv_evt_send((app_evt_t){ 
+      .type = APP_EVT_UI_VALUE_CHANGED, 
+      .src = src, 
+      .value = 0, 
+      .str = buf });
+  }
+  // clang-format on
+}
+
+static void ui_common_evt_handler(lv_event_t *e) {
+  lv_event_code_t code = lv_event_get_code(e);
+  lv_obj_t *obj = lv_event_get_target(e);
+
+  ui_src_t src = (ui_src_t)(uintptr_t)lv_event_get_user_data(e);
+
+  app_evt_t evt = { 0 };
+  evt.src = src;
+
+  static char buf[32] = { 0 };
+  if (code == LV_EVENT_VALUE_CHANGED) {
+    evt.type = APP_EVT_UI_VALUE_CHANGED;
+
+    // dropdown이면 선택 index를 value에 넣기
+    if (lv_obj_check_type(obj, &lv_dropdown_class)) {
+      // evt.value = (int32_t)lv_dropdown_get_selected(obj);
+      lv_dropdown_get_selected_str(obj, buf, sizeof(buf));
+      evt.str = buf;
+    } else if (lv_obj_check_type(obj, &lv_roller_class)) {
+      evt.value = (int32_t)lv_roller_get_selected(obj);
+    } else {
+      evt.value = 0;
+    }
+
+    lv_evt_send(evt);
+  } else if (code == LV_EVENT_CLICKED) {
+    evt.type = APP_EVT_UI_CLICKED;
+    evt.value = 1;
+    lv_evt_send(evt);
+  }
+}
 
 void ui_Screen1_screen_init(void) {
   ui_Screen1 = lv_obj_create(NULL);
@@ -58,7 +131,7 @@ void ui_Screen1_screen_init(void) {
   lv_obj_set_width(ui_Main_Panel_Btn2_Label, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_Main_Panel_Btn2_Label, LV_SIZE_CONTENT);  /// 1
   lv_obj_set_align(ui_Main_Panel_Btn2_Label, LV_ALIGN_CENTER);
-  lv_label_set_text(ui_Main_Panel_Btn2_Label, "btn2");
+  lv_label_set_text(ui_Main_Panel_Btn2_Label, "AGMO");
 
   ui_Side_Panel_Btn3 = lv_btn_create(ui_Side_Panel);
   lv_obj_set_width(ui_Side_Panel_Btn3, 100);
@@ -122,10 +195,20 @@ void ui_Screen1_screen_init(void) {
   ui_Label3 = lv_label_create(ui_mainpanel2);
   lv_obj_set_width(ui_Label3, LV_SIZE_CONTENT);   /// 1
   lv_obj_set_height(ui_Label3, LV_SIZE_CONTENT);  /// 1
-  lv_obj_set_x(ui_Label3, -237);
-  lv_obj_set_y(ui_Label3, -151);
+  lv_obj_set_x(ui_Label3, -250);
+  lv_obj_set_y(ui_Label3, -130);
   lv_obj_set_align(ui_Label3, LV_ALIGN_CENTER);
-  lv_label_set_text(ui_Label3, "panel2");
+  lv_obj_set_style_text_font(ui_Label3, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_label_set_text(ui_Label3, "RC_1");
+
+  ui_Label3 = lv_label_create(ui_mainpanel2);
+  lv_obj_set_width(ui_Label3, LV_SIZE_CONTENT);   /// 1
+  lv_obj_set_height(ui_Label3, LV_SIZE_CONTENT);  /// 1
+  lv_obj_set_x(ui_Label3, -250);
+  lv_obj_set_y(ui_Label3, -30);
+  lv_obj_set_align(ui_Label3, LV_ALIGN_CENTER);
+  lv_obj_set_style_text_font(ui_Label3, &lv_font_montserrat_24, LV_PART_MAIN | LV_STATE_DEFAULT);
+  lv_label_set_text(ui_Label3, "RC_2");
 
   ui_mainpanel3 = lv_obj_create(ui_Screen1);
   lv_obj_set_width(ui_mainpanel3, 593);
@@ -206,4 +289,41 @@ void ui_Screen1_screen_init(void) {
   lv_obj_add_event_cb(ui_Side_Panel_Btn2, ui_event_Side_Panel_Btn2, LV_EVENT_ALL, NULL);
   lv_obj_add_event_cb(ui_Side_Panel_Btn3, ui_event_Side_Panel_Btn3, LV_EVENT_ALL, NULL);
   lv_obj_add_event_cb(ui_ImgButton1, ui_event_ImgButton1, LV_EVENT_ALL, NULL);
+
+  UI_LABEL_CREATE(ui_Label_10, ui_mainpanel2, -250, -100, "UD_1");
+  UI_LABEL_CREATE(ui_Label_11, ui_mainpanel2, -180, -100, "UD_2");
+  UI_LABEL_CREATE(ui_Label_12, ui_mainpanel2, -110, -100, "UD_3");
+  UI_LABEL_CREATE(ui_Label_13, ui_mainpanel2, -40, -100, "UD_4");
+  UI_LABEL_CREATE(ui_Label_volt_RC1_M1, ui_mainpanel2, 50, -100, "RC1_M1");
+  UI_LABEL_CREATE(ui_Label_volt_RC1_M2, ui_mainpanel2, 150, -100, "RC1_M2");
+  UI_LABEL_CREATE(ui_Label_14, ui_mainpanel2, -250, 0, "UD_5");
+  UI_LABEL_CREATE(ui_Label_15, ui_mainpanel2, -180, 0, "UD_6");
+  UI_LABEL_CREATE(ui_Label_16, ui_mainpanel2, -110, 0, "UD_7");
+  UI_LABEL_CREATE(ui_Label_17, ui_mainpanel2, -40, 0, "UD_8");
+  UI_LABEL_CREATE(ui_Label_18, ui_mainpanel2, -250, 50, "UD_9");
+  UI_LABEL_CREATE(ui_Label_volt_RC2_M1, ui_mainpanel2, 50, 0, "RC1_M1");
+  UI_LABEL_CREATE(ui_Label_volt_RC2_M2, ui_mainpanel2, 150, 0, "RC1_M2");
+
+  /*A style to make the selected option larger*/
+  static lv_style_t style_sel;
+  lv_style_init(&style_sel);
+  lv_style_set_text_font(&style_sel, &lv_font_montserrat_16);
+
+  const char *select_driver = "RC1\nRC2\nBoth";
+  const char *target_volt = "0V\n1V\n2V\n3V\n4V\n5V\n6V\n7V\n8V\n9V\n10V\n11V\n12V";
+  const char *period_set = "100ms\n200ms\n300ms\n400ms\n500ms\n600ms\n700ms\n800ms\n900ms\n";
+  const char *run = "Run\nStop";
+
+  /*A roller on the middle with center aligned text, and auto (default) width*/
+  ui_s_driver = lv_dropdown_create(ui_mainpanel2);
+  lv_dropdown_set_options(ui_s_driver, select_driver);
+  lv_obj_add_style(ui_s_driver, &style_sel, LV_PART_MAIN);
+  lv_obj_set_width(ui_s_driver, 80);
+  lv_obj_align(ui_s_driver, LV_ALIGN_CENTER, -220, 150);
+  lv_obj_add_event_cb(ui_s_driver, op1_evt_handler, LV_EVENT_VALUE_CHANGED, (void *)UI_SRC_DRIVER_DD);
+  lv_dropdown_set_selected(ui_s_driver, 1);
+
+  UI_DROPDOWN_CREATE_DRIVER(ui_s_ud_1, -100, 150, target_volt, ui_common_evt_handler, UI_SRC_TARGET_VOLT);
+  UI_DROPDOWN_CREATE_DRIVER(ui_s_ud_1, 20, 150, period_set, ui_common_evt_handler, UI_SRC_MODE_PERIOD_SET);
+  UI_DROPDOWN_CREATE_DRIVER(ui_s_ud_1, 140, 150, run, ui_common_evt_handler, UI_SRC_BTN_RUN);
 }

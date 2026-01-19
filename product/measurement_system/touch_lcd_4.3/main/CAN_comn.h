@@ -37,11 +37,13 @@ extern "C" {
 #define EXAMPLE_TAG "TWAI Master"  // Log tag for example
 
 // Intervals:
-#define TRANSMIT_RATE_MS 10000  // Transmission interval in milliseconds
-#define POLLING_RATE_MS  1000   // Polling interval in milliseconds
+#define TRANSMIT_RATE_MS 10    // Transmission interval in milliseconds
+#define POLLING_RATE_MS  1000  // Polling interval in milliseconds
 
-esp_err_t waveshare_twai_init();     // Function to initialize TWAI
-esp_err_t waveshare_twai_receive();  // Function to receive TWAI messages
+esp_err_t waveshare_twai_init();                        // Function to initialize TWAI
+esp_err_t waveshare_twai_receive(twai_message_t *msg);  // Function to receive TWAI messages
+esp_err_t waveshare_twai_transmit(int user_data);       // Transmit data via TWAI
+esp_err_t evt_twai_transmit(uint8_t *payload);
 
 #ifdef __cplusplus
 }

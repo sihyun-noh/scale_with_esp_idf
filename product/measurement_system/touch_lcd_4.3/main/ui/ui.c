@@ -38,6 +38,30 @@ lv_obj_t *ui____initial_actions0;
 
 lv_obj_t *ui_mainPanel_btn_up;
 
+// CAN TEST
+
+lv_obj_t *ui_Label_10;  // user_data 1
+lv_obj_t *ui_Label_11;  // user_data 2
+lv_obj_t *ui_Label_12;  // user_data 3
+lv_obj_t *ui_Label_13;  // user_data 4
+lv_obj_t *ui_Label_14;  // user_data 5
+lv_obj_t *ui_Label_15;  // user_data 6
+lv_obj_t *ui_Label_16;  // user_data 7
+lv_obj_t *ui_Label_17;  // user_data 8
+lv_obj_t *ui_Label_18;  // user_data 9
+lv_obj_t *ui_Label_19;  //
+lv_obj_t *ui_Label_20;  //
+
+lv_obj_t *ui_Label_volt_RC1_M1;  // checked motor voltage value for rc1 M1
+lv_obj_t *ui_Label_volt_RC1_M2;  //
+lv_obj_t *ui_Label_volt_RC2_M1;  //
+lv_obj_t *ui_Label_volt_RC2_M2;  //
+
+lv_obj_t *ui_s_driver;
+lv_obj_t *ui_s_ud_1;
+lv_obj_t *ui_s_ud_3;
+lv_obj_t *ui_s_ud_4;
+
 ///////////////////// TEST LVGL SETTINGS ////////////////////
 #if LV_COLOR_DEPTH != 16
 #error "LV_COLOR_DEPTH should be 16bit to match SquareLine Studio's settings"

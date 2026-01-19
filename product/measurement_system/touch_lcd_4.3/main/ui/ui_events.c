@@ -3,9 +3,60 @@
 // LVGL version: 8.3.6
 // Project name: wifi_manual_SquareLine_Project
 
-#include "ui.h"
+#include "ui_events.h"
 
-void wifi_scan_start(lv_event_t * e)
-{
-	// Your code here
+#include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
+#include "freertos/portmacro.h"
+
+static const char *TAG = "app_evt";
+
+#ifndef APP_EVT_QUEUE_LEN
+#define APP_EVT_QUEUE_LEN 32
+#endif
+
+static QueueHandle_t s_evt_q = NULL;
+
+void lv_evt_init(void) {
+  if (s_evt_q != NULL) {
+    return;  // 이미 초기화됨
+  }
+
+  s_evt_q = xQueueCreate(APP_EVT_QUEUE_LEN, sizeof(app_evt_t));
+  if (s_evt_q == NULL) {
+    ESP_LOGE(TAG, "Failed to create event queue");
+  }
+}
+
+bool lv_evt_send(app_evt_t evt) {
+  if (s_evt_q == NULL)
+    return false;
+
+  // 논블로킹(0 ticks). 큐가 꽉 차면 drop
+  BaseType_t ok = xQueueSend(s_evt_q, &evt, 0);
+  return (ok == pdTRUE);
+}
+
+bool lv_evt_send_from_isr(app_evt_t evt) {
+  if (s_evt_q == NULL)
+    return false;
+
+  BaseType_t higher_woken = pdFALSE;
+  BaseType_t ok = xQueueSendFromISR(s_evt_q, &evt, &higher_woken);
+
+  // ISR에서 더 높은 우선순위 태스크를 깨웠다면 즉시 스위치 요청
+  if (higher_woken == pdTRUE) {
+    portYIELD_FROM_ISR();
+  }
+
+  return (ok == pdTRUE);
+}
+
+bool lv_evt_recv(app_evt_t *evt, TickType_t timeout) {
+  if (s_evt_q == NULL || evt == NULL)
+    return false;
+
+  BaseType_t ok = xQueueReceive(s_evt_q, evt, timeout);
+  return (ok == pdTRUE);
 }

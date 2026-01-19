@@ -46,6 +46,29 @@ extern lv_obj_t *ui____initial_actions0;
 
 extern lv_obj_t *ui_mainPanel_btn_up;
 
+// CAN TEST
+
+extern lv_obj_t *ui_Label_10;           // user_data 1
+extern lv_obj_t *ui_Label_11;           // user_data 2
+extern lv_obj_t *ui_Label_12;           // user_data 3
+extern lv_obj_t *ui_Label_13;           // user_data 4
+extern lv_obj_t *ui_Label_14;           // user_data 5
+extern lv_obj_t *ui_Label_15;           // user_data 6
+extern lv_obj_t *ui_Label_16;           // user_data 7
+extern lv_obj_t *ui_Label_17;           // user_data 8
+extern lv_obj_t *ui_Label_18;           // user_data 9
+extern lv_obj_t *ui_Label_19;           //
+extern lv_obj_t *ui_Label_20;           //
+extern lv_obj_t *ui_Label_volt_RC1_M1;  // checked motor voltage value for rc1 M1
+extern lv_obj_t *ui_Label_volt_RC1_M2;  //
+extern lv_obj_t *ui_Label_volt_RC2_M1;  //
+extern lv_obj_t *ui_Label_volt_RC2_M2;  //
+
+extern lv_obj_t *ui_s_driver;
+extern lv_obj_t *ui_s_ud_1;
+extern lv_obj_t *ui_s_ud_3;
+extern lv_obj_t *ui_s_ud_4;
+
 LV_IMG_DECLARE(ui_img_2105472862);  // assets/Icon-Small-50@2x.png
 LV_IMG_DECLARE(ui_img_77785195);    // assets/Icon-Small-50@2x 복사본.png
 

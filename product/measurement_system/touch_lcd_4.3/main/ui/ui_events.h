@@ -6,12 +6,88 @@
 #ifndef _UI_EVENTS_H
 #define _UI_EVENTS_H
 
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"   // TickType_t
+#include "freertos/queue.h"  // QueueHandle_t
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+typedef enum {
+  UI_EVT_NONE = 0,
+  UI_SRC_DRIVER_DD,
+  UI_SRC_TARGET_VOLT,
+  UI_SRC_MODE_PERIOD_SET,
+  UI_SRC_BTN_RUN,
+  UI_SRC_BTN_STOP,
+  // ... 필요시 추가
+} ui_src_t;
+
+typedef enum {
+  APP_EVT_UI_VALUE_CHANGED,
+  APP_EVT_UI_CLICKED,
+} app_evt_type_t;
+
+typedef struct {
+  app_evt_type_t type;
+  ui_src_t src;   // 어떤 UI에서 왔는지
+  int32_t value;  // 필요 시 파라미터 (모드 번호, 버튼 값 등)
+  char *str;
+} app_evt_t;
+
+/**
+ * @brief  Initialize the lvgl application user event system.
+ *
+ * Creates internal resources (e.g., FreeRTOS queue) used to pass events from
+ * UI/ISR-safe contexts to the application task.
+ *
+ * @note   Call this once before calling app_evt_send/app_evt_recv.
+ */
+void lv_evt_init(void);
+
+/**
+ * @brief  Send a lvgl application event to the event queue (non-blocking).
+ *
+ * Enqueues the given event for later processing by the application task.
+ * This function is typically called from UI callbacks or worker tasks.
+ *
+ * @param  evt  Event to send (copied into the queue).
+ *
+ * @return true if queued, false if the queue was not ready or full (dropped).
+ */
+bool lv_evt_send(app_evt_t evt);
+
+/**
+ * @brief  Send a lvgl application event from ISR context (ISR-safe).
+ *
+ * Enqueues the event using FreeRTOS ISR API. If an event is successfully queued,
+ * this function may request a context switch.
+ *
+ * @param  evt  Event to send (copied into the queue).
+ *
+ * @return true if queued, false if the queue was not ready or full (dropped).
+ */
+bool lv_evt_send_from_isr(app_evt_t evt);
+
+/**
+ * @brief  Receive a lvgl application event from the event queue.
+ *
+ * Waits up to @p timeout ticks for an event. On success, the received event is
+ * written to @p evt.
+ *
+ * @param  evt      Output pointer to store the received event. Must not be NULL.
+ * @param  timeout  Maximum time to wait in RTOS ticks (use portMAX_DELAY to wait forever).
+ *
+ * @return true if an event was received and stored into @p evt, false on timeout or error.
+ */
+bool lv_evt_recv(app_evt_t *evt, TickType_t timeout);
+
 #ifdef __cplusplus
-} /*extern "C"*/
+}
 #endif
 
 #endif
