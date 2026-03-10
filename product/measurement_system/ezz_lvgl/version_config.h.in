@@ -1,0 +1,6 @@
+#ifndef _VERSION_CONFIG_H_
+#define _VERSION_CONFIG_H_
+
+#define FW_VERSION "@FW_VERSION@"
+
+#endif // _VERSION_CONFIG_H_

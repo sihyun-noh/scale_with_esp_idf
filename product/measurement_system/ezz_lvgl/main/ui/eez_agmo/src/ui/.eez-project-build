@@ -1,0 +1,26 @@
+{
+  "files": [
+    "actions.h",
+    "eez-flow.cpp",
+    "eez-flow.h",
+    "fonts.h",
+    "images.c",
+    "images.h",
+    "screens.c",
+    "screens.h",
+    "structs.h",
+    "styles.c",
+    "styles.h",
+    "ui.c",
+    "ui.h",
+    "ui_font_maru_buri_regular_kr16.c",
+    "ui_font_maru_buri_regular_kr20.c",
+    "ui_font_maru_buri_regular_kr28.c",
+    "ui_image_agmo.c",
+    "ui_image_arc_indicator.c",
+    "ui_image_arc_main.c",
+    "ui_image_motor.c",
+    "ui_image_rda.c",
+    "vars.h"
+  ]
+}
