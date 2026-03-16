@@ -1,7 +1,9 @@
 
 
 #include "ui_bridge.h"
+#include <string.h>
 #include "esp_log.h"
+#include "ui_msg.h"
 
 static const char *TAG = "ui_bridge";
 static bridge_t s_bridge;
@@ -33,7 +35,9 @@ static bool send_to_queue_int(QueueHandle_t q, ui_msg_id_t id, int32_t value, Ti
   if (!q)
     return false;
 
-  ui_msg_t msg = { .id = id, .value = value, .str = NULL };
+  ui_msg_t msg = { 0 };
+  msg.id = id;
+  msg.value = value;
 
   // xQueueSend is thread-safe
   return xQueueSend(q, &msg, to_ticks) == pdTRUE;
@@ -43,7 +47,15 @@ static bool send_to_queue_str(QueueHandle_t q, ui_msg_id_t id, char *value, Tick
   if (!q)
     return false;
 
-  ui_msg_t msg = { .id = id, .value = 0, .str = value };
+  if (value == NULL)
+    return false;
+
+  ui_msg_t msg = { 0 };
+
+  msg.id = id;
+  msg.value = 0;
+  memcpy(&msg.str, value, sizeof(msg.str) - 1);
+  msg.str[sizeof(msg.str) - 1] = '\0';
 
   // xQueueSend is thread-safe
   return xQueueSend(q, &msg, to_ticks) == pdTRUE;

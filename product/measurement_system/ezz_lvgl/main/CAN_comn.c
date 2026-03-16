@@ -15,12 +15,55 @@ static bool driver_installed = false;  // Flag to check if the driver is install
 unsigned long previousMillis = 0;      // Will store last time a message was sent
 
 // TWAI configuration settings
-// static const twai_timing_config_t t_config = TWAI_TIMING_CONFIG_500KBITS();  // Timing configuration for 500 kbps
-static const twai_timing_config_t t_config = TWAI_TIMING_CONFIG_1MBITS();
+static const twai_timing_config_t t_config = TWAI_TIMING_CONFIG_500KBITS();  // Timing configuration for 500 kbps
+// static const twai_timing_config_t t_config = TWAI_TIMING_CONFIG_1MBITS();
 static const twai_filter_config_t f_config =
     TWAI_FILTER_CONFIG_ACCEPT_ALL();  // Filter configuration to accept all messages
 static const twai_general_config_t g_config =
     TWAI_GENERAL_CONFIG_DEFAULT(TX_GPIO_NUM, RX_GPIO_NUM, TWAI_MODE_NORMAL);  // General configuration in normal mode
+
+static inline bool can_use_extended_frame(void) {
+  return CAN_FRAME_FORMAT == CAN_FRAME_EXTENDED;
+}
+
+static const char *can_frame_format_name(void) {
+  return can_use_extended_frame() ? "EXTENDED" : "STANDARD";
+}
+
+static esp_err_t validate_can_identifier(uint32_t can_id) {
+  if (can_use_extended_frame()) {
+    if (can_id > 0x1FFFFFFF) {
+      ESP_LOGE(TAG, "Invalid extended CAN ID: 0x%08" PRIx32, can_id);
+      return ESP_ERR_INVALID_ARG;
+    }
+  } else {
+    if (can_id > 0x7FF) {
+      ESP_LOGE(TAG, "Invalid standard CAN ID: 0x%08" PRIx32, can_id);
+      return ESP_ERR_INVALID_ARG;
+    }
+  }
+
+  return ESP_OK;
+}
+
+static bool can_rx_filter_match(const twai_message_t *msg) {
+#if !CAN_RX_FILTER_ENABLE
+  (void)msg;
+  return true;
+#else
+  if (!msg) {
+    return false;
+  }
+
+#if CONFIG_APP_RUN_MODE_UPPER
+  return msg->extd &&
+         (msg->identifier == CAN_RX_FILTER_UPPER_STATUS_ID || msg->identifier == CAN_RX_FILTER_UPPER_STATUS_RPM_ID);
+#else
+  return (!msg->extd) &&
+         (msg->identifier == CAN_RX_FILTER_SIBI_ID_1 || msg->identifier == CAN_RX_FILTER_SIBI_ID_2);
+#endif
+#endif
+}
 
 #if 0
 static esp_err_t i2c_master_init(void) {
@@ -102,11 +145,19 @@ uint8_t can_cmd_tabel[4][8] = { { 0x3C, 0x72, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00
                                 { 0x3C, 0x72, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00 } };
 
 // Function to send a message
-static void send_message(int user_data, uint32_t can_id) {
+static esp_err_t send_message(int user_data, uint32_t can_id) {
+  esp_err_t id_check = validate_can_identifier(can_id);
+  if (id_check != ESP_OK) {
+    return id_check;
+  }
+
   // Configure message to transmit
-  twai_message_t message;        // Message structure
-  message.identifier = can_id;   // Message identifier
-  message.data_length_code = 8;  // Data length code
+  twai_message_t message = {
+    .identifier = can_id,
+    .extd = can_use_extended_frame(),
+    .rtr = 0,
+    .data_length_code = 8,
+  };
 
   memcpy(message.data, can_cmd_tabel[user_data], sizeof(can_cmd_tabel[user_data]));
   print_hex(message.data, sizeof(message.data));
@@ -118,14 +169,24 @@ static void send_message(int user_data, uint32_t can_id) {
   } else {
     printf("Failed to queue message for transmission(err : %d)\n", ret);  // Failure message
   }
+
+  return ret;
 }
 
 // Function to send a message
-static void evt_send_message(uint8_t *payload, uint32_t can_id) {
+static esp_err_t evt_send_message(uint8_t *payload, uint32_t can_id) {
+  esp_err_t id_check = validate_can_identifier(can_id);
+  if (id_check != ESP_OK) {
+    return id_check;
+  }
+
   // Configure message to transmit
-  twai_message_t message;        // Message structure
-  message.identifier = can_id;   // Message identifier
-  message.data_length_code = 8;  // Data length code
+  twai_message_t message = {
+    .identifier = can_id,
+    .extd = can_use_extended_frame(),
+    .rtr = 0,
+    .data_length_code = 8,
+  };
 
   memcpy(message.data, payload, sizeof(message.data));
   print_hex(message.data, sizeof(message.data));
@@ -137,6 +198,8 @@ static void evt_send_message(uint8_t *payload, uint32_t can_id) {
   } else {
     printf("Failed to queue message for transmission(err : %d)\n", ret);  // Failure message
   }
+
+  return ret;
 }
 
 esp_err_t waveshare_twai_init()  // Initialize TWAI driver
@@ -164,6 +227,7 @@ esp_err_t waveshare_twai_init()  // Initialize TWAI driver
   // Start TWAI driver
   if (twai_start() == ESP_OK) {
     ESP_LOGI(TAG, "Driver started");  // Log driver start success
+    ESP_LOGI(TAG, "CAN config: baudrate=500kbps, frame=%s", can_frame_format_name());
   } else {
     ESP_LOGI(TAG, "Failed to start driver");  // Log driver start failure
     return ESP_FAIL;
@@ -231,7 +295,11 @@ esp_err_t waveshare_twai_receive(twai_message_t *msg)  // Receive messages via T
 #else
   esp_err_t err = ESP_FAIL;
   if (alerts_triggered & TWAI_ALERT_RX_DATA) {  // If RX data alert is triggered
-    err = twai_receive(msg, portMAX_DELAY);     // 실시간 대기
+    while ((err = twai_receive(msg, portMAX_DELAY)) == ESP_OK) {
+      if (can_rx_filter_match(msg)) {
+        return ESP_OK;
+      }
+    }
   }
   return err;
 #endif
@@ -279,8 +347,7 @@ esp_err_t waveshare_twai_transmit(int user_data, uint32_t can_id) {
   }
 #endif
 
-  send_message(user_data, can_id);  // Call send message function
-  return ESP_OK;                    // Return success status
+  return send_message(user_data, can_id);  // Call send message function
 }
 
 // Function to transmit messages
@@ -325,6 +392,5 @@ esp_err_t evt_twai_transmit(uint8_t *payload, uint32_t can_id) {
   }
 #endif
 
-  evt_send_message(payload, can_id);  // Call send message function
-  return ESP_OK;                      // Return success status
+  return evt_send_message(payload, can_id);  // Call send message function
 }

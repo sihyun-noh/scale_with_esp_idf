@@ -7,6 +7,7 @@
 #include "freertos/task.h"      // FreeRTOS task management
 #include "freertos/queue.h"     // FreeRTOS queue management
 #include "freertos/semphr.h"    // FreeRTOS semaphore management
+#include "sdkconfig.h"
 #include "esp_err.h"            // ESP-IDF error codes
 #include "esp_log.h"            // ESP-IDF logging library
 #include "driver/twai.h"        // TWAI driver header
@@ -50,6 +51,21 @@ extern "C" {
 // Intervals:
 #define TRANSMIT_RATE_MS 10    // Transmission interval in milliseconds
 #define POLLING_RATE_MS  1000  // Polling interval in milliseconds
+
+#define CAN_FRAME_STANDARD 0
+#define CAN_FRAME_EXTENDED 1
+
+#ifndef CAN_FRAME_FORMAT
+#define CAN_FRAME_FORMAT CAN_FRAME_EXTENDED
+#endif
+
+#define CAN_RX_FILTER_ENABLE 1
+
+#define CAN_RX_FILTER_SIBI_ID_1 0x00000001UL
+#define CAN_RX_FILTER_SIBI_ID_2 0x00000002UL
+
+#define CAN_RX_FILTER_UPPER_STATUS_ID     0x18FF0310UL
+#define CAN_RX_FILTER_UPPER_STATUS_RPM_ID 0x18FF0300UL
 
 esp_err_t waveshare_twai_init();                                    // Function to initialize TWAI
 esp_err_t waveshare_twai_receive(twai_message_t *msg);              // Function to receive TWAI messages

@@ -86,6 +86,19 @@ menu "AGMO Product"
     config TARGET_WAVESHARE_5
         bool "Waveshare 5 inch"
 
+    choice APP_RUN_MODE
+        prompt "Application Run Mode"
+        default APP_RUN_MODE_SIBI
+        help
+            Select which runtime module to start after common initialization.
+
+        config APP_RUN_MODE_SIBI
+            bool "SIBI monitor"
+
+        config APP_RUN_MODE_UPPER
+            bool "Upper task"
+    endchoice
+
 endmenu
 
     menu "Wifi Scan Configuration"

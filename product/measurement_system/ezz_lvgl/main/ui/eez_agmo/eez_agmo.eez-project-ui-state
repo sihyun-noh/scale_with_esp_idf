@@ -1,8 +1,7 @@
 {
   "navigation": {
     "selectedUserPageObject": "[eez_agmo.eez-project]:/userPages/0",
-    "selectedActionObject": "[eez_agmo.eez-project]:/actions/-1",
-    "selectedGlobalVariableObject": "[eez_agmo.eez-project]:/variables/globalVariables/4",
+    "selectedGlobalVariableObject": "[eez_agmo.eez-project]:/variables/globalVariables/5",
     "selectedFontObject": "[eez_agmo.eez-project]:/fonts/0",
     "selectedBitmapObject": "[eez_agmo.eez-project]:/bitmaps/4",
     "subnavigationSelectedItems": {
@@ -28,7 +27,7 @@
           {
             "type": "border",
             "selected": 1,
-            "size": 355.5,
+            "size": 230.5,
             "location": "right",
             "children": [
               {
@@ -202,7 +201,8 @@
             {
               "type": "tabset",
               "id": "EDITORS",
-              "weight": 42.132221034814364,
+              "weight": 45.916576646931794,
+              "selected": 1,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
@@ -243,12 +243,13 @@
                   },
                   "icon": "material:font_download"
                 }
-              ]
+              ],
+              "active": true
             },
             {
               "type": "tabset",
               "id": "#3b2cc5be-710b-450a-9a09-bcb787db9abd",
-              "weight": 40.22608310968236,
+              "weight": 36.44172749756492,
               "children": [
                 {
                   "type": "tab",
@@ -266,8 +267,7 @@
                   "enableClose": false,
                   "icon": "svg:components"
                 }
-              ],
-              "active": true
+              ]
             }
           ]
         }
@@ -1084,9 +1084,7 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "0": {
-            "$selected": true
-          },
+          "0": {},
           "3": {},
           "5": {},
           "7": {},
@@ -1096,14 +1094,17 @@
           "18": {},
           "31": {},
           "33": {}
+        },
+        "5": {
+          "$selected": true
         }
       },
       "transform": {
         "translate": {
-          "x": -103.70364842454396,
-          "y": -55.576818230219374
+          "x": -121.83899120122052,
+          "y": -210.59352120926133
         },
-        "scale": 0.5
+        "scale": 0.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1173,16 +1174,17 @@
   "showComponentDescriptions": true,
   "logsPanelFilter": "all",
   "selectedStylePropertyName": "",
-  "lvglPart": "MAIN",
+  "lvglPart": "KNOB",
   "lvglState": "DEFAULT",
   "lvglExpandedPropertiesGroup": [
-    "BORDER",
     "BACKGROUND",
-    "TEXT"
+    "TEXT",
+    "MISCELLANEOUS",
+    "ARC"
   ],
   "showInactiveFlowsInDebugger": true,
   "globalFlowZoom": true,
-  "flowZoom": 0.5,
+  "flowZoom": 0.75,
   "implementationLanguage": "C",
   "openDialogDefaultPath": "/Users/sihyun.noh/Downloads/마루 부리/MaruBuriTTF/MaruBuri-Regular.ttf"
 }

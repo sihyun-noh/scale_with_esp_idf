@@ -1,6 +1,9 @@
 idf_component_register(
     SRCS
         "main.cpp"
+        "monitor_runtime.cpp"
+        "sibi_monitor.cpp"
+        "upper_task.cpp"
         "mqtt.c"
         "CAN_comn.c"
         "math_rpm.c"
@@ -23,6 +26,7 @@ idf_component_register(
         #bridge
         "ui/glue/ui_bridge.c"
         "ui/glue/ui_adaptor.c"
+        "ui/glue/ui_struct_bridge.cpp"
         # "480_800_16_bmp.c"
     INCLUDE_DIRS
         "."

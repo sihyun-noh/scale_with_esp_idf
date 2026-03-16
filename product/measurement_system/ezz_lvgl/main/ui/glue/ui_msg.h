@@ -21,13 +21,21 @@ typedef enum {
   UI_EVT_FB_DRIVER1_L,
   UI_EVT_FB_DRIVER2_R,
   UI_EVT_FB_DRIVER2_L,
+  UI_EVT_VCU_STATUS_D0,
+  UI_EVT_VCU_STATUS_D1,
+  UI_EVT_VCU_STATUS_D2,
+  UI_EVT_VCU_STATUS_D3,
+  UI_EVT_VCU_STATUS_D4,
+  UI_EVT_VCU_STATUS_D5,
+  UI_EVT_VCU_STATUS_D6,
+  UI_EVT_VCU_STATUS_D7,
 
 } ui_msg_id_t;
 
 typedef struct {
   ui_msg_id_t id;
   int32_t value;
-  char *str;
+  char str[32];
 } ui_msg_t;
 
 #ifdef __cplusplus
