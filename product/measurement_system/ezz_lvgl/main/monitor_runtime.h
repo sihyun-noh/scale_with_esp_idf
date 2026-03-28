@@ -34,6 +34,9 @@ typedef enum {
   TX_CMD_SET_USER_VALUE,
   TX_CMD_SET_PERIOD,
   TX_CMD_RUN_STOP,
+  TX_CMD_3XIS_THROTTLE,
+  TX_CMD_3XIS_STEERING,
+  TX_CMD_3XIS_AUTOMATION,
 } tx_cmd_type_t;
 
 typedef struct {

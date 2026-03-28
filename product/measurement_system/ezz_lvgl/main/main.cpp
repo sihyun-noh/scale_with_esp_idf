@@ -126,6 +126,31 @@ void eez_lv_tick_task(void *arg) {
 
       if (msg.id == UI_EVT_VCU_STATUS_D7)
         ui_struct_set_field(7, msg.str);
+
+      // vehicle status
+      if (msg.id == UI_EVT_VCU_VEHICLE_STATUS_D0)
+        ui_struct_vehicle_field(0, msg.str);
+
+      if (msg.id == UI_EVT_VCU_VEHICLE_STATUS_D1)
+        ui_struct_vehicle_field(1, msg.str);
+
+      if (msg.id == UI_EVT_VCU_VEHICLE_STATUS_D2)
+        ui_struct_vehicle_field(2, msg.str);
+
+      if (msg.id == UI_EVT_VCU_VEHICLE_STATUS_D3)
+        ui_struct_vehicle_field(3, msg.str);
+
+      if (msg.id == UI_EVT_VCU_VEHICLE_STATUS_D4)
+        ui_struct_vehicle_field(4, msg.str);
+
+      if (msg.id == UI_EVT_VCU_VEHICLE_STATUS_D5)
+        ui_struct_vehicle_field(5, msg.str);
+
+      if (msg.id == UI_EVT_VCU_VEHICLE_STATUS_D6)
+        ui_struct_vehicle_field(6, msg.str);
+
+      if (msg.id == UI_EVT_VCU_VEHICLE_STATUS_D7)
+        ui_struct_vehicle_field(7, msg.str);
     }
   }
 }
@@ -181,10 +206,10 @@ xTaskCreatePinnedToCore(
 #if 1
   vTaskDelay(pdMS_TO_TICKS(100));
   ESP_ERROR_CHECK(waveshare_twai_init());  // Initialize the TWAI interface and check for errors
-#if CONFIG_APP_RUN_MODE_UPPER
-  upper_process_run();
-#else
+#if CONFIG_APP_RUN_MODE_SIBI
   sibi_process_run();
+#else
+  upper_process_run();
 #endif
 
 #endif

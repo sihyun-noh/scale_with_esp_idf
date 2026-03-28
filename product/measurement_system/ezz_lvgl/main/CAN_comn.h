@@ -8,10 +8,10 @@
 #include "freertos/queue.h"     // FreeRTOS queue management
 #include "freertos/semphr.h"    // FreeRTOS semaphore management
 #include "sdkconfig.h"
-#include "esp_err.h"            // ESP-IDF error codes
-#include "esp_log.h"            // ESP-IDF logging library
-#include "driver/twai.h"        // TWAI driver header
-#include <esp_timer.h>          // ESP timer library
+#include "esp_err.h"      // ESP-IDF error codes
+#include "esp_log.h"      // ESP-IDF logging library
+#include "driver/twai.h"  // TWAI driver header
+#include <esp_timer.h>    // ESP timer library
 
 #include "driver/i2c.h"   // I2C driver header
 #include "driver/gpio.h"  // GPIO driver header
@@ -64,12 +64,15 @@ extern "C" {
 #define CAN_RX_FILTER_SIBI_ID_1 0x00000001UL
 #define CAN_RX_FILTER_SIBI_ID_2 0x00000002UL
 
-#define CAN_RX_FILTER_UPPER_STATUS_ID     0x18FF0310UL
-#define CAN_RX_FILTER_UPPER_STATUS_RPM_ID 0x18FF0300UL
+#define CAN_RX_FILTER_UPPER_STATUS_ID           0x18FF0310UL
+#define CAN_RX_FILTER_UPPER_STATUS_RPM_ID       0x18FF0300UL
+#define CAN_RX_FILTER_UPPER_STATUS_VEHICLE_ID   0x18FF0320UL
+#define CAN_RX_FILTER_UPPER_STATUS_VEHICLE_2_ID 0x18FF0330UL
 
-esp_err_t waveshare_twai_init();                                    // Function to initialize TWAI
-esp_err_t waveshare_twai_receive(twai_message_t *msg);              // Function to receive TWAI messages
-esp_err_t waveshare_twai_transmit(int user_data, uint32_t can_id);  // Transmit data via TWAI
+esp_err_t waveshare_twai_init();                              // Function to initialize TWAI
+esp_err_t waveshare_twai_receive(twai_message_t *msg);        // Function to receive TWAI messages
+esp_err_t waveshare_twai_receive_drain(twai_message_t *msg);  // Queue-first receive path for RX miss testing
+esp_err_t waveshare_twai_transmit(int num, uint32_t can_id);  // Transmit data via TWAI
 esp_err_t evt_twai_transmit(uint8_t *payload, uint32_t can_id);
 
 #ifdef __cplusplus

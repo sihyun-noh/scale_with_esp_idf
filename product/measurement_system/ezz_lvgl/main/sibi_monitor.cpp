@@ -69,7 +69,7 @@ static void parse_rx_and_push_gui(const twai_message_t *m) {
     return;
   }
 
-  if (type == 0x72) {
+  if (type == 0x7a) {
     if (id >= 1 && id <= 2) {
       evt.type = GUI_EVT_SIBI_VOLT_FLOAT;
       evt.id = id;
@@ -110,25 +110,19 @@ static void twai_tx_task(void *arg) {
 
   tx_cmd_t cmd;
 
+  uint8_t payload_1[8] = { 0x3c, 0x72, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00 };
+  uint8_t payload_2[8] = { 0x3c, 0x72, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00 };
   while (1) {
     while (monitor_runtime_tx_cmd_receive(&cmd, 0)) {
       switch (cmd.type) {
-        case TX_CMD_SET_DRIVER:
-          break;
-        case TX_CMD_SET_USER_VALUE:
-          evt_twai_transmit(cmd.payload, CAN_ID_0X01);
-          break;
-        case TX_CMD_SET_PERIOD:
-          evt_twai_transmit(cmd.payload, CAN_ID_0X01);
-          break;
-        case TX_CMD_RUN_STOP:
-          evt_twai_transmit(cmd.payload, CAN_ID_0X01);
-          break;
-        default:
-          break;
+        case TX_CMD_SET_DRIVER: break;
+        case TX_CMD_SET_USER_VALUE: evt_twai_transmit(cmd.payload, CAN_ID_0X01); break;
+        case TX_CMD_SET_PERIOD: evt_twai_transmit(cmd.payload, CAN_ID_0X01); break;
+        case TX_CMD_RUN_STOP: evt_twai_transmit(cmd.payload, CAN_ID_0X01); break;
+        default: break;
       }
     }
-
+#if 1
     for (int i = 0; i < 2; i++) {
       ESP_LOGW(TAG, "TX period");
 
@@ -144,6 +138,7 @@ static void twai_tx_task(void *arg) {
 
       vTaskDelay(cmd_interval);
     }
+#endif
     vTaskDelay(cycle_delay);
   }
 }

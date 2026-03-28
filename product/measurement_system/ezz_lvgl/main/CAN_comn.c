@@ -15,11 +15,15 @@ static bool driver_installed = false;  // Flag to check if the driver is install
 unsigned long previousMillis = 0;      // Will store last time a message was sent
 
 // TWAI configuration settings
+
+#if CONFIG_APP_RUN_MODE_UPPER
 static const twai_timing_config_t t_config = TWAI_TIMING_CONFIG_500KBITS();  // Timing configuration for 500 kbps
-// static const twai_timing_config_t t_config = TWAI_TIMING_CONFIG_1MBITS();
+#else
+static const twai_timing_config_t t_config = TWAI_TIMING_CONFIG_1MBITS();
+#endif
 static const twai_filter_config_t f_config =
     TWAI_FILTER_CONFIG_ACCEPT_ALL();  // Filter configuration to accept all messages
-static const twai_general_config_t g_config =
+static twai_general_config_t g_config =
     TWAI_GENERAL_CONFIG_DEFAULT(TX_GPIO_NUM, RX_GPIO_NUM, TWAI_MODE_NORMAL);  // General configuration in normal mode
 
 static inline bool can_use_extended_frame(void) {
@@ -57,10 +61,11 @@ static bool can_rx_filter_match(const twai_message_t *msg) {
 
 #if CONFIG_APP_RUN_MODE_UPPER
   return msg->extd &&
-         (msg->identifier == CAN_RX_FILTER_UPPER_STATUS_ID || msg->identifier == CAN_RX_FILTER_UPPER_STATUS_RPM_ID);
+         (msg->identifier == CAN_RX_FILTER_UPPER_STATUS_ID || msg->identifier == CAN_RX_FILTER_UPPER_STATUS_RPM_ID ||
+          msg->identifier == CAN_RX_FILTER_UPPER_STATUS_VEHICLE_ID ||
+          msg->identifier == CAN_RX_FILTER_UPPER_STATUS_VEHICLE_2_ID);
 #else
-  return (!msg->extd) &&
-         (msg->identifier == CAN_RX_FILTER_SIBI_ID_1 || msg->identifier == CAN_RX_FILTER_SIBI_ID_2);
+  return (!msg->extd) && (msg->identifier == CAN_RX_FILTER_SIBI_ID_1 || msg->identifier == CAN_RX_FILTER_SIBI_ID_2);
 #endif
 #endif
 }
@@ -141,8 +146,8 @@ uint8_t can_cmd_tabel[11][8] = {
   { 0x3C, 0x72, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00 }
 };
 */
-uint8_t can_cmd_tabel[4][8] = { { 0x3C, 0x72, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00 },
-                                { 0x3C, 0x72, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00 } };
+uint8_t can_cmd_tabel[4][8] = { { 0x3C, 0x7A, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00 },
+                                { 0x3C, 0x7A, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00 } };
 
 // Function to send a message
 static esp_err_t send_message(int user_data, uint32_t can_id) {
@@ -154,7 +159,8 @@ static esp_err_t send_message(int user_data, uint32_t can_id) {
   // Configure message to transmit
   twai_message_t message = {
     .identifier = can_id,
-    .extd = can_use_extended_frame(),
+    // .extd = can_use_extended_frame(),
+    .extd = 0,
     .rtr = 0,
     .data_length_code = 8,
   };
@@ -163,7 +169,7 @@ static esp_err_t send_message(int user_data, uint32_t can_id) {
   print_hex(message.data, sizeof(message.data));
 
   // Queue message for transmission
-  esp_err_t ret = twai_transmit(&message, pdMS_TO_TICKS(1000));
+  esp_err_t ret = twai_transmit(&message, pdMS_TO_TICKS(10));
   if (ret == ESP_OK) {
     printf("Message queued for transmission\n");  // Success message
   } else {
@@ -192,7 +198,7 @@ static esp_err_t evt_send_message(uint8_t *payload, uint32_t can_id) {
   print_hex(message.data, sizeof(message.data));
 
   // Queue message for transmission
-  esp_err_t ret = twai_transmit(&message, pdMS_TO_TICKS(1000));
+  esp_err_t ret = twai_transmit(&message, pdMS_TO_TICKS(10));
   if (ret == ESP_OK) {
     printf("Message queued for transmission\n");  // Success message
   } else {
@@ -216,6 +222,9 @@ esp_err_t waveshare_twai_init()  // Initialize TWAI driver
   i2c_master_write_to_device(I2C_MASTER_NUM, 0x38, &write_buf, 1, I2C_MASTER_TIMEOUT_MS / portTICK_PERIOD_MS);
 #endif
   // Install TWAI driver
+
+  g_config.rx_queue_len = 64;
+  g_config.tx_queue_len = 16;
 
   if (twai_driver_install(&g_config, &t_config, &f_config) == ESP_OK) {
     ESP_LOGI(TAG, "Driver installed");  // Log driver installation success
@@ -260,10 +269,11 @@ esp_err_t waveshare_twai_receive(twai_message_t *msg)  // Receive messages via T
   }
 
   // Check if alert happened
-  uint32_t alerts_triggered;                                            // Variable to hold triggered alerts
-  twai_read_alerts(&alerts_triggered, pdMS_TO_TICKS(POLLING_RATE_MS));  // Read triggered alerts
-  twai_status_info_t twaistatus;                                        // Variable to hold TWAI status information
-  twai_get_status_info(&twaistatus);                                    // Get TWAI status information
+  uint32_t alerts_triggered;  // Variable to hold triggered alerts
+  // twai_read_alerts(&alerts_triggered, pdMS_TO_TICKS(POLLING_RATE_MS));  // Read triggered alerts
+  twai_read_alerts(&alerts_triggered, pdMS_TO_TICKS(10));  // Read triggered alerts
+  twai_status_info_t twaistatus;                           // Variable to hold TWAI status information
+  twai_get_status_info(&twaistatus);                       // Get TWAI status information
 
   // Handle alerts
   if (alerts_triggered & TWAI_ALERT_ERR_PASS) {                         // Check for error passive alert
@@ -276,11 +286,11 @@ esp_err_t waveshare_twai_receive(twai_message_t *msg)  // Receive messages via T
   }
 
   if (alerts_triggered & TWAI_ALERT_RX_QUEUE_FULL) {  // Check for RX queue full alert
-    ESP_LOGI(TAG,
-             "Alert: The RX queue is full causing a received frame to be lost.");  // Log RX queue full alert
-    ESP_LOGI(TAG, "RX buffered: %" PRIu32, twaistatus.msgs_to_rx);                 // Log buffered RX messages
-    ESP_LOGI(TAG, "RX missed: %" PRIu32, twaistatus.rx_missed_count);              // Log missed RX messages
-    ESP_LOGI(TAG, "RX overrun %" PRIu32, twaistatus.rx_overrun_count);             // Log RX overrun count
+                                                      // ESP_LOGI(TAG,
+    //           "Alert: The RX queue is full causing a received frame to be lost.");  // Log RX queue full alert
+    //  ESP_LOGI(TAG, "RX buffered: %" PRIu32, twaistatus.msgs_to_rx);                 // Log buffered RX messages
+    ESP_LOGI(TAG, "RX missed: %" PRIu32, twaistatus.rx_missed_count);  // Log missed RX messages
+    //  ESP_LOGI(TAG, "RX overrun %" PRIu32, twaistatus.rx_overrun_count);             // Log RX overrun count
   }
 #if 0
   // Check if message is received
@@ -305,8 +315,56 @@ esp_err_t waveshare_twai_receive(twai_message_t *msg)  // Receive messages via T
 #endif
 }
 
+esp_err_t waveshare_twai_receive_drain(twai_message_t *msg) {
+  if (!driver_installed) {
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    ESP_LOGI(TAG, "Failed to deriver installed");
+    return ESP_FAIL;
+  }
+
+  if (!msg) {
+    return ESP_ERR_INVALID_ARG;
+  }
+
+  esp_err_t err = ESP_ERR_TIMEOUT;
+
+  // Drain anything already buffered first instead of waiting for a new alert edge.
+  while ((err = twai_receive(msg, 0)) == ESP_OK) {
+    if (can_rx_filter_match(msg)) {
+      return ESP_OK;
+    }
+  }
+
+  uint32_t alerts_triggered = 0;
+  (void)twai_read_alerts(&alerts_triggered, pdMS_TO_TICKS(10));
+
+  twai_status_info_t twaistatus;
+  twai_get_status_info(&twaistatus);
+
+  if (alerts_triggered & TWAI_ALERT_ERR_PASS) {
+    ESP_LOGI(TAG, "Alert: TWAI controller has become error passive.");
+  }
+  if (alerts_triggered & TWAI_ALERT_BUS_ERROR) {
+    ESP_LOGI(TAG, "Alert: A (Bit, Stuff, CRC, Form, ACK) error has occurred on the bus.");
+    ESP_LOGI(TAG, "Bus error count: %" PRIu32, twaistatus.bus_error_count);
+  }
+  if (alerts_triggered & TWAI_ALERT_RX_QUEUE_FULL) {
+    ESP_LOGW(TAG, "RX queue full: buffered=%" PRIu32 ", missed=%" PRIu32 ", overrun=%" PRIu32, twaistatus.msgs_to_rx,
+             twaistatus.rx_missed_count, twaistatus.rx_overrun_count);
+  }
+
+  // Drain again after the short alert wait in case new frames arrived.
+  while ((err = twai_receive(msg, 0)) == ESP_OK) {
+    if (can_rx_filter_match(msg)) {
+      return ESP_OK;
+    }
+  }
+
+  return ESP_ERR_TIMEOUT;
+}
+
 // Function to transmit messages
-esp_err_t waveshare_twai_transmit(int user_data, uint32_t can_id) {
+esp_err_t waveshare_twai_transmit(int num, uint32_t can_id) {
   if (!driver_installed) {
     // Driver not installed
     vTaskDelay(pdMS_TO_TICKS(1000));               // Wait before retrying
@@ -314,10 +372,11 @@ esp_err_t waveshare_twai_transmit(int user_data, uint32_t can_id) {
     return ESP_FAIL;                               // Return failure status
   }
   // Check if alert happened
-  uint32_t alerts_triggered;                                            // Variable to store triggered alerts
-  twai_read_alerts(&alerts_triggered, pdMS_TO_TICKS(POLLING_RATE_MS));  // Read alerts
-  twai_status_info_t twaistatus;                                        // Variable to store TWAI status information
-  twai_get_status_info(&twaistatus);                                    // Get TWAI status information
+  uint32_t alerts_triggered;  // Variable to store triggered alerts
+  // twai_read_alerts(&alerts_triggered, pdMS_TO_TICKS(POLLING_RATE_MS));  // Read alerts
+  twai_read_alerts(&alerts_triggered, pdMS_TO_TICKS(0));  // Read alerts
+  twai_status_info_t twaistatus;                          // Variable to store TWAI status information
+  twai_get_status_info(&twaistatus);                      // Get TWAI status information
 
   // Handle alerts
   if (alerts_triggered & TWAI_ALERT_ERR_PASS) {
@@ -347,7 +406,7 @@ esp_err_t waveshare_twai_transmit(int user_data, uint32_t can_id) {
   }
 #endif
 
-  return send_message(user_data, can_id);  // Call send message function
+  return send_message(num, can_id);  // Call send message function
 }
 
 // Function to transmit messages
@@ -359,10 +418,11 @@ esp_err_t evt_twai_transmit(uint8_t *payload, uint32_t can_id) {
     return ESP_FAIL;                               // Return failure status
   }
   // Check if alert happened
-  uint32_t alerts_triggered;                                            // Variable to store triggered alerts
-  twai_read_alerts(&alerts_triggered, pdMS_TO_TICKS(POLLING_RATE_MS));  // Read alerts
-  twai_status_info_t twaistatus;                                        // Variable to store TWAI status information
-  twai_get_status_info(&twaistatus);                                    // Get TWAI status information
+  uint32_t alerts_triggered;  // Variable to store triggered alerts
+  // twai_read_alerts(&alerts_triggered, pdMS_TO_TICKS(POLLING_RATE_MS));  // Read alerts
+  twai_read_alerts(&alerts_triggered, pdMS_TO_TICKS(0));  // Read alerts
+  twai_status_info_t twaistatus;                          // Variable to store TWAI status information
+  twai_get_status_info(&twaistatus);                      // Get TWAI status information
 
   // Handle alerts
   if (alerts_triggered & TWAI_ALERT_ERR_PASS) {
@@ -380,7 +440,7 @@ esp_err_t evt_twai_transmit(uint8_t *payload, uint32_t can_id) {
     ESP_LOGI(TAG, "TX failed: %" PRIu32, twaistatus.tx_failed_count);  // Log failed transmission count
   }
   if (alerts_triggered & TWAI_ALERT_TX_SUCCESS) {
-    ESP_LOGI(TAG, "Alert: The Transmission was successful.");       // Log transmission success alert
+    ESP_LOGI(TAG, "evt_Alert: The Transmission was successful.");   // Log transmission success alert
     ESP_LOGI(TAG, "TX buffered: %" PRIu32, twaistatus.msgs_to_tx);  // Log buffered messages count
   }
 #if 0

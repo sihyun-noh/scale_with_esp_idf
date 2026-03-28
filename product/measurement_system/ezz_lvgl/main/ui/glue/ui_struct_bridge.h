@@ -7,6 +7,8 @@ extern "C" {
 
 void ui_struct_set_field(int index, const char *text);
 
+void ui_struct_vehicle_field(int index, const char *text);
+
 #ifdef __cplusplus
 }
 #endif

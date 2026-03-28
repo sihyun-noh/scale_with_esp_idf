@@ -25,10 +25,45 @@ typedef enum {
   DRIVER_EVT_BOTH
 } driver_sel_t;
 
+typedef enum {
+  DRIVER_THROTTLE = 1,
+  DRIVER_STEERING,
+} k_3axis_etc_t;
+
 static QueueHandle_t s_gui_queue;
 static QueueHandle_t s_tx_q;
 static bool s_runtime_started;
 static driver_sel_t s_driver_sel = DRIVER_RC1;
+
+static void i16_to_be16(int16_t value, uint8_t *hi, uint8_t *lo) {
+  uint16_t raw = (uint16_t)value;
+  *hi = (uint8_t)((raw >> 8) & 0xFF);
+  *lo = (uint8_t)(raw & 0xFF);
+}
+
+static bool build_cmd_target_3axis_from_int(k_3axis_etc_t tag, uint32_t val, uint8_t out8[8]) {
+  int16_t v = (int16_t)val;
+
+  //  out8[0] = 0x18;
+  //  out8[1] = 0x38;
+  if (tag == DRIVER_THROTTLE)
+    i16_to_be16((int16_t)v, &out8[0], &out8[1]);
+  else {
+    out8[0] = 0x00;
+    out8[1] = 0x00;
+  }
+  if (tag == DRIVER_STEERING)
+    i16_to_be16((int16_t)v, &out8[2], &out8[3]);
+  else {
+    out8[2] = 0x00;
+    out8[3] = 0x00;
+  }
+  out8[4] = 0x00;
+  out8[5] = 0x00;
+  out8[6] = 0x00;
+  out8[7] = 0x00;
+  return true;
+}
 
 static bool build_cmd_target_volt_from_int(driver_sel_t driver, uint32_t val, uint8_t out8[8]) {
   uint32_t v = val;
@@ -106,20 +141,35 @@ static void eez_lv_hw_ctrl_task(void *arg) {
       memset(&cmd, 0x00, sizeof(cmd));
 
       switch (msg.id) {
-        case UI_CMD_DRIVER1_SET:
-          ESP_LOGI(TAG, "[Driver 1] ui_msg val %" PRId32, msg.value);
+        case UI_CMD_DRIVER1_SET: ESP_LOGI(TAG, "[Driver 1] ui_msg val %" PRId32, msg.value);
+#if CONFIG_APP_RUN_MODE_SIBI
           if (build_cmd_target_volt_from_int(DRIVER_RC1, msg.value, cmd.payload)) {
             cmd.type = TX_CMD_SET_USER_VALUE;
             monitor_runtime_tx_cmd_send(&cmd);
           }
+#else
+          if (build_cmd_target_3axis_from_int(DRIVER_THROTTLE, (msg.value * 10), cmd.payload)) {
+            cmd.type = TX_CMD_3XIS_THROTTLE;
+            monitor_runtime_tx_cmd_send(&cmd);
+          }
+#endif
+
           break;
 
-        case UI_CMD_DRIVER2_SET:
-          ESP_LOGI(TAG, "[Driver 2] ui_msg val %" PRId32, msg.value);
+        case UI_CMD_DRIVER2_SET: ESP_LOGI(TAG, "[Driver 2] ui_msg val %" PRId32, msg.value);
+
+#if CONFIG_APP_RUN_MODE_SIBI
           if (build_cmd_target_volt_from_int(DRIVER_RC2, msg.value, cmd.payload)) {
             cmd.type = TX_CMD_SET_USER_VALUE;
             monitor_runtime_tx_cmd_send(&cmd);
           }
+#else
+          if (build_cmd_target_3axis_from_int(DRIVER_STEERING, (msg.value * 10), cmd.payload)) {
+            cmd.type = TX_CMD_3XIS_STEERING;
+            monitor_runtime_tx_cmd_send(&cmd);
+          }
+
+#endif
           break;
 
         case UI_CMD_BOTH_SET_RPM:
@@ -138,11 +188,27 @@ static void eez_lv_hw_ctrl_task(void *arg) {
           }
           break;
 
-        case UI_CMD_RUN_STATE:
-          ESP_LOGI(TAG, "[Run both] ui_msg val %s", msg.value ? "true" : "false");
+        case UI_CMD_RUN_STATE: ESP_LOGI(TAG, "[Run both] ui_msg val %s", msg.value ? "true" : "false");
+#if CONFIG_APP_RUN_MODE_SIBI
           build_cmd_both(cmd.payload, msg.value);
           cmd.type = TX_CMD_RUN_STOP;
           monitor_runtime_tx_cmd_send(&cmd);
+#else
+          cmd.payload[0] = 0x00;
+          cmd.payload[1] = 0x00;
+          cmd.payload[2] = 0x00;
+          cmd.payload[3] = 0x00;
+          cmd.payload[4] = 0x00;
+          cmd.payload[5] = 0x00;
+          if (msg.value)
+            cmd.payload[6] = 0x01;
+          else
+            cmd.payload[6] = 0x00;
+          cmd.payload[7] = 0x01;
+          cmd.type = TX_CMD_3XIS_AUTOMATION;
+          monitor_runtime_tx_cmd_send(&cmd);
+
+#endif
           break;
 
         default: break;
