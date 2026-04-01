@@ -18,6 +18,9 @@ static char fb_driver1_l[10] = { 0 };
 static char fb_driver2_r[10] = { 0 };
 static char fb_driver2_l[10] = { 0 };
 
+static char _3_axis_max_kmh[50] = { 0 };
+static char _3_axis_max_rpm[50] = { 0 };
+
 // ---------------- UI -> HW ----------------
 int32_t get_var_checked_evt_both_hidden() {
   return checked_evt_both_hidden;
@@ -62,6 +65,26 @@ int32_t get_var_both_set_rpm_val(void) {
 void set_var_both_set_rpm_val(int32_t value) {
   both_set_rpm_val = value;
   bridge_send_to_hw(UI_CMD_BOTH_SET_RPM, value, 0);
+}
+
+const char *get_var__3_axis_max_kmh() {
+  return _3_axis_max_kmh;
+}
+
+void set_var__3_axis_max_kmh(const char *value) {
+  strncpy(_3_axis_max_kmh, value, sizeof(_3_axis_max_kmh) / sizeof(char));
+  _3_axis_max_kmh[sizeof(_3_axis_max_kmh) / sizeof(char) - 1] = 0;
+  bridge_send_to_hw_str(UI_CMD_3AXIS_MAX_KMH, _3_axis_max_kmh, 0);
+}
+
+const char *get_var__3_axis_max_rpm() {
+  return _3_axis_max_rpm;
+}
+
+void set_var__3_axis_max_rpm(const char *value) {
+  strncpy(_3_axis_max_rpm, value, sizeof(_3_axis_max_rpm) / sizeof(char));
+  _3_axis_max_rpm[sizeof(_3_axis_max_rpm) / sizeof(char) - 1] = 0;
+  bridge_send_to_hw_str(UI_CMD_3AXIS_MAX_RPM, _3_axis_max_rpm, 0);
 }
 
 // ---------------- HW -> UI ----------------

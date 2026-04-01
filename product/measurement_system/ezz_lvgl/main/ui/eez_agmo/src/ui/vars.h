@@ -43,6 +43,10 @@ extern const char *get_var_fb_driver2_l();
 extern void set_var_fb_driver2_l(const char *value);
 extern int32_t get_var_run_state();
 extern void set_var_run_state(int32_t value);
+extern const char *get_var__3_axis_max_rpm();
+extern void set_var__3_axis_max_rpm(const char *value);
+extern const char *get_var__3_axis_max_kmh();
+extern void set_var__3_axis_max_kmh(const char *value);
 
 #ifdef __cplusplus
 }

@@ -2,6 +2,8 @@
 #include <cstdint>
 #include <cstring>
 #include <inttypes.h>
+#include <cstdlib>
+#include <cmath>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -39,6 +41,44 @@ static void i16_to_be16(int16_t value, uint8_t *hi, uint8_t *lo) {
   uint16_t raw = (uint16_t)value;
   *hi = (uint8_t)((raw >> 8) & 0xFF);
   *lo = (uint8_t)(raw & 0xFF);
+}
+
+static void u16_to_be16(uint16_t value, uint8_t *hi, uint8_t *lo) {
+  *hi = (uint8_t)((value >> 8) & 0xFF);
+  *lo = (uint8_t)(value & 0xFF);
+}
+
+static bool parse_text_to_u16_be(const char *text, uint8_t *hi, uint8_t *lo) {
+  if (!text || !hi || !lo) {
+    return false;
+  }
+
+  char *end = nullptr;
+  float parsed = strtof(text, &end);
+  if (end == text) {
+    return false;
+  }
+
+  while (end && *end == ' ') {
+    ++end;
+  }
+  if (end && *end != '\0') {
+    return false;
+  }
+
+  if (!std::isfinite(parsed)) {
+    return false;
+  }
+
+  if (parsed < 0.0f) {
+    parsed = 0.0f;
+  } else if (parsed > 65535.0f) {
+    parsed = 65535.0f;
+  }
+
+  uint16_t value = (uint16_t)lroundf(parsed);
+  u16_to_be16(value, hi, lo);
+  return true;
 }
 
 static bool build_cmd_target_3axis_from_int(k_3axis_etc_t tag, uint32_t val, uint8_t out8[8]) {
@@ -194,21 +234,45 @@ static void eez_lv_hw_ctrl_task(void *arg) {
           cmd.type = TX_CMD_RUN_STOP;
           monitor_runtime_tx_cmd_send(&cmd);
 #else
-          cmd.payload[0] = 0x00;
+
+          if (msg.value)
+            cmd.payload[0] = 0x01;
+          else
+            cmd.payload[0] = 0x00;
           cmd.payload[1] = 0x00;
           cmd.payload[2] = 0x00;
           cmd.payload[3] = 0x00;
-          cmd.payload[4] = 0x00;
-          cmd.payload[5] = 0x00;
           if (msg.value)
-            cmd.payload[6] = 0x01;
+            cmd.payload[4] = 0x01;
           else
-            cmd.payload[6] = 0x00;
-          cmd.payload[7] = 0x01;
+            cmd.payload[4] = 0x00;
+          cmd.payload[5] = 0x00;
+          cmd.payload[6] = 0x00;
+          cmd.payload[7] = 0x00;
           cmd.type = TX_CMD_3XIS_AUTOMATION;
           monitor_runtime_tx_cmd_send(&cmd);
 
 #endif
+          break;
+
+        case UI_CMD_3AXIS_MAX_RPM:
+          ESP_LOGI(TAG, "[_3AXIS] max rpm: %s", msg.str);
+          if (parse_text_to_u16_be(msg.str, &cmd.payload[4], &cmd.payload[5])) {
+            cmd.type = TX_CMD_3AXIS_MAX_INPUT;
+            monitor_runtime_tx_cmd_send(&cmd);
+          } else {
+            ESP_LOGW(TAG, "[_3AXIS] invalid max rpm text: %s", msg.str);
+          }
+          break;
+
+        case UI_CMD_3AXIS_MAX_KMH:
+          ESP_LOGI(TAG, "[_3AXIS] max khm: %s", msg.str);
+          if (parse_text_to_u16_be(msg.str, &cmd.payload[6], &cmd.payload[7])) {
+            cmd.type = TX_CMD_3AXIS_MAX_KMH;
+            monitor_runtime_tx_cmd_send(&cmd);
+          } else {
+            ESP_LOGW(TAG, "[_3AXIS] invalid max kmh text: %s", msg.str);
+          }
           break;
 
         default: break;

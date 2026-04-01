@@ -37,6 +37,8 @@ typedef enum {
   TX_CMD_3XIS_THROTTLE,
   TX_CMD_3XIS_STEERING,
   TX_CMD_3XIS_AUTOMATION,
+  TX_CMD_3AXIS_MAX_INPUT,
+  TX_CMD_3AXIS_MAX_KMH,
 } tx_cmd_type_t;
 
 typedef struct {

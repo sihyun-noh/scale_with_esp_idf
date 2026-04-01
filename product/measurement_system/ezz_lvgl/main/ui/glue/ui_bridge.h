@@ -33,6 +33,9 @@ const bridge_t *bridge_get(void);
  * Return true on success, false if not initialized or queue send fails.
  */
 bool bridge_send_to_hw(ui_msg_id_t id, int32_t value, TickType_t to_ticks);
+
+bool bridge_send_to_hw_str(ui_msg_id_t id, char *str, TickType_t to_ticks);
+
 bool bridge_send_to_ui(ui_msg_id_t id, void *value, TickType_t to_ticks);
 
 /**

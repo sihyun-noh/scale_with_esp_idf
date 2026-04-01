@@ -27,6 +27,11 @@ void set_var_fb_driver2_r(const char *value);
 const char *get_var_fb_driver2_l();
 void set_var_fb_driver2_l(const char *value);
 
+void set_var__3_axis_max_rpm(const char *value);
+const char *get_var__3_axis_max_rpm();
+void set_var__3_axis_max_kmh(const char *value);
+const char *get_var__3_axis_max_kmh();
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <inttypes.h>
@@ -30,6 +31,7 @@ typedef struct {
   uint8_t md_left_fault_msg;
   uint8_t md_right_fault_msg;
   uint8_t relay_st;
+  uint8_t timeout_detail_code;
 } upper_rx_status_t;
 
 typedef struct {
@@ -41,14 +43,14 @@ typedef struct {
 } upper_rx_status_rpm_t;
 
 typedef struct {
-  uint8_t driver_config_bitmask;
+  bool automation;
   bool cultivator_down;
   bool cultivator_on;
   bool upper_force_stop;
   bool upper_force_active;
   uint8_t relay_mask;
-  bool automation;
-  uint8_t reserved;
+  uint8_t left_accel_cmd;
+  uint8_t right_accel_cmd;
 } upper_tx_cmd_t;
 
 typedef struct {
@@ -112,15 +114,26 @@ static const char *stop_reason_name(uint8_t reason) {
 }
 
 static void format_rc_status_mask(uint8_t mask, char *buf, size_t len) {
-  snprintf(buf, len, "RC:%c%c%c%c%c%c", (mask & (1u << 0)) ? 'E' : '-', (mask & (1u << 1)) ? 'S' : '-',
-           (mask & (1u << 2)) ? 'F' : '-', (mask & (1u << 3)) ? 'R' : '-', (mask & (1u << 4)) ? 'D' : '-',
-           (mask & (1u << 5)) ? 'O' : '-');
+  snprintf(buf, len, "RC:%c%c%c%c%c%c%c",
+           (mask & (1u << 0)) ? 'E' : '-',   // ENABLE
+           (mask & (1u << 1)) ? 'S' : '-',   // E-STOP
+           (mask & (1u << 2)) ? 'F' : '-',   // FAILSAFE
+           (mask & (1u << 3)) ? 'R' : '-',   // FRESH
+           (mask & (1u << 4)) ? 'D' : '-',   // CULTIVATOR_DOWN
+           (mask & (1u << 5)) ? 'O' : '-',   // CULTIVATOR_ON
+           (mask & (1u << 6)) ? 'A' : '-');  // REMOTE_AUTOMATION
 }
 
 static void format_vcu_fsm_status_mask(uint8_t mask, char *buf, size_t len) {
-  snprintf(buf, len, "FSM:%c%c%c%c%c%c%c%c", (mask & (1u << 0)) ? 'N' : '-', (mask & (1u << 1)) ? 'R' : '-',
-           (mask & (1u << 2)) ? 'U' : '-', (mask & (1u << 3)) ? 'P' : '-', (mask & (1u << 4)) ? 'E' : '-',
-           (mask & (1u << 5)) ? 'M' : '-', (mask & (1u << 6)) ? 'T' : '-', (mask & (1u << 7)) ? 'G' : '-');
+  snprintf(buf, len, "FSM:%c%c%c%c%c%c%c%c",
+           (mask & (1u << 0)) ? 'N' : '-',   // SRC_NONE
+           (mask & (1u << 1)) ? 'R' : '-',   // SRC_RC
+           (mask & (1u << 2)) ? 'U' : '-',   // SRC_UPPER
+           (mask & (1u << 3)) ? 'P' : '-',   // STOP_UPPER
+           (mask & (1u << 4)) ? 'E' : '-',   // STOP_RC_EMG
+           (mask & (1u << 5)) ? 'M' : '-',   // STOP_MOTOR_FAULT
+           (mask & (1u << 6)) ? 'T' : '-',   // STOP_TIMEOUT
+           (mask & (1u << 7)) ? 'G' : '-');  // RUNNING
 }
 
 static void print_hex(const uint8_t *buf, size_t len) {
@@ -201,7 +214,7 @@ static void publish_upper_status_fields(const upper_rx_status_t *status) {
   snprintf(buf, sizeof(buf), "fltR:0x%02X", status->md_right_fault_msg);
   (void)monitor_runtime_post_text(GUI_EVT_VCU_STATUS, UI_EVT_VCU_STATUS_D6, buf);
 
-  snprintf(buf, sizeof(buf), "relay:0x%02X", status->relay_st);
+  snprintf(buf, sizeof(buf), "relay:%02X to:%02X", status->relay_st, status->timeout_detail_code);
   (void)monitor_runtime_post_text(GUI_EVT_VCU_STATUS, UI_EVT_VCU_STATUS_D7, buf);
 }
 
@@ -228,6 +241,7 @@ static bool upper_decode_rx_status(const twai_message_t *msg, upper_rx_status_t 
   out->rc_status_mask = msg->data[4];
   out->vcu_fsm_status_mask = msg->data[5];
   out->relay_st = msg->data[6];
+  out->timeout_detail_code = msg->data[7];
   out->control_src = 0;
   if (out->vcu_fsm_status_mask & (1u << 2)) {
     out->control_src = 2;
@@ -296,14 +310,14 @@ static bool upper_decode_rx_vehicle_monitor(const twai_message_t *msg, vcu_motio
 
 static void upper_pack_tx_cmd(const upper_tx_cmd_t *cmd, uint8_t out[8]) {
   memset(out, 0, 8);
-  out[0] = cmd->driver_config_bitmask;
+  out[0] = cmd->automation ? 1u : 0u;
   out[1] = cmd->cultivator_down ? 1u : 0u;
   out[2] = cmd->cultivator_on ? 1u : 0u;
   out[3] = cmd->upper_force_stop ? 1u : 0u;
   out[4] = cmd->upper_force_active ? 1u : 0u;
   out[5] = cmd->relay_mask;
-  out[6] = cmd->automation ? 1u : 0u;
-  out[7] = cmd->reserved;
+  out[6] = cmd->left_accel_cmd;
+  out[7] = cmd->right_accel_cmd;
 }
 
 static void upper_pack_tx_cmd_rpm(const upper_tx_cmd_rpm_t *cmd, uint8_t out[8]) {
@@ -354,7 +368,7 @@ static void twai_rx_ext_test_task(void *arg) {
   twai_message_t msg = {};
 
   while (1) {
-    esp_err_t err = waveshare_twai_receive(&msg);
+    esp_err_t err = waveshare_twai_receive_drain(&msg);
     if (err == ESP_OK) {
       if (!msg.extd) {
         continue;
@@ -418,26 +432,33 @@ static void upper_tx_task(void *arg) {
     while (monitor_runtime_tx_cmd_receive(&cmd, 0)) {
       switch (cmd.type) {
         case TX_CMD_SET_DRIVER: break;
+        case TX_CMD_3AXIS_MAX_INPUT:
+          s_upper_tx_cmd_driver.max_input = be16_to_i16(cmd.payload[4], cmd.payload[5]);
+          break;
+        case TX_CMD_3AXIS_MAX_KMH: s_upper_tx_cmd_driver.kmh = be16_to_i16(cmd.payload[6], cmd.payload[7]); break;
         case TX_CMD_3XIS_THROTTLE: s_upper_tx_cmd_driver.throttle = be16_to_i16(cmd.payload[0], cmd.payload[1]); break;
         case TX_CMD_3XIS_STEERING: s_upper_tx_cmd_driver.steering = be16_to_i16(cmd.payload[2], cmd.payload[3]); break;
-        case TX_CMD_3XIS_AUTOMATION: evt_twai_transmit(cmd.payload, CANID_ESP_TO_VCU_CMD_RPM_TX); break;
+        case TX_CMD_3XIS_AUTOMATION:
+          s_upper_tx_cmd.automation = cmd.payload[0];
+          s_upper_tx_cmd.upper_force_active = cmd.payload[4];
+          break;
         case TX_CMD_SET_PERIOD: evt_twai_transmit(cmd.payload, CANID_ESP_TO_VCU_CMD_TX); break;
         case TX_CMD_RUN_STOP: evt_twai_transmit(cmd.payload, CANID_ESP_TO_VCU_CMD_TX); break;
         default: break;
       }
     }
 
-    // upper_pack_tx_cmd(&s_upper_tx_cmd, payload);
-    // if (evt_twai_transmit(payload, CANID_ESP_TO_VCU_CMD_TX) != ESP_OK) {
-    //   ESP_LOGW(TAG, "upper cmd tx failed");
-    // }
-    //
+    upper_pack_tx_cmd(&s_upper_tx_cmd, payload);
+    if (evt_twai_transmit(payload, CANID_ESP_TO_VCU_CMD_TX) != ESP_OK) {
+      ESP_LOGW(TAG, "upper cmd tx failed");
+    }
+
     upper_pack_tx_cmd_driver(&s_upper_tx_cmd_driver, payload);
     if (evt_twai_transmit(payload, CANID_ESP_TO_VCU_CMD_RPM_TX) != ESP_OK) {
       ESP_LOGW(TAG, "upper cmd rpm tx failed");
     }
 
-    vTaskDelay(pdMS_TO_TICKS(100));
+    vTaskDelay(pdMS_TO_TICKS(500));
   }
 }
 

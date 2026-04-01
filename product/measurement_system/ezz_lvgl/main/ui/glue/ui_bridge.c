@@ -67,6 +67,14 @@ bool bridge_send_to_hw(ui_msg_id_t id, int32_t value, TickType_t to_ticks) {
     return false;
   return send_to_queue_int(s_bridge.hw_q, id, value, to_ticks);
 }
+
+// send string type
+bool bridge_send_to_hw_str(ui_msg_id_t id, char *str, TickType_t to_ticks) {
+  if (!bridge_is_ready())
+    return false;
+  return send_to_queue_str(s_bridge.hw_q, id, str, to_ticks);
+}
+
 // send str type
 bool bridge_send_to_ui(ui_msg_id_t id, void *value, TickType_t to_ticks) {
   if (!bridge_is_ready())

@@ -15,6 +15,8 @@ typedef enum {
   UI_CMD_BOTH_SET_RPM,
   UI_CMD_EVT_BOTH,
   UI_CMD_RUN_STATE,
+  UI_CMD_3AXIS_MAX_RPM,
+  UI_CMD_3AXIS_MAX_KMH,
 
   // ---- HW -> UI ----
   UI_EVT_FB_DRIVER1_R,
