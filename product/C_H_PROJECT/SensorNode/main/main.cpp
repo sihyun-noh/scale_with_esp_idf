@@ -141,8 +141,8 @@ extern "C" void app_main(void) {
   // Network Initialization (Ethernet or Wi-Fi)
   //------------------------------------------------------
 
-  bool lan_sel = !gpio_get_level((gpio_num_t)CONFIG_LAN_SELECT_PIN);
-  bool wifi_sel = !gpio_get_level((gpio_num_t)CONFIG_WIFI_SELECT_PIN);
+  int lan_sel = gpio_get_level((gpio_num_t)CONFIG_LAN_SELECT_PIN);
+  int wifi_sel = gpio_get_level((gpio_num_t)CONFIG_WIFI_SELECT_PIN);
 
   ESP_LOGI(TAG, "LAN select: %d, WIFI select: %d", lan_sel, wifi_sel);
 

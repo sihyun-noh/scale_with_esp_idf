@@ -2,6 +2,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_log.h"
+#include "hal/gpio_types.h"
+#include "sdkconfig.h"
 
 #include "bsp_gpio.h"
 
@@ -35,8 +37,9 @@ esp_err_t bsp_gpio_init() {
   // Configure input GPIOs (WiFi/LAN selector)
   gpio_config_t i_conf = { .pin_bit_mask = (1ULL << CONFIG_WIFI_SELECT_PIN) | (1ULL << CONFIG_LAN_SELECT_PIN),
                            .mode = GPIO_MODE_INPUT,
-                           .pull_up_en = GPIO_PULLUP_ENABLE,
-                           .intr_type = GPIO_INTR_ANYEDGE };
+                           .pull_up_en = GPIO_PULLUP_DISABLE,
+                           .pull_down_en = GPIO_PULLUP_DISABLE,
+                           .intr_type = GPIO_INTR_DISABLE };
   gpio_config(&i_conf);
 
   return ESP_OK;

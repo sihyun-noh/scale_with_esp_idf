@@ -6,12 +6,33 @@ menu "MQTT Configuration"
         help
             Enabling this allows for the autoregistration of the mqtt command.
 
+
+     choice MQTT_BROKER_SELECTION
+        prompt "Select MQTT Broker"
+        default MQTT_BROKER_REMOTE
+
+        config MQTT_BROKER_LOCAL
+            bool "Local broker (192.168.50.100:1883)"
+
+        config MQTT_BROKER_REMOTE
+            bool "Remote broker (115.143.224.112)"
+
+    endchoice
+
     config MQTT_BROKER_URL
-        string "Broker URL or IP address"
-        #default "mqtt://192.168.50.12:1884"
-        default "mqtt://115.143.224.112:11883"
+        string
+        default "mqtt://192.168.50.100:1883" if MQTT_BROKER_LOCAL
+        default "mqtt://115.143.224.112:11883" if MQTT_BROKER_REMOTE
         help
             URL or IP address of the broker to connect to
+
+   
+    # config MQTT_BROKER_URL
+    #     string "Broker URL or IP address"
+    #     #default "mqtt://192.168.50.12:1884"
+    #     default "mqtt://115.143.224.112:11883"
+    #     help
+    #         URL or IP address of the broker to connect to
 
 
 
