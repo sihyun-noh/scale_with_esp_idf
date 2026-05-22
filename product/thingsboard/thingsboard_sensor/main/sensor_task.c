@@ -422,6 +422,7 @@ int read_soil_ec_rs_ecth(void) {
             res = -1;
         } else {
             // set_rs485_conn_fail(0);
+            LOGE(TAG, "mb_characteristic name :%s, %d", mb_characteristic[i].name, mb_characteristic[i].slave_id);
             for (int k = 0; k < data_len; k++) {
                 LOGI(TAG, "value[%d] = [0x%x]", k, value[k]);
             }
@@ -441,10 +442,10 @@ int read_soil_ec_rs_ecth(void) {
             f_saturation_ec = convert_bulk_to_saturation_ec(f_temp, (f_mos / 100), f_ec);
             snprintf(s_saturation_ec, sizeof(s_saturation_ec), "%.2f", f_saturation_ec);
 
-            sysevent_set(MB_TEMPERATURE_EVENT, s_temperature); 
-            sysevent_set(MB_MOISTURE_EVENT, s_moisture); 
+            sysevent_set(MB_TEMPERATURE_EVENT, s_temperature);
+            sysevent_set(MB_MOISTURE_EVENT, s_moisture);
             sysevent_set(MB_SOIL_EC_EVENT, s_saturation_ec);
-            sysevent_set(MB_SOIL_BULK_EC_EVENT, s_ec); 
+            sysevent_set(MB_SOIL_BULK_EC_EVENT, s_ec);
 
             if (i == SEN1) {
                 LOGI(TAG, "SEN1 :ec : %.2f, moisture : %.2f, temperature : %.2f", f_saturation_ec, f_mos, f_temp);

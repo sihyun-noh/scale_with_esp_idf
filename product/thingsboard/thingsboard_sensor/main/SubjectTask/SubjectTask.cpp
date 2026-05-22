@@ -81,17 +81,6 @@ void SubjectTask::run() {
             strategy->execute();
         } else {
             ESP_LOGI(TAG_SUBJECT, "SENSOR_READ_MODE");
-            // sensor_power_on();
-            // // sensor warming up time
-            // vTaskDelay(3000 / portTICK_PERIOD_MS);
-            // if (sensor_read() == 0) {
-            //     //                EventManager::GetInstance().SetEventBits(EVENT_GROUPS_FOR_THINGSBOARD,
-            //     //                EVENT_BIT_TASK_READY);
-            // } else {
-            //     ESP_LOGE(TAG_SUBJECT, "sensor read, error = [%d]", 3);
-            // }
-            //
-            // sensor_power_off();
         }
         value++;
         ESP_LOGI(TAG_SUBJECT, "Subject[%d] value = %d", static_cast<int>(subjectType), value);
