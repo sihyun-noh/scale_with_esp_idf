@@ -76,6 +76,7 @@ void publish_command(esp_mqtt_client_handle_t client, const char *cmd) {
 }
 
 int publish_sensor_datatable(const char *topic, const char *data_table) {
+  ESP_LOGW(TAG, "Publish sensor data to the server via MQTT.");
   /* Qos 0 at most once*/
   return esp_mqtt_client_publish(mqtt_ctx.client, topic, data_table, 0, 0, 0);
 }

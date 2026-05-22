@@ -12,17 +12,31 @@ menu "MQTT Configuration"
         default MQTT_BROKER_REMOTE
 
         config MQTT_BROKER_LOCAL
-            bool "Local broker (192.168.50.100:1883)"
+            bool "Local broker (192.168.50.12:1884)"
 
         config MQTT_BROKER_REMOTE
             bool "Remote broker (115.143.224.112)"
+
+        config MQTT_BROKER_LOCAL_CAH
+            bool "Local broker (192.168.50.100:1883)"
+    
+        config MQTT_BROKER_REMOTE_CAH
+            bool "Remote broker (121.156.164.156:11883)"
+
+        config MQTT_BROKER_REMOTE_CAH_NEW
+            bool "Remote broker (119.30.165.250:11883)"
+
 
     endchoice
 
     config MQTT_BROKER_URL
         string
-        default "mqtt://192.168.50.100:1883" if MQTT_BROKER_LOCAL
+        default "mqtt://192.168.50.12:1884" if MQTT_BROKER_LOCAL
         default "mqtt://115.143.224.112:11883" if MQTT_BROKER_REMOTE
+        default "mqtt://192.168.50.100:1883" if MQTT_BROKER_LOCAL_CAH
+        default "mqtt://121.156.164.156:11883" if MQTT_BROKER_REMOTE_CAH
+        default "mqtt://119.30.165.250:11883" if MQTT_BROKER_REMOTE_CAH_NEW
+
         help
             URL or IP address of the broker to connect to
 

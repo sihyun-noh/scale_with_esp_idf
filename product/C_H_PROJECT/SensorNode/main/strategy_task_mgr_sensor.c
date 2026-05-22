@@ -161,7 +161,7 @@ static void handle_teros_series(void* param) {
   char topic[MAX_TOPIC_LEN] = { 0 };
 
   if (!param) {
-    ESP_LOGE(TAG, "[TEROS12] Invalid param (NULL)");
+    ESP_LOGE(TAG, "[TEROS_SERIES] Invalid param (NULL)");
     return;
   }
 
@@ -340,7 +340,7 @@ static void handle_atmos_series(void* param) {
   char topic[MAX_TOPIC_LEN] = { 0 };
 
   if (!param) {
-    ESP_LOGE(TAG, "[ATMOS41] Invalid param (NULL)");
+    ESP_LOGE(TAG, "[ATMOS_SERIES] Invalid param (NULL)");
     return;
   }
 
@@ -517,6 +517,148 @@ static void handle_atmos_series(void* param) {
           sprintf(buf + len, ",%s,%d", sensor_type, config->port);  // 여기는 실제 포트번호
           ESP_LOGI(TAG, "[FDATA] %s", buf);
           FDATA(BASE_PATH, "%s", buf);  // write to tb data
+        } else {
+          ESP_LOGW(TAG, "Faild to parse JSON rows");
+        }
+      }
+
+      // free-up json resources
+      cJSON_free(dt_json_str);
+      cJSON_Delete(dt_json);
+    }
+
+  } else {
+    ESP_LOGW(TAG, "[%s] dt->handle is NULL, cannot push/process samples", sensor_type);
+  }
+  // 작업 완료 알림
+  xEventGroupSetBits(done_group, TASK_DONE_BIT);
+#ifdef SDI12_DEBUG_SET
+  ESP_LOGI(TAG, "[%s] Task done, DONE_BIT set", sensor_type);
+  ESP_LOGI(TAG, "[%s] Task completed", sensor_type);
+#endif
+}
+
+static void handle_hydros_series(void* param) {
+  int ret = 0;
+  char buf[250] = { 0 };
+  char topic[MAX_TOPIC_LEN] = { 0 };
+
+  if (!param) {
+    ESP_LOGE(TAG, "[HYDROS_SERIES] Invalid param (NULL)");
+    return;
+  }
+
+  sensor_task_t* config = (sensor_task_t*)param;
+  sensor_datatable_t* dt = config->dt;
+  // NOTE: starts at array address 0
+  int array_num = config->port - 1;
+
+  const char* sensor_type = sensor_type_to_str(config->cfg[array_num].sensor_type);
+  // const char* sensor_type = sensor_type_to_str(TEROS12);
+  if (strcmp(sensor_type, "UNKNOWN") == 0) {
+    ESP_LOGW(TAG, "Unrecognized sensor type: %s", sensor_type);
+  }
+  ESP_LOGI(TAG, "[%s] Starting SDI-12 read...port[%d] ", sensor_type, config->port);
+
+  hydros21_data_t* data_hydros21 = NULL;
+
+  if (config->cfg[array_num].sensor_type == HYDROS21) {
+    data_hydros21 = sdi12_read_hydros21(array_num);  // 데이터 읽기
+    if (!data_hydros21) {
+      ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
+      return;
+    }
+    ESP_LOGI(TAG, "[%s] Raw data - depth: %dmm, Temp: %.2f, EC: %.2f", sensor_type, data_hydros21->depth,
+             data_hydros21->temperature, data_hydros21->ec);
+  } else {
+    ESP_LOGE(TAG, "[HYDROS_SERIES] Invalid sensor type (ERR)");
+    return;
+  }
+
+  // Push to table(Append to the table)
+  if (dt[array_num].handle) {
+    if (config->cfg[array_num].sensor_type == HYDROS21) {
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].hydros21_col.depth_avg_col, data_hydros21->depth);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].hydros21_col.ta_avg_col,
+                                  data_hydros21->temperature);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].hydros21_col.ec_avg_col, data_hydros21->ec);
+    } else {
+      ESP_LOGE(TAG, "[HYDROS_SERIES] Invalid sensor type (ERR)");
+      return;
+    }
+
+#ifdef SDI12_DEBUG_SET
+    ESP_LOGI(TAG, "[%s] Pushed samples to data table", sensor_type);
+    ESP_LOGI(TAG, "[%s] sampling_count: %d / max: %d", sensor_type, dt[array_num].handle->sampling_count,
+             dt[array_num].handle->samples_maximum_size);
+
+#endif
+    // 데이터 처리 (평균, 필터링 등)
+    datatable_process_samples(dt[array_num].handle);
+    ESP_LOGI(TAG, "[%s] Processed samples in data table", sensor_type);
+
+    // NOTE: 무조건 samples 데이터 처리해야 동작해. 아님. free 중복으로 에러남
+    // 1분마다 samples 처리하도록 설정이 되어있음 data_table config에
+    // 지금은 내부 internal time과 동기화가 되어 있지 않아서 수동으로 맞춰야 함.
+    //
+
+    /**
+     * @brief Enforces periodic processing of sample data to prevent memory errors.
+     *
+     * Sample data must be consumed and cleared regularly; otherwise, duplicate `free()`
+     * or memory corruption issues may occur. According to the data_table configuration,
+     * samples are expected to be processed every 1 minute.
+     *
+     * Currently, this timing is not automatically synchronized with the internal time system,
+     * so manual alignment is required to ensure sample processing occurs at the correct interval.
+     *
+     * Notes:
+     * - Sample lifecycle must be managed carefully to avoid double-free or memory leaks.
+     * - Timing should match the data_table's configuration (typically 60-second interval).
+     * - Internal clock synchronization is planned but not implemented.
+     */
+
+    int retry_count = 0;
+    while (dt[array_num].handle->sampling_count >= 3) {
+      datatable_process_samples(dt[array_num].handle);
+      // ESP_LOGI(TAG, "[%s] Processed samples in data table... count %d ", sensor_type, retry_count);
+      retry_count += 1;
+      vTaskDelay(pdMS_TO_TICKS(200));
+      // vTaskDelay(pdMS_TO_TICKS(50));
+    }
+
+    /* serialize data-table and output in json format every 5-minutes (i.e. 12:00:00, 12:05:00, 12:10:00, etc.) */
+    if (time_into_interval(dt[array_num].publish_interval.handle)) {
+      // create root object for data-table
+      cJSON* dt_json = cJSON_CreateObject();
+
+      // convert the data-table to json object
+      datatable_to_json(dt[array_num].handle, &dt_json);
+
+      // render json data-table object to text and print
+      char* dt_json_str = cJSON_Print(dt_json);
+#ifdef SDI12_DEBUG_SET
+      ESP_LOGI(TAG, "[%s] JSON Data-Table:\n%s", sensor_type, dt_json_str);
+#endif
+      memset(topic, 0x00, sizeof(topic));
+      if (BUILD_DEVICE_TOPIC(topic, TOPIC_TYPE_SENSOR) == ESP_OK) {
+        ret = publish_sensor_datatable(topic, dt_json_str);
+        //  ESP_LOGI(TAG, "ret : %d", ret);
+      }
+
+      if (ret == -1) { /* Qos 0*/  // -1 fail,-2 box full
+        char* parsed = parse_rows(dt_json_str);
+        if (parsed != NULL) {
+          memset(buf, 0x00, sizeof(buf));
+          strncpy(buf, parsed, sizeof(buf) - 1);
+          int len = strlen(buf);
+          // TODO: Retry loop triggered when message sending fails
+          //  Saved to internal flash when the network is disconnected and message sending fails
+          //  append sensor_type string to the end of parsed buffer
+          //  count,date,vwc,temperature,ec,sensor_type,port
+          sprintf(buf + len, ",%s,%d", sensor_type, config->port);  // 여기는 실제 포트번호
+          ESP_LOGI(TAG, "[FDATA] %s", buf);
+          FDATA(BASE_PATH, "%s", buf);  // write to nvs data
         } else {
           ESP_LOGW(TAG, "Faild to parse JSON rows");
         }
@@ -897,6 +1039,13 @@ void strategy_task_mgr_sensor_start(void) {
           entry->type = ATMOS41;
           entry->action = handle_atmos_series;
           entry->task_name = sensor_type_to_str(ATMOS41);
+          entry->port = cfg[i].port;
+          break;
+
+        case HYDROS21:
+          entry->type = HYDROS21;
+          entry->action = handle_hydros_series;
+          entry->task_name = sensor_type_to_str(HYDROS21);
           entry->port = cfg[i].port;
           break;
 

@@ -163,9 +163,12 @@ extern "C" void app_main(void) {
     blink_status_blink(LED_GREEN, 2);
     blink_status_blink(LED_BLUE, 2);
   } else {
-    ESP_LOGW(TAG, "No network selected, defaulting to Wi-Fi.");
-    start_wifi();
-    cfg_set_network_type("Wifi");
+    // ESP_LOGW(TAG, "No network selected, defaulting to Wi-Fi.");
+    // start_wifi();
+    // cfg_set_network_type("Wifi");
+    ESP_LOGW(TAG, "No network selected, defaulting to LAN(Ethernet.");
+    start_lan();
+    cfg_set_network_type("Ethernet(LAN)");
     blink_status_blink(LED_GREEN, 2);
     blink_status_blink(LED_RED, 2);
   }

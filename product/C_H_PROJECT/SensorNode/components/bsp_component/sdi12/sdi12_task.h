@@ -97,6 +97,13 @@ typedef struct {
 
 typedef struct {
   char address;
+  int depth;
+  float temperature;
+  float ec;
+} hydros21_data_t;
+
+typedef struct {
+  char address;
   unsigned type;
   float PPFD;
   float NDVI_UP_WARD;
@@ -200,6 +207,18 @@ weather_atmos22_data_t *sdi12_read_atmos22(uint8_t portId);
  * @return Pointer to a statically allocated weather_atmos14_data_t structure with parsed data.
  */
 weather_atmos14_data_t *sdi12_read_atmos14(uint8_t portId);
+
+/**
+ * @brief Reads measurement data from an HYDROS21 sensor using the "R0!" SDI-12 command.
+ *
+ * Sends the "R0!" command to the specified port, waits for the response,
+ * and parses it into a hydros21_data_t structure containing volumetric water depth,
+ * temperature, and electrical conductivity (EC).
+ *
+ * @param portId Sensor port ID (0–N) selecting the SDI-12 bus or multiplexer channel.
+ * @return Pointer to a statically allocated hydros21_data_t structure with parsed data.
+ */
+hydros21_data_t *sdi12_read_hydros21(uint8_t portId);
 
 // /**
 //  * @brief Reads measurement data from an Apogee S2-412 sensor using "M!" and "D!" SDI-12 commands.

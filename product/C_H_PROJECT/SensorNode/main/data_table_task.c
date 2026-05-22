@@ -3,6 +3,7 @@
 #include "freertos/idf_additions.h"
 #include "freertos/projdefs.h"
 #include "sdi12_task.h"
+#include "sensor_config.h"
 #include "stdio.h"
 #include "esp_log.h"
 #include "mqtt_publish.h"
@@ -174,6 +175,12 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
       datatable_add_float_smp_column(dt->handle, "nullValue", &dt->at41g2_col.nullValue_col);
       datatable_add_float_smp_column(dt->handle, "northWindSpeed", &dt->at41g2_col.northWindSpeed_col);
       datatable_add_float_smp_column(dt->handle, "eastWindSpeed", &dt->at41g2_col.eastWindSpeed_col);
+      break;
+
+    case HYDROS21:
+      datatable_add_float_smp_column(dt->handle, "depth", &dt->hydros21_col.depth_avg_col);
+      datatable_add_float_smp_column(dt->handle, "temp", &dt->hydros21_col.ta_avg_col);
+      datatable_add_float_smp_column(dt->handle, "ec", &dt->hydros21_col.ec_avg_col);
       break;
 
       /* APOGEE TYPE */

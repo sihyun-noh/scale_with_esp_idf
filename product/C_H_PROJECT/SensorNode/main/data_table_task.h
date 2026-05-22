@@ -81,6 +81,12 @@ typedef struct {
 } weather_at41g2_col_t;
 
 typedef struct {
+  uint8_t depth_avg_col;
+  uint8_t ta_avg_col;
+  uint8_t ec_avg_col;
+} hydros21_col_t;
+
+typedef struct {
   uint8_t PPFD;
   uint8_t NDVI_UP_WARD;
   uint8_t NDVI_DOWN_WARD;
@@ -105,6 +111,8 @@ typedef struct {
   weather_atmos14_col_t atmos14_col;
   weather_atmos22_data_t atmos22;
   weather_atmos22_col_t atmos22_col;
+  hydros21_col_t hydros21_col;
+  hydros21_data_t hydros21;
   teros11_col_t teros11_col;
   teros11_data_t tero11;
   teros12_col_t teros12_col;

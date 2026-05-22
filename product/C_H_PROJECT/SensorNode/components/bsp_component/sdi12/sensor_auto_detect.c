@@ -17,6 +17,7 @@
 #include "sensor_auto_detect.h"
 #include "sensor_cfg_config.h"
 #include "bsp_gpio.h"
+#include "sensor_config.h"
 
 #define DEBOUNCE_TIME_MS 100
 static const char *TAG = "[sensorAutoDetect]";
@@ -60,6 +61,7 @@ static const sensor_model_map_t meter_model_map[] = {
   { "ATMOS14", ATMOS14, 4 },
   { "ATMOS22", ATMOS22, 9 },
   { "ATMOS41", ATMOS41, 17 },
+  { "HYDROS21", HYDROS21, 3 },
 };
 
 // APOGEE Model map

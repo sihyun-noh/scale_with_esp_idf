@@ -19,6 +19,7 @@ typedef enum {
   ATMOS22,
   // ATMOS31,
   ATMOS41,
+  HYDROS21,
   APOGEE_S2_411,
   APOGEE_S2_412,
   //  APOGEE_SP_421,

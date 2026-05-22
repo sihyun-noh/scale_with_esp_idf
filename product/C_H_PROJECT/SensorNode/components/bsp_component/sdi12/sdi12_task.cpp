@@ -84,7 +84,7 @@ sdi12_cmd_template_t cmd_table[SENSOR_TYPE_COUNT][SDI_CMD_COUNT] = {
  [ATMOS14] = {
     [SDI_CMD_INFO]  = { "I!",  30 },
     [SDI_CMD_ADDR]  = { "A!",  100 },
-    [SDI_CMD_READ]  = { "R0!", 30 },
+    [SDI_CMD_READ]  = { "R0!", 100 }, 
   },
  [ATMOS22] = {
     [SDI_CMD_INFO]  = { "I!",  30 },
@@ -94,7 +94,12 @@ sdi12_cmd_template_t cmd_table[SENSOR_TYPE_COUNT][SDI_CMD_COUNT] = {
   [ATMOS41] = {
     [SDI_CMD_INFO]  = { "I!",  30 },
     [SDI_CMD_ADDR]  = { "A!",  100 },
-    [SDI_CMD_READ]  = { "R0!", 20 },
+    [SDI_CMD_READ]  = { "R0!", 20 },  //must be delay 500ms
+  },
+  [HYDROS21] = {
+    [SDI_CMD_INFO]  = { "I!",  30 },
+    [SDI_CMD_ADDR]  = { "A!",  100 },
+    [SDI_CMD_READ]  = { "R0!", 500 },  //must be delay 500ms
   },
   [APOGEE_S2_411] = {
     [SDI_CMD_INFO]  = { "I!",  30 },
@@ -211,6 +216,11 @@ bool parse_sdi12_info(const char *resp, sdi12_sensor_info_t *out) {
     ESP_LOGE(TAG, "[INFO] Model AT41G2(ATMOS41)");
     strcpy(out->manufacturer, "METER");
     strcpy(out->model, "ATMOS41");
+
+  } else if (strstr(resp, "HYD21") != 0) {
+    ESP_LOGE(TAG, "[INFO] Model HYD21(HYDROS21)");
+    strcpy(out->manufacturer, "METER");
+    strcpy(out->model, "HYDROS21");
 
   } else if (strstr(resp, "SQ-521") != 0) {
     ESP_LOGE(TAG, "[INFO] Model SQ-521");
@@ -530,6 +540,47 @@ static bool parse_at41g2_response(const char *resp, weather_at41g2_data_t *out) 
   return true;
 }
 
+static bool parse_hydros21_response(const char *resp, hydros21_data_t *out) {
+  if (!resp || !out)
+    return false;
+
+  //<electricalConductivity> µS/cm Electrical conductivity
+  //<depth> mm Depth­ —Values will typically range from 0 to 10,000 mm
+  //<temperature> °C Temperature
+
+  // e.g. "0+5500+26.3+0"
+  char *ptr = (char *)resp;
+
+  // 1. Sensor address (1 char)
+  out->address = *ptr++;
+
+  // 2. Parse the 3 float/int values
+  for (int i = 0; i < 3; i++) {
+    if (*ptr != '+' && *ptr != '-')
+      return false;  // sign 체크
+    char *endptr = NULL;
+    float value = strtof(ptr, &endptr);
+    if (endptr == ptr)
+      return false;
+
+    // Handle sensor 'no data' value -9999
+    if (value <= -9999.0f) {
+      ESP_LOGW(TAG, "Field %d is invalid (-9999). Replacing with 0.0", i);
+      return false;
+    }
+
+    switch (i) {
+      case 0: out->depth = value; break;
+      case 1: out->temperature = value; break;
+      case 2: out->ec = value; break;
+    }
+
+    ptr = endptr;
+  }
+
+  return true;
+}
+
 // apogee data parsed
 static bool parse_apogee_response(const char *resp, apogee_sensor_t *out, sdi12_sensor_type_t type) {
   if (!resp || !out)
@@ -691,7 +742,7 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
                  (float)teros11->temperature);
         return true;
       } else {
-        ESP_LOGE(TAG, "Failed to parse TEROS12 response.");
+        ESP_LOGE(TAG, "Failed to parse TEROS11 response.");
         return false;
       }
     }
@@ -740,7 +791,7 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
 
         return true;
       } else {
-        ESP_LOGE(TAG, "Failed to parse ATMOS22 response.");
+        ESP_LOGE(TAG, "Failed to parse ATMOS14 response.");
         return false;
       }
     }
@@ -772,6 +823,17 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
         return true;
       } else {
         ESP_LOGE(TAG, "Failed to parse ATMOS41 response.");
+        return false;
+      }
+    }
+    case HYDROS21: {
+      hydros21_data_t *hydros21 = (hydros21_data_t *)out_data;
+      if (parse_hydros21_response(parsed, hydros21)) {
+        ESP_LOGI(TAG, "[PARSED] ADDR: %c, depth: %dmm, TEMP: %.2f, EC: %.2f", hydros21->address, (int)hydros21->depth,
+                 (float)hydros21->temperature, (float)hydros21->ec);
+        return true;
+      } else {
+        ESP_LOGE(TAG, "Failed to parse HYDROS21 response.");
         return false;
       }
     }
@@ -911,7 +973,7 @@ teros21_data_t *sdi12_read_teros21(uint8_t portId) {
   return &teros21;
 }
 
-// TEROS54
+// TEROS54  always turned on
 teros54_data_t *sdi12_read_teros54(uint8_t portId) {
   static uint8_t control_pin_flag = 0;
   static teros54_data_t teros54;
@@ -974,10 +1036,15 @@ teros54_data_t *sdi12_read_teros54(uint8_t portId) {
 
   return &teros54;
 }
-
-// ATMOS14 is always turned on
+#if 0
+#define MAX_RETRY_COUNT 5
+#define RETRY_DELAY_MS  1000
+// ATMOS14 power is controlled by ON/OFF sequence.
+// 2026.05.07
+// When two ATMOS14 sensors are connected, read failures may occur.
+// Power-cycle the sensor before reading and retry up to 5 times.
 weather_atmos14_data_t *sdi12_read_atmos14(uint8_t portId) {
-  static uint8_t control_pin_flag = 0;
+  uint8_t control_pin_flag = 0;
   static weather_atmos14_data_t atmos14;
   sensor_system_t *sensorSys = sensor_ctl_get_instance();
 
@@ -999,8 +1066,8 @@ weather_atmos14_data_t *sdi12_read_atmos14(uint8_t portId) {
   ESP_LOGW(TAG, "control pin %d level %d", detechPin, level);
 #endif
   //  pin level low is deteched
-  //  NOTE:weather station is always turned on
-  if (!control_pin_flag) {
+  //  NOTE:
+  if (!level) {
     control_pin_flag = 1;
     ESP_ERROR_CHECK(sensor_control_pin_set(portId, 1));
 #ifdef SDI12_DEBUG_SET
@@ -1009,21 +1076,108 @@ weather_atmos14_data_t *sdi12_read_atmos14(uint8_t portId) {
     vTaskDelay(pdMS_TO_TICKS(1000));  // booting delay
   }
 
-  vTaskDelay(pdMS_TO_TICKS(1000));
-  mySDI12.begin();
-  if (!print_sdi12_data('0', ATMOS14, &atmos14)) {
+  bool success = false;
+
+  for (int retry = 0; retry < MAX_RETRY_COUNT; retry++) {
+    mySDI12.begin();
+    if (print_sdi12_data('0', ATMOS14, &atmos14)) {
+      success = true;
+      break;
+    }
+    mySDI12.end();
     ESP_LOGE(TAG, "Sensor data parsing failed for address '0'");
+    ESP_LOGE(TAG, "retry read data (%d/%d)", retry + 1, MAX_RETRY_COUNT);
+    if (retry < MAX_RETRY_COUNT - 1) {
+      vTaskDelay(pdMS_TO_TICKS(RETRY_DELAY_MS));
+    }
+  }
+
+  if (!success) {
+    ESP_LOGE(TAG, "Sensor data parsing failed after %d retries", MAX_RETRY_COUNT);
+    ESP_ERROR_CHECK(sensor_buffer_disable());
+    ESP_ERROR_CHECK(sensor_control_pin_set(portId, 0));
+    mySDI12.end();
     return NULL;
   }
+
   mySDI12.end();
 
   // It disables the connection.
   ESP_ERROR_CHECK(sensor_buffer_disable());
 
   // pin level low is deteched
-  if (level) {
+
+  if (control_pin_flag) {
     ESP_ERROR_CHECK(sensor_control_pin_set(portId, 0));
     ESP_LOGW(TAG, "Clear control pin %d", portId);
+  }
+
+  ESP_LOGI(TAG, "End Search for SDI-12 Devices.");
+
+  return &atmos14;
+}
+#endif
+
+#define MAX_RETRY_COUNT      5
+#define RETRY_DELAY_MS       1000
+#define POWER_CYCLE_DELAY_MS 1000
+#define SENSOR_BOOT_DELAY_MS 1000
+
+// ATMOS14 power is controlled by ON/OFF sequence.
+// 2026.05.07
+// When two ATMOS14 sensors are connected, read failures may occur.
+// Power-cycle the sensor before reading and retry up to 5 times.
+weather_atmos14_data_t *sdi12_read_atmos14(uint8_t portId) {
+  static weather_atmos14_data_t atmos14;
+  sensor_system_t *sensorSys = sensor_ctl_get_instance();
+  bool success = false;
+
+  if (sensorSys == NULL) {
+    ESP_LOGE(TAG, "sensorSys() returned NULL");
+    return NULL;
+  }
+
+  ESP_LOGI(TAG, "[SDI12] Data Read to ATMOS14");
+
+  memset(&atmos14, 0x00, sizeof(weather_atmos14_data_t));
+
+  ESP_ERROR_CHECK(sensor_buffer_select_port(portId));
+
+  // Power-cycle ATMOS14 before reading.
+  ESP_ERROR_CHECK(sensor_control_pin_set(portId, 0));
+  vTaskDelay(pdMS_TO_TICKS(POWER_CYCLE_DELAY_MS));
+
+  ESP_ERROR_CHECK(sensor_control_pin_set(portId, 1));
+  ESP_LOGW(TAG, "Set control pin %d", portId);
+  vTaskDelay(pdMS_TO_TICKS(SENSOR_BOOT_DELAY_MS));
+
+  for (int retry = 0; retry < MAX_RETRY_COUNT; retry++) {
+    mySDI12.begin();
+
+    if (print_sdi12_data('0', ATMOS14, &atmos14)) {
+      success = true;
+      mySDI12.end();
+      break;
+    }
+
+    mySDI12.end();
+
+    ESP_LOGE(TAG, "Sensor data parsing failed for address '0'");
+    ESP_LOGE(TAG, "retry read data (%d/%d)", retry + 1, MAX_RETRY_COUNT);
+
+    if (retry < MAX_RETRY_COUNT - 1) {
+      vTaskDelay(pdMS_TO_TICKS(RETRY_DELAY_MS));
+    }
+  }
+
+  ESP_ERROR_CHECK(sensor_buffer_disable());
+
+  ESP_ERROR_CHECK(sensor_control_pin_set(portId, 0));
+  ESP_LOGW(TAG, "Clear control pin %d", portId);
+
+  if (!success) {
+    ESP_LOGE(TAG, "Sensor data parsing failed after %d retries", MAX_RETRY_COUNT);
+    return NULL;
   }
 
   ESP_LOGI(TAG, "End Search for SDI-12 Devices.");
@@ -1142,6 +1296,62 @@ weather_at41g2_data_t *sdi12_read_atmos41(uint8_t portId) {
   ESP_LOGI(TAG, "End Search for SDI-12 Devices.");
 
   return &atmos41;
+}
+
+// HYDROS21 is always turned on
+hydros21_data_t *sdi12_read_hydros21(uint8_t portId) {
+  static uint8_t control_pin_flag = 0;
+  static hydros21_data_t hydros21;
+  sensor_system_t *sensorSys = sensor_ctl_get_instance();
+
+  if (sensorSys == NULL) {
+    ESP_LOGE(TAG, "sensorSys() returned NULL ");
+    return NULL;
+  }
+
+  ESP_LOGI(TAG, "[SDI12] Data Read to HYDROS21");
+  // buffer clear
+  memset(&hydros21, 0x00, sizeof(hydros21_data_t));
+  // TODO: This is the control point for buffer and power management
+  // Sets the MUX to match the data line and power control for the specified port.
+  ESP_ERROR_CHECK(sensor_buffer_select_port(portId));
+
+  int detechPin = sensorSys->ports[portId].detectPin;
+  int level = gpio_get_level((gpio_num_t)detechPin);
+#ifdef SDI12_DEBUG_SET
+  ESP_LOGW(TAG, "control pin %d level %d", detechPin, level);
+#endif
+  //  pin level low is deteched
+  //  NOTE:weather station is always turned on
+  if (!control_pin_flag) {
+    control_pin_flag = 1;
+    ESP_ERROR_CHECK(sensor_control_pin_set(portId, 1));
+#ifdef SDI12_DEBUG_SET
+    ESP_LOGW(TAG, "Set control pin %d", portId);
+#endif
+    vTaskDelay(pdMS_TO_TICKS(1000));  // booting delay
+  }
+
+  vTaskDelay(pdMS_TO_TICKS(450));
+  mySDI12.begin();
+  if (!print_sdi12_data('0', HYDROS21, &hydros21)) {
+    ESP_LOGE(TAG, "Sensor data parsing failed for address '0'");
+    return NULL;
+  }
+  mySDI12.end();
+
+  // It disables the connection.
+  ESP_ERROR_CHECK(sensor_buffer_disable());
+
+  // pin level low is deteched
+  if (level) {
+    ESP_ERROR_CHECK(sensor_control_pin_set(portId, 0));
+    ESP_LOGW(TAG, "Clear control pin %d", portId);
+  }
+
+  ESP_LOGI(TAG, "End Search for SDI-12 Devices.");
+
+  return &hydros21;
 }
 
 // SQ-521 is always turned on
@@ -1489,6 +1699,14 @@ void sdi12_app_main_2(void *param) {
         ESP_LOGW(TAG, "[ATMOS41] Weather station : %.2f", weather->airTemperature);
       } else {
         ESP_LOGW(TAG, "[ATMOS41] READ FAILED");
+      }
+
+    } else if (strcmp(info->model, "HYDROS21") == 0) {
+      hydros21_data_t *hydros21_data = sdi12_read_hydros21(portId);
+      if (hydros21_data != NULL) {
+        ESP_LOGW(TAG, "[HYDROS21] Read Sensor data(temperature) : %.2f", hydros21_data->temperature);
+      } else {
+        ESP_LOGW(TAG, "[HYDROS21] READ FAILED");
       }
 
     } else if (strcmp(info->model, "SQ-521") == 0) {
