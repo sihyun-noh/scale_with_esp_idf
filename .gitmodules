@@ -19,6 +19,3 @@
 [submodule "product/C_H_PROJECT/SensorNode/opensource/esp_littlefs"]
 	path = product/C_H_PROJECT/SensorNode/opensource/esp_littlefs
 	url = https://github.com/joltwallet/esp_littlefs.git
-[submodule "product/arduino_platform/template/lib/RAK13010-SDI12"]
-	path = product/arduino_platform/template/lib/RAK13010-SDI12
-	url = https://github.com/RAKWireless/RAK13010-SDI12.git
