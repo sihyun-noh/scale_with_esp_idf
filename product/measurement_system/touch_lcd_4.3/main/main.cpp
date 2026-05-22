@@ -515,6 +515,7 @@ void app_main(void) {
   lvgl_release();
   //  mqtt_app_start();
 
+  // msg queue Initialize for lv ui_events
   lv_evt_init();
 
   ESP_ERROR_CHECK(waveshare_twai_init());  // Initialize the TWAI interface and check for errors

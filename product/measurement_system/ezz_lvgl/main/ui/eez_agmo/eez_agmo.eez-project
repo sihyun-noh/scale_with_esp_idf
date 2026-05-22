@@ -479,7 +479,7 @@
               "type": "LVGLLabelWidget",
               "left": 86,
               "top": 147,
-              "width": 246,
+              "width": 0,
               "height": 33,
               "customInputs": [],
               "customOutputs": [],
@@ -554,7 +554,7 @@
                   "type": "LVGLLabelWidget",
                   "left": 0,
                   "top": 0,
-                  "width": 23,
+                  "width": 0,
                   "height": 29,
                   "customInputs": [],
                   "customOutputs": [],
@@ -751,7 +751,7 @@
                   "type": "LVGLLabelWidget",
                   "left": 0,
                   "top": 0,
-                  "width": 23,
+                  "width": 0,
                   "height": 29,
                   "customInputs": [],
                   "customOutputs": [],
@@ -878,7 +878,7 @@
               "type": "LVGLLabelWidget",
               "left": 115,
               "top": 245,
-              "width": 205,
+              "width": 0,
               "height": 33,
               "customInputs": [],
               "customOutputs": [],
@@ -1002,7 +1002,7 @@
                   "type": "LVGLLabelWidget",
                   "left": 0,
                   "top": 0,
-                  "width": 23,
+                  "width": 0,
                   "height": 29,
                   "customInputs": [],
                   "customOutputs": [],
@@ -1198,7 +1198,7 @@
                   "type": "LVGLLabelWidget",
                   "left": 0,
                   "top": 0,
-                  "width": 23,
+                  "width": 0,
                   "height": 29,
                   "customInputs": [],
                   "customOutputs": [],
@@ -1326,7 +1326,7 @@
               "type": "LVGLLabelWidget",
               "left": 320,
               "top": 245,
-              "width": 211,
+              "width": 0,
               "height": 33,
               "customInputs": [],
               "customOutputs": [],
@@ -2018,7 +2018,7 @@
               "type": "LVGLLabelWidget",
               "left": 524,
               "top": 208,
-              "width": 174,
+              "width": 0,
               "height": 33,
               "customInputs": [],
               "customOutputs": [],
@@ -2067,7 +2067,7 @@
               "type": "LVGLLabelWidget",
               "left": 644,
               "top": 208,
-              "width": 177,
+              "width": 0,
               "height": 33,
               "customInputs": [],
               "customOutputs": [],
@@ -2116,7 +2116,7 @@
               "type": "LVGLLabelWidget",
               "left": 524,
               "top": 368,
-              "width": 180,
+              "width": 0,
               "height": 33,
               "customInputs": [],
               "customOutputs": [],
@@ -2165,7 +2165,7 @@
               "type": "LVGLLabelWidget",
               "left": 644,
               "top": 368,
-              "width": 183,
+              "width": 0,
               "height": 33,
               "customInputs": [],
               "customOutputs": [],
@@ -2244,7 +2244,7 @@
                   "type": "LVGLLabelWidget",
                   "left": 0,
                   "top": 0,
-                  "width": 23,
+                  "width": 0,
                   "height": 29,
                   "customInputs": [],
                   "customOutputs": [],
@@ -2441,7 +2441,7 @@
                   "type": "LVGLLabelWidget",
                   "left": 0,
                   "top": 0,
-                  "width": 23,
+                  "width": 0,
                   "height": 29,
                   "customInputs": [],
                   "customOutputs": [],
@@ -2568,7 +2568,7 @@
               "type": "LVGLLabelWidget",
               "left": 115,
               "top": 245,
-              "width": 289,
+              "width": 0,
               "height": 33,
               "customInputs": [],
               "customOutputs": [],
@@ -3217,7 +3217,7 @@
               "type": "LVGLLabelWidget",
               "left": 37,
               "top": 66,
-              "width": 230,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -3267,7 +3267,7 @@
               "type": "LVGLLabelWidget",
               "left": 37,
               "top": 111,
-              "width": 224,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -3317,7 +3317,7 @@
               "type": "LVGLLabelWidget",
               "left": 37,
               "top": 155,
-              "width": 230,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -3367,7 +3367,7 @@
               "type": "LVGLLabelWidget",
               "left": 37,
               "top": 200,
-              "width": 229,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -3417,7 +3417,7 @@
               "type": "LVGLLabelWidget",
               "left": 37,
               "top": 245,
-              "width": 229,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -3467,7 +3467,7 @@
               "type": "LVGLLabelWidget",
               "left": 37,
               "top": 290,
-              "width": 229,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -3517,7 +3517,7 @@
               "type": "LVGLLabelWidget",
               "left": 37,
               "top": 334,
-              "width": 229,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -3567,7 +3567,7 @@
               "type": "LVGLLabelWidget",
               "left": 37,
               "top": 379,
-              "width": 229,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -3713,7 +3713,7 @@
               "type": "LVGLLabelWidget",
               "left": 293,
               "top": 66,
-              "width": 312,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -3763,7 +3763,7 @@
               "type": "LVGLLabelWidget",
               "left": 293,
               "top": 112,
-              "width": 306,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -3812,7 +3812,7 @@
               "type": "LVGLLabelWidget",
               "left": 293,
               "top": 157,
-              "width": 312,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -3861,7 +3861,7 @@
               "type": "LVGLLabelWidget",
               "left": 293,
               "top": 203,
-              "width": 311,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -3910,7 +3910,7 @@
               "type": "LVGLLabelWidget",
               "left": 293,
               "top": 249,
-              "width": 311,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -3959,7 +3959,7 @@
               "type": "LVGLLabelWidget",
               "left": 293,
               "top": 295,
-              "width": 311,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -4008,7 +4008,7 @@
               "type": "LVGLLabelWidget",
               "left": 293,
               "top": 340,
-              "width": 311,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -4057,7 +4057,7 @@
               "type": "LVGLLabelWidget",
               "left": 293,
               "top": 386,
-              "width": 311,
+              "width": 0,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -6760,6 +6760,108 @@
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false
+            },
+            {
+              "objID": "63a1497b-5f51-4fa9-ceb1-e73ccc544d09",
+              "type": "LVGLLabelWidget",
+              "left": 482,
+              "top": 290,
+              "width": 209,
+              "height": 24,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "514bc243-a748-4044-b5e9-40b64eac6a51",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "Calculation_label",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "content",
+              "heightUnit": "content",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+              "hiddenFlagType": "literal",
+              "clickableFlagType": "literal",
+              "flagScrollbarMode": "",
+              "flagScrollDirection": "",
+              "scrollSnapX": "",
+              "scrollSnapY": "",
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "63fb1570-53a5-40f3-a691-7385bd469d5e",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_font": "MONTSERRAT_22",
+                      "text_letter_space": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "Calculation_table",
+              "textType": "expression",
+              "longMode": "WRAP",
+              "recolor": false
+            },
+            {
+              "objID": "1b7ecb82-c4aa-4948-af76-fb933d29b9bf",
+              "type": "LVGLLabelWidget",
+              "left": 483,
+              "top": 256,
+              "width": 126,
+              "height": 24,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "c8d88c55-8a72-42cb-fa61-dc72b337cae0",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "Calculation_label_1",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "content",
+              "heightUnit": "content",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SCROLLABLE|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_WITH_ARROW|SNAPPABLE",
+              "hiddenFlagType": "literal",
+              "clickableFlagType": "literal",
+              "flagScrollbarMode": "",
+              "flagScrollDirection": "",
+              "scrollSnapX": "",
+              "scrollSnapY": "",
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "82c90c8a-d954-485e-a05d-6e5eef7e2da1",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_font": "MONTSERRAT_22",
+                      "text_letter_space": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "end_table",
+              "textType": "expression",
+              "longMode": "WRAP",
+              "recolor": false
             }
           ],
           "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE|SCROLLABLE|SCROLL_ELASTIC|SCROLL_MOMENTUM|SCROLL_CHAIN_HOR|SCROLL_CHAIN_VER",
@@ -6777,8 +6879,8 @@
         {
           "objID": "701139a1-c124-4561-8319-096b24fe68a2",
           "type": "StartActionComponent",
-          "left": -375,
-          "top": -187,
+          "left": -470,
+          "top": -274,
           "width": 87,
           "height": 24,
           "customInputs": [],
@@ -6787,10 +6889,10 @@
         {
           "objID": "7262fa2b-1440-40f2-be30-c747a3b058b5",
           "type": "SetVariableActionComponent",
-          "left": -167,
-          "top": -187,
-          "width": 146,
-          "height": 122,
+          "left": -264,
+          "top": -290,
+          "width": 213,
+          "height": 187,
           "customInputs": [],
           "customOutputs": [],
           "description": "Initialize calculator state",
@@ -6814,6 +6916,21 @@
               "objID": "5a4ffb51-5cff-4d2f-d01f-f3fd8b3851d1",
               "variable": "newNumber",
               "value": "true"
+            },
+            {
+              "objID": "096f21be-f7c3-46e7-c7b6-8126f7fba5e1",
+              "variable": "Calculation_table",
+              "value": "\"\""
+            },
+            {
+              "objID": "77b9b4fb-f3e6-4572-9629-6bf67059f58a",
+              "variable": "calcuation_table_empty",
+              "value": "\"\""
+            },
+            {
+              "objID": "37a188e7-7f33-4d00-a8e4-c9e1be33a9a0",
+              "variable": "end_table",
+              "value": "\"\""
             }
           ]
         },
@@ -6994,8 +7111,8 @@
           "type": "SetVariableActionComponent",
           "left": 531,
           "top": -109,
-          "width": 459,
-          "height": 57,
+          "width": 828,
+          "height": 78,
           "customInputs": [],
           "customOutputs": [],
           "description": "Add decimal point",
@@ -7004,6 +7121,11 @@
               "objID": "b01f44d3-ed10-480c-96f0-d69b5adf8e79",
               "variable": "display",
               "value": "String.find(display, \".\") == -1 ? display + \".\" : display"
+            },
+            {
+              "objID": "cb6b3433-cb9d-4b76-d3fa-cf64d4023cbc",
+              "variable": "calcuation_table_empty",
+              "value": "String.find(calcuation_table_empty, \".\") == -1 ? calcuation_table_empty + \".\" : calcuation_table_empty"
             }
           ]
         },
@@ -7291,8 +7413,8 @@
         {
           "objID": "7d280580-6a2f-413b-fd2f-68d7618cd2c3",
           "type": "LVGLActionComponent",
-          "left": 609,
-          "top": 310,
+          "left": 1158,
+          "top": 490,
           "width": 280,
           "height": 52,
           "customInputs": [],
@@ -7353,8 +7475,8 @@
           "type": "SetVariableActionComponent",
           "left": -1046,
           "top": 103,
-          "width": 403,
-          "height": 86,
+          "width": 588,
+          "height": 115,
           "customInputs": [
             {
               "objID": "4c23c120-0a30-4016-ea5c-9b36a87bb87e",
@@ -7369,6 +7491,11 @@
               "objID": "aae7e7be-c3a1-4cf1-eb94-9ab40468f591",
               "variable": "display",
               "value": "newNumber ? digit :\n(display == \"0\" ? digit : display + digit)"
+            },
+            {
+              "objID": "5bd59505-6cbd-4703-e2c5-b9c9a7cd451f",
+              "variable": "calcuation_table_empty",
+              "value": "newNumber ? digit :\n(display == \"0\" ? digit : calcuation_table_empty + digit)"
             },
             {
               "objID": "045e22c2-ec89-44da-b2f7-09cf871bb18d",
@@ -7649,6 +7776,40 @@
               "value": "0"
             }
           ]
+        },
+        {
+          "objID": "0f213639-0ff1-4919-975f-3c823b706255",
+          "type": "SetVariableActionComponent",
+          "left": 1018,
+          "top": 1025,
+          "width": 373,
+          "height": 57,
+          "customInputs": [],
+          "customOutputs": [],
+          "entries": [
+            {
+              "objID": "3caa45b6-51d6-4885-9a09-c89dec046c31",
+              "variable": "Calculation_table",
+              "value": "calcuation_table_empty + operator"
+            }
+          ]
+        },
+        {
+          "objID": "c45dafd1-2fab-4c27-f9cc-6e2197b5a3f2",
+          "type": "SetVariableActionComponent",
+          "left": 1013,
+          "top": 1155,
+          "width": 306,
+          "height": 57,
+          "customInputs": [],
+          "customOutputs": [],
+          "entries": [
+            {
+              "objID": "a250f094-18d7-45c9-e5f1-a0c4be9dad37",
+              "variable": "end_table",
+              "value": "end_table + Calculation_table "
+            }
+          ]
         }
       ],
       "connectionLines": [
@@ -7693,13 +7854,6 @@
           "output": "CLICKED",
           "target": "0b29ea95-36a1-4ec1-cc7a-f16d6e3225a1",
           "input": "@seqin"
-        },
-        {
-          "objID": "27cbfa1d-8fb1-44f5-e71d-d7e23dc28e62",
-          "source": "0b29ea95-36a1-4ec1-cc7a-f16d6e3225a1",
-          "output": "ADD",
-          "target": "54cd92a5-65e1-4823-b1e5-4a39682d593c",
-          "input": "result"
         },
         {
           "objID": "741127ca-02e7-4ac6-e477-1736304eb26c",
@@ -8106,6 +8260,27 @@
           "output": "@seqout",
           "target": "37e2795e-c421-45d8-d0c0-c626ed670d3f",
           "input": "@seqin"
+        },
+        {
+          "objID": "a25fa68d-25f8-4cbc-b5eb-0acfcf4b361a",
+          "source": "0b29ea95-36a1-4ec1-cc7a-f16d6e3225a1",
+          "output": "ADD",
+          "target": "54cd92a5-65e1-4823-b1e5-4a39682d593c",
+          "input": "result"
+        },
+        {
+          "objID": "9d88901e-fe0f-480e-b245-be4b87b7d664",
+          "source": "a5897a1f-6993-40a1-8db5-ad7a5e6df9f0",
+          "output": "@seqout",
+          "target": "0f213639-0ff1-4919-975f-3c823b706255",
+          "input": "@seqin"
+        },
+        {
+          "objID": "7f389ef7-ffe0-4e33-c86e-de4d258a0b84",
+          "source": "0f213639-0ff1-4919-975f-3c823b706255",
+          "output": "@seqout",
+          "target": "c45dafd1-2fab-4c27-f9cc-6e2197b5a3f2",
+          "input": "@seqin"
         }
       ],
       "localVariables": [
@@ -8170,6 +8345,30 @@
           "name": "num",
           "type": "integer",
           "defaultValue": "0",
+          "persistent": false,
+          "native": false
+        },
+        {
+          "objID": "1931f8c5-1435-481a-fb71-14cb78d69fe4",
+          "name": "Calculation_table",
+          "type": "string",
+          "defaultValue": "\"\"",
+          "persistent": false,
+          "native": false
+        },
+        {
+          "objID": "fd0cad00-aec6-4f0e-c78f-3eb84715ef1e",
+          "name": "calcuation_table_empty",
+          "type": "string",
+          "defaultValue": "\"\"",
+          "persistent": false,
+          "native": false
+        },
+        {
+          "objID": "295305a2-014f-46be-d1a0-2a20d240bdf7",
+          "name": "end_table",
+          "type": "string",
+          "defaultValue": "\"\"",
           "persistent": false,
           "native": false
         }

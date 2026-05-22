@@ -37,7 +37,6 @@ idf_component_register(
         # UI images
         "ui/images/ui_img_77785195.c"
         "ui/images/ui_img_2105472862.c"
-
         # (optional)
         # "480_800_16_bmp.c"
     INCLUDE_DIRS
