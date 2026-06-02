@@ -544,9 +544,10 @@ static bool parse_hydros21_response(const char *resp, hydros21_data_t *out) {
   if (!resp || !out)
     return false;
 
-  //<electricalConductivity> µS/cm Electrical conductivity
-  //<depth> mm Depth­ —Values will typically range from 0 to 10,000 mm
-  //<temperature> °C Temperature
+  // aR0! -> a±<depth>±<temperature>+<electricalConductivity>
+  // <depth> mm — Values will typically range from 0 to 10,000 mm.
+  // <temperature> °C
+  // <electricalConductivity> µS/cm
 
   // e.g. "0+5500+26.3+0"
   char *ptr = (char *)resp;
@@ -829,7 +830,7 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
     case HYDROS21: {
       hydros21_data_t *hydros21 = (hydros21_data_t *)out_data;
       if (parse_hydros21_response(parsed, hydros21)) {
-        ESP_LOGI(TAG, "[PARSED] ADDR: %c, depth: %dmm, TEMP: %.2f, EC: %.2f", hydros21->address, (int)hydros21->depth,
+        ESP_LOGI(TAG, "[PARSED] ADDR: %c, depth: %.2fmm, TEMP: %.2f, EC: %.2f", hydros21->address, hydros21->depth,
                  (float)hydros21->temperature, (float)hydros21->ec);
         return true;
       } else {
@@ -1303,6 +1304,7 @@ hydros21_data_t *sdi12_read_hydros21(uint8_t portId) {
   static uint8_t control_pin_flag = 0;
   static hydros21_data_t hydros21;
   sensor_system_t *sensorSys = sensor_ctl_get_instance();
+  bool success = false;
 
   if (sensorSys == NULL) {
     ESP_LOGE(TAG, "sensorSys() returned NULL ");
@@ -1334,11 +1336,12 @@ hydros21_data_t *sdi12_read_hydros21(uint8_t portId) {
 
   vTaskDelay(pdMS_TO_TICKS(450));
   mySDI12.begin();
-  if (!print_sdi12_data('0', HYDROS21, &hydros21)) {
-    ESP_LOGE(TAG, "Sensor data parsing failed for address '0'");
-    return NULL;
-  }
+  success = print_sdi12_data('0', HYDROS21, &hydros21);
   mySDI12.end();
+
+  if (!success) {
+    ESP_LOGE(TAG, "Sensor data parsing failed for address '0'");
+  }
 
   // It disables the connection.
   ESP_ERROR_CHECK(sensor_buffer_disable());
@@ -1351,7 +1354,7 @@ hydros21_data_t *sdi12_read_hydros21(uint8_t portId) {
 
   ESP_LOGI(TAG, "End Search for SDI-12 Devices.");
 
-  return &hydros21;
+  return success ? &hydros21 : NULL;
 }
 
 // SQ-521 is always turned on

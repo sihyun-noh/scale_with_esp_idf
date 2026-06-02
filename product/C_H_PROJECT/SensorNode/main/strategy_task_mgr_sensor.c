@@ -566,13 +566,13 @@ static void handle_hydros_series(void* param) {
     data_hydros21 = sdi12_read_hydros21(array_num);  // 데이터 읽기
     if (!data_hydros21) {
       ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
-      return;
+      goto next;
     }
-    ESP_LOGI(TAG, "[%s] Raw data - depth: %dmm, Temp: %.2f, EC: %.2f", sensor_type, data_hydros21->depth,
+    ESP_LOGI(TAG, "[%s] Raw data - depth: %.2fmm, Temp: %.2f, EC: %.2f", sensor_type, data_hydros21->depth,
              data_hydros21->temperature, data_hydros21->ec);
   } else {
     ESP_LOGE(TAG, "[HYDROS_SERIES] Invalid sensor type (ERR)");
-    return;
+    goto next;
   }
 
   // Push to table(Append to the table)
@@ -584,7 +584,7 @@ static void handle_hydros_series(void* param) {
       datatable_push_float_sample(dt[array_num].handle, dt[array_num].hydros21_col.ec_avg_col, data_hydros21->ec);
     } else {
       ESP_LOGE(TAG, "[HYDROS_SERIES] Invalid sensor type (ERR)");
-      return;
+      goto next;
     }
 
 #ifdef SDI12_DEBUG_SET
@@ -627,6 +627,7 @@ static void handle_hydros_series(void* param) {
       // vTaskDelay(pdMS_TO_TICKS(50));
     }
 
+  next:
     /* serialize data-table and output in json format every 5-minutes (i.e. 12:00:00, 12:05:00, 12:10:00, etc.) */
     if (time_into_interval(dt[array_num].publish_interval.handle)) {
       // create root object for data-table

@@ -97,7 +97,7 @@ typedef struct {
 
 typedef struct {
   char address;
-  int depth;
+  float depth;
   float temperature;
   float ec;
 } hydros21_data_t;
