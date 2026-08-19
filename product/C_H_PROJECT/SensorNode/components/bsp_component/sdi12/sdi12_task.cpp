@@ -10,6 +10,9 @@
 #include "sensor_config.h"
 #include "soc/gpio_num.h"
 #include "sdi12_task.h"
+#include <string.h>
+#include <cstdint>
+#include <cstring>
 
 #define TX_PIN             CONFIG_SDI12_TX_PIN  // The pin of the SDI-12 data bus.
 #define RX_PIN             CONFIG_SDI12_RX_PIN  // The pin of the SDI-12 data bus.
@@ -76,10 +79,27 @@ sdi12_cmd_template_t cmd_table[SENSOR_TYPE_COUNT][SDI_CMD_COUNT] = {
     [SDI_CMD_ADDR]  = { "A!",  100 },
     [SDI_CMD_READ]  = { "R0!", 30 },
   },
+  [TEROS32] = {
+    [SDI_CMD_INFO]  = { "I!",  30 },
+    [SDI_CMD_ADDR]  = { "A!",  100 },
+    [SDI_CMD_READ]  = { "R0!", 65 },
+    [SDI_CMD_M]  = { "M!", 65 },     // read to Teros32 measurement command
+    [SDI_CMD_D0]  = { "D0!", 65 },
+    [SDI_CMD_D1]  = { "D1!", 65 },
+    [SDI_CMD_D2]  = { "D2!", 65 },
+  },
   [TEROS54] = {
     [SDI_CMD_INFO]  = { "I!",  30 },
     [SDI_CMD_ADDR]  = { "A!",  100 },
     [SDI_CMD_READ]  = { "R0!", 50 },
+  },
+ [SOLYX14] = {
+    [SDI_CMD_INFO]  = { "I!",  30 },
+    [SDI_CMD_ADDR]  = { "A!",  100 },
+    [SDI_CMD_READ]  = { "R0!", 100 },
+    [SDI_CMD_M]  = { "M!", 50 },     // read to SOLYX14 measurement command
+    [SDI_CMD_D0]  = { "D0!", 50 },
+    [SDI_CMD_D1]  = { "D1!", 50 },
   },
  [ATMOS14] = {
     [SDI_CMD_INFO]  = { "I!",  30 },
@@ -94,7 +114,7 @@ sdi12_cmd_template_t cmd_table[SENSOR_TYPE_COUNT][SDI_CMD_COUNT] = {
   [ATMOS41] = {
     [SDI_CMD_INFO]  = { "I!",  30 },
     [SDI_CMD_ADDR]  = { "A!",  100 },
-    [SDI_CMD_READ]  = { "R0!", 20 },  //must be delay 500ms
+    [SDI_CMD_READ]  = { "R0!", 20 },  //must be delay 20ms
   },
   [HYDROS21] = {
     [SDI_CMD_INFO]  = { "I!",  30 },
@@ -106,21 +126,21 @@ sdi12_cmd_template_t cmd_table[SENSOR_TYPE_COUNT][SDI_CMD_COUNT] = {
     [SDI_CMD_ADDR]  = { "A!",  100 },
     [SDI_CMD_READ]  = { "R0!", 50 },
     [SDI_CMD_M]  = { "M2!", 50 },     // read to NDVI measurement command 
-    [SDI_CMD_D]  = { "D0!", 50 },
+    [SDI_CMD_D0]  = { "D0!", 50 },
   },
   [APOGEE_S2_412] = {
     [SDI_CMD_INFO]  = { "I!",  30 },
     [SDI_CMD_ADDR]  = { "A!",  100 },
     [SDI_CMD_READ]  = { "R0!", 50 },
     [SDI_CMD_M]  = { "M2!", 50 },     // read to NDVI measurement command 
-    [SDI_CMD_D]  = { "D0!", 50 },
+    [SDI_CMD_D0]  = { "D0!", 50 },
   },
   [APOGEE_SQ_521] = {
     [SDI_CMD_INFO]  = { "I!",  30 },
     [SDI_CMD_ADDR]  = { "A!",  100 },
     [SDI_CMD_READ]  = { "R0!", 50 },
     [SDI_CMD_M]  = { "M0!", 50 },
-    [SDI_CMD_D]  = { "D0!", 50 },
+    [SDI_CMD_D0]  = { "D0!", 50 },
   },
 
 };
@@ -197,10 +217,20 @@ bool parse_sdi12_info(const char *resp, sdi12_sensor_info_t *out) {
     strcpy(out->manufacturer, "METER");
     strcpy(out->model, "TER21");
 
+  } else if (strstr(resp, "TER32") != 0) {
+    ESP_LOGE(TAG, "[INFO] Model TER32(TEROS32)");
+    strcpy(out->manufacturer, "METER");
+    strcpy(out->model, "TER32");
+
   } else if (strstr(resp, "TER54") != 0) {
     ESP_LOGE(TAG, "[INFO] Model TER54(TEROS54)");
     strcpy(out->manufacturer, "METER");
     strcpy(out->model, "TER54");
+
+  } else if (strstr(resp, "SLYX14") != 0) {
+    ESP_LOGE(TAG, "[INFO] Model SLYX14(SOLYX14)");
+    strcpy(out->manufacturer, "METER");
+    strcpy(out->model, "SLYX14");
 
   } else if (strstr(resp, "ATM14") != 0) {
     ESP_LOGE(TAG, "[INFO] Model ATM14(ATMOS14)");
@@ -364,6 +394,46 @@ static bool parse_teros21_response(const char *resp, teros21_data_t *out) {
   return true;
 }
 
+static bool parse_teros32_response(const char *resp, teros32_data_t *out) {
+  if (!resp || !out)
+    return false;
+
+  // e.g. "0-1808.28+26.3"
+  char *ptr = (char *)resp;
+
+  // 1. Sensor address (1 char)
+  out->address = *ptr++;
+
+  // 2. Parse the 2 float/int values
+  for (int i = 0; i < 6; i++) {
+    if (*ptr != '+' && *ptr != '-')
+      return false;  // sign 체크
+    char *endptr = NULL;
+    float value = strtof(ptr, &endptr);
+    if (endptr == ptr)
+      return false;
+
+    // Handle sensor 'no data' value -9999
+    if (value <= -9999.0f) {
+      ESP_LOGW(TAG, "Field %d is invalid (-9999). Replacing with 0.0", i);
+      return false;
+    }
+
+    switch (i) {
+      case 0: out->matricPotential = value; break;
+      case 1: out->temperature = value; break;
+      case 2: out->meta = (uint8_t)value; break;
+      case 3: out->pitch = value; break;
+      case 4: out->roll = value; break;
+      case 5: out->upressure = value; break;
+    }
+
+    ptr = endptr;
+  }
+
+  return true;
+}
+
 static bool parse_teros54_response(const char *resp, teros54_data_t *out) {
   if (!resp || !out)
     return false;
@@ -397,6 +467,52 @@ static bool parse_teros54_response(const char *resp, teros54_data_t *out) {
       case 5: out->temp3 = value; break;
       case 6: out->vwc4 = value; break;
       case 7: out->temp4 = value; break;
+    }
+
+    ptr = endptr;
+  }
+
+  return true;
+}
+
+/* brief
+Command : M
+Value Format:
+- D0: 3 bytes
+- D1: 1 byte
+The 3 bytes from D0 and the 1 byte from D1 are combined to form a single 4-byte value.
+*/
+
+static bool parse_solyx14_response(const char *resp, solyx14_data_t *out) {
+  if (!resp || !out)
+    return false;
+
+  // e.g. "0+1808.28+26.3+0"
+  char *ptr = (char *)resp;
+
+  // 1. Sensor address (1 char)
+  out->address = *ptr++;
+
+  // 2. Parse the 3 float/int values
+  for (int i = 0; i < 4; i++) {
+    if (*ptr != '+' && *ptr != '-')
+      return false;  // sign 체크
+    char *endptr = NULL;
+    float value = strtof(ptr, &endptr);
+    if (endptr == ptr)
+      return false;
+
+    // Handle sensor 'no data' value -9999
+    if (value <= -9999.0f) {
+      ESP_LOGW(TAG, "Field %d is invalid (-9999). Replacing with 0.0", i);
+      return false;
+    }
+
+    switch (i) {
+      case 0: out->mdp = value; break;
+      case 1: out->temperature = value; break;
+      case 2: out->ec = value; break;
+      case 3: out->vwc = value; break;
     }
 
     ptr = endptr;
@@ -693,29 +809,87 @@ static char *parse_array_ctrl(char *buf, const char *target) {
   return start;
 }
 
-static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_data) {
-  char addr = i;
+static bool sensor_uses_measurement_sequence(sdi12_sensor_type_t sensor_type) {
+  return sensor_type == APOGEE_SQ_521 || sensor_type == APOGEE_S2_411 || sensor_type == APOGEE_S2_412 ||
+         sensor_type == SOLYX14 || sensor_type == TEROS32;
+}
+
+static bool read_sdi12_payload(char addr, sdi12_sensor_type_t sensor_type, char *payload, size_t payload_size) {
   char removeStr[5] = { 0 };
+  char removeStrD1[6] = { 0 };
   memset(buff, 0x00, sizeof(buff));
 
-  if (SENSOR_TYPE == APOGEE_SQ_521 || SENSOR_TYPE == APOGEE_S2_411 || SENSOR_TYPE == APOGEE_S2_412) {
-    sdi12_get_data(addr, buff, SENSOR_TYPE, SDI_CMD_M);
+  if (sensor_uses_measurement_sequence(sensor_type)) {
+    sdi12_get_data(addr, buff, sensor_type, SDI_CMD_M);
 #ifdef SDI12_DEBUG_SET
     ESP_LOGI(TAG, "[RESULTE] Command \"M\" value : %s", buff);
 #endif
     trim(buff);
     vTaskDelay(pdMS_TO_TICKS(1000));
     memset(buff, 0x00, sizeof(buff));
-    sdi12_get_data(addr, buff, SENSOR_TYPE, SDI_CMD_D);
+    sdi12_get_data(addr, buff, sensor_type, SDI_CMD_D0);
 #ifdef SDI12_DEBUG_SET
     ESP_LOGI(TAG, "[RESULTE] Value \"D0\" value : %s", buff);
 #endif
     trim(buff);
     strncpy(removeStr, "0D0!", 4);
 
+    if (sensor_type == SOLYX14 || sensor_type == TEROS32) {
+      char sub_buff[MAX_BUF_SDI12_SIZE] = { 0 };
+
+      strncpy(sub_buff, buff, sizeof(sub_buff) - 1);
+      ESP_LOGI(TAG, "[RESULTE] Value \"D0 copy\" value : %s", sub_buff);
+
+      memset(buff, 0x00, sizeof(buff));
+      sdi12_get_data(addr, buff, sensor_type, SDI_CMD_D1);
+#ifdef SDI12_DEBUG_SET
+      ESP_LOGI(TAG, "[RESULTE] Value \"D1\" value : %s", buff);
+#endif
+
+      trim(buff);
+      strncpy(removeStrD1, "0D1!0", 5);
+      char *parsed = parse_array_ctrl(buff, removeStrD1);
+      if (!parsed) {
+        ESP_LOGE(TAG, "Parsed D1 response is NULL");
+        return false;
+      }
+      strncat(sub_buff, parsed, sizeof(sub_buff) - strlen(sub_buff) - 1);
+#ifdef SDI12_DEBUG_SET
+      ESP_LOGI(TAG, "[RESULTE] Value \"D0-D1\" value : %s", sub_buff);
+#endif
+      memset(buff, 0x00, sizeof(buff));
+      strncpy(buff, sub_buff, sizeof(buff) - 1);
+
+      if (sensor_type == TEROS32) {
+        memset(sub_buff, 0x00, sizeof(sub_buff));
+        strncpy(sub_buff, buff, sizeof(sub_buff) - 1);
+        ESP_LOGI(TAG, "[RESULTE] Value \"D1 copy\" value : %s", sub_buff);
+
+        memset(buff, 0x00, sizeof(buff));
+        sdi12_get_data(addr, buff, sensor_type, SDI_CMD_D2);
+#ifdef SDI12_DEBUG_SET
+        ESP_LOGI(TAG, "[RESULTE] Value \"D2\" value : %s", buff);
+#endif
+
+        trim(buff);
+        strncpy(removeStrD1, "0D2!0", 5);
+        char *parsed = parse_array_ctrl(buff, removeStrD1);
+        if (!parsed) {
+          ESP_LOGE(TAG, "Parsed D2 response is NULL");
+          return false;
+        }
+        strncat(sub_buff, parsed, sizeof(sub_buff) - strlen(sub_buff) - 1);
+#ifdef SDI12_DEBUG_SET
+        ESP_LOGI(TAG, "[RESULTE] Value \"D0-D2\" value : %s", sub_buff);
+#endif
+        memset(buff, 0x00, sizeof(buff));
+        strncpy(buff, sub_buff, sizeof(buff) - 1);
+      }
+    }
+
   } else {
     // meter group sensor
-    sdi12_get_data(addr, buff, SENSOR_TYPE, SDI_CMD_READ);
+    sdi12_get_data(addr, buff, sensor_type, SDI_CMD_READ);
 #ifdef SDI12_DEBUG_SET
     ESP_LOGI(TAG, "[RESULTE] Value : %s", buff);
 #endif
@@ -735,10 +909,15 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
 #endif
   }
 
-  switch (SENSOR_TYPE) {
+  snprintf(payload, payload_size, "%s", parsed);
+  return true;
+}
+
+static bool parse_sdi12_payload(sdi12_sensor_type_t sensor_type, const char *payload, void *out_data) {
+  switch (sensor_type) {
     case TEROS11: {
       teros11_data_t *teros11 = (teros11_data_t *)out_data;
-      if (parse_teros11_response(parsed, teros11)) {
+      if (parse_teros11_response(payload, teros11)) {
         ESP_LOGI(TAG, "[PARSED] ADDR: %c, VWC: %.2f, TEMP: %.2f", teros11->address, (float)teros11->vwc,
                  (float)teros11->temperature);
         return true;
@@ -749,7 +928,7 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
     }
     case TEROS12: {
       teros12_data_t *teros12 = (teros12_data_t *)out_data;
-      if (parse_teros12_response(parsed, teros12)) {
+      if (parse_teros12_response(payload, teros12)) {
         ESP_LOGI(TAG, "[PARSED] ADDR: %c, VWC: %.2f, TEMP: %.2f, EC: %.2f", teros12->address, (float)teros12->vwc,
                  (float)teros12->temperature, (float)teros12->ec);
         return true;
@@ -760,7 +939,7 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
     }
     case TEROS21: {
       teros21_data_t *teros21 = (teros21_data_t *)out_data;
-      if (parse_teros21_response(parsed, teros21)) {
+      if (parse_teros21_response(payload, teros21)) {
         ESP_LOGI(TAG, "[PARSED] ADDR: %c, MATRICPOTENTIAL: %.2f, TEMP: %.2f", teros21->address,
                  (float)teros21->matricPotential, (float)teros21->temperature);
         return true;
@@ -769,9 +948,24 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
         return false;
       }
     }
+    case TEROS32: {
+      teros32_data_t *teros32 = (teros32_data_t *)out_data;
+      if (parse_teros32_response(payload, teros32)) {
+        ESP_LOGI(
+            TAG,
+            "[PARSED] ADDR: %c, MATRICPOTENTIAL: %.2f, TEMP: %.2f, MATA: %d, PITCH: %.2f, ROLL: %.2f, UPRESSURE: %.2f",
+            teros32->address, (float)teros32->matricPotential, (float)teros32->temperature, teros32->meta,
+            (float)teros32->pitch, (float)teros32->roll, (float)teros32->upressure);
+        return true;
+      } else {
+        ESP_LOGE(TAG, "Failed to parse TEROS32 response.");
+        return false;
+      }
+    }
+
     case TEROS54: {
       teros54_data_t *teros54 = (teros54_data_t *)out_data;
-      if (parse_teros54_response(parsed, teros54)) {
+      if (parse_teros54_response(payload, teros54)) {
         ESP_LOGI(TAG, "[PARSED] ADDR: %c, VWC_1: %.2f, TEMP_1: %.2f", teros54->address, (float)teros54->vwc1,
                  (float)teros54->temp1);
         return true;
@@ -781,9 +975,21 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
       }
     }
 
+    case SOLYX14: {
+      solyx14_data_t *solyx14 = (solyx14_data_t *)out_data;
+      if (parse_solyx14_response(payload, solyx14)) {
+        ESP_LOGI(TAG, "[PARSED] ADDR: %c, MDP:%.2f, VWC: %.2f, TEMP: %.2f, EC: %.2f", solyx14->address,
+                 (float)solyx14->mdp, (float)solyx14->vwc, (float)solyx14->temperature, (float)solyx14->ec);
+        return true;
+      } else {
+        ESP_LOGE(TAG, "Failed to parse SOLYX14 response.");
+        return false;
+      }
+    }
+
     case ATMOS14: {
       weather_atmos14_data_t *atmos14 = (weather_atmos14_data_t *)out_data;
-      if (parse_atmos14_response(parsed, atmos14)) {
+      if (parse_atmos14_response(payload, atmos14)) {
         ESP_LOGI(TAG,
                  "[PARSED] ADDR: %c | vaporPres: %.3f | TEMP: %.2f°C  | relativeHumidity: %.2f | atmosphericPressure "
                  ": %.3f",
@@ -799,7 +1005,7 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
 
     case ATMOS22: {
       weather_atmos22_data_t *atmos22 = (weather_atmos22_data_t *)out_data;
-      if (parse_atmos22_response(parsed, atmos22)) {
+      if (parse_atmos22_response(payload, atmos22)) {
         ESP_LOGI(TAG,
                  "[PARSED] ADDR: %c | TEMP: %.2f°C | WIND: %.2f m/s (%.1f°) | GUST: %.2f m/s | "
                  "ORIENTATION: X %.1f° Y %.1f° | N WIND: %.2f m/s | E WIND: %.2f m/s | NULL: %.2f",
@@ -815,7 +1021,7 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
     }
     case ATMOS41: {
       weather_at41g2_data_t *at41g2 = (weather_at41g2_data_t *)out_data;
-      if (parse_at41g2_response(parsed, at41g2)) {
+      if (parse_at41g2_response(payload, at41g2)) {
         ESP_LOGI(TAG,
                  "[PARSED] ADDR: %c | TEMP: %.2f°C | RH: %.2f%% | PRES: %.2f hPa | "
                  "WIND: %.2f m/s (%.1f°) | RAIN: %.2f mm",
@@ -829,7 +1035,7 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
     }
     case HYDROS21: {
       hydros21_data_t *hydros21 = (hydros21_data_t *)out_data;
-      if (parse_hydros21_response(parsed, hydros21)) {
+      if (parse_hydros21_response(payload, hydros21)) {
         ESP_LOGI(TAG, "[PARSED] ADDR: %c, depth: %.2fmm, TEMP: %.2f, EC: %.2f", hydros21->address, hydros21->depth,
                  (float)hydros21->temperature, (float)hydros21->ec);
         return true;
@@ -840,7 +1046,7 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
     }
     case APOGEE_S2_411: {
       apogee_sensor_t *s2_411 = (apogee_sensor_t *)out_data;
-      if (parse_apogee_response(parsed, s2_411, APOGEE_S2_411)) {
+      if (parse_apogee_response(payload, s2_411, APOGEE_S2_411)) {
         ESP_LOGI(TAG, "[PARSED] ADDR: %c, NDVI Upward : %.4f", s2_411->address, s2_411->NDVI_UP_WARD);
         return true;
       } else {
@@ -851,7 +1057,7 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
 
     case APOGEE_S2_412: {
       apogee_sensor_t *s2_412 = (apogee_sensor_t *)out_data;
-      if (parse_apogee_response(parsed, s2_412, APOGEE_S2_412)) {
+      if (parse_apogee_response(payload, s2_412, APOGEE_S2_412)) {
         ESP_LOGI(TAG, "[PARSED] ADDR: %c, NDVI Downward : %.4f", s2_412->address, s2_412->NDVI_DOWN_WARD);
         return true;
       } else {
@@ -862,7 +1068,7 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
 
     case APOGEE_SQ_521: {
       apogee_sensor_t *sq_521 = (apogee_sensor_t *)out_data;
-      if (parse_apogee_response(parsed, sq_521, APOGEE_SQ_521)) {
+      if (parse_apogee_response(payload, sq_521, APOGEE_SQ_521)) {
         ESP_LOGI(TAG, "[PARSED] ADDR: %c, PPFD: %.4f µmol m-2 s-1", sq_521->address, sq_521->PPFD);
         return true;
       } else {
@@ -873,6 +1079,16 @@ static bool print_sdi12_data(char i, sdi12_sensor_type_t SENSOR_TYPE, void *out_
 
     default: ESP_LOGW(TAG, "Unknown sensor type"); return false;
   }
+}
+
+static bool print_sdi12_data(char i, sdi12_sensor_type_t sensor_type, void *out_data) {
+  char payload[MAX_BUF_SDI12_SIZE] = { 0 };
+
+  if (!read_sdi12_payload(i, sensor_type, payload, sizeof(payload))) {
+    return false;
+  }
+
+  return parse_sdi12_payload(sensor_type, payload, out_data);
 }
 
 void print_sdi12_info(char i, sdi12_sensor_type_t SENSOR_TYPE, sdi12_sensor_info_t *info) {
@@ -974,6 +1190,34 @@ teros21_data_t *sdi12_read_teros21(uint8_t portId) {
   return &teros21;
 }
 
+// TEROS32
+teros32_data_t *sdi12_read_teros32(uint8_t portId) {
+  static teros32_data_t teros32;
+  ESP_LOGI(TAG, "[SDI12] Data Read to TEROS32");
+  // buffer clear
+  memset(&teros32, 0x00, sizeof(teros32_data_t));
+  // TODO: This is the control point for buffer and power management
+  // Sets the MUX to match the data line and power control for the specified port.
+  ESP_ERROR_CHECK(sensor_buffer_select_port(portId));
+  ESP_ERROR_CHECK(sensor_control_pin_set(portId, 1));
+
+  vTaskDelay(pdMS_TO_TICKS(1000));
+  mySDI12.begin();
+  if (!print_sdi12_data('0', TEROS32, &teros32)) {
+    ESP_LOGE(TAG, "Sensor data parsing failed for address '0'");
+    return NULL;
+  }
+  mySDI12.end();
+
+  // It disables the connection.
+  ESP_ERROR_CHECK(sensor_buffer_disable());
+  ESP_ERROR_CHECK(sensor_control_pin_set(portId, 0));
+
+  ESP_LOGI(TAG, "End Search for SDI-12 Devices.");
+
+  return &teros32;
+}
+
 // TEROS54  always turned on
 teros54_data_t *sdi12_read_teros54(uint8_t portId) {
   static uint8_t control_pin_flag = 0;
@@ -1037,6 +1281,35 @@ teros54_data_t *sdi12_read_teros54(uint8_t portId) {
 
   return &teros54;
 }
+
+// SOLYX14
+solyx14_data_t *sdi12_read_solyx14(uint8_t portId) {
+  static solyx14_data_t solyx14;
+  ESP_LOGI(TAG, "[SDI12] Data Read to SOLYX14");
+  // buffer clear
+  memset(&solyx14, 0x00, sizeof(teros12_data_t));
+  // TODO: This is the control point for buffer and power management
+  // Sets the MUX to match the data line and power control for the specified port.
+  ESP_ERROR_CHECK(sensor_buffer_select_port(portId));
+  ESP_ERROR_CHECK(sensor_control_pin_set(portId, 1));
+
+  vTaskDelay(pdMS_TO_TICKS(450));
+  mySDI12.begin();
+  if (!print_sdi12_data('0', SOLYX14, &solyx14)) {
+    ESP_LOGE(TAG, "Sensor data parsing failed for address '0'");
+    return NULL;
+  }
+  mySDI12.end();
+
+  // It disables the connection.
+  ESP_ERROR_CHECK(sensor_buffer_disable());
+  ESP_ERROR_CHECK(sensor_control_pin_set(portId, 0));
+
+  ESP_LOGI(TAG, "End Search for SDI-12 Devices.");
+
+  return &solyx14;
+}
+
 #if 0
 #define MAX_RETRY_COUNT 5
 #define RETRY_DELAY_MS  1000
@@ -1650,8 +1923,19 @@ void sdi12_app_main_2(void *param) {
   ESP_LOGI(TAG, "Start main 2");
 
   uint8_t portId = 0;
+
+#if 1
   sdi12_sensor_info_t *info = sdi12_info_start((uint8_t)portId);
   ESP_LOGI(TAG, "Menufanture : %s", info->model);
+  while (1) {
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    sdi12_sensor_info_t *info = sdi12_info_start((uint8_t)portId);
+    ESP_LOGI(TAG, "Menufanture : %s", info->model);
+  }
+#else
+  sdi12_sensor_info_t *info = sdi12_info_start((uint8_t)portId);
+  ESP_LOGI(TAG, "Menufanture : %s", info->model);
+
   while (1) {
     // sdi12_sensor_info_t *info = sdi12_info_start((uint8_t)portId);
     // ESP_LOGI(TAG, "Menufanture : %s", info->model);
@@ -1745,6 +2029,7 @@ void sdi12_app_main_2(void *param) {
     ESP_LOGI(TAG, "End Search for SDI-12 Devices.");
     vTaskDelay(pdMS_TO_TICKS(2000));
   }
+#endif
 }
 
 void sdi12_task_init() {

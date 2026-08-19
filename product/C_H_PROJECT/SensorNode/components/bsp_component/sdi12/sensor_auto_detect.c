@@ -53,11 +53,14 @@ typedef struct {
 } sensor_model_map_t;
 
 // METER Model map
+// model에서 센서 수량 정확히 넣을 것 -> TB에서 에러남
 static const sensor_model_map_t meter_model_map[] = {
   { "TER11", TEROS11, 2 },
   { "TER12", TEROS12, 3 },
   { "TER21", TEROS21, 2 },
+  { "TER32", TEROS32, 6 },
   { "TER54", TEROS54, 8 },
+  { "SLYX14", SOLYX14, 4 },
   { "ATMOS14", ATMOS14, 4 },
   { "ATMOS22", ATMOS22, 9 },
   { "ATMOS41", ATMOS41, 17 },

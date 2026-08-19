@@ -30,6 +30,15 @@ typedef struct {
 } teros21_col_t;
 
 typedef struct {
+  uint8_t matricPotential_avg_col;
+  uint8_t temperature_avg_col;
+  uint8_t meta_avg_col;
+  uint8_t pitch_avg_col;
+  uint8_t roll_avg_col;
+  uint8_t uPressure_avg_col;
+} teros32_col_t;
+
+typedef struct {
   uint8_t vwc1_col;
   uint8_t temp1_col;
   uint8_t vwc2_col;
@@ -39,6 +48,13 @@ typedef struct {
   uint8_t vwc4_col;
   uint8_t temp4_col;
 } teros54_col_t;
+
+typedef struct {
+  uint8_t mdp_avg_col;
+  uint8_t ta_avg_col;
+  uint8_t ec_avg_col;
+  uint8_t vwc_avg_col;
+} solyx14_col_t;
 
 typedef struct {
   uint8_t vaporPressure_col;
@@ -119,8 +135,12 @@ typedef struct {
   teros12_data_t tero12;
   teros21_col_t teros21_col;
   teros21_data_t tero21;
+  teros32_col_t teros32_col;
+  teros32_data_t tero32;
   teros54_col_t teros54_col;
   teros54_data_t tero54;
+  solyx14_col_t solyx14_col;
+  solyx14_data_t solyx14;
   apogee_sensor_t apogee_data;
   apogee_sensor_col_t apogee_data_col;
 

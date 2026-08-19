@@ -7,7 +7,7 @@ menu "MQTT Configuration"
             Enabling this allows for the autoregistration of the mqtt command.
 
 
-     choice MQTT_BROKER_SELECTION
+    choice MQTT_BROKER_SELECTION
         prompt "Select MQTT Broker"
         default MQTT_BROKER_REMOTE
 

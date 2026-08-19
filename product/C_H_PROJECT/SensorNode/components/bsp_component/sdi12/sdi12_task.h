@@ -2,6 +2,7 @@
 #ifndef SDI12_OPER_H
 #define SDI12_OPER_H
 
+#include <stdint.h>
 #include "stdio.h"
 #include "sensor_config.h"
 
@@ -11,7 +12,16 @@ extern "C" {
 
 // #define SDI12_DEBUG_SET
 
-typedef enum { SDI_CMD_INFO = 0, SDI_CMD_ADDR, SDI_CMD_READ, SDI_CMD_M, SDI_CMD_D, SDI_CMD_COUNT } sdi12_cmd_type_t;
+typedef enum {
+  SDI_CMD_INFO = 0,
+  SDI_CMD_ADDR,
+  SDI_CMD_READ,
+  SDI_CMD_M,
+  SDI_CMD_D0,
+  SDI_CMD_D1,
+  SDI_CMD_D2,
+  SDI_CMD_COUNT
+} sdi12_cmd_type_t;
 
 typedef struct {
   const char *cmd_format;  // "I!", "R0!"
@@ -39,6 +49,16 @@ typedef struct {
 
 typedef struct {
   char address;
+  float matricPotential;
+  float temperature;
+  uint8_t meta;
+  float pitch;
+  float roll;
+  float upressure;
+} teros32_data_t;
+
+typedef struct {
+  char address;
   float vwc1;
   float temp1;
   float vwc2;
@@ -48,6 +68,14 @@ typedef struct {
   float vwc4;
   float temp4;
 } teros54_data_t;
+
+typedef struct {
+  char address;
+  float mdp;  // Measured Dielectric Permittivity
+  float temperature;
+  float ec;
+  float vwc;
+} solyx14_data_t;
 
 // ATMOS14
 
@@ -164,6 +192,18 @@ teros12_data_t *sdi12_read_teros12(uint8_t portId);
 teros21_data_t *sdi12_read_teros21(uint8_t portId);
 
 /**
+ * @brief Reads measurement data from a TEROS32 sensor using the "M!" SDI-12 command.
+ *
+ * Sends the "M!" command to the specified port, waits for the response (D0,D1,D2),
+ * and parses it into a teros21_data_t structure containing matric potential and temperature values.
+ * (additional meta, pitch, roll uPressure values )
+ *
+ * @param portId Sensor port ID (0–N) selecting the SDI-12 bus or multiplexer channel.
+ * @return Pointer to a statically allocated teros21_data_t structure with parsed data.
+ */
+teros32_data_t *sdi12_read_teros32(uint8_t portId);
+
+/**
  * @brief Reads measurement data from an ATMOS41 (AT41G2) sensor using the "R0!" SDI-12 command.
  *
  * Sends the "R0!" command to the specified port, waits for the response,
@@ -185,6 +225,18 @@ weather_at41g2_data_t *sdi12_read_atmos41(uint8_t portId);
  * @return Pointer to a statically allocated teros54_data_t structure with parsed data.
  */
 teros54_data_t *sdi12_read_teros54(uint8_t portId);
+
+/**
+ * @brief Reads measurement data from a new SOLYX14 sensor using the "M!" SDI-12 command.
+ *
+ * Sends the "M!" command to the specified port, waits for the response(D0 D1),
+ * and parses it into a solyx14_data_t structure containing volumetric water content (VWC),
+ * temperature, and electrical conductivity (EC).
+ *
+ * @param portId Sensor port ID (0–N) selecting the SDI-12 bus or multiplexer channel.
+ * @return Pointer to a statically allocated solyx14_data_t structure with parsed data.
+ */
+solyx14_data_t *sdi12_read_solyx14(uint8_t portId);
 
 /**
  * @brief Reads measurement data from an ATMOS22 sensor using the "R0!" SDI-12 command.

@@ -10,6 +10,7 @@
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_check.h"
 #include "esp_netif.h"
 #include "esp_eth.h"
 #include "esp_event.h"
@@ -19,6 +20,35 @@
 #include "sdkconfig.h"
 
 static const char *TAG = "[ethernetApp]";
+
+static esp_err_t eth_apply_ip_config(esp_netif_t *eth_netif) {
+#if CONFIG_BSP_ETH_USE_STATIC_IP
+  esp_netif_ip_info_t ip_info = { 0 };
+
+  ESP_RETURN_ON_ERROR(esp_netif_str_to_ip4(CONFIG_BSP_ETH_STATIC_IP_ADDR, &ip_info.ip), TAG,
+                      "invalid static IP address: %s", CONFIG_BSP_ETH_STATIC_IP_ADDR);
+  ESP_RETURN_ON_ERROR(esp_netif_str_to_ip4(CONFIG_BSP_ETH_STATIC_NETMASK, &ip_info.netmask), TAG,
+                      "invalid static netmask: %s", CONFIG_BSP_ETH_STATIC_NETMASK);
+  ESP_RETURN_ON_ERROR(esp_netif_str_to_ip4(CONFIG_BSP_ETH_STATIC_GATEWAY, &ip_info.gw), TAG,
+                      "invalid static gateway: %s", CONFIG_BSP_ETH_STATIC_GATEWAY);
+
+  esp_err_t err = esp_netif_dhcpc_stop(eth_netif);
+  if (err != ESP_OK && err != ESP_ERR_ESP_NETIF_DHCP_ALREADY_STOPPED) {
+    ESP_LOGE(TAG, "failed to stop Ethernet DHCP client: %s", esp_err_to_name(err));
+    return err;
+  }
+
+  ESP_RETURN_ON_ERROR(esp_netif_set_ip_info(eth_netif, &ip_info), TAG, "failed to set static Ethernet IP");
+
+  ESP_LOGI(TAG, "Ethernet static IP configured");
+  ESP_LOGI(TAG, "ETHIP:" IPSTR, IP2STR(&ip_info.ip));
+  ESP_LOGI(TAG, "ETHMASK:" IPSTR, IP2STR(&ip_info.netmask));
+  ESP_LOGI(TAG, "ETHGW:" IPSTR, IP2STR(&ip_info.gw));
+#else
+  ESP_LOGI(TAG, "Ethernet DHCP client enabled");
+#endif
+  return ESP_OK;
+}
 
 /** Event handler for Ethernet events */
 static void eth_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
@@ -45,12 +75,10 @@ static void got_ip_event_handler(void *arg, esp_event_base_t event_base, int32_t
   ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
   const esp_netif_ip_info_t *ip_info = &event->ip_info;
 
-  ESP_LOGI(TAG, "Ethernet Got IP Address");
-  ESP_LOGI(TAG, "~~~~~~~~~~~");
+  ESP_LOGI(TAG, "Ethernet DHCP IP configured");
   ESP_LOGI(TAG, "ETHIP:" IPSTR, IP2STR(&ip_info->ip));
   ESP_LOGI(TAG, "ETHMASK:" IPSTR, IP2STR(&ip_info->netmask));
   ESP_LOGI(TAG, "ETHGW:" IPSTR, IP2STR(&ip_info->gw));
-  ESP_LOGI(TAG, "~~~~~~~~~~~");
 }
 
 void app_eth_init(void) {
@@ -59,6 +87,12 @@ void app_eth_init(void) {
   uint8_t eth_port_cnt = 0;
   esp_eth_handle_t *eth_handles;
   ESP_ERROR_CHECK(bsp_eth_init(&eth_handles, &eth_port_cnt));
+#if CONFIG_BSP_ETH_USE_STATIC_IP
+  if (eth_port_cnt != 1) {
+    ESP_LOGE(TAG, "Static Ethernet IP supports only one Ethernet interface");
+    ESP_ERROR_CHECK(ESP_ERR_INVALID_STATE);
+  }
+#endif
 
   // Initialize TCP/IP network interface aka the esp-netif (should be called only once in application)
   ESP_ERROR_CHECK(esp_netif_init());
@@ -73,6 +107,7 @@ void app_eth_init(void) {
     esp_netif_t *eth_netif = esp_netif_new(&cfg);
     // Attach Ethernet driver to TCP/IP stack
     ESP_ERROR_CHECK(esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handles[0])));
+    ESP_ERROR_CHECK(eth_apply_ip_config(eth_netif));
   } else {
     // Use ESP_NETIF_INHERENT_DEFAULT_ETH when multiple Ethernet interfaces are used and so you need to modify
     // esp-netif configuration parameters for each interface (name, priority, etc.).
@@ -92,6 +127,7 @@ void app_eth_init(void) {
 
       // Attach Ethernet driver to TCP/IP stack
       ESP_ERROR_CHECK(esp_netif_attach(eth_netif, esp_eth_new_netif_glue(eth_handles[i])));
+      ESP_ERROR_CHECK(eth_apply_ip_config(eth_netif));
     }
   }
 

@@ -122,6 +122,15 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
       datatable_add_float_smp_column(dt->handle, "temperature", &dt->teros21_col.temperature_avg_col);
       break;
 
+    case TEROS32:
+      datatable_add_float_smp_column(dt->handle, "matricPotential", &dt->teros32_col.matricPotential_avg_col);
+      datatable_add_float_smp_column(dt->handle, "temperature", &dt->teros32_col.temperature_avg_col);
+      datatable_add_float_smp_column(dt->handle, "meta", &dt->teros32_col.meta_avg_col);
+      datatable_add_float_smp_column(dt->handle, "pitch", &dt->teros32_col.pitch_avg_col);
+      datatable_add_float_smp_column(dt->handle, "roll", &dt->teros32_col.roll_avg_col);
+      datatable_add_float_smp_column(dt->handle, "uPressure", &dt->teros32_col.uPressure_avg_col);
+      break;
+
     case TEROS54:
       datatable_add_float_smp_column(dt->handle, "vwc1", &dt->teros54_col.vwc1_col);
       datatable_add_float_smp_column(dt->handle, "temperature1", &dt->teros54_col.temp1_col);
@@ -131,6 +140,13 @@ bool init_datatable_for_port(int port_index, const sensor_port_cfg_t* cfg, senso
       datatable_add_float_smp_column(dt->handle, "temperature3", &dt->teros54_col.temp3_col);
       datatable_add_float_smp_column(dt->handle, "vwc4", &dt->teros54_col.vwc4_col);
       datatable_add_float_smp_column(dt->handle, "temperature4", &dt->teros54_col.temp4_col);
+      break;
+
+    case SOLYX14:
+      datatable_add_float_smp_column(dt->handle, "mdp", &dt->solyx14_col.mdp_avg_col);
+      datatable_add_float_smp_column(dt->handle, "temp", &dt->solyx14_col.ta_avg_col);
+      datatable_add_float_smp_column(dt->handle, "ec", &dt->solyx14_col.ec_avg_col);
+      datatable_add_float_smp_column(dt->handle, "vwc", &dt->solyx14_col.vwc_avg_col);
       break;
 
     /* ATMOS TYPE */

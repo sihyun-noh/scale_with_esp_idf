@@ -180,7 +180,9 @@ static void handle_teros_series(void* param) {
   teros12_data_t* data_teros11 = NULL;
   teros12_data_t* data_teros12 = NULL;
   teros21_data_t* data_teros21 = NULL;
+  teros32_data_t* data_teros32 = NULL;
   teros54_data_t* data_teros54 = NULL;
+  solyx14_data_t* data_solyx14 = NULL;
 
   if (config->cfg[array_num].sensor_type == TEROS11) {
     data_teros11 = sdi12_read_teros11(array_num);  // 데이터 읽기
@@ -205,6 +207,16 @@ static void handle_teros_series(void* param) {
     }
     ESP_LOGI(TAG, "[%s] Raw data - matricPotential: %.2f, Temp: %.2f", sensor_type, data_teros21->matricPotential,
              data_teros21->temperature);
+  } else if (config->cfg[array_num].sensor_type == TEROS32) {
+    data_teros32 = sdi12_read_teros32(array_num);  // 데이터 읽기
+    if (!data_teros32) {
+      ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
+      return;
+    }
+    ESP_LOGI(TAG,
+             "[%s] Raw data - matricPotential: %.2f, Temp: %.2f meta: %d, pitch: %.2f, roll: %.2f, uPressure: %.2f",
+             sensor_type, data_teros32->matricPotential, data_teros32->temperature, data_teros32->meta,
+             data_teros32->pitch, data_teros32->roll, data_teros32->upressure);
   } else if (config->cfg[array_num].sensor_type == TEROS54) {
     data_teros54 = sdi12_read_teros54(array_num);  // 데이터 읽기
     if (!data_teros54) {
@@ -212,6 +224,14 @@ static void handle_teros_series(void* param) {
       return;
     }
     ESP_LOGI(TAG, "[%s] Raw data - Vwc1: %.2f, Temp1: %.2f", sensor_type, data_teros54->vwc1, data_teros54->temp1);
+  } else if (config->cfg[array_num].sensor_type == SOLYX14) {
+    data_solyx14 = sdi12_read_solyx14(array_num);  // 데이터 읽기
+    if (!data_solyx14) {
+      ESP_LOGE(TAG, "[%s] Failed to read data from SDI-12 sensor", sensor_type);
+      return;
+    }
+    ESP_LOGI(TAG, "[%s] Raw data -  MDP: %.2f, Temp: %.2f, EC: %.2f, VWC: %.2f", sensor_type, data_solyx14->mdp,
+             data_solyx14->temperature, data_solyx14->ec, data_solyx14->vwc);
   }
 
   // Push to table(Append to the table)
@@ -230,6 +250,17 @@ static void handle_teros_series(void* param) {
                                   data_teros21->matricPotential);
       datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros21_col.temperature_avg_col,
                                   data_teros21->temperature);
+    } else if (config->cfg[array_num].sensor_type == TEROS32) {
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros32_col.matricPotential_avg_col,
+                                  data_teros32->matricPotential);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros32_col.temperature_avg_col,
+                                  data_teros32->temperature);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros32_col.meta_avg_col, data_teros32->meta);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros32_col.pitch_avg_col, data_teros32->pitch);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros32_col.roll_avg_col, data_teros32->roll);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros32_col.uPressure_avg_col,
+                                  data_teros32->upressure);
+
     } else if (config->cfg[array_num].sensor_type == TEROS54) {
       datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros54_col.vwc1_col, data_teros54->vwc1);
       datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros54_col.temp1_col, data_teros54->temp1);
@@ -239,6 +270,12 @@ static void handle_teros_series(void* param) {
       datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros54_col.temp3_col, data_teros54->temp3);
       datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros54_col.vwc4_col, data_teros54->vwc4);
       datatable_push_float_sample(dt[array_num].handle, dt[array_num].teros54_col.temp4_col, data_teros54->temp4);
+    } else if (config->cfg[array_num].sensor_type == SOLYX14) {
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].solyx14_col.mdp_avg_col, data_solyx14->mdp);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].solyx14_col.ta_avg_col,
+                                  data_solyx14->temperature);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].solyx14_col.ec_avg_col, data_solyx14->ec);
+      datatable_push_float_sample(dt[array_num].handle, dt[array_num].solyx14_col.vwc_avg_col, data_solyx14->vwc);
     }
 
 #ifdef SDI12_DEBUG_SET
@@ -1015,10 +1052,24 @@ void strategy_task_mgr_sensor_start(void) {
           entry->port = cfg[i].port;
           break;
 
+        case TEROS32:
+          entry->type = TEROS32;
+          entry->action = handle_teros_series;
+          entry->task_name = sensor_type_to_str(TEROS32);
+          entry->port = cfg[i].port;
+          break;
+
         case TEROS54:
           entry->type = TEROS54;
           entry->action = handle_teros_series;
           entry->task_name = sensor_type_to_str(TEROS54);
+          entry->port = cfg[i].port;
+          break;
+
+        case SOLYX14:
+          entry->type = SOLYX14;
+          entry->action = handle_teros_series;
+          entry->task_name = sensor_type_to_str(SOLYX14);
           entry->port = cfg[i].port;
           break;
 

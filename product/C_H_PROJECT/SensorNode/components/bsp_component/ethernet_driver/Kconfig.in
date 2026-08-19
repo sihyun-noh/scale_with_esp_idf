@@ -295,4 +295,36 @@ menu "ESP-IDF base driver"
             help
                 Set the second SPI Ethernet module PHY address according your board schematic.
     endif # BSP_USE_SPI_ETHERNET
+
+    menu "Ethernet IP Configuration"
+
+        config BSP_ETH_USE_STATIC_IP
+            bool "Use static Ethernet IP"
+            default n
+            help
+                Disable DHCP client and use the static Ethernet IPv4 settings below.
+                Keep this disabled to receive IP address, netmask, and gateway from a DHCP server.
+
+        config BSP_ETH_STATIC_IP_ADDR
+            string "Static Ethernet IP address"
+            depends on BSP_ETH_USE_STATIC_IP
+            default "192.168.50.25"
+            help
+                Static IPv4 address assigned to the Ethernet interface.
+
+        config BSP_ETH_STATIC_NETMASK
+            string "Static Ethernet netmask"
+            depends on BSP_ETH_USE_STATIC_IP
+            default "255.255.255.0"
+            help
+                Static IPv4 netmask assigned to the Ethernet interface.
+
+        config BSP_ETH_STATIC_GATEWAY
+            string "Static Ethernet gateway"
+            depends on BSP_ETH_USE_STATIC_IP
+            default "192.168.50.1"
+            help
+                Static IPv4 gateway assigned to the Ethernet interface.
+
+    endmenu
 endmenu
