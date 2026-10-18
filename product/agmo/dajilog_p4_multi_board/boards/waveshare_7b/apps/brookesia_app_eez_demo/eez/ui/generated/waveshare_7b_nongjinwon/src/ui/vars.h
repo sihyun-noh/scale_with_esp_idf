@@ -1,0 +1,32 @@
+#ifndef EEZ_LVGL_UI_VARS_H
+#define EEZ_LVGL_UI_VARS_H
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// enum declarations
+
+// Flow global variables
+
+enum FlowGlobalVariables {
+    FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_RIDGE_COUNT_TEXT = 0,
+    FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_RIDGE_WIDTH_M_TEXT = 1,
+    FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_ACTUAL_LENGTH_M_TEXT = 2,
+    FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_NITROGEN_RATE_KG_N_PER_10A_TEXT = 3,
+    FLOW_GLOBAL_VARIABLE_NUMERIC_INPUT_TARGET = 4,
+    FLOW_GLOBAL_VARIABLE_NUMERIC_INPUT_VALUE_TEXT = 5,
+    FLOW_GLOBAL_VARIABLE_NUMERIC_INPUT_TITLE_TEXT = 6,
+    FLOW_GLOBAL_VARIABLE_NUMERIC_INPUT_UNIT_TEXT = 7
+};
+
+// Native global variables
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /*EEZ_LVGL_UI_VARS_H*/

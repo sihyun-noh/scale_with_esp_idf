@@ -1,0 +1,7 @@
+build/
+boards/*/build/
+boards/*/sdkconfig
+boards/*/sdkconfig.old
+boards/*/managed_components/
+.DS_Store
+VERSION.ini

@@ -1,0 +1,2 @@
+bus: {name: can0, bitrate: 500000}
+devices: []

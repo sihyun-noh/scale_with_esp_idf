@@ -1,0 +1,7 @@
+version: "0.1.0"
+
+dependencies:
+  brookesia_core:
+    public: true
+  dajilog_usb_memory_update:
+    path: ../../../update/usb/dajilog_usb_memory_update

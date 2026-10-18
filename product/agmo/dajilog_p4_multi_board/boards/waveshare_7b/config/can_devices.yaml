@@ -1,0 +1,10 @@
+bus: {name: can0, bitrate: 500000}
+devices:
+  - instance: speed_sensor_1
+    display_name: Speed Sensor 1
+    profile: tr07e
+    enabled: true
+    frames:
+      config: {id: 0x7F5}
+      measurement: {id: 0x3F5}
+# Motor instances will be added after their protocol document is available.

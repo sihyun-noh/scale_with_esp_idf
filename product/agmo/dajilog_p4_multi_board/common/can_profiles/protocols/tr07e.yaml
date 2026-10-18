@@ -1,0 +1,9 @@
+profile:
+  name: tr07e
+  display_name: TR07E Speed Radar
+  version: 2
+  codec_prefix: dajilog_tr07e
+can: {frame_format: standard, bitrate: 500000, byte_order: motorola}
+frames:
+  config: {direction: tx, default_id: 0x7F5, dlc: 5}
+  measurement: {direction: rx, default_id: 0x3F5, dlc: 8, timeout_ms: 500}

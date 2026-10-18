@@ -1,0 +1,69 @@
+menu "DAJILOG Configuration"
+    menu "Applications"
+        config DAJILOG_APP_HELLO
+            bool "Hello Test app"
+            default y
+
+        config DAJILOG_APP_WIFI
+            bool "Wi-Fi app"
+            default n
+            help
+                Build the common Wi-Fi application. Enable after validating
+                ESP-Hosted communication with the 7B coprocessor firmware.
+
+        config DAJILOG_APP_EEZ_DEMO
+            bool "7B EEZ landscape main app"
+            default y
+            help
+                Build the 1024x600 EEZ Studio application stored under this
+                board target. Generated UI files remain board-specific while
+                ui_adaptor, ui_bridge and ui_msg are shared components.
+
+        choice DAJILOG_FIRMWARE_UPDATE_METHOD
+            prompt "Firmware update method"
+            default DAJILOG_UPDATE_DISABLED
+
+            config DAJILOG_UPDATE_DISABLED
+                bool "Disabled"
+            config DAJILOG_UPDATE_PC_USB
+                bool "PC USB Update (USB Device)"
+            config DAJILOG_UPDATE_USB_MEMORY
+                bool "USB Memory Update (USB Host)"
+        endchoice
+    endmenu
+
+    menu "Diagnostics"
+        config DAJILOG_SETTINGS_DEBUG_LOG
+            bool "Print settings values in debug logs"
+            default n
+            help
+                Print staged and saved setting values. Validation and storage
+                errors are still logged when this option is disabled.
+
+        config DAJILOG_APP_CAN_DIAGNOSTIC
+            bool "CAN Diagnostic app"
+            depends on DAJILOG_CAN_ENABLE
+            default n
+    endmenu
+
+    menu "CAN"
+        config DAJILOG_CAN_ENABLE
+            bool "Enable CAN service"
+            default n
+
+        config DAJILOG_CAN_TX_GPIO
+            int "CAN TX GPIO"
+            depends on DAJILOG_CAN_ENABLE
+            default -1
+
+        config DAJILOG_CAN_RX_GPIO
+            int "CAN RX GPIO"
+            depends on DAJILOG_CAN_ENABLE
+            default -1
+
+        config DAJILOG_CAN_TRANSCEIVER_ENABLE_GPIO
+            int "Transceiver enable GPIO (-1 if unused)"
+            depends on DAJILOG_CAN_ENABLE
+            default -1
+    endmenu
+endmenu
