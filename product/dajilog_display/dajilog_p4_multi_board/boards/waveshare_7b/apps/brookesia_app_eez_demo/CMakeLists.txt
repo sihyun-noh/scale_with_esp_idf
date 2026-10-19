@@ -18,6 +18,7 @@ idf_component_register(
         dajilog_ui_bridge
         dajilog_ui_msg
         dajilog_settings
+        dajilog_system_core
     WHOLE_ARCHIVE
 )
 

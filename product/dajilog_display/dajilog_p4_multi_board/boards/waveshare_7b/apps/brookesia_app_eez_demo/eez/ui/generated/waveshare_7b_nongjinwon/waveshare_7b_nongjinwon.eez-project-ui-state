@@ -1,8 +1,11 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[waveshare_7b_nongjinwon.eez-project]:/userPages/1",
+    "selectedUserPageObject": "[waveshare_7b_nongjinwon.eez-project]:/userPages/2",
+    "selectedFontObject": "[waveshare_7b_nongjinwon.eez-project]:/fonts/1",
     "selectedBitmapObject": "[waveshare_7b_nongjinwon.eez-project]:/bitmaps/1",
-    "subnavigationSelectedItems": {}
+    "subnavigationSelectedItems": {
+      "variables-tab/sub-navigation/selected-item": "Actions"
+    }
   },
   "layoutModel": {
     "rootEditor": {
@@ -22,7 +25,7 @@
           },
           {
             "type": "border",
-            "selected": 2,
+            "selected": 1,
             "size": 240,
             "location": "right",
             "children": [
@@ -197,10 +200,20 @@
               "type": "tabset",
               "id": "EDITORS",
               "weight": 65,
-              "selected": 1,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
+                {
+                  "type": "tab",
+                  "id": "#a0827476-4db1-4708-bb37-3a88d9b93ded",
+                  "name": "SystemSetting",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[waveshare_7b_nongjinwon.eez-project]:/userPages/2",
+                    "permanent": false
+                  },
+                  "icon": "svg:page"
+                },
                 {
                   "type": "tab",
                   "id": "#e8939f68-e42d-4889-afbc-5311f3a9c994",
@@ -212,17 +225,6 @@
                     "permanent": false
                   },
                   "icon": "material:settings"
-                },
-                {
-                  "type": "tab",
-                  "id": "#dc33d86f-9140-4815-a624-69aeaf232a03",
-                  "name": "Main",
-                  "component": "editor",
-                  "config": {
-                    "objectPath": "[waveshare_7b_nongjinwon.eez-project]:/userPages/1",
-                    "permanent": false
-                  },
-                  "icon": "svg:page"
                 }
               ],
               "active": true
@@ -1081,7 +1083,7 @@
           "x": -512,
           "y": 20.51251222658192
         },
-        "scale": 1
+        "scale": 1.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1094,20 +1096,20 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
-          "37": {},
-          "38": {},
-          "52": {},
-          "53": {
+          "2": {},
+          "7": {
             "0": {}
-          }
-        }
+          },
+          "83": {}
+        },
+        "1": {}
       },
       "transform": {
         "translate": {
-          "x": -512,
-          "y": -300
+          "x": -720.3300359816776,
+          "y": -493.72999891410143
         },
-        "scale": 1
+        "scale": 1.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1118,13 +1120,35 @@
     },
     "[waveshare_7b_nongjinwon.eez-project]:/userPages/2[flow-state]": {
       "selectionFront": {},
-      "selectionBack": {},
+      "selectionBack": {
+        "0": {
+          "1": {},
+          "2": {
+            "0": {}
+          },
+          "4": {},
+          "6": {},
+          "8": {},
+          "10": {},
+          "12": {},
+          "23": {},
+          "27": {
+            "0": {
+              "$selected": true
+            },
+            "$selected": true
+          },
+          "28": {},
+          "29": {}
+        },
+        "8": {}
+      },
       "transform": {
         "translate": {
-          "x": -512,
-          "y": -300
+          "x": -565.3531886509486,
+          "y": -276.3859322752728
         },
-        "scale": 1
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -1135,13 +1159,17 @@
     },
     "[waveshare_7b_nongjinwon.eez-project]:/userPages/3[flow-state]": {
       "selectionFront": {},
-      "selectionBack": {},
+      "selectionBack": {
+        "0": {
+          "13": {}
+        }
+      },
       "transform": {
         "translate": {
-          "x": -512,
-          "y": -300
+          "x": -517.7771240234376,
+          "y": -383.72836914062503
         },
-        "scale": 1
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -1158,7 +1186,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -1175,7 +1203,41 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1
+        "scale": 0.9
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[waveshare_7b_nongjinwon.eez-project]:/userPages/6[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {},
+      "transform": {
+        "translate": {
+          "x": -512,
+          "y": -300
+        },
+        "scale": 0.9
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[waveshare_7b_nongjinwon.eez-project]:/userPages/7[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {},
+      "transform": {
+        "translate": {
+          "x": -512,
+          "y": -300
+        },
+        "scale": 0.9
       },
       "timeline": {
         "isEditorActive": false,
@@ -1198,9 +1260,15 @@
   "selectedStylePropertyName": "",
   "lvglPart": "MAIN",
   "lvglState": "DEFAULT",
-  "lvglExpandedPropertiesGroup": [],
+  "lvglExpandedPropertiesGroup": [
+    "BACKGROUND",
+    "LAYOUT",
+    "POSITION AND SIZE",
+    "TEXT",
+    "BORDER"
+  ],
   "showInactiveFlowsInDebugger": true,
   "globalFlowZoom": true,
-  "flowZoom": 1,
+  "flowZoom": 0.9,
   "implementationLanguage": "C"
 }

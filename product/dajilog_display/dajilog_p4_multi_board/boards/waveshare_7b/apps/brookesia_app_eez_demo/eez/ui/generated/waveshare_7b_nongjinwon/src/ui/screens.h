@@ -12,18 +12,20 @@ extern "C" {
 enum ScreensEnum {
     _SCREEN_ID_FIRST = 1,
     SCREEN_ID_STARTUP_ANIMATION = 1,
-    SCREEN_ID_MAIN = 2,
-    SCREEN_ID_RIDGE_SETUP = 3,
-    SCREEN_ID_PREPARATION = 4,
-    SCREEN_ID_WORK = 5,
-    SCREEN_ID_WEIGHING_TEST = 6,
-    SCREEN_ID_NUMERIC_INPUT = 7,
-    _SCREEN_ID_LAST = 7
+    SCREEN_ID_DASHBOARD = 2,
+    SCREEN_ID_SYSTEM_SETTING = 3,
+    SCREEN_ID_RIDGE_SETUP = 4,
+    SCREEN_ID_PREPARATION = 5,
+    SCREEN_ID_WORK = 6,
+    SCREEN_ID_WEIGHING_TEST = 7,
+    SCREEN_ID_NUMERIC_INPUT = 8,
+    _SCREEN_ID_LAST = 8
 };
 
 typedef struct _objects_t {
     lv_obj_t *startup_animation;
-    lv_obj_t *main;
+    lv_obj_t *dashboard;
+    lv_obj_t *system_setting;
     lv_obj_t *ridge_setup;
     lv_obj_t *preparation;
     lv_obj_t *work;
@@ -54,7 +56,95 @@ typedef struct _objects_t {
     lv_obj_t *startup_status_label;
     lv_obj_t *startup_module_label;
     lv_obj_t *startup_footer_label;
-    lv_obj_t *main_app_title;
+    lv_obj_t *dashboard_header;
+    lv_obj_t *dashboard_brand;
+    lv_obj_t *dashboard_title;
+    lv_obj_t *dashboard_operation_label;
+    lv_obj_t *operation_state_value;
+    lv_obj_t *dashboard_can_label;
+    lv_obj_t *can_online_value;
+    lv_obj_t *dashboard_stop_button;
+    lv_obj_t *dashboard_stop_label;
+    lv_obj_t *dashboard_motor_section_hint;
+    lv_obj_t *motor_1_card;
+    lv_obj_t *motor_1_number;
+    lv_obj_t *motor_1_name;
+    lv_obj_t *motor_1_state_value;
+    lv_obj_t *motor_1_speed_label;
+    lv_obj_t *motor_1_target_label;
+    lv_obj_t *motor_1_speed_value;
+    lv_obj_t *motor_1_speed_unit;
+    lv_obj_t *motor_1_target_value;
+    lv_obj_t *motor_1_target_unit;
+    lv_obj_t *motor_1_progress_track;
+    lv_obj_t *motor_1_progress_fill;
+    lv_obj_t *motor_1_load_value;
+    lv_obj_t *motor_2_card;
+    lv_obj_t *motor_2_number;
+    lv_obj_t *motor_2_name;
+    lv_obj_t *motor_2_state_value;
+    lv_obj_t *motor_2_speed_label;
+    lv_obj_t *motor_2_target_label;
+    lv_obj_t *motor_2_speed_value;
+    lv_obj_t *motor_2_speed_unit;
+    lv_obj_t *motor_2_target_value;
+    lv_obj_t *motor_2_target_unit;
+    lv_obj_t *motor_2_progress_track;
+    lv_obj_t *motor_2_progress_fill;
+    lv_obj_t *motor_2_load_value;
+    lv_obj_t *motor_3_card;
+    lv_obj_t *motor_3_number;
+    lv_obj_t *motor_3_name;
+    lv_obj_t *motor_3_state_value;
+    lv_obj_t *motor_3_speed_label;
+    lv_obj_t *motor_3_target_label;
+    lv_obj_t *motor_3_speed_value;
+    lv_obj_t *motor_3_speed_unit;
+    lv_obj_t *motor_3_target_value;
+    lv_obj_t *motor_3_target_unit;
+    lv_obj_t *motor_3_progress_track;
+    lv_obj_t *motor_3_progress_fill;
+    lv_obj_t *motor_3_load_value;
+    lv_obj_t *motor_4_card;
+    lv_obj_t *motor_4_number;
+    lv_obj_t *motor_4_name;
+    lv_obj_t *motor_4_state_value;
+    lv_obj_t *motor_4_speed_label;
+    lv_obj_t *motor_4_target_label;
+    lv_obj_t *motor_4_speed_value;
+    lv_obj_t *motor_4_speed_unit;
+    lv_obj_t *motor_4_target_value;
+    lv_obj_t *motor_4_target_unit;
+    lv_obj_t *motor_4_progress_track;
+    lv_obj_t *motor_4_progress_fill;
+    lv_obj_t *motor_4_load_value;
+    lv_obj_t *vehicle_speed_card;
+    lv_obj_t *vehicle_speed_title;
+    lv_obj_t *vehicle_speed_divider;
+    lv_obj_t *vehicle_speed_label;
+    lv_obj_t *vehicle_speed_value;
+    lv_obj_t *vehicle_speed_unit;
+    lv_obj_t *vehicle_target_speed_label;
+    lv_obj_t *vehicle_target_speed_value;
+    lv_obj_t *vehicle_speed_progress_track;
+    lv_obj_t *vehicle_speed_progress_fill;
+    lv_obj_t *vehicle_speed_signal_label;
+    lv_obj_t *vehicle_speed_signal_value;
+    lv_obj_t *dashboard_system_card;
+    lv_obj_t *dashboard_system_title;
+    lv_obj_t *work_mode_label;
+    lv_obj_t *work_mode_value;
+    lv_obj_t *recipe_name_label;
+    lv_obj_t *recipe_name_value;
+    lv_obj_t *dashboard_alert_card;
+    lv_obj_t *dashboard_alert_title;
+    lv_obj_t *dashboard_alert_severity;
+    lv_obj_t *dashboard_alert_value;
+    lv_obj_t *dashboard_setting_button;
+    lv_obj_t *dashboard_setting_caption;
+    lv_obj_t *dashboard_setting_label;
+    lv_obj_t *dashboard_setting_description;
+    lv_obj_t *dashboard_setting_arrow;
     lv_obj_t *main_status;
     lv_obj_t *main_stop;
     lv_obj_t *main_stop_label;
@@ -74,38 +164,7 @@ typedef struct _objects_t {
     lv_obj_t *main_tab_weighing_label;
     lv_obj_t *main_tab_line_weighing;
     lv_obj_t *main_content;
-    lv_obj_t *main_left_title;
-    lv_obj_t *main_divider;
     lv_obj_t *main_right_title;
-    lv_obj_t *main_ridge_label;
-    lv_obj_t *main_ridge_value;
-    lv_obj_t *main_count_label;
-    lv_obj_t *recipe_ridge_count_input;
-    lv_obj_t *main_count_unit;
-    lv_obj_t *main_width_label;
-    lv_obj_t *recipe_ridge_width_input;
-    lv_obj_t *main_width_unit;
-    lv_obj_t *main_length_label;
-    lv_obj_t *recipe_actual_length_input;
-    lv_obj_t *main_length_unit;
-    lv_obj_t *main_area_only;
-    lv_obj_t *main_area_only_label;
-    lv_obj_t *main_area_furrow;
-    lv_obj_t *main_area_furrow_label;
-    lv_obj_t *main_all;
-    lv_obj_t *main_all_label;
-    lv_obj_t *main_split;
-    lv_obj_t *main_split_label;
-    lv_obj_t *main_apply_length;
-    lv_obj_t *main_apply_length_label;
-    lv_obj_t *main_north_label;
-    lv_obj_t *main_north_value;
-    lv_obj_t *main_south_label;
-    lv_obj_t *main_south_value;
-    lv_obj_t *main_temp_save;
-    lv_obj_t *main_temp_save_label;
-    lv_obj_t *main_copy;
-    lv_obj_t *main_copy_label;
     lv_obj_t *main_nitrogen;
     lv_obj_t *main_nitrogen_label;
     lv_obj_t *main_direct;
@@ -121,10 +180,13 @@ typedef struct _objects_t {
     lv_obj_t *main_upper_product;
     lv_obj_t *main_lower_product_label;
     lv_obj_t *main_lower_product;
-    lv_obj_t *main_check_amount;
-    lv_obj_t *main_check_amount_label;
-    lv_obj_t *main_save_settings;
-    lv_obj_t *main_save_settings_label;
+    lv_obj_t *fertilizer_temp_save;
+    lv_obj_t *fertilizer_temp_save_label;
+    lv_obj_t *fertilizer_save_settings;
+    lv_obj_t *fertilizer_save_settings_label;
+    lv_obj_t *main_stop_1;
+    lv_obj_t *main_stop_label_1;
+    lv_obj_t *ridge_divider_1;
     lv_obj_t *ridge_app_title;
     lv_obj_t *ridge_status;
     lv_obj_t *ridge_stop;
@@ -145,9 +207,37 @@ typedef struct _objects_t {
     lv_obj_t *ridge_tab_weighing_label;
     lv_obj_t *ridge_tab_line_weighing;
     lv_obj_t *ridge_content;
-    lv_obj_t *ridge_content_title;
-    lv_obj_t *ridge_placeholder;
-    lv_obj_t *ridge_guide;
+    lv_obj_t *ridge_left_title;
+    lv_obj_t *ridge_divider;
+    lv_obj_t *ridge_ridge_label;
+    lv_obj_t *ridge_ridge_value;
+    lv_obj_t *ridge_count_label;
+    lv_obj_t *ridge_recipe_ridge_count_input;
+    lv_obj_t *ridge_count_unit;
+    lv_obj_t *ridge_width_label;
+    lv_obj_t *ridge_recipe_ridge_width_input;
+    lv_obj_t *ridge_width_unit;
+    lv_obj_t *ridge_length_label;
+    lv_obj_t *ridge_recipe_actual_length_input;
+    lv_obj_t *ridge_length_unit;
+    lv_obj_t *ridge_area_only;
+    lv_obj_t *ridge_area_only_label;
+    lv_obj_t *ridge_area_furrow;
+    lv_obj_t *ridge_area_furrow_label;
+    lv_obj_t *ridge_all;
+    lv_obj_t *ridge_all_label;
+    lv_obj_t *ridge_split;
+    lv_obj_t *ridge_split_label;
+    lv_obj_t *ridge_apply_length;
+    lv_obj_t *ridge_apply_length_label;
+    lv_obj_t *ridge_north_label;
+    lv_obj_t *ridge_north_value;
+    lv_obj_t *ridge_south_label;
+    lv_obj_t *ridge_south_value;
+    lv_obj_t *ridge_temp_save;
+    lv_obj_t *ridge_temp_save_label;
+    lv_obj_t *ridge_save_settings;
+    lv_obj_t *ridge_save_settings_label;
     lv_obj_t *prep_app_title;
     lv_obj_t *prep_status;
     lv_obj_t *prep_stop;
@@ -234,8 +324,11 @@ extern objects_t objects;
 void create_screen_startup_animation();
 void tick_screen_startup_animation();
 
-void create_screen_main();
-void tick_screen_main();
+void create_screen_dashboard();
+void tick_screen_dashboard();
+
+void create_screen_system_setting();
+void tick_screen_system_setting();
 
 void create_screen_ridge_setup();
 void tick_screen_ridge_setup();
