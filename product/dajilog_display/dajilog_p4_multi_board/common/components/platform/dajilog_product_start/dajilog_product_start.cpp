@@ -44,7 +44,13 @@ extern "C" void dajilog_product_start(void)
                    board->display_width, board->display_height);
 
     ESP_UTILS_CHECK_ERROR_EXIT(dajilog_board_init(), "Board init failed");
-    ESP_UTILS_CHECK_ERROR_EXIT(dajilog_system_core_start(), "System Core start failed");
+    const esp_err_t system_core_error = dajilog_system_core_start();
+    ESP_UTILS_CHECK_FALSE_EXIT(
+        system_core_error == ESP_OK || system_core_error == ESP_ERR_NOT_SUPPORTED,
+        "System Core start failed: %s", esp_err_to_name(system_core_error));
+    if (system_core_error == ESP_ERR_NOT_SUPPORTED) {
+        ESP_UTILS_LOGW("No product controller registered; continue without product tasks");
+    }
     ESP_UTILS_CHECK_ERROR_EXIT(dajilog_board_display_start(), "Display start failed");
 
     LvLock::registerCallbacks(

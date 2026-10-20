@@ -14,19 +14,21 @@ enum ScreensEnum {
     SCREEN_ID_STARTUP_ANIMATION = 1,
     SCREEN_ID_DASHBOARD = 2,
     SCREEN_ID_MOTOR_MANUAL = 3,
-    SCREEN_ID_SYSTEM_SETTING = 4,
-    SCREEN_ID_RIDGE_SETUP = 5,
-    SCREEN_ID_PREPARATION = 6,
-    SCREEN_ID_WORK = 7,
-    SCREEN_ID_WEIGHING_TEST = 8,
-    SCREEN_ID_NUMERIC_INPUT = 9,
-    _SCREEN_ID_LAST = 9
+    SCREEN_ID_RUN_COUNTDOWN = 4,
+    SCREEN_ID_SYSTEM_SETTING = 5,
+    SCREEN_ID_RIDGE_SETUP = 6,
+    SCREEN_ID_PREPARATION = 7,
+    SCREEN_ID_WORK = 8,
+    SCREEN_ID_WEIGHING_TEST = 9,
+    SCREEN_ID_NUMERIC_INPUT = 10,
+    _SCREEN_ID_LAST = 10
 };
 
 typedef struct _objects_t {
     lv_obj_t *startup_animation;
     lv_obj_t *dashboard;
     lv_obj_t *motor_manual;
+    lv_obj_t *run_countdown;
     lv_obj_t *system_setting;
     lv_obj_t *ridge_setup;
     lv_obj_t *preparation;
@@ -65,61 +67,61 @@ typedef struct _objects_t {
     lv_obj_t *operation_state_value;
     lv_obj_t *dashboard_can_label;
     lv_obj_t *can_online_value;
-    lv_obj_t *dashboard_stop_button;
-    lv_obj_t *dashboard_stop_label;
+    lv_obj_t *dashboard_setting_button;
+    lv_obj_t *dashboard_setting_top_label;
     lv_obj_t *dashboard_motor_section_hint;
-    lv_obj_t *motor_1_card;
-    lv_obj_t *motor_1_number;
-    lv_obj_t *motor_1_name;
-    lv_obj_t *motor_1_state_value;
-    lv_obj_t *motor_1_speed_label;
-    lv_obj_t *motor_1_target_label;
-    lv_obj_t *motor_1_speed_value;
-    lv_obj_t *motor_1_speed_unit;
-    lv_obj_t *motor_1_target_value;
-    lv_obj_t *motor_1_target_unit;
-    lv_obj_t *motor_1_progress_track;
-    lv_obj_t *motor_1_progress_fill;
-    lv_obj_t *motor_1_load_value;
-    lv_obj_t *motor_2_card;
-    lv_obj_t *motor_2_number;
-    lv_obj_t *motor_2_name;
-    lv_obj_t *motor_2_state_value;
-    lv_obj_t *motor_2_speed_label;
-    lv_obj_t *motor_2_target_label;
-    lv_obj_t *motor_2_speed_value;
-    lv_obj_t *motor_2_speed_unit;
-    lv_obj_t *motor_2_target_value;
-    lv_obj_t *motor_2_target_unit;
-    lv_obj_t *motor_2_progress_track;
-    lv_obj_t *motor_2_progress_fill;
-    lv_obj_t *motor_2_load_value;
-    lv_obj_t *motor_3_card;
-    lv_obj_t *motor_3_number;
-    lv_obj_t *motor_3_name;
-    lv_obj_t *motor_3_state_value;
-    lv_obj_t *motor_3_speed_label;
-    lv_obj_t *motor_3_target_label;
-    lv_obj_t *motor_3_speed_value;
-    lv_obj_t *motor_3_speed_unit;
-    lv_obj_t *motor_3_target_value;
-    lv_obj_t *motor_3_target_unit;
-    lv_obj_t *motor_3_progress_track;
-    lv_obj_t *motor_3_progress_fill;
-    lv_obj_t *motor_3_load_value;
-    lv_obj_t *motor_4_card;
-    lv_obj_t *motor_4_number;
-    lv_obj_t *motor_4_name;
-    lv_obj_t *motor_4_state_value;
-    lv_obj_t *motor_4_speed_label;
-    lv_obj_t *motor_4_target_label;
-    lv_obj_t *motor_4_speed_value;
-    lv_obj_t *motor_4_speed_unit;
-    lv_obj_t *motor_4_target_value;
-    lv_obj_t *motor_4_target_unit;
-    lv_obj_t *motor_4_progress_track;
-    lv_obj_t *motor_4_progress_fill;
-    lv_obj_t *motor_4_load_value;
+    lv_obj_t *driver_1_card;
+    lv_obj_t *driver_1_number;
+    lv_obj_t *driver_1_name;
+    lv_obj_t *driver_1_state_value;
+    lv_obj_t *driver_1_speed_label;
+    lv_obj_t *driver_1_target_label;
+    lv_obj_t *driver_1_speed_value;
+    lv_obj_t *driver_1_speed_unit;
+    lv_obj_t *driver_1_target_value;
+    lv_obj_t *driver_1_target_unit;
+    lv_obj_t *driver_1_progress_track;
+    lv_obj_t *driver_1_progress_fill;
+    lv_obj_t *driver_1_load_value;
+    lv_obj_t *setting_1_card;
+    lv_obj_t *setting_1_number;
+    lv_obj_t *setting_1_name;
+    lv_obj_t *setting_1_state_value;
+    lv_obj_t *setting_1_speed_label;
+    lv_obj_t *setting_1_target_label;
+    lv_obj_t *setting_1_speed_value;
+    lv_obj_t *setting_1_speed_unit;
+    lv_obj_t *setting_1_target_value;
+    lv_obj_t *setting_1_target_unit;
+    lv_obj_t *setting_1_progress_track;
+    lv_obj_t *setting_1_progress_fill;
+    lv_obj_t *setting_1_load_value;
+    lv_obj_t *driver_2_card;
+    lv_obj_t *driver_2_number;
+    lv_obj_t *driver_2_name;
+    lv_obj_t *driver_2_state_value;
+    lv_obj_t *driver_2_speed_label;
+    lv_obj_t *driver_2_target_label;
+    lv_obj_t *driver_2_speed_value;
+    lv_obj_t *driver_2_speed_unit;
+    lv_obj_t *driver_2_target_value;
+    lv_obj_t *driver_2_target_unit;
+    lv_obj_t *driver_2_progress_track;
+    lv_obj_t *driver_2_progress_fill;
+    lv_obj_t *driver_2_load_value;
+    lv_obj_t *setting_2_card;
+    lv_obj_t *setting_2_number;
+    lv_obj_t *setting_2_name;
+    lv_obj_t *setting_2_state_value;
+    lv_obj_t *setting_2_speed_label;
+    lv_obj_t *setting_2_target_label;
+    lv_obj_t *setting_2_speed_value;
+    lv_obj_t *setting_2_speed_unit;
+    lv_obj_t *setting_2_target_value;
+    lv_obj_t *setting_2_target_unit;
+    lv_obj_t *setting_2_progress_track;
+    lv_obj_t *setting_2_progress_fill;
+    lv_obj_t *setting_2_load_value;
     lv_obj_t *vehicle_speed_card;
     lv_obj_t *vehicle_speed_title;
     lv_obj_t *vehicle_speed_divider;
@@ -132,7 +134,7 @@ typedef struct _objects_t {
     lv_obj_t *vehicle_speed_progress_fill;
     lv_obj_t *vehicle_speed_signal_label;
     lv_obj_t *vehicle_speed_signal_value;
-    lv_obj_t *dashboard_system_card;
+    lv_obj_t *dashboard_run_button;
     lv_obj_t *dashboard_system_title;
     lv_obj_t *work_mode_label;
     lv_obj_t *work_mode_value;
@@ -142,7 +144,7 @@ typedef struct _objects_t {
     lv_obj_t *dashboard_alert_title;
     lv_obj_t *dashboard_alert_severity;
     lv_obj_t *dashboard_alert_value;
-    lv_obj_t *dashboard_setting_button;
+    lv_obj_t *dashboard_stop_button;
     lv_obj_t *dashboard_setting_caption;
     lv_obj_t *dashboard_setting_label;
     lv_obj_t *dashboard_setting_description;
@@ -151,6 +153,12 @@ typedef struct _objects_t {
     lv_obj_t *motor_manual_panel;
     lv_obj_t *motor_manual_title;
     lv_obj_t *motor_manual_selected_value;
+    lv_obj_t *driver_mode_auto_button;
+    lv_obj_t *driver_mode_auto_label;
+    lv_obj_t *driver_mode_manual_button;
+    lv_obj_t *driver_mode_manual_label;
+    lv_obj_t *driver_mode_disabled_button;
+    lv_obj_t *driver_mode_disabled_label;
     lv_obj_t *motor_manual_close_button;
     lv_obj_t *motor_manual_close_label;
     lv_obj_t *motor_manual_rpm_caption;
@@ -173,6 +181,16 @@ typedef struct _objects_t {
     lv_obj_t *motor_manual_stop_lamp;
     lv_obj_t *motor_manual_stop_lamp_label;
     lv_obj_t *motor_manual_safety_hint;
+    lv_obj_t *run_countdown_backdrop;
+    lv_obj_t *run_countdown_panel;
+    lv_obj_t *run_countdown_title;
+    lv_obj_t *run_countdown_value;
+    lv_obj_t *run_countdown_description;
+    lv_obj_t *run_countdown_summary_panel;
+    lv_obj_t *run_countdown_d1_summary;
+    lv_obj_t *run_countdown_d2_summary;
+    lv_obj_t *run_countdown_stop_button;
+    lv_obj_t *run_countdown_stop_label;
     lv_obj_t *main_status;
     lv_obj_t *main_stop;
     lv_obj_t *main_stop_label;
@@ -357,6 +375,9 @@ void tick_screen_dashboard();
 
 void create_screen_motor_manual();
 void tick_screen_motor_manual();
+
+void create_screen_run_countdown();
+void tick_screen_run_countdown();
 
 void create_screen_system_setting();
 void tick_screen_system_setting();

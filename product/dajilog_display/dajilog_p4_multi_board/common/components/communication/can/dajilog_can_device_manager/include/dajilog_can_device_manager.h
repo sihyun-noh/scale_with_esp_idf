@@ -22,6 +22,8 @@ typedef void (*dajilog_can_device_observer_t)(
 
 esp_err_t dajilog_can_device_manager_set_observer(
     dajilog_can_device_observer_t observer, void *context);
+esp_err_t dajilog_can_device_manager_add_observer(
+    dajilog_can_device_observer_t observer, void *context);
 esp_err_t dajilog_can_device_manager_start(void);
 esp_err_t dajilog_can_device_manager_get(size_t index, const dajilog_can_device_config_t **config,
                                          dajilog_can_device_state_t *state);

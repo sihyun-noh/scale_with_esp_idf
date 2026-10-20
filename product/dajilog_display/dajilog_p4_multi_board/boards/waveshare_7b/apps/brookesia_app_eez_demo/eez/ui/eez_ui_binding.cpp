@@ -46,7 +46,8 @@ char s_motor_state_text[DAJILOG_MOTOR_CHANNEL_COUNT][24] = {};
 char s_motor_speed_text[DAJILOG_MOTOR_CHANNEL_COUNT][24] = {};
 char s_motor_target_text[DAJILOG_MOTOR_CHANNEL_COUNT][24] = {};
 char s_motor_load_text[DAJILOG_MOTOR_CHANNEL_COUNT][24] = {};
-char s_manual_motor_selected_text[16] = {};
+char s_setting_name_text[2][DAJILOG_RECIPE_NAME_CAPACITY] = {};
+char s_manual_motor_selected_text[48] = {};
 char s_manual_motor_rpm_text[16] = {};
 char s_manual_motor_direction_text[32] = {};
 char s_manual_motor_operation_text[24] = {};
@@ -156,33 +157,41 @@ void render_dashboard(const dajilog_dashboard_snapshot_t &snapshot)
                s_alarm_text, sizeof(s_alarm_text), STRING_ID_DASHBOARD_BASE + 7,
                snapshot.alarm_text[0] != '\0' ? snapshot.alarm_text : "정상");
 
-    const uint32_t state_vars[] = {
-        FLOW_GLOBAL_VARIABLE_MOTOR_1_STATE_TEXT,
-        FLOW_GLOBAL_VARIABLE_MOTOR_2_STATE_TEXT,
-        FLOW_GLOBAL_VARIABLE_MOTOR_3_STATE_TEXT,
-        FLOW_GLOBAL_VARIABLE_MOTOR_4_STATE_TEXT,
+    const uint32_t driver_state_vars[] = {
+        FLOW_GLOBAL_VARIABLE_DRIVER_1_STATE_TEXT,
+        FLOW_GLOBAL_VARIABLE_DRIVER_2_STATE_TEXT,
     };
-    const uint32_t speed_vars[] = {
-        FLOW_GLOBAL_VARIABLE_MOTOR_1_SPEED_RPM_TEXT,
-        FLOW_GLOBAL_VARIABLE_MOTOR_2_SPEED_RPM_TEXT,
-        FLOW_GLOBAL_VARIABLE_MOTOR_3_SPEED_RPM_TEXT,
-        FLOW_GLOBAL_VARIABLE_MOTOR_4_SPEED_RPM_TEXT,
+    const uint32_t driver_speed_vars[] = {
+        FLOW_GLOBAL_VARIABLE_DRIVER_1_SPEED_RPM_TEXT,
+        FLOW_GLOBAL_VARIABLE_DRIVER_2_SPEED_RPM_TEXT,
     };
-    const uint32_t target_vars[] = {
-        FLOW_GLOBAL_VARIABLE_MOTOR_1_TARGET_KG_MIN_TEXT,
-        FLOW_GLOBAL_VARIABLE_MOTOR_2_TARGET_KG_MIN_TEXT,
-        FLOW_GLOBAL_VARIABLE_MOTOR_3_TARGET_KG_MIN_TEXT,
-        FLOW_GLOBAL_VARIABLE_MOTOR_4_TARGET_KG_MIN_TEXT,
+    const uint32_t driver_target_vars[] = {
+        FLOW_GLOBAL_VARIABLE_DRIVER_1_TARGET_KG_MIN_TEXT,
+        FLOW_GLOBAL_VARIABLE_DRIVER_2_TARGET_KG_MIN_TEXT,
     };
-    const uint32_t load_vars[] = {
-        FLOW_GLOBAL_VARIABLE_MOTOR_1_LOAD_PCT_TEXT,
-        FLOW_GLOBAL_VARIABLE_MOTOR_2_LOAD_PCT_TEXT,
-        FLOW_GLOBAL_VARIABLE_MOTOR_3_LOAD_PCT_TEXT,
-        FLOW_GLOBAL_VARIABLE_MOTOR_4_LOAD_PCT_TEXT,
+    const uint32_t driver_load_vars[] = {
+        FLOW_GLOBAL_VARIABLE_DRIVER_1_LOAD_PCT_TEXT,
+        FLOW_GLOBAL_VARIABLE_DRIVER_2_LOAD_PCT_TEXT,
     };
-    for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
+    const uint32_t setting_state_vars[] = {
+        FLOW_GLOBAL_VARIABLE_SETTING_1_STATE_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_2_STATE_TEXT,
+    };
+    const uint32_t setting_name_vars[] = {
+        FLOW_GLOBAL_VARIABLE_SETTING_1_NAME_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_2_NAME_TEXT,
+    };
+    const uint32_t setting_target_vars[] = {
+        FLOW_GLOBAL_VARIABLE_SETTING_1_TARGET_KG_MIN_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_2_TARGET_KG_MIN_TEXT,
+    };
+    const uint32_t setting_load_vars[] = {
+        FLOW_GLOBAL_VARIABLE_SETTING_1_LOAD_PCT_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_2_LOAD_PCT_TEXT,
+    };
+    for (size_t i = 0; i < 2U; ++i) {
         const auto &motor = snapshot.motors[i];
-        set_string(state_vars[i], s_motor_state_text[i], sizeof(s_motor_state_text[i]),
+        set_string(driver_state_vars[i], s_motor_state_text[i], sizeof(s_motor_state_text[i]),
                    STRING_ID_DASHBOARD_BASE + 10 + i * 4,
                    motor_state_text(motor.state));
         std::snprintf(s_motor_speed_text[i], sizeof(s_motor_speed_text[i]), "%lu",
@@ -191,12 +200,25 @@ void render_dashboard(const dajilog_dashboard_snapshot_t &snapshot)
                       static_cast<double>(motor.target_kg_min));
         std::snprintf(s_motor_load_text[i], sizeof(s_motor_load_text[i]), "%.0f%%",
                       static_cast<double>(motor.load_pct));
-        eez::flow::setGlobalVariable(speed_vars[i], eez::Value::makeStringRef(
+        eez::flow::setGlobalVariable(driver_speed_vars[i], eez::Value::makeStringRef(
             s_motor_speed_text[i], -1, STRING_ID_DASHBOARD_BASE + 11 + i * 4));
-        eez::flow::setGlobalVariable(target_vars[i], eez::Value::makeStringRef(
+        eez::flow::setGlobalVariable(driver_target_vars[i], eez::Value::makeStringRef(
             s_motor_target_text[i], -1, STRING_ID_DASHBOARD_BASE + 12 + i * 4));
-        eez::flow::setGlobalVariable(load_vars[i], eez::Value::makeStringRef(
+        eez::flow::setGlobalVariable(driver_load_vars[i], eez::Value::makeStringRef(
             s_motor_load_text[i], -1, STRING_ID_DASHBOARD_BASE + 13 + i * 4));
+
+        set_string(setting_state_vars[i], s_motor_state_text[i + 2U],
+                   sizeof(s_motor_state_text[i + 2U]),
+                   STRING_ID_DASHBOARD_BASE + 30 + i * 4,
+                   motor.state == DAJILOG_MOTOR_OFFLINE ? "OFFLINE" : "READY");
+        set_string(setting_name_vars[i], s_setting_name_text[i],
+                   sizeof(s_setting_name_text[i]),
+                   STRING_ID_DASHBOARD_BASE + 31 + i * 4,
+                   snapshot.recipe_name);
+        eez::flow::setGlobalVariable(setting_target_vars[i], eez::Value::makeStringRef(
+            s_motor_target_text[i], -1, STRING_ID_DASHBOARD_BASE + 32 + i * 4));
+        eez::flow::setGlobalVariable(setting_load_vars[i], eez::Value::makeStringRef(
+            s_motor_load_text[i], -1, STRING_ID_DASHBOARD_BASE + 33 + i * 4));
     }
 }
 
@@ -304,6 +326,10 @@ void manual_motor_forward_event(lv_event_t *event)
         return;
     }
     s_manual_motor_direction = DAJILOG_MANUAL_MOTOR_FORWARD;
+    set_manual_motor_text(FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_DIRECTION_TEXT,
+                          s_manual_motor_direction_text,
+                          sizeof(s_manual_motor_direction_text), 2,
+                          "FORWARD");
 }
 
 void manual_motor_reverse_event(lv_event_t *event)
@@ -321,6 +347,13 @@ void manual_motor_reverse_event(lv_event_t *event)
 void manual_motor_run_event(lv_event_t *event)
 {
     if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
+        return;
+    }
+    if (!eez::flow::getGlobalVariable(
+             FLOW_GLOBAL_VARIABLE_DRIVER_MODE_MANUAL_SELECTED).getBoolean()) {
+        s_manual_motor_1_running = false;
+        set_manual_motor_operation_ui(false);
+        ESP_LOGW(TAG, "manual motor 1 RUN rejected: driver mode is not MANUAL");
         return;
     }
     if (manual_motor_rpm() == 0U) {
@@ -619,10 +652,10 @@ extern "C" bool eez_ui_binding_attach(void)
         objects.fertilizer_temp_save == nullptr ||
         objects.fertilizer_save_settings == nullptr ||
         objects.dashboard_stop_button == nullptr ||
-        objects.motor_1_card == nullptr ||
-        objects.motor_2_card == nullptr ||
-        objects.motor_3_card == nullptr ||
-        objects.motor_4_card == nullptr ||
+        objects.driver_1_card == nullptr ||
+        objects.setting_1_card == nullptr ||
+        objects.driver_2_card == nullptr ||
+        objects.setting_2_card == nullptr ||
         objects.motor_manual_close_button == nullptr ||
         objects.motor_manual_rpm_slider == nullptr ||
         objects.motor_manual_forward_button == nullptr ||
@@ -646,9 +679,10 @@ extern "C" bool eez_ui_binding_attach(void)
                         LV_EVENT_PRESSED, nullptr);
     lv_obj_add_event_cb(objects.dashboard_stop_button, stop_event,
                         LV_EVENT_PRESSED, nullptr);
-    lv_obj_add_state(objects.motor_2_card, LV_STATE_DISABLED);
-    lv_obj_add_state(objects.motor_3_card, LV_STATE_DISABLED);
-    lv_obj_add_state(objects.motor_4_card, LV_STATE_DISABLED);
+    // The first driver is the only motor currently enabled for bench testing.
+    lv_obj_add_state(objects.setting_1_card, LV_STATE_DISABLED);
+    lv_obj_add_state(objects.driver_2_card, LV_STATE_DISABLED);
+    lv_obj_add_state(objects.setting_2_card, LV_STATE_DISABLED);
     lv_obj_add_event_cb(objects.motor_manual_forward_button,
                         manual_motor_forward_event, LV_EVENT_PRESSED, nullptr);
     lv_obj_add_event_cb(objects.motor_manual_reverse_button,
@@ -663,7 +697,8 @@ extern "C" bool eez_ui_binding_attach(void)
                         manual_motor_close_event, LV_EVENT_PRESSED, nullptr);
     set_manual_motor_text(FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_SELECTED_TEXT,
                           s_manual_motor_selected_text,
-                          sizeof(s_manual_motor_selected_text), 0, "M1");
+                          sizeof(s_manual_motor_selected_text), 0,
+                          "D1 · 전층 드라이버");
     render_latest_dashboard();
     s_attached = true;
     ESP_LOGI(TAG, "System Core, settings, dashboard and M1 manual binding attached");

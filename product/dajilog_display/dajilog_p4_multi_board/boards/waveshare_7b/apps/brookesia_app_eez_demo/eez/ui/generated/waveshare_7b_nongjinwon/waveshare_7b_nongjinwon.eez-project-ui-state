@@ -1,7 +1,7 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[waveshare_7b_nongjinwon.eez-project]:/userPages/2",
-    "selectedFontObject": "[waveshare_7b_nongjinwon.eez-project]:/fonts/1",
+    "selectedUserPageObject": "[waveshare_7b_nongjinwon.eez-project]:/userPages/1",
+    "selectedFontObject": "[waveshare_7b_nongjinwon.eez-project]:/fonts/2",
     "selectedBitmapObject": "[waveshare_7b_nongjinwon.eez-project]:/bitmaps/1",
     "subnavigationSelectedItems": {
       "variables-tab/sub-navigation/selected-item": "Actions"
@@ -206,10 +206,10 @@
                 {
                   "type": "tab",
                   "id": "#1a91607d-63ac-4344-bc59-dfec905b203f",
-                  "name": "MotorManual",
+                  "name": "Dashboard",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[waveshare_7b_nongjinwon.eez-project]:/userPages/2",
+                    "objectPath": "[waveshare_7b_nongjinwon.eez-project]:/userPages/1",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -1094,7 +1094,7 @@
           "x": -512,
           "y": 20.51251222658192
         },
-        "scale": 1.1
+        "scale": 1.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1112,16 +1112,20 @@
             "0": {}
           },
           "9": {},
+          "24": {},
+          "37": {},
+          "79": {},
           "83": {}
         },
-        "1": {}
+        "1": {},
+        "2": {}
       },
       "transform": {
         "translate": {
-          "x": -724.9412714640291,
-          "y": -483.32449548728016
+          "x": -747.9242213157642,
+          "y": -356.9308849052596
         },
-        "scale": 1.25
+        "scale": 1.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1137,22 +1141,21 @@
           "1": {},
           "2": {},
           "4": {},
+          "5": {},
           "6": {},
           "8": {},
           "10": {},
           "12": {},
-          "13": {
-            "0": {}
-          },
+          "13": {},
           "14": {}
         }
       },
       "transform": {
         "translate": {
-          "x": -522.8168883822095,
-          "y": -194.03047959380774
+          "x": -1236.801563374153,
+          "y": -732.6103659891228
         },
-        "scale": 1.1
+        "scale": 2.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1169,17 +1172,15 @@
           "3": {},
           "5": {},
           "7": {},
-          "9": {},
-          "11": {},
-          "13": {}
+          "8": {}
         }
       },
       "transform": {
         "translate": {
-          "x": -576.6610538543214,
-          "y": -789.7270885074465
+          "x": -1180.1504709439178,
+          "y": -214.78525635435113
         },
-        "scale": 1.25
+        "scale": 2.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1196,7 +1197,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1.25
+        "scale": 2.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1213,7 +1214,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1.25
+        "scale": 2.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1230,7 +1231,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1.25
+        "scale": 1.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1247,7 +1248,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1.25
+        "scale": 1.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1297,6 +1298,6 @@
   ],
   "showInactiveFlowsInDebugger": true,
   "globalFlowZoom": true,
-  "flowZoom": 1.1,
+  "flowZoom": 1.5,
   "implementationLanguage": "C"
 }

@@ -10,21 +10,26 @@ static const char *TAG = "DajilogCANMgr";
 static dajilog_can_device_state_t s_states[16];
 static SemaphoreHandle_t s_lock;
 static bool s_started;
-static dajilog_can_device_observer_t s_observer;
-static void *s_observer_context;
+#define MAX_OBSERVERS 4U
+typedef struct {
+  dajilog_can_device_observer_t callback;
+  void *context;
+} observer_entry_t;
+static observer_entry_t s_observers[MAX_OBSERVERS];
+static size_t s_observer_count;
 
 static void notify_observer(size_t index, const dajilog_can_device_state_t *state) {
-  dajilog_can_device_observer_t observer;
-  void *context;
+  observer_entry_t observers[MAX_OBSERVERS];
+  size_t observer_count;
 
   xSemaphoreTake(s_lock, portMAX_DELAY);
-  observer = s_observer;
-  context = s_observer_context;
+  observer_count = s_observer_count;
+  memcpy(observers, s_observers, observer_count * sizeof(observers[0]));
   xSemaphoreGive(s_lock);
-  if (observer != NULL) {
-    const dajilog_can_device_config_t *device = &DAJILOG_CAN_DEVICES[index];
-    const dajilog_can_protocol_profile_t *profile = &DAJILOG_CAN_PROFILES[device->profile_index];
-    observer(index, device, profile, state, context);
+  const dajilog_can_device_config_t *device = &DAJILOG_CAN_DEVICES[index];
+  const dajilog_can_protocol_profile_t *profile = &DAJILOG_CAN_PROFILES[device->profile_index];
+  for (size_t i = 0; i < observer_count; ++i) {
+    observers[i].callback(index, device, profile, state, observers[i].context);
   }
 }
 
@@ -101,14 +106,36 @@ esp_err_t dajilog_can_device_manager_set_observer(dajilog_can_device_observer_t 
     return ESP_ERR_INVALID_ARG;
   }
   if (s_lock == NULL) {
-    s_observer = observer;
-    s_observer_context = context;
+    s_observer_count = 1U;
+    s_observers[0] = (observer_entry_t) { .callback = observer, .context = context };
     return ESP_OK;
   }
   xSemaphoreTake(s_lock, portMAX_DELAY);
-  s_observer = observer;
-  s_observer_context = context;
+  s_observer_count = 1U;
+  s_observers[0] = (observer_entry_t) { .callback = observer, .context = context };
   xSemaphoreGive(s_lock);
+  return ESP_OK;
+}
+
+esp_err_t dajilog_can_device_manager_add_observer(
+    dajilog_can_device_observer_t observer, void *context) {
+  if (observer == NULL) {
+    return ESP_ERR_INVALID_ARG;
+  }
+  if (s_lock != NULL) {
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+  }
+  if (s_observer_count >= MAX_OBSERVERS) {
+    if (s_lock != NULL) {
+      xSemaphoreGive(s_lock);
+    }
+    return ESP_ERR_NO_MEM;
+  }
+  s_observers[s_observer_count++] =
+      (observer_entry_t) { .callback = observer, .context = context };
+  if (s_lock != NULL) {
+    xSemaphoreGive(s_lock);
+  }
   return ESP_OK;
 }
 esp_err_t dajilog_can_device_manager_start(void) {

@@ -240,15 +240,15 @@
       },
       {
         "objID": "83a9f224-d002-4aa7-a31f-fa7fb00951f6",
-        "name": "motor_1_state_text",
+        "name": "driver_1_state_text",
         "type": "string",
-        "defaultValue": "\"RUN\"",
+        "defaultValue": "\"AUTO\"",
         "persistent": false,
         "native": false
       },
       {
         "objID": "f2d684e4-c50e-4ac9-afd0-8cd42662a964",
-        "name": "motor_1_speed_rpm_text",
+        "name": "driver_1_speed_rpm_text",
         "type": "string",
         "defaultValue": "\"1,280\"",
         "persistent": false,
@@ -256,23 +256,23 @@
       },
       {
         "objID": "9f4de857-fd8f-4279-9a73-635de57f2629",
-        "name": "motor_1_target_kg_min_text",
+        "name": "driver_1_target_kg_min_text",
         "type": "string",
-        "defaultValue": "\"18.0\"",
+        "defaultValue": "\"\"",
         "persistent": false,
         "native": false
       },
       {
         "objID": "a0df62ba-a3c4-408a-bf1f-273d42ea28e3",
-        "name": "motor_1_load_pct_text",
+        "name": "driver_1_load_pct_text",
         "type": "string",
-        "defaultValue": "\"72%\"",
+        "defaultValue": "\"\"",
         "persistent": false,
         "native": false
       },
       {
         "objID": "8b8172d2-46b3-46f4-80ad-135e7c6e1203",
-        "name": "motor_2_state_text",
+        "name": "setting_1_state_text",
         "type": "string",
         "defaultValue": "\"READY\"",
         "persistent": false,
@@ -280,15 +280,15 @@
       },
       {
         "objID": "a3d046a8-afcb-4a2b-9122-0a909a5e5efd",
-        "name": "motor_2_speed_rpm_text",
+        "name": "setting_1_name_text",
         "type": "string",
-        "defaultValue": "\"0\"",
+        "defaultValue": "\"질소 처방 #01\"",
         "persistent": false,
         "native": false
       },
       {
         "objID": "84705272-6774-43a8-a21e-13e6b01f362c",
-        "name": "motor_2_target_kg_min_text",
+        "name": "setting_1_target_kg_min_text",
         "type": "string",
         "defaultValue": "\"18.0\"",
         "persistent": false,
@@ -296,23 +296,23 @@
       },
       {
         "objID": "54c7a66d-839d-4d2a-8982-878bda3443f7",
-        "name": "motor_2_load_pct_text",
+        "name": "setting_1_load_pct_text",
         "type": "string",
-        "defaultValue": "\"0%\"",
+        "defaultValue": "\"\"",
         "persistent": false,
         "native": false
       },
       {
         "objID": "d725ce3e-f0fc-4564-93ac-1232373a21b7",
-        "name": "motor_3_state_text",
+        "name": "driver_2_state_text",
         "type": "string",
-        "defaultValue": "\"RUN\"",
+        "defaultValue": "\"AUTO\"",
         "persistent": false,
         "native": false
       },
       {
         "objID": "a41f8ef5-5a90-42c7-a930-afd61d904675",
-        "name": "motor_3_speed_rpm_text",
+        "name": "driver_2_speed_rpm_text",
         "type": "string",
         "defaultValue": "\"1,160\"",
         "persistent": false,
@@ -320,39 +320,39 @@
       },
       {
         "objID": "40db9a85-d4db-4b74-8f5f-8d33ce92d308",
-        "name": "motor_3_target_kg_min_text",
+        "name": "driver_2_target_kg_min_text",
         "type": "string",
-        "defaultValue": "\"12.0\"",
+        "defaultValue": "\"\"",
         "persistent": false,
         "native": false
       },
       {
         "objID": "04b24a83-a243-4fe7-a394-ff70038c533c",
-        "name": "motor_3_load_pct_text",
+        "name": "driver_2_load_pct_text",
         "type": "string",
-        "defaultValue": "\"64%\"",
+        "defaultValue": "\"\"",
         "persistent": false,
         "native": false
       },
       {
         "objID": "3e87c6d4-8ba7-4d2d-89d7-16a705a0ae43",
-        "name": "motor_4_state_text",
+        "name": "setting_2_state_text",
         "type": "string",
-        "defaultValue": "\"FAULT\"",
+        "defaultValue": "\"READY\"",
         "persistent": false,
         "native": false
       },
       {
         "objID": "b1868cb0-e24d-4715-8b04-b04ec50887d5",
-        "name": "motor_4_speed_rpm_text",
+        "name": "setting_2_name_text",
         "type": "string",
-        "defaultValue": "\"0\"",
+        "defaultValue": "\"질소 처방 #02\"",
         "persistent": false,
         "native": false
       },
       {
         "objID": "b738d154-329c-4fe5-8978-16ceb6a51a6d",
-        "name": "motor_4_target_kg_min_text",
+        "name": "setting_2_target_kg_min_text",
         "type": "string",
         "defaultValue": "\"12.0\"",
         "persistent": false,
@@ -360,9 +360,9 @@
       },
       {
         "objID": "05f3f657-839e-4b0c-8293-5781f5faf419",
-        "name": "motor_4_load_pct_text",
+        "name": "setting_2_load_pct_text",
         "type": "string",
-        "defaultValue": "\"18%\"",
+        "defaultValue": "\"\"",
         "persistent": false,
         "native": false
       },
@@ -370,7 +370,7 @@
         "objID": "f0010001-0000-4000-8000-000000000001",
         "name": "manual_motor_selected_text",
         "type": "string",
-        "defaultValue": "\"M1 · 전층 A\"",
+        "defaultValue": "\"D1 · 전층 드라이버\"",
         "persistent": false,
         "native": false
       },
@@ -419,6 +419,46 @@
         "name": "manual_motor_stop_active",
         "type": "boolean",
         "defaultValue": "true",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "f0010008-0000-4000-8000-000000000008",
+        "name": "manual_motor_control_mode_text",
+        "type": "string",
+        "defaultValue": "\"MANUAL\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "f0010009-0000-4000-8000-000000000009",
+        "name": "run_countdown_text",
+        "type": "string",
+        "defaultValue": "\"5\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "f0010010-0000-4000-8000-000000000010",
+        "name": "driver_mode_auto_selected",
+        "type": "boolean",
+        "defaultValue": "false",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "f0010011-0000-4000-8000-000000000011",
+        "name": "driver_mode_manual_selected",
+        "type": "boolean",
+        "defaultValue": "true",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "f0010012-0000-4000-8000-000000000012",
+        "name": "driver_mode_disabled_selected",
+        "type": "boolean",
+        "defaultValue": "false",
         "persistent": false,
         "native": false
       }
@@ -3672,8 +3712,15 @@
                 "childStyles": []
               },
               "timeline": [],
-              "eventHandlers": [],
-              "identifier": "dashboard_stop_button",
+              "eventHandlers": [
+                {
+                  "objID": "f2100001-0000-4000-8000-000000000001",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
+              "identifier": "dashboard_setting_button",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -3696,7 +3743,7 @@
                   },
                   "timeline": [],
                   "eventHandlers": [],
-                  "identifier": "dashboard_stop_label",
+                  "identifier": "dashboard_setting_top_label",
                   "leftUnit": "px",
                   "topUnit": "px",
                   "widthUnit": "px",
@@ -3729,7 +3776,7 @@
                   },
                   "group": "",
                   "groupIndex": 0,
-                  "text": "전체 정지",
+                  "text": "SETTING",
                   "textType": "literal",
                   "longMode": "WRAP",
                   "recolor": false,
@@ -3750,7 +3797,7 @@
                 "definition": {
                   "MAIN": {
                     "DEFAULT": {
-                      "bg_color": "#f04444",
+                      "bg_color": "#f9b938",
                       "bg_opa": 255,
                       "radius": 8,
                       "border_width": 0,
@@ -3760,7 +3807,7 @@
                       "pad_bottom": 0
                     },
                     "PRESSED": {
-                      "bg_color": "#ba2424"
+                      "bg_color": "#d89a16"
                     }
                   }
                 }
@@ -3818,7 +3865,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "4채널 실시간 운전 정보",
+              "text": "2드라이버 운전 정보",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -3848,7 +3895,7 @@
                   "userData": 0
                 }
               ],
-              "identifier": "motor_1_card",
+              "identifier": "driver_1_card",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -3901,7 +3948,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_1_number",
+              "identifier": "driver_1_number",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -3934,7 +3981,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "M1",
+              "text": "D1",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -3945,7 +3992,7 @@
               "type": "LVGLLabelWidget",
               "left": 82,
               "top": 88,
-              "width": 116,
+              "width": 127,
               "height": 30,
               "customInputs": [],
               "customOutputs": [],
@@ -3957,7 +4004,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_1_name",
+              "identifier": "driver_1_name",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -3990,7 +4037,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "전층 A",
+              "text": "전층 드라이버",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -4013,7 +4060,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_1_state_value",
+              "identifier": "driver_1_state_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -4046,7 +4093,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_1_state_text",
+              "text": "driver_1_state_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -4069,7 +4116,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_1_speed_label",
+              "identifier": "driver_1_speed_label",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -4125,14 +4172,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_1_target_label",
+              "identifier": "driver_1_target_label",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -4169,7 +4216,7 @@
               "type": "LVGLLabelWidget",
               "left": 40,
               "top": 154,
-              "width": 96,
+              "width": 284,
               "height": 38,
               "customInputs": [],
               "customOutputs": [],
@@ -4181,7 +4228,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_1_speed_value",
+              "identifier": "driver_1_speed_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -4214,7 +4261,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_1_speed_rpm_text",
+              "text": "driver_1_speed_rpm_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -4237,7 +4284,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_1_speed_unit",
+              "identifier": "driver_1_speed_unit",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -4293,14 +4340,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_1_target_value",
+              "identifier": "driver_1_target_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -4326,7 +4373,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_1_target_kg_min_text",
+              "text": "driver_1_target_kg_min_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -4349,14 +4396,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_1_target_unit",
+              "identifier": "driver_1_target_unit",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -4405,14 +4452,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_1_progress_track",
+              "identifier": "driver_1_progress_track",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -4458,14 +4505,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_1_progress_fill",
+              "identifier": "driver_1_progress_fill",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -4511,14 +4558,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_1_load_value",
+              "identifier": "driver_1_load_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -4544,7 +4591,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_1_load_pct_text",
+              "text": "driver_1_load_pct_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -4574,7 +4621,7 @@
                   "userData": 0
                 }
               ],
-              "identifier": "motor_2_card",
+              "identifier": "setting_1_card",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -4627,7 +4674,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_2_number",
+              "identifier": "setting_1_number",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -4660,7 +4707,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "M2",
+              "text": "S1",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -4671,7 +4718,7 @@
               "type": "LVGLLabelWidget",
               "left": 414,
               "top": 88,
-              "width": 116,
+              "width": 155,
               "height": 30,
               "customInputs": [],
               "customOutputs": [],
@@ -4683,7 +4730,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_2_name",
+              "identifier": "setting_1_name",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -4716,11 +4763,11 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "전층 B",
-              "textType": "literal",
+              "text": "setting_1_name_text",
+              "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
-              "useStaticText": true
+              "useStaticText": false
             },
             {
               "objID": "80899117-cd90-4260-b4ef-c15b9e1cc01a",
@@ -4739,7 +4786,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_2_state_value",
+              "identifier": "setting_1_state_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -4772,7 +4819,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_2_state_text",
+              "text": "setting_1_state_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -4795,14 +4842,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_2_speed_label",
+              "identifier": "setting_1_speed_label",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -4851,7 +4898,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_2_target_label",
+              "identifier": "setting_1_target_label",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -4907,14 +4954,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_2_speed_value",
+              "identifier": "setting_1_speed_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -4940,7 +4987,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_2_speed_rpm_text",
+              "text": "setting_1_name_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -4963,14 +5010,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_2_speed_unit",
+              "identifier": "setting_1_speed_unit",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -5019,7 +5066,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_2_target_value",
+              "identifier": "setting_1_target_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -5052,7 +5099,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_2_target_kg_min_text",
+              "text": "setting_1_target_kg_min_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -5075,7 +5122,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_2_target_unit",
+              "identifier": "setting_1_target_unit",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -5131,14 +5178,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_2_progress_track",
+              "identifier": "setting_1_progress_track",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -5184,14 +5231,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_2_progress_fill",
+              "identifier": "setting_1_progress_fill",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -5237,14 +5284,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_2_load_value",
+              "identifier": "setting_1_load_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -5270,7 +5317,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_2_load_pct_text",
+              "text": "setting_1_load_pct_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -5300,7 +5347,7 @@
                   "userData": 0
                 }
               ],
-              "identifier": "motor_3_card",
+              "identifier": "driver_2_card",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -5353,7 +5400,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_3_number",
+              "identifier": "driver_2_number",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -5386,7 +5433,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "M3",
+              "text": "D2",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -5397,7 +5444,7 @@
               "type": "LVGLLabelWidget",
               "left": 82,
               "top": 268,
-              "width": 116,
+              "width": 127,
               "height": 30,
               "customInputs": [],
               "customOutputs": [],
@@ -5409,7 +5456,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_3_name",
+              "identifier": "driver_2_name",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -5442,7 +5489,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "지중 C",
+              "text": "지중 드라이버",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -5465,7 +5512,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_3_state_value",
+              "identifier": "driver_2_state_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -5498,7 +5545,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_3_state_text",
+              "text": "driver_2_state_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -5521,7 +5568,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_3_speed_label",
+              "identifier": "driver_2_speed_label",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -5577,14 +5624,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_3_target_label",
+              "identifier": "driver_2_target_label",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -5633,7 +5680,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_3_speed_value",
+              "identifier": "driver_2_speed_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -5666,7 +5713,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_3_speed_rpm_text",
+              "text": "driver_2_speed_rpm_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -5689,7 +5736,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_3_speed_unit",
+              "identifier": "driver_2_speed_unit",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -5745,14 +5792,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_3_target_value",
+              "identifier": "driver_2_target_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -5778,7 +5825,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_3_target_kg_min_text",
+              "text": "driver_2_target_kg_min_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -5801,14 +5848,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_3_target_unit",
+              "identifier": "driver_2_target_unit",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -5857,14 +5904,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_3_progress_track",
+              "identifier": "driver_2_progress_track",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -5910,14 +5957,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_3_progress_fill",
+              "identifier": "driver_2_progress_fill",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -5963,14 +6010,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_3_load_value",
+              "identifier": "driver_2_load_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -5996,7 +6043,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_3_load_pct_text",
+              "text": "driver_2_load_pct_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -6026,7 +6073,7 @@
                   "userData": 0
                 }
               ],
-              "identifier": "motor_4_card",
+              "identifier": "setting_2_card",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -6079,7 +6126,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_4_number",
+              "identifier": "setting_2_number",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -6112,7 +6159,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "M4",
+              "text": "S2",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -6123,7 +6170,7 @@
               "type": "LVGLLabelWidget",
               "left": 414,
               "top": 268,
-              "width": 116,
+              "width": 155,
               "height": 30,
               "customInputs": [],
               "customOutputs": [],
@@ -6135,7 +6182,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_4_name",
+              "identifier": "setting_2_name",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -6168,11 +6215,11 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "지중 D",
-              "textType": "literal",
+              "text": "setting_2_name_text",
+              "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
-              "useStaticText": true
+              "useStaticText": false
             },
             {
               "objID": "2a19861d-1f26-4df7-ac33-f9b2b6dc2f51",
@@ -6191,7 +6238,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_4_state_value",
+              "identifier": "setting_2_state_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -6224,7 +6271,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_4_state_text",
+              "text": "setting_2_state_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -6247,14 +6294,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_4_speed_label",
+              "identifier": "setting_2_speed_label",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -6303,7 +6350,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_4_target_label",
+              "identifier": "setting_2_target_label",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -6359,14 +6406,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_4_speed_value",
+              "identifier": "setting_2_speed_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -6392,7 +6439,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_4_speed_rpm_text",
+              "text": "setting_2_name_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -6415,14 +6462,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_4_speed_unit",
+              "identifier": "setting_2_speed_unit",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -6471,7 +6518,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_4_target_value",
+              "identifier": "setting_2_target_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -6504,7 +6551,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_4_target_kg_min_text",
+              "text": "setting_2_target_kg_min_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -6527,7 +6574,7 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_4_target_unit",
+              "identifier": "setting_2_target_unit",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -6583,14 +6630,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_4_progress_track",
+              "identifier": "setting_2_progress_track",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -6636,14 +6683,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_4_progress_fill",
+              "identifier": "setting_2_progress_fill",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -6689,14 +6736,14 @@
               },
               "timeline": [],
               "eventHandlers": [],
-              "identifier": "motor_4_load_value",
+              "identifier": "setting_2_load_value",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
+              "hiddenFlag": true,
               "hiddenFlagType": "literal",
               "clickableFlag": false,
               "clickableFlagType": "literal",
@@ -6722,7 +6769,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "motor_4_load_pct_text",
+              "text": "setting_2_load_pct_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -7390,7 +7437,7 @@
             },
             {
               "objID": "ce1b15c2-c08a-4f8b-b8bb-6c53025c0cff",
-              "type": "LVGLPanelWidget",
+              "type": "LVGLButtonWidget",
               "left": 688,
               "top": 308,
               "width": 312,
@@ -7404,17 +7451,24 @@
                 "childStyles": []
               },
               "timeline": [],
-              "eventHandlers": [],
-              "identifier": "dashboard_system_card",
+              "eventHandlers": [
+                {
+                  "objID": "f2200001-0000-4000-8000-000000000001",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
+              "identifier": "dashboard_run_button",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
               "children": [],
-              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
               "hiddenFlag": false,
               "hiddenFlagType": "literal",
-              "clickableFlag": false,
+              "clickableFlag": true,
               "clickableFlagType": "literal",
               "checkedState": false,
               "checkedStateType": "literal",
@@ -7425,11 +7479,11 @@
                 "definition": {
                   "MAIN": {
                     "DEFAULT": {
-                      "bg_color": "#111922",
+                      "bg_color": "#f04444",
                       "bg_opa": 255,
                       "radius": 10,
-                      "border_color": "#293540",
-                      "border_width": 1,
+                      "border_color": "#f04444",
+                      "border_width": 0,
                       "pad_left": 0,
                       "pad_right": 0,
                       "pad_top": 0,
@@ -7491,7 +7545,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "SYSTEM",
+              "text": "RUN",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -7547,7 +7601,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "작업 모드",
+              "text": "5초 후 시작",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -7603,11 +7657,11 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "work_mode_text",
-              "textType": "expression",
+              "text": "READY",
+              "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
-              "useStaticText": false
+              "useStaticText": true
             },
             {
               "objID": "418811b4-74df-403a-a3bb-d5b305bc76fc",
@@ -7659,7 +7713,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "현재 처방",
+              "text": "D1 + D2",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -7715,11 +7769,11 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "recipe_name_text",
-              "textType": "expression",
+              "text": "동시 운전",
+              "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
-              "useStaticText": false
+              "useStaticText": true
             },
             {
               "objID": "67f95fa5-799b-4afe-bc86-ce55023b66ad",
@@ -7955,15 +8009,8 @@
                 "childStyles": []
               },
               "timeline": [],
-              "eventHandlers": [
-                {
-                  "objID": "a3bc0b74-5d7a-475c-a674-4f717dbc90f2",
-                  "eventName": "PRESSED",
-                  "handlerType": "flow",
-                  "userData": 0
-                }
-              ],
-              "identifier": "dashboard_setting_button",
+              "eventHandlers": [],
+              "identifier": "dashboard_stop_button",
               "leftUnit": "px",
               "topUnit": "px",
               "widthUnit": "px",
@@ -8019,7 +8066,7 @@
                   },
                   "group": "",
                   "groupIndex": 0,
-                  "text": "CONFIGURATION",
+                  "text": "GLOBAL CONTROL",
                   "textType": "literal",
                   "longMode": "WRAP",
                   "recolor": false,
@@ -8075,7 +8122,7 @@
                   },
                   "group": "",
                   "groupIndex": 0,
-                  "text": "SETTING",
+                  "text": "STOP",
                   "textType": "literal",
                   "longMode": "WRAP",
                   "recolor": false,
@@ -8131,7 +8178,7 @@
                   },
                   "group": "",
                   "groupIndex": 0,
-                  "text": "운전 및 장치 설정",
+                  "text": "즉시 전체 정지",
                   "textType": "literal",
                   "longMode": "WRAP",
                   "recolor": false,
@@ -8208,7 +8255,7 @@
                 "definition": {
                   "MAIN": {
                     "DEFAULT": {
-                      "bg_color": "#f9b938",
+                      "bg_color": "#2677d4",
                       "bg_opa": 255,
                       "radius": 10,
                       "border_width": 0,
@@ -8218,7 +8265,7 @@
                       "pad_bottom": 0
                     },
                     "PRESSED": {
-                      "bg_color": "#d89a16"
+                      "bg_color": "#195ba7"
                     }
                   }
                 }
@@ -8281,7 +8328,7 @@
           "type": "SetVariableActionComponent",
           "left": 1060,
           "top": 160,
-          "width": 299,
+          "width": 328,
           "height": 187,
           "customInputs": [],
           "customOutputs": [],
@@ -8289,7 +8336,7 @@
             {
               "objID": "f2000011-0000-4000-8000-000000000011",
               "variable": "manual_motor_selected_text",
-              "value": "\"M1 · 전층 A\""
+              "value": "\"D1 · 전층 드라이버\""
             },
             {
               "objID": "f2000012-0000-4000-8000-000000000012",
@@ -8328,7 +8375,7 @@
           "type": "SetVariableActionComponent",
           "left": 1051,
           "top": 394,
-          "width": 299,
+          "width": 329,
           "height": 187,
           "customInputs": [],
           "customOutputs": [],
@@ -8336,7 +8383,7 @@
             {
               "objID": "f2000021-0000-4000-8000-000000000021",
               "variable": "manual_motor_selected_text",
-              "value": "\"M2 · 전층 B\""
+              "value": "\"S1 · D1 적용 설정\""
             },
             {
               "objID": "f2000022-0000-4000-8000-000000000022",
@@ -8375,7 +8422,7 @@
           "type": "SetVariableActionComponent",
           "left": 1419,
           "top": 165,
-          "width": 299,
+          "width": 328,
           "height": 187,
           "customInputs": [],
           "customOutputs": [],
@@ -8383,7 +8430,7 @@
             {
               "objID": "f2000031-0000-4000-8000-000000000031",
               "variable": "manual_motor_selected_text",
-              "value": "\"M3 · 지층 C\""
+              "value": "\"D2 · 지중 드라이버\""
             },
             {
               "objID": "f2000032-0000-4000-8000-000000000032",
@@ -8422,7 +8469,7 @@
           "type": "SetVariableActionComponent",
           "left": 1419,
           "top": 394,
-          "width": 299,
+          "width": 329,
           "height": 187,
           "customInputs": [],
           "customOutputs": [],
@@ -8430,7 +8477,7 @@
             {
               "objID": "f2000041-0000-4000-8000-000000000041",
               "variable": "manual_motor_selected_text",
-              "value": "\"M4 · 지층 D\""
+              "value": "\"S2 · D2 적용 설정\""
             },
             {
               "objID": "f2000042-0000-4000-8000-000000000042",
@@ -8489,12 +8536,38 @@
               "useStackType": "literal"
             }
           ]
+        },
+        {
+          "objID": "f2200010-0000-4000-8000-000000000010",
+          "type": "LVGLActionComponent",
+          "left": 1880,
+          "top": 320,
+          "width": 421,
+          "height": 52,
+          "customInputs": [],
+          "customOutputs": [],
+          "actions": [
+            {
+              "objID": "f2200011-0000-4000-8000-000000000011",
+              "action": "changeScreen",
+              "screen": "RunCountdown",
+              "screenType": "literal",
+              "fadeMode": "FADE_IN",
+              "fadeModeType": "literal",
+              "speed": 100,
+              "speedType": "literal",
+              "delay": 0,
+              "delayType": "literal",
+              "useStack": false,
+              "useStackType": "literal"
+            }
+          ]
         }
       ],
       "connectionLines": [
         {
           "objID": "81338363-019b-4529-89e1-5f5b67c0eee2",
-          "source": "50ba04e4-eb95-42e8-bae6-f1d80cd0711c",
+          "source": "e234352b-080e-43e3-8905-d0e2294a8a75",
           "output": "PRESSED",
           "target": "c4c28a06-6599-4060-9206-a2a8600a4d91",
           "input": "@seqin"
@@ -8538,7 +8611,7 @@
           "objID": "f2000106-0000-4000-8000-000000000106",
           "source": "f2000002-0000-4000-8000-000000000002",
           "output": "@seqout",
-          "target": "f2000005-0000-4000-8000-000000000005",
+          "target": "c4c28a06-6599-4060-9206-a2a8600a4d91",
           "input": "@seqin"
         },
         {
@@ -8552,7 +8625,14 @@
           "objID": "f2000108-0000-4000-8000-000000000108",
           "source": "f2000004-0000-4000-8000-000000000004",
           "output": "@seqout",
-          "target": "f2000005-0000-4000-8000-000000000005",
+          "target": "c4c28a06-6599-4060-9206-a2a8600a4d91",
+          "input": "@seqin"
+        },
+        {
+          "objID": "f2200020-0000-4000-8000-000000000020",
+          "source": "ce1b15c2-c08a-4f8b-b8bb-6c53025c0cff",
+          "output": "PRESSED",
+          "target": "f2200010-0000-4000-8000-000000000010",
           "input": "@seqin"
         }
       ],
@@ -8649,9 +8729,9 @@
               "objID": "f1000020-0000-4000-8000-000000000020",
               "type": "LVGLPanelWidget",
               "left": 172,
-              "top": 34,
+              "top": 20,
               "width": 680,
-              "height": 463,
+              "height": 560,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -8705,7 +8785,7 @@
               "objID": "f1000030-0000-4000-8000-000000000030",
               "type": "LVGLLabelWidget",
               "left": 212,
-              "top": 52,
+              "top": 38,
               "width": 430,
               "height": 38,
               "customInputs": [],
@@ -8748,7 +8828,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "MANUAL MOTOR CONTROL",
+              "text": "DRIVER CONTROL / TEST",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -8758,7 +8838,7 @@
               "objID": "f1000040-0000-4000-8000-000000000040",
               "type": "LVGLLabelWidget",
               "left": 212,
-              "top": 98,
+              "top": 86,
               "width": 360,
               "height": 30,
               "customInputs": [],
@@ -8807,10 +8887,361 @@
               "useStaticText": false
             },
             {
+              "objID": "f1100100-0000-4000-8000-000000000100",
+              "type": "LVGLButtonWidget",
+              "left": 212,
+              "top": 124,
+              "width": 180,
+              "height": 44,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1100101-0000-4000-8000-000000000101",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [
+                {
+                  "objID": "f3100101-0000-4000-8000-000000000101",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
+              "identifier": "driver_mode_auto_button",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [
+                {
+                  "objID": "f1100102-0000-4000-8000-000000000102",
+                  "type": "LVGLLabelWidget",
+                  "left": 37,
+                  "top": -4,
+                  "width": 64,
+                  "height": 28,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "f1100103-0000-4000-8000-000000000103",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "identifier": "driver_mode_auto_label",
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "px",
+                  "heightUnit": "px",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+                  "hiddenFlag": false,
+                  "hiddenFlagType": "literal",
+                  "clickableFlag": false,
+                  "clickableFlagType": "literal",
+                  "checkedState": false,
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "f1100104-0000-4000-8000-000000000104",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "text_color": "#ffffff",
+                          "text_font": "MaruBuri-Regular_KR20",
+                          "text_align": "CENTER",
+                          "bg_opa": 0
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "AUTO",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "useStaticText": true
+                }
+              ],
+              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": true,
+              "clickableFlagType": "literal",
+              "checkedState": "driver_mode_auto_selected",
+              "checkedStateType": "expression",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1100105-0000-4000-8000-000000000105",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#263442",
+                      "bg_opa": 255,
+                      "radius": 8,
+                      "border_color": "#465664",
+                      "border_width": 1
+                    },
+                    "CHECKED": {
+                      "bg_color": "#2677d4",
+                      "border_color": "#78b7ff"
+                    },
+                    "PRESSED": {
+                      "bg_color": "#195ba7"
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
+              "objID": "f1100110-0000-4000-8000-000000000110",
+              "type": "LVGLButtonWidget",
+              "left": 422,
+              "top": 124,
+              "width": 180,
+              "height": 44,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1100111-0000-4000-8000-000000000111",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [
+                {
+                  "objID": "f3100111-0000-4000-8000-000000000111",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
+              "identifier": "driver_mode_manual_button",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [
+                {
+                  "objID": "f1100112-0000-4000-8000-000000000112",
+                  "type": "LVGLLabelWidget",
+                  "left": 24,
+                  "top": -4,
+                  "width": 90,
+                  "height": 28,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "f1100113-0000-4000-8000-000000000113",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "identifier": "driver_mode_manual_label",
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "px",
+                  "heightUnit": "px",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+                  "hiddenFlag": false,
+                  "hiddenFlagType": "literal",
+                  "clickableFlag": false,
+                  "clickableFlagType": "literal",
+                  "checkedState": false,
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "f1100114-0000-4000-8000-000000000114",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "text_color": "#ffffff",
+                          "text_font": "MaruBuri-Regular_KR20",
+                          "text_align": "CENTER",
+                          "bg_opa": 0
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "MANUAL",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "useStaticText": true
+                }
+              ],
+              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": true,
+              "clickableFlagType": "literal",
+              "checkedState": "driver_mode_manual_selected",
+              "checkedStateType": "expression",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1100115-0000-4000-8000-000000000115",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#263442",
+                      "bg_opa": 255,
+                      "radius": 8,
+                      "border_color": "#465664",
+                      "border_width": 1
+                    },
+                    "CHECKED": {
+                      "bg_color": "#f9b938",
+                      "border_color": "#ffe39a"
+                    },
+                    "PRESSED": {
+                      "bg_color": "#d89a16"
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
+              "objID": "f1100120-0000-4000-8000-000000000120",
+              "type": "LVGLButtonWidget",
+              "left": 632,
+              "top": 124,
+              "width": 180,
+              "height": 44,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1100121-0000-4000-8000-000000000121",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [
+                {
+                  "objID": "f3100121-0000-4000-8000-000000000121",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
+              "identifier": "driver_mode_disabled_button",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [
+                {
+                  "objID": "f1100122-0000-4000-8000-000000000122",
+                  "type": "LVGLLabelWidget",
+                  "left": 19,
+                  "top": -4,
+                  "width": 101,
+                  "height": 28,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "f1100123-0000-4000-8000-000000000123",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "identifier": "driver_mode_disabled_label",
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "px",
+                  "heightUnit": "px",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+                  "hiddenFlag": false,
+                  "hiddenFlagType": "literal",
+                  "clickableFlag": false,
+                  "clickableFlagType": "literal",
+                  "checkedState": false,
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "f1100124-0000-4000-8000-000000000124",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "text_color": "#ffffff",
+                          "text_font": "MaruBuri-Regular_KR20",
+                          "text_align": "CENTER",
+                          "bg_opa": 0
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "DISABLED",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "useStaticText": true
+                }
+              ],
+              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": true,
+              "clickableFlagType": "literal",
+              "checkedState": "driver_mode_disabled_selected",
+              "checkedStateType": "expression",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1100125-0000-4000-8000-000000000125",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#263442",
+                      "bg_opa": 255,
+                      "radius": 8,
+                      "border_color": "#465664",
+                      "border_width": 1
+                    },
+                    "CHECKED": {
+                      "bg_color": "#596773",
+                      "border_color": "#8fa0ae"
+                    },
+                    "PRESSED": {
+                      "bg_color": "#465664"
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
               "objID": "f1000050-0000-4000-8000-000000000050",
               "type": "LVGLButtonWidget",
               "left": 770,
-              "top": 44,
+              "top": 30,
               "width": 54,
               "height": 54,
               "customInputs": [],
@@ -8926,7 +9357,7 @@
               "objID": "f1000060-0000-4000-8000-000000000060",
               "type": "LVGLLabelWidget",
               "left": 212,
-              "top": 150,
+              "top": 196,
               "width": 180,
               "height": 26,
               "customInputs": [],
@@ -8978,7 +9409,7 @@
               "objID": "f1000070-0000-4000-8000-000000000070",
               "type": "LVGLLabelWidget",
               "left": 282,
-              "top": 138,
+              "top": 184,
               "width": 240,
               "height": 64,
               "customInputs": [],
@@ -9031,7 +9462,7 @@
               "objID": "f1000080-0000-4000-8000-000000000080",
               "type": "LVGLLabelWidget",
               "left": 539,
-              "top": 162,
+              "top": 208,
               "width": 80,
               "height": 28,
               "customInputs": [],
@@ -9083,7 +9514,7 @@
               "objID": "f1000090-0000-4000-8000-000000000090",
               "type": "LVGLSliderWidget",
               "left": 222,
-              "top": 218,
+              "top": 258,
               "width": 580,
               "height": 34,
               "customInputs": [],
@@ -9167,7 +9598,7 @@
               "objID": "f1000100-0000-4000-8000-000000000100",
               "type": "LVGLLabelWidget",
               "left": 222,
-              "top": 262,
+              "top": 298,
               "width": 580,
               "height": 26,
               "customInputs": [],
@@ -9220,7 +9651,7 @@
               "objID": "f1000110-0000-4000-8000-000000000110",
               "type": "LVGLLabelWidget",
               "left": 222,
-              "top": 304,
+              "top": 332,
               "width": 280,
               "height": 28,
               "customInputs": [],
@@ -9273,7 +9704,7 @@
               "objID": "f1000210-0000-4000-8000-000000000210",
               "type": "LVGLLabelWidget",
               "left": 522,
-              "top": 304,
+              "top": 332,
               "width": 280,
               "height": 28,
               "customInputs": [],
@@ -9326,9 +9757,9 @@
               "objID": "f1000120-0000-4000-8000-000000000120",
               "type": "LVGLButtonWidget",
               "left": 212,
-              "top": 348,
+              "top": 370,
               "width": 135,
-              "height": 82,
+              "height": 76,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -9442,9 +9873,9 @@
               "objID": "f1000130-0000-4000-8000-000000000130",
               "type": "LVGLButtonWidget",
               "left": 367,
-              "top": 348,
+              "top": 370,
               "width": 135,
-              "height": 82,
+              "height": 76,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -9558,9 +9989,9 @@
               "objID": "f1000200-0000-4000-8000-000000000200",
               "type": "LVGLButtonWidget",
               "left": 522,
-              "top": 348,
+              "top": 370,
               "width": 135,
-              "height": 82,
+              "height": 76,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -9631,7 +10062,7 @@
                   },
                   "group": "",
                   "groupIndex": 0,
-                  "text": "RUN",
+                  "text": "TEST RUN",
                   "textType": "literal",
                   "longMode": "WRAP",
                   "recolor": false,
@@ -9674,9 +10105,9 @@
               "objID": "f1000140-0000-4000-8000-000000000140",
               "type": "LVGLButtonWidget",
               "left": 677,
-              "top": 348,
+              "top": 370,
               "width": 135,
-              "height": 82,
+              "height": 76,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -9747,7 +10178,7 @@
                   },
                   "group": "",
                   "groupIndex": 0,
-                  "text": "STOP",
+                  "text": "TEST STOP",
                   "textType": "literal",
                   "longMode": "WRAP",
                   "recolor": false,
@@ -9790,7 +10221,7 @@
               "objID": "f1000160-0000-4000-8000-000000000160",
               "type": "LVGLPanelWidget",
               "left": 610,
-              "top": 134,
+              "top": 190,
               "width": 18,
               "height": 18,
               "customInputs": [],
@@ -9846,7 +10277,7 @@
               "objID": "f1000170-0000-4000-8000-000000000170",
               "type": "LVGLLabelWidget",
               "left": 634,
-              "top": 130,
+              "top": 186,
               "width": 50,
               "height": 26,
               "customInputs": [],
@@ -9898,7 +10329,7 @@
               "objID": "f1000180-0000-4000-8000-000000000180",
               "type": "LVGLPanelWidget",
               "left": 690,
-              "top": 134,
+              "top": 190,
               "width": 18,
               "height": 18,
               "customInputs": [],
@@ -9954,7 +10385,7 @@
               "objID": "f1000190-0000-4000-8000-000000000190",
               "type": "LVGLLabelWidget",
               "left": 714,
-              "top": 130,
+              "top": 186,
               "width": 54,
               "height": 26,
               "customInputs": [],
@@ -10006,7 +10437,7 @@
               "objID": "f1000150-0000-4000-8000-000000000150",
               "type": "LVGLLabelWidget",
               "left": 212,
-              "top": 454,
+              "top": 502,
               "width": 600,
               "height": 28,
               "customInputs": [],
@@ -10049,7 +10480,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "Check RPM before selecting direction.",
+              "text": "MANUAL only · Hold TEST RUN to operate.",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -10209,6 +10640,102 @@
               "value": "false"
             }
           ]
+        },
+        {
+          "objID": "f3200100-0000-4000-8000-000000000100",
+          "type": "SetVariableActionComponent",
+          "left": 1840,
+          "top": 160,
+          "width": 287,
+          "height": 122,
+          "customInputs": [],
+          "customOutputs": [],
+          "entries": [
+            {
+              "objID": "f3200101-0000-4000-8000-000000000101",
+              "variable": "manual_motor_control_mode_text",
+              "value": "\"AUTO\""
+            },
+            {
+              "objID": "f3200102-0000-4000-8000-000000000102",
+              "variable": "driver_mode_auto_selected",
+              "value": "true"
+            },
+            {
+              "objID": "f3200103-0000-4000-8000-000000000103",
+              "variable": "driver_mode_manual_selected",
+              "value": "false"
+            },
+            {
+              "objID": "f3200104-0000-4000-8000-000000000104",
+              "variable": "driver_mode_disabled_selected",
+              "value": "false"
+            }
+          ]
+        },
+        {
+          "objID": "f3200110-0000-4000-8000-000000000110",
+          "type": "SetVariableActionComponent",
+          "left": 1840,
+          "top": 260,
+          "width": 299,
+          "height": 122,
+          "customInputs": [],
+          "customOutputs": [],
+          "entries": [
+            {
+              "objID": "f3200111-0000-4000-8000-000000000111",
+              "variable": "manual_motor_control_mode_text",
+              "value": "\"MANUAL\""
+            },
+            {
+              "objID": "f3200112-0000-4000-8000-000000000112",
+              "variable": "driver_mode_auto_selected",
+              "value": "false"
+            },
+            {
+              "objID": "f3200113-0000-4000-8000-000000000113",
+              "variable": "driver_mode_manual_selected",
+              "value": "true"
+            },
+            {
+              "objID": "f3200114-0000-4000-8000-000000000114",
+              "variable": "driver_mode_disabled_selected",
+              "value": "false"
+            }
+          ]
+        },
+        {
+          "objID": "f3200120-0000-4000-8000-000000000120",
+          "type": "SetVariableActionComponent",
+          "left": 1840,
+          "top": 360,
+          "width": 312,
+          "height": 122,
+          "customInputs": [],
+          "customOutputs": [],
+          "entries": [
+            {
+              "objID": "f3200121-0000-4000-8000-000000000121",
+              "variable": "manual_motor_control_mode_text",
+              "value": "\"DISABLED\""
+            },
+            {
+              "objID": "f3200122-0000-4000-8000-000000000122",
+              "variable": "driver_mode_auto_selected",
+              "value": "false"
+            },
+            {
+              "objID": "f3200123-0000-4000-8000-000000000123",
+              "variable": "driver_mode_manual_selected",
+              "value": "false"
+            },
+            {
+              "objID": "f3200124-0000-4000-8000-000000000124",
+              "variable": "driver_mode_disabled_selected",
+              "value": "true"
+            }
+          ]
         }
       ],
       "connectionLines": [
@@ -10253,12 +10780,656 @@
           "output": "PRESSED",
           "target": "f3000006-0000-4000-8000-000000000006",
           "input": "@seqin"
+        },
+        {
+          "objID": "f3200200-0000-4000-8000-000000000200",
+          "source": "f1100100-0000-4000-8000-000000000100",
+          "output": "PRESSED",
+          "target": "f3200100-0000-4000-8000-000000000100",
+          "input": "@seqin"
+        },
+        {
+          "objID": "f3200210-0000-4000-8000-000000000210",
+          "source": "f1100110-0000-4000-8000-000000000110",
+          "output": "PRESSED",
+          "target": "f3200110-0000-4000-8000-000000000110",
+          "input": "@seqin"
+        },
+        {
+          "objID": "f3200220-0000-4000-8000-000000000220",
+          "source": "f1100120-0000-4000-8000-000000000120",
+          "output": "PRESSED",
+          "target": "f3200120-0000-4000-8000-000000000120",
+          "input": "@seqin"
         }
       ],
       "localVariables": [],
       "componentGroups": [],
       "userProperties": [],
       "name": "MotorManual",
+      "left": 0,
+      "top": 0,
+      "width": 1024,
+      "height": 600,
+      "isUsedAsUserWidget": false,
+      "createAtStart": false,
+      "deleteOnScreenUnload": false
+    },
+    {
+      "objID": "f4000000-0000-4000-8000-000000000000",
+      "components": [
+        {
+          "objID": "f4000001-0000-4000-8000-000000000001",
+          "type": "LVGLScreenWidget",
+          "left": 0,
+          "top": 0,
+          "width": 1024,
+          "height": 600,
+          "customInputs": [],
+          "customOutputs": [],
+          "style": {
+            "objID": "f4000002-0000-4000-8000-000000000002",
+            "useStyle": "default",
+            "conditionalStyles": [],
+            "childStyles": []
+          },
+          "timeline": [],
+          "eventHandlers": [],
+          "identifier": "run_countdown_screen",
+          "leftUnit": "px",
+          "topUnit": "px",
+          "widthUnit": "px",
+          "heightUnit": "px",
+          "children": [
+            {
+              "objID": "f4000010-0000-4000-8000-000000000010",
+              "type": "LVGLPanelWidget",
+              "left": 0,
+              "top": 0,
+              "width": 1024,
+              "height": 600,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f4000011-0000-4000-8000-000000000011",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "run_countdown_backdrop",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f4000012-0000-4000-8000-000000000012",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#05090e",
+                      "bg_opa": 245,
+                      "border_width": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
+              "objID": "f4000020-0000-4000-8000-000000000020",
+              "type": "LVGLPanelWidget",
+              "left": 172,
+              "top": 45,
+              "width": 680,
+              "height": 510,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f4000021-0000-4000-8000-000000000021",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "run_countdown_panel",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f4000022-0000-4000-8000-000000000022",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#111922",
+                      "bg_opa": 255,
+                      "radius": 18,
+                      "border_color": "#344453",
+                      "border_width": 2,
+                      "shadow_color": "#000000",
+                      "shadow_opa": 180,
+                      "shadow_width": 24
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
+              "objID": "f4000030-0000-4000-8000-000000000030",
+              "type": "LVGLLabelWidget",
+              "left": 252,
+              "top": 78,
+              "width": 520,
+              "height": 42,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f4000031-0000-4000-8000-000000000031",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "run_countdown_title",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f4000032-0000-4000-8000-000000000032",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#f5f7fa",
+                      "text_font": "MaruBuri-Regular_KR28",
+                      "text_align": "CENTER",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "작업을 시작합니다",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "f4000040-0000-4000-8000-000000000040",
+              "type": "LVGLLabelWidget",
+              "left": 362,
+              "top": 132,
+              "width": 300,
+              "height": 92,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f4000041-0000-4000-8000-000000000041",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "run_countdown_value",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f4000042-0000-4000-8000-000000000042",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#f9b938",
+                      "text_font": "MaruBuri-Regular_KR28",
+                      "text_align": "CENTER",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "run_countdown_text",
+              "textType": "expression",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": false
+            },
+            {
+              "objID": "f4000050-0000-4000-8000-000000000050",
+              "type": "LVGLLabelWidget",
+              "left": 252,
+              "top": 226,
+              "width": 520,
+              "height": 30,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f4000051-0000-4000-8000-000000000051",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "run_countdown_description",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f4000052-0000-4000-8000-000000000052",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#d9e0e6",
+                      "text_font": "MaruBuri-Regular_KR20",
+                      "text_align": "CENTER",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "초 후 D1·D2 모터가 동작합니다",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "f4000060-0000-4000-8000-000000000060",
+              "type": "LVGLPanelWidget",
+              "left": 242,
+              "top": 280,
+              "width": 540,
+              "height": 88,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f4000061-0000-4000-8000-000000000061",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "run_countdown_summary_panel",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f4000062-0000-4000-8000-000000000062",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#0b121a",
+                      "bg_opa": 255,
+                      "radius": 10,
+                      "border_color": "#293540",
+                      "border_width": 1
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
+              "objID": "f4000070-0000-4000-8000-000000000070",
+              "type": "LVGLLabelWidget",
+              "left": 266,
+              "top": 294,
+              "width": 492,
+              "height": 26,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f4000071-0000-4000-8000-000000000071",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "run_countdown_d1_summary",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f4000072-0000-4000-8000-000000000072",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#eef5fa",
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_align": "LEFT",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "D1   AUTO     S1     target 18.5 rpm",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "f4000080-0000-4000-8000-000000000080",
+              "type": "LVGLLabelWidget",
+              "left": 266,
+              "top": 330,
+              "width": 492,
+              "height": 26,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f4000081-0000-4000-8000-000000000081",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "run_countdown_d2_summary",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f4000082-0000-4000-8000-000000000082",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#eef5fa",
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_align": "LEFT",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "D2   MANUAL          target 12.0 rpm",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "f4000090-0000-4000-8000-000000000090",
+              "type": "LVGLButtonWidget",
+              "left": 302,
+              "top": 405,
+              "width": 440,
+              "height": 88,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f4000091-0000-4000-8000-000000000091",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [
+                {
+                  "objID": "f4100001-0000-4000-8000-000000000001",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
+              "identifier": "run_countdown_stop_button",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [
+                {
+                  "objID": "f4000092-0000-4000-8000-000000000092",
+                  "type": "LVGLLabelWidget",
+                  "left": -20,
+                  "top": 14,
+                  "width": 440,
+                  "height": 38,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "f4000093-0000-4000-8000-000000000093",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "identifier": "run_countdown_stop_label",
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "px",
+                  "heightUnit": "px",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+                  "hiddenFlag": false,
+                  "hiddenFlagType": "literal",
+                  "clickableFlag": false,
+                  "clickableFlagType": "literal",
+                  "checkedState": false,
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "f4000094-0000-4000-8000-000000000094",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "text_color": "#ffffff",
+                          "text_font": "MaruBuri-Regular_KR28",
+                          "text_align": "CENTER",
+                          "bg_opa": 0
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "STOP · 즉시 정지",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "useStaticText": true
+                }
+              ],
+              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": true,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f4000095-0000-4000-8000-000000000095",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#2677d4",
+                      "bg_opa": 255,
+                      "radius": 12,
+                      "border_width": 0
+                    },
+                    "PRESSED": {
+                      "bg_color": "#195ba7"
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            }
+          ],
+          "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
+          "hiddenFlag": false,
+          "hiddenFlagType": "literal",
+          "clickableFlag": true,
+          "clickableFlagType": "literal",
+          "checkedState": false,
+          "checkedStateType": "literal",
+          "disabledStateType": "literal",
+          "states": "",
+          "localStyles": {
+            "objID": "f4000003-0000-4000-8000-000000000003",
+            "definition": {
+              "MAIN": {
+                "DEFAULT": {
+                  "bg_color": "#071019",
+                  "bg_opa": 255
+                }
+              }
+            }
+          },
+          "group": "",
+          "groupIndex": 0
+        },
+        {
+          "objID": "f4100010-0000-4000-8000-000000000010",
+          "type": "LVGLActionComponent",
+          "left": 1060,
+          "top": 80,
+          "width": 403,
+          "height": 52,
+          "customInputs": [],
+          "customOutputs": [],
+          "actions": [
+            {
+              "objID": "f4100011-0000-4000-8000-000000000011",
+              "action": "changeScreen",
+              "screen": "Dashboard",
+              "screenType": "literal",
+              "fadeMode": "FADE_IN",
+              "fadeModeType": "literal",
+              "speed": 100,
+              "speedType": "literal",
+              "delay": 0,
+              "delayType": "literal",
+              "useStack": false,
+              "useStackType": "literal"
+            }
+          ]
+        }
+      ],
+      "connectionLines": [
+        {
+          "objID": "f4100020-0000-4000-8000-000000000020",
+          "source": "f4000090-0000-4000-8000-000000000090",
+          "output": "PRESSED",
+          "target": "f4100010-0000-4000-8000-000000000010",
+          "input": "@seqin"
+        }
+      ],
+      "localVariables": [],
+      "componentGroups": [],
+      "userProperties": [],
+      "name": "RunCountdown",
       "left": 0,
       "top": 0,
       "width": 1024,
@@ -21678,7 +22849,7 @@
       "descent": 4,
       "glyphs": [],
       "lvglRanges": "32-127",
-      "lvglSymbols": "지중시비전층좌우동수목표입력란을누르면숫자패드가열립니다완료뒤세요를한제어기설정예체두둑처방과준량작업계험구간개폭실길이적만고랑분할용북측남임저장복사질소품직접번배선택찾확인화탭의부능은음단에서추합취운채널보현재속도신호상모살포라버오류및터태하치·",
+      "lvglSymbols": "·가간개계고과구기길남널농누능니다단도동두둑뒤드라란랑량력료류르를림립만면모목및방배버번보복부북분비사살상서선설세소속수숫시신실알어업에열예오완요용우운원은을음의이인임입자작장재저적전접정제좌준중즉지직진질찾채처체초추취측층치태택탭터패포폭표품하한할합행험현호화확후",
       "lvglAdditionalSources": [],
       "lvglGlyphs": {
         "encodings": [
@@ -21687,7 +22858,7 @@
             "to": 127
           }
         ],
-        "symbols": "지중시비전층좌우동수목표입력란을누르면숫자패드가열립니다완료뒤세요를한제어기설정예체두둑처방과준량작업계험구간개폭실길이적만고랑분할용북측남임저장복사질소품직접번배선택찾확인화탭의부능은음단에서추합취"
+        "symbols": "가간개계고과구기길남농누능니다단도동두둑뒤드라란랑량력료류르를림립만면모목및방배버번보복부북분비사살상서선설세소속수숫시신실알어업에열예오완요용우운원은을음의이인임입자작장재저적전접정제좌준중즉지직진질찾처체초추취측층태택탭터패포폭표품하한할합행험현호화확후"
       }
     },
     {
@@ -21706,7 +22877,7 @@
       "descent": 6,
       "glyphs": [],
       "lvglRanges": "32-127",
-      "lvglSymbols": "동시비작업화면구성전체정지운모드자수실제속도층목표중교미등록출력불가호퍼상세일간종료숫장태와조건을확인하요입란누르패열립니다완뒤어기설예두둑처방과준량계험개폭길이적만고랑분할용북측남임저복사질소품직접번배선택찾탭의부능은음단에서추합취를한농진원터행알림메",
+      "lvglSymbols": "·가간개건계고과교구기길남농누능니다단도동두둑뒤드등라란랑량력록료류르를림립만메면모목미및방배버번보복부북분불비사살상서선설성세소속수숫시신실알어업에열예오와완요용운원은을음의이인일임입자작장재저적전접정제조종준중즉지직진질찾처체초추출취측층태택탭터패퍼포폭표품하한할합행험현호화확후",
       "lvglAdditionalSources": [],
       "lvglGlyphs": {
         "encodings": [
@@ -21715,7 +22886,7 @@
             "to": 127
           }
         ],
-        "symbols": "동시비작업화면구성전체정지운모드자수실제속도층목표중교미등록출력불가호퍼상세일간종료숫장태와조건을확인하요입란누르패열립니다완뒤어기설예두둑처방과준량계험개폭길이적만고랑분할용북측남임저복사질소품직접번배선택찾탭의부능은음단에서추합취를한"
+        "symbols": "가간개건계고과교구기길남농누능니다단도동두둑뒤드등라란랑량력록료류르를림립만면모목미및방배버번보복부북분불비사살상서선설성세소속수숫시신실알어업에열예오와완요용운원은을음의이인일임입자작장재저적전접정제조종준중즉지직진질찾처체초추출취측층태택탭터패퍼포폭표품하한할합행험현호화확후"
       },
       "embeddedFontFileIndex": 0
     },
@@ -21735,7 +22906,7 @@
       "descent": 9,
       "glyphs": [],
       "lvglRanges": "32-127",
-      "lvglSymbols": "전층시비확인취소설정뒤로작지온도압류농진청테스트중동촌흥업화면구성체운모드자수실제속목표교미등록출력불가호퍼상세일간종료숫장태와조건을하요입란누르패열립니다완어기예두둑처방과준량계험개폭길이적만고랑분할용북측남임저복사질품직접번배선택찾탭의부능은음단에서추합를한",
+      "lvglSymbols": "·가간개건계고과교구기길남농누능니다단도동두둑뒤드등라란랑량력로록료류르를림립만면모목미및방배버번보복부북분불비사살상서선설성세소속수숫스시신실알압어업에열예오온와완요용운원은을음의이인일임입자작장재저적전접정제조종준중즉지직진질찾처청체초촌추출취측층태택탭터테트패퍼포폭표품하한할합행험현호화확후흥",
       "lvglAdditionalSources": [],
       "lvglGlyphs": {
         "encodings": [
@@ -21744,7 +22915,7 @@
             "to": 127
           }
         ],
-        "symbols": "전층시비확인취소설정뒤로작지온도압류농진청테스트중동촌흥업화면구성체운모드자수실제속목표교미등록출력불가호퍼상세일간종료숫장태와조건을하요입란누르패열립니다완어기예두둑처방과준량계험개폭길이적만고랑분할용북측남임저복사질품직접번배선택찾탭의부능은음단에서추합를한"
+        "symbols": "가간개건계고과교구기길남농누능니다단도동두둑뒤드등라란랑량력로록료류르를림립만면모목미및방배버번보복부북분불비사살상서선설성세소속수숫스시신실알압어업에열예오온와완요용운원은을음의이인일임입자작장재저적전접정제조종준중즉지직진질찾처청체초촌추출취측층태택탭터테트패퍼포폭표품하한할합행험현호화확후흥"
       },
       "embeddedFontFileIndex": 0
     }
