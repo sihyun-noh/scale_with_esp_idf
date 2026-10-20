@@ -7,4 +7,10 @@ devices:
     frames:
       config: {id: 0x7F5}
       measurement: {id: 0x3F5}
-# Motor instances will be added after their protocol document is available.
+  - instance: motor_driver_1
+    display_name: Motor Driver 1
+    profile: moonwalker_mdc24
+    enabled: true
+    frames:
+      request: {id: 0x001}
+      response: {id: 0x001}

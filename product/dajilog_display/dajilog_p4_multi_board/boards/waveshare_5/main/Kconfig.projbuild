@@ -35,6 +35,10 @@ menu "DAJILOG Configuration"
             help
                 Print staged and saved setting values. Validation and storage
                 errors are still logged when this option is disabled.
+
+        config DAJILOG_CAN_DEBUG_LOG
+            bool
+            default n
     endmenu
 
     config DAJILOG_CAN_ENABLE

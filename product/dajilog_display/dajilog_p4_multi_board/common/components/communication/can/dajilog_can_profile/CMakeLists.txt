@@ -18,4 +18,7 @@ execute_process(
 if(NOT CAN_PROFILE_RESULT EQUAL 0)
     message(FATAL_ERROR "CAN profile generation failed: ${CAN_PROFILE_STDERR}")
 endif()
-idf_component_register(SRCS "dajilog_can_tr07e.c" "${GENERATED_C}" INCLUDE_DIRS "include" "${GENERATED_DIR}")
+idf_component_register(
+    SRCS "dajilog_can_tr07e.c" "dajilog_can_moonwalker.c" "${GENERATED_C}"
+    INCLUDE_DIRS "include" "${GENERATED_DIR}"
+)

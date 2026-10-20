@@ -365,6 +365,62 @@
         "defaultValue": "\"18%\"",
         "persistent": false,
         "native": false
+      },
+      {
+        "objID": "f0010001-0000-4000-8000-000000000001",
+        "name": "manual_motor_selected_text",
+        "type": "string",
+        "defaultValue": "\"M1 · 전층 A\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "f0010002-0000-4000-8000-000000000002",
+        "name": "manual_motor_rpm",
+        "type": "integer",
+        "defaultValue": "0",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "f0010003-0000-4000-8000-000000000003",
+        "name": "manual_motor_rpm_text",
+        "type": "string",
+        "defaultValue": "\"0\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "f0010004-0000-4000-8000-000000000004",
+        "name": "manual_motor_direction_text",
+        "type": "string",
+        "defaultValue": "\"STOPPED\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "f0010005-0000-4000-8000-000000000005",
+        "name": "manual_motor_operation_text",
+        "type": "string",
+        "defaultValue": "\"STOPPED\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "f0010006-0000-4000-8000-000000000006",
+        "name": "manual_motor_run_active",
+        "type": "boolean",
+        "defaultValue": "false",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "f0010007-0000-4000-8000-000000000007",
+        "name": "manual_motor_stop_active",
+        "type": "boolean",
+        "defaultValue": "true",
+        "persistent": false,
+        "native": false
       }
     ],
     "structures": [],
@@ -1735,7 +1791,7 @@
           "left": 1040,
           "top": 100,
           "width": 274,
-          "height": 121,
+          "height": 123,
           "customInputs": [],
           "customOutputs": [],
           "actions": [
@@ -1787,7 +1843,7 @@
           "left": 1530,
           "top": 100,
           "width": 489,
-          "height": 362,
+          "height": 369,
           "customInputs": [],
           "customOutputs": [],
           "actions": [
@@ -2190,7 +2246,7 @@
           "left": 2180,
           "top": 100,
           "width": 280,
-          "height": 69,
+          "height": 70,
           "customInputs": [],
           "customOutputs": [],
           "actions": [
@@ -2229,7 +2285,7 @@
           "left": 2830,
           "top": 100,
           "width": 489,
-          "height": 379,
+          "height": 387,
           "customInputs": [],
           "customOutputs": [],
           "actions": [
@@ -2628,7 +2684,7 @@
           "left": 3480,
           "top": 100,
           "width": 280,
-          "height": 69,
+          "height": 70,
           "customInputs": [],
           "customOutputs": [],
           "actions": [
@@ -2667,7 +2723,7 @@
           "left": 4130,
           "top": 100,
           "width": 489,
-          "height": 379,
+          "height": 387,
           "customInputs": [],
           "customOutputs": [],
           "actions": [
@@ -3784,7 +3840,14 @@
                 "childStyles": []
               },
               "timeline": [],
-              "eventHandlers": [],
+              "eventHandlers": [
+                {
+                  "objID": "f2100001-0000-4000-8000-000000000001",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
               "identifier": "motor_1_card",
               "leftUnit": "px",
               "topUnit": "px",
@@ -3794,7 +3857,7 @@
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
               "hiddenFlag": false,
               "hiddenFlagType": "literal",
-              "clickableFlag": false,
+              "clickableFlag": true,
               "clickableFlagType": "literal",
               "checkedState": false,
               "checkedStateType": "literal",
@@ -4503,7 +4566,14 @@
                 "childStyles": []
               },
               "timeline": [],
-              "eventHandlers": [],
+              "eventHandlers": [
+                {
+                  "objID": "f2100002-0000-4000-8000-000000000002",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
               "identifier": "motor_2_card",
               "leftUnit": "px",
               "topUnit": "px",
@@ -4513,7 +4583,7 @@
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
               "hiddenFlag": false,
               "hiddenFlagType": "literal",
-              "clickableFlag": false,
+              "clickableFlag": true,
               "clickableFlagType": "literal",
               "checkedState": false,
               "checkedStateType": "literal",
@@ -5222,7 +5292,14 @@
                 "childStyles": []
               },
               "timeline": [],
-              "eventHandlers": [],
+              "eventHandlers": [
+                {
+                  "objID": "f2100003-0000-4000-8000-000000000003",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
               "identifier": "motor_3_card",
               "leftUnit": "px",
               "topUnit": "px",
@@ -5232,7 +5309,7 @@
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
               "hiddenFlag": false,
               "hiddenFlagType": "literal",
-              "clickableFlag": false,
+              "clickableFlag": true,
               "clickableFlagType": "literal",
               "checkedState": false,
               "checkedStateType": "literal",
@@ -5941,7 +6018,14 @@
                 "childStyles": []
               },
               "timeline": [],
-              "eventHandlers": [],
+              "eventHandlers": [
+                {
+                  "objID": "f2100004-0000-4000-8000-000000000004",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
               "identifier": "motor_4_card",
               "leftUnit": "px",
               "topUnit": "px",
@@ -5951,7 +6035,7 @@
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
               "hiddenFlag": false,
               "hiddenFlagType": "literal",
-              "clickableFlag": false,
+              "clickableFlag": true,
               "clickableFlagType": "literal",
               "checkedState": false,
               "checkedStateType": "literal",
@@ -7251,9 +7335,9 @@
             {
               "objID": "d883f20c-385a-486e-93d8-fc90a2190fb8",
               "type": "LVGLLabelWidget",
-              "left": 810,
-              "top": 269,
-              "width": 174,
+              "left": 779,
+              "top": 270,
+              "width": 198,
               "height": 23,
               "customInputs": [],
               "customOutputs": [],
@@ -7641,9 +7725,9 @@
               "objID": "67f95fa5-799b-4afe-bc86-ce55023b66ad",
               "type": "LVGLPanelWidget",
               "left": 24,
-              "top": 442,
+              "top": 437,
               "width": 648,
-              "height": 104,
+              "height": 92,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -7694,7 +7778,7 @@
               "objID": "80215af7-498c-4377-a27f-0ac9ace61480",
               "type": "LVGLLabelWidget",
               "left": 40,
-              "top": 452,
+              "top": 447,
               "width": 130,
               "height": 28,
               "customInputs": [],
@@ -7750,7 +7834,7 @@
               "objID": "76517f3a-3ab5-4449-9659-93aa9d9aa77e",
               "type": "LVGLPanelWidget",
               "left": 40,
-              "top": 489,
+              "top": 478,
               "width": 4,
               "height": 38,
               "customInputs": [],
@@ -7803,7 +7887,7 @@
               "objID": "e0dc4ada-9ac0-47da-84a7-8d89e5992be8",
               "type": "LVGLLabelWidget",
               "left": 58,
-              "top": 484,
+              "top": 473,
               "width": 620,
               "height": 46,
               "customInputs": [],
@@ -7859,9 +7943,9 @@
               "objID": "50ba04e4-eb95-42e8-bae6-f1d80cd0711c",
               "type": "LVGLButtonWidget",
               "left": 688,
-              "top": 442,
+              "top": 437,
               "width": 312,
-              "height": 104,
+              "height": 92,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -7888,7 +7972,7 @@
                 {
                   "objID": "9fea5cb8-107c-42f7-8f46-c8fc7308adc2",
                   "type": "LVGLLabelWidget",
-                  "left": 20,
+                  "left": 66,
                   "top": 10,
                   "width": 180,
                   "height": 18,
@@ -7944,7 +8028,7 @@
                 {
                   "objID": "b4be017c-b696-4eb3-becb-a208ed26a582",
                   "type": "LVGLLabelWidget",
-                  "left": 20,
+                  "left": 61,
                   "top": 31,
                   "width": 190,
                   "height": 38,
@@ -8000,8 +8084,8 @@
                 {
                   "objID": "be71d4a8-a739-463b-910a-6044303bba69",
                   "type": "LVGLLabelWidget",
-                  "left": 20,
-                  "top": 70,
+                  "left": 61,
+                  "top": 65,
                   "width": 190,
                   "height": 22,
                   "customInputs": [],
@@ -8191,6 +8275,220 @@
               "useStackType": "literal"
             }
           ]
+        },
+        {
+          "objID": "f2000001-0000-4000-8000-000000000001",
+          "type": "SetVariableActionComponent",
+          "left": 1060,
+          "top": 160,
+          "width": 299,
+          "height": 187,
+          "customInputs": [],
+          "customOutputs": [],
+          "entries": [
+            {
+              "objID": "f2000011-0000-4000-8000-000000000011",
+              "variable": "manual_motor_selected_text",
+              "value": "\"M1 · 전층 A\""
+            },
+            {
+              "objID": "f2000012-0000-4000-8000-000000000012",
+              "variable": "manual_motor_rpm",
+              "value": "0"
+            },
+            {
+              "objID": "f2000013-0000-4000-8000-000000000013",
+              "variable": "manual_motor_rpm_text",
+              "value": "\"0\""
+            },
+            {
+              "objID": "f2000014-0000-4000-8000-000000000014",
+              "variable": "manual_motor_direction_text",
+              "value": "\"STOPPED\""
+            },
+            {
+              "objID": "f2000015-0000-4000-8000-000000000015",
+              "variable": "manual_motor_operation_text",
+              "value": "\"STOPPED\""
+            },
+            {
+              "objID": "f2000016-0000-4000-8000-000000000016",
+              "variable": "manual_motor_run_active",
+              "value": "false"
+            },
+            {
+              "objID": "f2000017-0000-4000-8000-000000000017",
+              "variable": "manual_motor_stop_active",
+              "value": "true"
+            }
+          ]
+        },
+        {
+          "objID": "f2000002-0000-4000-8000-000000000002",
+          "type": "SetVariableActionComponent",
+          "left": 1051,
+          "top": 394,
+          "width": 299,
+          "height": 187,
+          "customInputs": [],
+          "customOutputs": [],
+          "entries": [
+            {
+              "objID": "f2000021-0000-4000-8000-000000000021",
+              "variable": "manual_motor_selected_text",
+              "value": "\"M2 · 전층 B\""
+            },
+            {
+              "objID": "f2000022-0000-4000-8000-000000000022",
+              "variable": "manual_motor_rpm",
+              "value": "0"
+            },
+            {
+              "objID": "f2000023-0000-4000-8000-000000000023",
+              "variable": "manual_motor_rpm_text",
+              "value": "\"0\""
+            },
+            {
+              "objID": "f2000024-0000-4000-8000-000000000024",
+              "variable": "manual_motor_direction_text",
+              "value": "\"STOPPED\""
+            },
+            {
+              "objID": "f2000025-0000-4000-8000-000000000025",
+              "variable": "manual_motor_operation_text",
+              "value": "\"STOPPED\""
+            },
+            {
+              "objID": "f2000026-0000-4000-8000-000000000026",
+              "variable": "manual_motor_run_active",
+              "value": "false"
+            },
+            {
+              "objID": "f2000027-0000-4000-8000-000000000027",
+              "variable": "manual_motor_stop_active",
+              "value": "true"
+            }
+          ]
+        },
+        {
+          "objID": "f2000003-0000-4000-8000-000000000003",
+          "type": "SetVariableActionComponent",
+          "left": 1419,
+          "top": 165,
+          "width": 299,
+          "height": 187,
+          "customInputs": [],
+          "customOutputs": [],
+          "entries": [
+            {
+              "objID": "f2000031-0000-4000-8000-000000000031",
+              "variable": "manual_motor_selected_text",
+              "value": "\"M3 · 지층 C\""
+            },
+            {
+              "objID": "f2000032-0000-4000-8000-000000000032",
+              "variable": "manual_motor_rpm",
+              "value": "0"
+            },
+            {
+              "objID": "f2000033-0000-4000-8000-000000000033",
+              "variable": "manual_motor_rpm_text",
+              "value": "\"0\""
+            },
+            {
+              "objID": "f2000034-0000-4000-8000-000000000034",
+              "variable": "manual_motor_direction_text",
+              "value": "\"STOPPED\""
+            },
+            {
+              "objID": "f2000035-0000-4000-8000-000000000035",
+              "variable": "manual_motor_operation_text",
+              "value": "\"STOPPED\""
+            },
+            {
+              "objID": "f2000036-0000-4000-8000-000000000036",
+              "variable": "manual_motor_run_active",
+              "value": "false"
+            },
+            {
+              "objID": "f2000037-0000-4000-8000-000000000037",
+              "variable": "manual_motor_stop_active",
+              "value": "true"
+            }
+          ]
+        },
+        {
+          "objID": "f2000004-0000-4000-8000-000000000004",
+          "type": "SetVariableActionComponent",
+          "left": 1419,
+          "top": 394,
+          "width": 299,
+          "height": 187,
+          "customInputs": [],
+          "customOutputs": [],
+          "entries": [
+            {
+              "objID": "f2000041-0000-4000-8000-000000000041",
+              "variable": "manual_motor_selected_text",
+              "value": "\"M4 · 지층 D\""
+            },
+            {
+              "objID": "f2000042-0000-4000-8000-000000000042",
+              "variable": "manual_motor_rpm",
+              "value": "0"
+            },
+            {
+              "objID": "f2000043-0000-4000-8000-000000000043",
+              "variable": "manual_motor_rpm_text",
+              "value": "\"0\""
+            },
+            {
+              "objID": "f2000044-0000-4000-8000-000000000044",
+              "variable": "manual_motor_direction_text",
+              "value": "\"STOPPED\""
+            },
+            {
+              "objID": "f2000045-0000-4000-8000-000000000045",
+              "variable": "manual_motor_operation_text",
+              "value": "\"STOPPED\""
+            },
+            {
+              "objID": "f2000046-0000-4000-8000-000000000046",
+              "variable": "manual_motor_run_active",
+              "value": "false"
+            },
+            {
+              "objID": "f2000047-0000-4000-8000-000000000047",
+              "variable": "manual_motor_stop_active",
+              "value": "true"
+            }
+          ]
+        },
+        {
+          "objID": "f2000005-0000-4000-8000-000000000005",
+          "type": "LVGLActionComponent",
+          "left": 1880,
+          "top": 220,
+          "width": 415,
+          "height": 52,
+          "customInputs": [],
+          "customOutputs": [],
+          "actions": [
+            {
+              "objID": "f2000051-0000-4000-8000-000000000051",
+              "action": "changeScreen",
+              "screen": "MotorManual",
+              "screenType": "literal",
+              "fadeMode": "FADE_IN",
+              "fadeModeType": "literal",
+              "speed": 100,
+              "speedType": "literal",
+              "delay": 0,
+              "delayType": "literal",
+              "useStack": false,
+              "useStackType": "literal"
+            }
+          ]
         }
       ],
       "connectionLines": [
@@ -8200,12 +8498,1767 @@
           "output": "PRESSED",
           "target": "c4c28a06-6599-4060-9206-a2a8600a4d91",
           "input": "@seqin"
+        },
+        {
+          "objID": "f2000101-0000-4000-8000-000000000101",
+          "source": "ae5702de-bbd4-4258-8bfa-c18af4a6443b",
+          "output": "PRESSED",
+          "target": "f2000001-0000-4000-8000-000000000001",
+          "input": "@seqin"
+        },
+        {
+          "objID": "f2000102-0000-4000-8000-000000000102",
+          "source": "358c30cd-c4ad-47e4-8cd6-8f695ccd892b",
+          "output": "PRESSED",
+          "target": "f2000002-0000-4000-8000-000000000002",
+          "input": "@seqin"
+        },
+        {
+          "objID": "f2000103-0000-4000-8000-000000000103",
+          "source": "e848fe50-7a20-4891-b149-19d98ba2aa09",
+          "output": "PRESSED",
+          "target": "f2000003-0000-4000-8000-000000000003",
+          "input": "@seqin"
+        },
+        {
+          "objID": "f2000104-0000-4000-8000-000000000104",
+          "source": "ff50adcd-0c4a-438c-9024-c13ee88c9e91",
+          "output": "PRESSED",
+          "target": "f2000004-0000-4000-8000-000000000004",
+          "input": "@seqin"
+        },
+        {
+          "objID": "f2000105-0000-4000-8000-000000000105",
+          "source": "f2000001-0000-4000-8000-000000000001",
+          "output": "@seqout",
+          "target": "f2000005-0000-4000-8000-000000000005",
+          "input": "@seqin"
+        },
+        {
+          "objID": "f2000106-0000-4000-8000-000000000106",
+          "source": "f2000002-0000-4000-8000-000000000002",
+          "output": "@seqout",
+          "target": "f2000005-0000-4000-8000-000000000005",
+          "input": "@seqin"
+        },
+        {
+          "objID": "f2000107-0000-4000-8000-000000000107",
+          "source": "f2000003-0000-4000-8000-000000000003",
+          "output": "@seqout",
+          "target": "f2000005-0000-4000-8000-000000000005",
+          "input": "@seqin"
+        },
+        {
+          "objID": "f2000108-0000-4000-8000-000000000108",
+          "source": "f2000004-0000-4000-8000-000000000004",
+          "output": "@seqout",
+          "target": "f2000005-0000-4000-8000-000000000005",
+          "input": "@seqin"
         }
       ],
       "localVariables": [],
       "componentGroups": [],
       "userProperties": [],
       "name": "Dashboard",
+      "left": 0,
+      "top": 0,
+      "width": 1024,
+      "height": 600,
+      "isUsedAsUserWidget": false,
+      "createAtStart": false,
+      "deleteOnScreenUnload": false
+    },
+    {
+      "objID": "f1000000-0000-4000-8000-000000000000",
+      "components": [
+        {
+          "objID": "f1000001-0000-4000-8000-000000000001",
+          "type": "LVGLScreenWidget",
+          "left": 0,
+          "top": 0,
+          "width": 1024,
+          "height": 600,
+          "customInputs": [],
+          "customOutputs": [],
+          "style": {
+            "objID": "f1000002-0000-4000-8000-000000000002",
+            "useStyle": "default",
+            "conditionalStyles": [],
+            "childStyles": []
+          },
+          "timeline": [],
+          "eventHandlers": [],
+          "identifier": "motor_manual_screen",
+          "leftUnit": "px",
+          "topUnit": "px",
+          "widthUnit": "px",
+          "heightUnit": "px",
+          "children": [
+            {
+              "objID": "f1000010-0000-4000-8000-000000000010",
+              "type": "LVGLPanelWidget",
+              "left": 0,
+              "top": 0,
+              "width": 1024,
+              "height": 600,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000011-0000-4000-8000-000000000011",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "motor_manual_backdrop",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": true,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000012-0000-4000-8000-000000000012",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#05090e",
+                      "bg_opa": 235,
+                      "border_width": 0,
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
+              "objID": "f1000020-0000-4000-8000-000000000020",
+              "type": "LVGLPanelWidget",
+              "left": 172,
+              "top": 34,
+              "width": 680,
+              "height": 463,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000021-0000-4000-8000-000000000021",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "motor_manual_panel",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": true,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000022-0000-4000-8000-000000000022",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#111922",
+                      "bg_opa": 255,
+                      "radius": 18,
+                      "border_color": "#344453",
+                      "border_width": 2,
+                      "shadow_color": "#000000",
+                      "shadow_opa": 180,
+                      "shadow_width": 24,
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
+              "objID": "f1000030-0000-4000-8000-000000000030",
+              "type": "LVGLLabelWidget",
+              "left": 212,
+              "top": 52,
+              "width": 430,
+              "height": 38,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000031-0000-4000-8000-000000000031",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "motor_manual_title",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000032-0000-4000-8000-000000000032",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#f5f7fa",
+                      "text_font": "MaruBuri-Regular_KR28",
+                      "text_align": "LEFT",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "MANUAL MOTOR CONTROL",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "f1000040-0000-4000-8000-000000000040",
+              "type": "LVGLLabelWidget",
+              "left": 212,
+              "top": 98,
+              "width": 360,
+              "height": 30,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000041-0000-4000-8000-000000000041",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "motor_manual_selected_value",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000042-0000-4000-8000-000000000042",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#f9b938",
+                      "text_font": "MaruBuri-Regular_KR20",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "manual_motor_selected_text",
+              "textType": "expression",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": false
+            },
+            {
+              "objID": "f1000050-0000-4000-8000-000000000050",
+              "type": "LVGLButtonWidget",
+              "left": 770,
+              "top": 44,
+              "width": 54,
+              "height": 54,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000051-0000-4000-8000-000000000051",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [
+                {
+                  "objID": "f3100001-0000-4000-8000-000000000001",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
+              "identifier": "motor_manual_close_button",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [
+                {
+                  "objID": "f1000052-0000-4000-8000-000000000052",
+                  "type": "LVGLLabelWidget",
+                  "left": 0,
+                  "top": 9,
+                  "width": 54,
+                  "height": 32,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "f1000053-0000-4000-8000-000000000053",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "identifier": "motor_manual_close_label",
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "px",
+                  "heightUnit": "px",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+                  "hiddenFlag": false,
+                  "hiddenFlagType": "literal",
+                  "clickableFlag": false,
+                  "clickableFlagType": "literal",
+                  "checkedState": false,
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "f1000054-0000-4000-8000-000000000054",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "text_color": "#d9e0e6",
+                          "text_font": "MaruBuri-Regular_KR28",
+                          "text_align": "CENTER",
+                          "bg_opa": 0
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "X",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "useStaticText": true
+                }
+              ],
+              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": true,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000055-0000-4000-8000-000000000055",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#1c2833",
+                      "bg_opa": 255,
+                      "radius": 10,
+                      "border_width": 0,
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    },
+                    "PRESSED": {
+                      "bg_color": "#344453"
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
+              "objID": "f1000060-0000-4000-8000-000000000060",
+              "type": "LVGLLabelWidget",
+              "left": 212,
+              "top": 150,
+              "width": 180,
+              "height": 26,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000061-0000-4000-8000-000000000061",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "motor_manual_rpm_caption",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000062-0000-4000-8000-000000000062",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#8fa0ae",
+                      "text_font": "MaruBuri-Regular_KR20",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "TARGET RPM",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "f1000070-0000-4000-8000-000000000070",
+              "type": "LVGLLabelWidget",
+              "left": 282,
+              "top": 138,
+              "width": 240,
+              "height": 64,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000071-0000-4000-8000-000000000071",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "motor_manual_rpm_value",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000072-0000-4000-8000-000000000072",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#f5f7fa",
+                      "text_font": "MaruBuri-Regular_KR28",
+                      "text_align": "RIGHT",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "manual_motor_rpm_text",
+              "textType": "expression",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": false
+            },
+            {
+              "objID": "f1000080-0000-4000-8000-000000000080",
+              "type": "LVGLLabelWidget",
+              "left": 539,
+              "top": 162,
+              "width": 80,
+              "height": 28,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000081-0000-4000-8000-000000000081",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "motor_manual_rpm_unit",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000082-0000-4000-8000-000000000082",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#8fa0ae",
+                      "text_font": "MaruBuri-Regular_KR20",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "rpm",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "f1000090-0000-4000-8000-000000000090",
+              "type": "LVGLSliderWidget",
+              "left": 222,
+              "top": 218,
+              "width": 580,
+              "height": 34,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000091-0000-4000-8000-000000000091",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [
+                {
+                  "objID": "f3100005-0000-4000-8000-000000000005",
+                  "eventName": "VALUE_CHANGED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
+              "identifier": "motor_manual_rpm_slider",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICKABLE|CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": true,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000092-0000-4000-8000-000000000092",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#263442",
+                      "bg_opa": 255,
+                      "radius": 12
+                    }
+                  },
+                  "INDICATOR": {
+                    "DEFAULT": {
+                      "bg_color": "#f9b938",
+                      "bg_opa": 255,
+                      "radius": 12
+                    }
+                  },
+                  "KNOB": {
+                    "DEFAULT": {
+                      "bg_color": "#ffffff",
+                      "bg_opa": 255,
+                      "radius": 18,
+                      "pad_left": 7,
+                      "pad_right": 7,
+                      "pad_top": 7,
+                      "pad_bottom": 7
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "min": 0,
+              "minType": "literal",
+              "max": 30,
+              "maxType": "literal",
+              "mode": "NORMAL",
+              "value": "manual_motor_rpm",
+              "valueType": "expression",
+              "previewValue": 0,
+              "valueLeft": 0,
+              "valueLeftType": "literal",
+              "previewValueLeft": 0,
+              "enableAnimation": false
+            },
+            {
+              "objID": "f1000100-0000-4000-8000-000000000100",
+              "type": "LVGLLabelWidget",
+              "left": 222,
+              "top": 262,
+              "width": 580,
+              "height": 26,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000101-0000-4000-8000-000000000101",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "motor_manual_range_hint",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000102-0000-4000-8000-000000000102",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#657786",
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_align": "CENTER",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "0                                      30 RPM",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "f1000110-0000-4000-8000-000000000110",
+              "type": "LVGLLabelWidget",
+              "left": 222,
+              "top": 304,
+              "width": 280,
+              "height": 28,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000111-0000-4000-8000-000000000111",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "motor_manual_direction_value",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000112-0000-4000-8000-000000000112",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#8fa0ae",
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_align": "CENTER",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "manual_motor_direction_text",
+              "textType": "expression",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": false
+            },
+            {
+              "objID": "f1000210-0000-4000-8000-000000000210",
+              "type": "LVGLLabelWidget",
+              "left": 522,
+              "top": 304,
+              "width": 280,
+              "height": 28,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000211-0000-4000-8000-000000000211",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "motor_manual_operation_value",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000212-0000-4000-8000-000000000212",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#f5f7fa",
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_align": "CENTER",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "manual_motor_operation_text",
+              "textType": "expression",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": false
+            },
+            {
+              "objID": "f1000120-0000-4000-8000-000000000120",
+              "type": "LVGLButtonWidget",
+              "left": 212,
+              "top": 348,
+              "width": 135,
+              "height": 82,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000121-0000-4000-8000-000000000121",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [
+                {
+                  "objID": "f3100002-0000-4000-8000-000000000002",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
+              "identifier": "motor_manual_forward_button",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [
+                {
+                  "objID": "f1000122-0000-4000-8000-000000000122",
+                  "type": "LVGLLabelWidget",
+                  "left": 0,
+                  "top": 25,
+                  "width": 135,
+                  "height": 32,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "f1000123-0000-4000-8000-000000000123",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "identifier": "motor_manual_forward_label",
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "px",
+                  "heightUnit": "px",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+                  "hiddenFlag": false,
+                  "hiddenFlagType": "literal",
+                  "clickableFlag": false,
+                  "clickableFlagType": "literal",
+                  "checkedState": false,
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "f1000124-0000-4000-8000-000000000124",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "text_color": "#ffffff",
+                          "text_font": "MaruBuri-Regular_KR20",
+                          "text_align": "CENTER",
+                          "bg_opa": 0
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "FORWARD",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "useStaticText": true
+                }
+              ],
+              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": true,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000125-0000-4000-8000-000000000125",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#2677d4",
+                      "bg_opa": 255,
+                      "radius": 10,
+                      "border_width": 0,
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    },
+                    "PRESSED": {
+                      "bg_color": "#195ba7"
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
+              "objID": "f1000130-0000-4000-8000-000000000130",
+              "type": "LVGLButtonWidget",
+              "left": 367,
+              "top": 348,
+              "width": 135,
+              "height": 82,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000131-0000-4000-8000-000000000131",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [
+                {
+                  "objID": "f3100003-0000-4000-8000-000000000003",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
+              "identifier": "motor_manual_reverse_button",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [
+                {
+                  "objID": "f1000132-0000-4000-8000-000000000132",
+                  "type": "LVGLLabelWidget",
+                  "left": 0,
+                  "top": 25,
+                  "width": 135,
+                  "height": 32,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "f1000133-0000-4000-8000-000000000133",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "identifier": "motor_manual_reverse_label",
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "px",
+                  "heightUnit": "px",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+                  "hiddenFlag": false,
+                  "hiddenFlagType": "literal",
+                  "clickableFlag": false,
+                  "clickableFlagType": "literal",
+                  "checkedState": false,
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "f1000134-0000-4000-8000-000000000134",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "text_color": "#ffffff",
+                          "text_font": "MaruBuri-Regular_KR20",
+                          "text_align": "CENTER",
+                          "bg_opa": 0
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "REVERSE",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "useStaticText": true
+                }
+              ],
+              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": true,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000135-0000-4000-8000-000000000135",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#d17a22",
+                      "bg_opa": 255,
+                      "radius": 10,
+                      "border_width": 0,
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    },
+                    "PRESSED": {
+                      "bg_color": "#a75d16"
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
+              "objID": "f1000200-0000-4000-8000-000000000200",
+              "type": "LVGLButtonWidget",
+              "left": 522,
+              "top": 348,
+              "width": 135,
+              "height": 82,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000201-0000-4000-8000-000000000201",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [
+                {
+                  "objID": "f3100006-0000-4000-8000-000000000006",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
+              "identifier": "motor_manual_run_button",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [
+                {
+                  "objID": "f1000202-0000-4000-8000-000000000202",
+                  "type": "LVGLLabelWidget",
+                  "left": 0,
+                  "top": 25,
+                  "width": 135,
+                  "height": 32,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "f1000203-0000-4000-8000-000000000203",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "identifier": "motor_manual_run_label",
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "px",
+                  "heightUnit": "px",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+                  "hiddenFlag": false,
+                  "hiddenFlagType": "literal",
+                  "clickableFlag": false,
+                  "clickableFlagType": "literal",
+                  "checkedState": false,
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "f1000204-0000-4000-8000-000000000204",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "text_color": "#ffffff",
+                          "text_font": "MaruBuri-Regular_KR20",
+                          "text_align": "CENTER",
+                          "bg_opa": 0
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "RUN",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "useStaticText": true
+                }
+              ],
+              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": true,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000205-0000-4000-8000-000000000205",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#16a34a",
+                      "bg_opa": 255,
+                      "radius": 10,
+                      "border_width": 0,
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    },
+                    "PRESSED": {
+                      "bg_color": "#0d7a35"
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
+              "objID": "f1000140-0000-4000-8000-000000000140",
+              "type": "LVGLButtonWidget",
+              "left": 677,
+              "top": 348,
+              "width": 135,
+              "height": 82,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000141-0000-4000-8000-000000000141",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [
+                {
+                  "objID": "f3100004-0000-4000-8000-000000000004",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
+              "identifier": "motor_manual_stop_button",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [
+                {
+                  "objID": "f1000142-0000-4000-8000-000000000142",
+                  "type": "LVGLLabelWidget",
+                  "left": 0,
+                  "top": 25,
+                  "width": 135,
+                  "height": 32,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "f1000143-0000-4000-8000-000000000143",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "identifier": "motor_manual_stop_label",
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "px",
+                  "heightUnit": "px",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+                  "hiddenFlag": false,
+                  "hiddenFlagType": "literal",
+                  "clickableFlag": false,
+                  "clickableFlagType": "literal",
+                  "checkedState": false,
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "f1000144-0000-4000-8000-000000000144",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "text_color": "#ffffff",
+                          "text_font": "MaruBuri-Regular_KR20",
+                          "text_align": "CENTER",
+                          "bg_opa": 0
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "STOP",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "useStaticText": true
+                }
+              ],
+              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": true,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000145-0000-4000-8000-000000000145",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#e33d42",
+                      "bg_opa": 255,
+                      "radius": 10,
+                      "border_width": 0,
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    },
+                    "PRESSED": {
+                      "bg_color": "#b52127"
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
+              "objID": "f1000160-0000-4000-8000-000000000160",
+              "type": "LVGLPanelWidget",
+              "left": 610,
+              "top": 134,
+              "width": 18,
+              "height": 18,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000161-0000-4000-8000-000000000161",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "motor_manual_run_lamp",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": "manual_motor_run_active",
+              "checkedStateType": "expression",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000162-0000-4000-8000-000000000162",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#263442",
+                      "bg_opa": 255,
+                      "radius": 9,
+                      "border_color": "#465664",
+                      "border_width": 1
+                    },
+                    "CHECKED": {
+                      "bg_color": "#22c55e",
+                      "border_color": "#9affb8",
+                      "shadow_color": "#22c55e",
+                      "shadow_opa": 180,
+                      "shadow_width": 8
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
+              "objID": "f1000170-0000-4000-8000-000000000170",
+              "type": "LVGLLabelWidget",
+              "left": 634,
+              "top": 130,
+              "width": 50,
+              "height": 26,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000171-0000-4000-8000-000000000171",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "motor_manual_run_lamp_label",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000172-0000-4000-8000-000000000172",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#8fa0ae",
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "RUN",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "f1000180-0000-4000-8000-000000000180",
+              "type": "LVGLPanelWidget",
+              "left": 690,
+              "top": 134,
+              "width": 18,
+              "height": 18,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000181-0000-4000-8000-000000000181",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "motor_manual_stop_lamp",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": "manual_motor_stop_active",
+              "checkedStateType": "expression",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000182-0000-4000-8000-000000000182",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_color": "#263442",
+                      "bg_opa": 255,
+                      "radius": 9,
+                      "border_color": "#465664",
+                      "border_width": 1
+                    },
+                    "CHECKED": {
+                      "bg_color": "#ef4444",
+                      "border_color": "#ffaaaa",
+                      "shadow_color": "#ef4444",
+                      "shadow_opa": 180,
+                      "shadow_width": 8
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
+              "objID": "f1000190-0000-4000-8000-000000000190",
+              "type": "LVGLLabelWidget",
+              "left": 714,
+              "top": 130,
+              "width": 54,
+              "height": 26,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000191-0000-4000-8000-000000000191",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "motor_manual_stop_lamp_label",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000192-0000-4000-8000-000000000192",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#8fa0ae",
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "STOP",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "f1000150-0000-4000-8000-000000000150",
+              "type": "LVGLLabelWidget",
+              "left": 212,
+              "top": 454,
+              "width": 600,
+              "height": 28,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f1000151-0000-4000-8000-000000000151",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "motor_manual_safety_hint",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "f1000152-0000-4000-8000-000000000152",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_color": "#657786",
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_align": "CENTER",
+                      "bg_opa": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "Check RPM before selecting direction.",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            }
+          ],
+          "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
+          "hiddenFlag": false,
+          "hiddenFlagType": "literal",
+          "clickableFlag": true,
+          "clickableFlagType": "literal",
+          "checkedState": false,
+          "checkedStateType": "literal",
+          "disabledStateType": "literal",
+          "states": "",
+          "localStyles": {
+            "objID": "f1000003-0000-4000-8000-000000000003",
+            "definition": {
+              "MAIN": {
+                "DEFAULT": {
+                  "bg_color": "#071019",
+                  "bg_opa": 255
+                }
+              }
+            }
+          },
+          "group": "",
+          "groupIndex": 0
+        },
+        {
+          "objID": "f3000001-0000-4000-8000-000000000001",
+          "type": "LVGLActionComponent",
+          "left": 1060,
+          "top": 80,
+          "width": 403,
+          "height": 52,
+          "customInputs": [],
+          "customOutputs": [],
+          "actions": [
+            {
+              "objID": "f3000011-0000-4000-8000-000000000011",
+              "action": "changeScreen",
+              "screen": "Dashboard",
+              "screenType": "literal",
+              "fadeMode": "FADE_IN",
+              "fadeModeType": "literal",
+              "speed": 100,
+              "speedType": "literal",
+              "delay": 0,
+              "delayType": "literal",
+              "useStack": false,
+              "useStackType": "literal"
+            }
+          ]
+        },
+        {
+          "objID": "f3000002-0000-4000-8000-000000000002",
+          "type": "SetVariableActionComponent",
+          "left": 1060,
+          "top": 160,
+          "width": 287,
+          "height": 57,
+          "customInputs": [],
+          "customOutputs": [],
+          "entries": [
+            {
+              "objID": "f3000021-0000-4000-8000-000000000021",
+              "variable": "manual_motor_direction_text",
+              "value": "\"FORWARD\""
+            }
+          ]
+        },
+        {
+          "objID": "f3000003-0000-4000-8000-000000000003",
+          "type": "SetVariableActionComponent",
+          "left": 1060,
+          "top": 260,
+          "width": 287,
+          "height": 57,
+          "customInputs": [],
+          "customOutputs": [],
+          "entries": [
+            {
+              "objID": "f3000031-0000-4000-8000-000000000031",
+              "variable": "manual_motor_direction_text",
+              "value": "\"REVERSE\""
+            }
+          ]
+        },
+        {
+          "objID": "f3000004-0000-4000-8000-000000000004",
+          "type": "SetVariableActionComponent",
+          "left": 1060,
+          "top": 360,
+          "width": 287,
+          "height": 100,
+          "customInputs": [],
+          "customOutputs": [],
+          "entries": [
+            {
+              "objID": "f3000041-0000-4000-8000-000000000041",
+              "variable": "manual_motor_operation_text",
+              "value": "\"STOPPED\""
+            },
+            {
+              "objID": "f3000042-0000-4000-8000-000000000042",
+              "variable": "manual_motor_run_active",
+              "value": "false"
+            },
+            {
+              "objID": "f3000043-0000-4000-8000-000000000043",
+              "variable": "manual_motor_stop_active",
+              "value": "true"
+            }
+          ]
+        },
+        {
+          "objID": "f3000005-0000-4000-8000-000000000005",
+          "type": "SetVariableActionComponent",
+          "left": 1480,
+          "top": 160,
+          "width": 293,
+          "height": 57,
+          "customInputs": [],
+          "customOutputs": [],
+          "entries": [
+            {
+              "objID": "f3000051-0000-4000-8000-000000000051",
+              "variable": "manual_motor_rpm_text",
+              "value": "manual_motor_rpm"
+            }
+          ]
+        },
+        {
+          "objID": "f3000006-0000-4000-8000-000000000006",
+          "type": "SetVariableActionComponent",
+          "left": 1480,
+          "top": 260,
+          "width": 287,
+          "height": 100,
+          "customInputs": [],
+          "customOutputs": [],
+          "entries": [
+            {
+              "objID": "f3000061-0000-4000-8000-000000000061",
+              "variable": "manual_motor_operation_text",
+              "value": "\"RUNNING\""
+            },
+            {
+              "objID": "f3000062-0000-4000-8000-000000000062",
+              "variable": "manual_motor_run_active",
+              "value": "true"
+            },
+            {
+              "objID": "f3000063-0000-4000-8000-000000000063",
+              "variable": "manual_motor_stop_active",
+              "value": "false"
+            }
+          ]
+        }
+      ],
+      "connectionLines": [
+        {
+          "objID": "f3000101-0000-4000-8000-000000000101",
+          "source": "f1000050-0000-4000-8000-000000000050",
+          "output": "PRESSED",
+          "target": "f3000001-0000-4000-8000-000000000001",
+          "input": "@seqin"
+        },
+        {
+          "objID": "f3000102-0000-4000-8000-000000000102",
+          "source": "f1000120-0000-4000-8000-000000000120",
+          "output": "PRESSED",
+          "target": "f3000002-0000-4000-8000-000000000002",
+          "input": "@seqin"
+        },
+        {
+          "objID": "f3000103-0000-4000-8000-000000000103",
+          "source": "f1000130-0000-4000-8000-000000000130",
+          "output": "PRESSED",
+          "target": "f3000003-0000-4000-8000-000000000003",
+          "input": "@seqin"
+        },
+        {
+          "objID": "f3000104-0000-4000-8000-000000000104",
+          "source": "f1000140-0000-4000-8000-000000000140",
+          "output": "PRESSED",
+          "target": "f3000004-0000-4000-8000-000000000004",
+          "input": "@seqin"
+        },
+        {
+          "objID": "f3000105-0000-4000-8000-000000000105",
+          "source": "f1000090-0000-4000-8000-000000000090",
+          "output": "VALUE_CHANGED",
+          "target": "f3000005-0000-4000-8000-000000000005",
+          "input": "@seqin"
+        },
+        {
+          "objID": "f3000106-0000-4000-8000-000000000106",
+          "source": "f1000200-0000-4000-8000-000000000200",
+          "output": "PRESSED",
+          "target": "f3000006-0000-4000-8000-000000000006",
+          "input": "@seqin"
+        }
+      ],
+      "localVariables": [],
+      "componentGroups": [],
+      "userProperties": [],
+      "name": "MotorManual",
       "left": 0,
       "top": 0,
       "width": 1024,
@@ -10793,7 +12846,7 @@
           "left": 512,
           "top": 642,
           "width": 484,
-          "height": 121,
+          "height": 122,
           "customInputs": [],
           "customOutputs": [],
           "entries": [
@@ -12985,7 +15038,7 @@
                       "left": 0,
                       "top": 0,
                       "width": 198,
-                      "height": 36,
+                      "height": 27,
                       "customInputs": [],
                       "customOutputs": [],
                       "style": {
@@ -13102,9 +15155,9 @@
                       "objID": "b75147a6-057c-4edd-f0cf-e36f81cd971b",
                       "type": "LVGLLabelWidget",
                       "left": 0,
-                      "top": 0,
+                      "top": -5,
                       "width": 116,
-                      "height": 36,
+                      "height": 26,
                       "customInputs": [],
                       "customOutputs": [],
                       "style": {
@@ -13211,9 +15264,9 @@
                       "objID": "93c1fd3e-ea45-47d8-e204-e7a3f6901f59",
                       "type": "LVGLLabelWidget",
                       "left": 0,
-                      "top": 0,
+                      "top": -5,
                       "width": 130,
-                      "height": 36,
+                      "height": 26,
                       "customInputs": [],
                       "customOutputs": [],
                       "style": {
@@ -13320,9 +15373,9 @@
                       "objID": "060ef3bd-0205-4ffb-f481-17399604197a",
                       "type": "LVGLLabelWidget",
                       "left": 0,
-                      "top": 0,
+                      "top": -5,
                       "width": 126,
-                      "height": 36,
+                      "height": 26,
                       "customInputs": [],
                       "customOutputs": [],
                       "style": {
@@ -19481,8 +21534,8 @@
           "type": "SetVariableActionComponent",
           "left": 1100,
           "top": 200,
-          "width": 1030,
-          "height": 121,
+          "width": 1031,
+          "height": 122,
           "customInputs": [],
           "customOutputs": [],
           "entries": [
@@ -19625,7 +21678,7 @@
       "descent": 4,
       "glyphs": [],
       "lvglRanges": "32-127",
-      "lvglSymbols": "지중시비전층좌우동수목표입력란을누르면숫자패드가열립니다완료뒤세요를한제어기설정예체두둑처방과준량작업계험구간개폭실길이적만고랑분할용북측남임저장복사질소품직접번배선택찾확인화탭의부능은음단에서추합취운채널보현재속도신호상모살포라버오류및터태하치",
+      "lvglSymbols": "지중시비전층좌우동수목표입력란을누르면숫자패드가열립니다완료뒤세요를한제어기설정예체두둑처방과준량작업계험구간개폭실길이적만고랑분할용북측남임저장복사질소품직접번배선택찾확인화탭의부능은음단에서추합취운채널보현재속도신호상모살포라버오류및터태하치·",
       "lvglAdditionalSources": [],
       "lvglGlyphs": {
         "encodings": [

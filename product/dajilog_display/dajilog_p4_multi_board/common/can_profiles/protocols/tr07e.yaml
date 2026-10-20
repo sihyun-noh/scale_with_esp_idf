@@ -3,6 +3,11 @@ profile:
   display_name: TR07E Speed Radar
   version: 2
   codec_prefix: dajilog_tr07e
+codec:
+  header: dajilog_can_tr07e.h
+  decoded_type: dajilog_tr07e_measurement_t
+  encode: dajilog_tr07e_encode_config
+  decode: dajilog_tr07e_decode_measurement
 can: {frame_format: standard, bitrate: 500000, byte_order: motorola}
 frames:
   config: {direction: tx, default_id: 0x7F5, dlc: 5}

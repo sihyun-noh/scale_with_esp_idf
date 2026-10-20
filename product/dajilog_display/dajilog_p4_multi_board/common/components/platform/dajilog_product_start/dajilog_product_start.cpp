@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "dajilog_board.h"
+#include "dajilog_system_core.h"
 #include "esp_brookesia.hpp"
 #include "esp_lib_utils.h"
 #include "esp_ota_ops.h"
@@ -43,6 +44,7 @@ extern "C" void dajilog_product_start(void)
                    board->display_width, board->display_height);
 
     ESP_UTILS_CHECK_ERROR_EXIT(dajilog_board_init(), "Board init failed");
+    ESP_UTILS_CHECK_ERROR_EXIT(dajilog_system_core_start(), "System Core start failed");
     ESP_UTILS_CHECK_ERROR_EXIT(dajilog_board_display_start(), "Display start failed");
 
     LvLock::registerCallbacks(

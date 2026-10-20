@@ -13,18 +13,20 @@ enum ScreensEnum {
     _SCREEN_ID_FIRST = 1,
     SCREEN_ID_STARTUP_ANIMATION = 1,
     SCREEN_ID_DASHBOARD = 2,
-    SCREEN_ID_SYSTEM_SETTING = 3,
-    SCREEN_ID_RIDGE_SETUP = 4,
-    SCREEN_ID_PREPARATION = 5,
-    SCREEN_ID_WORK = 6,
-    SCREEN_ID_WEIGHING_TEST = 7,
-    SCREEN_ID_NUMERIC_INPUT = 8,
-    _SCREEN_ID_LAST = 8
+    SCREEN_ID_MOTOR_MANUAL = 3,
+    SCREEN_ID_SYSTEM_SETTING = 4,
+    SCREEN_ID_RIDGE_SETUP = 5,
+    SCREEN_ID_PREPARATION = 6,
+    SCREEN_ID_WORK = 7,
+    SCREEN_ID_WEIGHING_TEST = 8,
+    SCREEN_ID_NUMERIC_INPUT = 9,
+    _SCREEN_ID_LAST = 9
 };
 
 typedef struct _objects_t {
     lv_obj_t *startup_animation;
     lv_obj_t *dashboard;
+    lv_obj_t *motor_manual;
     lv_obj_t *system_setting;
     lv_obj_t *ridge_setup;
     lv_obj_t *preparation;
@@ -145,6 +147,32 @@ typedef struct _objects_t {
     lv_obj_t *dashboard_setting_label;
     lv_obj_t *dashboard_setting_description;
     lv_obj_t *dashboard_setting_arrow;
+    lv_obj_t *motor_manual_backdrop;
+    lv_obj_t *motor_manual_panel;
+    lv_obj_t *motor_manual_title;
+    lv_obj_t *motor_manual_selected_value;
+    lv_obj_t *motor_manual_close_button;
+    lv_obj_t *motor_manual_close_label;
+    lv_obj_t *motor_manual_rpm_caption;
+    lv_obj_t *motor_manual_rpm_value;
+    lv_obj_t *motor_manual_rpm_unit;
+    lv_obj_t *motor_manual_rpm_slider;
+    lv_obj_t *motor_manual_range_hint;
+    lv_obj_t *motor_manual_direction_value;
+    lv_obj_t *motor_manual_operation_value;
+    lv_obj_t *motor_manual_forward_button;
+    lv_obj_t *motor_manual_forward_label;
+    lv_obj_t *motor_manual_reverse_button;
+    lv_obj_t *motor_manual_reverse_label;
+    lv_obj_t *motor_manual_run_button;
+    lv_obj_t *motor_manual_run_label;
+    lv_obj_t *motor_manual_stop_button;
+    lv_obj_t *motor_manual_stop_label;
+    lv_obj_t *motor_manual_run_lamp;
+    lv_obj_t *motor_manual_run_lamp_label;
+    lv_obj_t *motor_manual_stop_lamp;
+    lv_obj_t *motor_manual_stop_lamp_label;
+    lv_obj_t *motor_manual_safety_hint;
     lv_obj_t *main_status;
     lv_obj_t *main_stop;
     lv_obj_t *main_stop_label;
@@ -326,6 +354,9 @@ void tick_screen_startup_animation();
 
 void create_screen_dashboard();
 void tick_screen_dashboard();
+
+void create_screen_motor_manual();
+void tick_screen_motor_manual();
 
 void create_screen_system_setting();
 void tick_screen_system_setting();

@@ -1,0 +1,14 @@
+profile:
+  name: moonwalker_mdc24
+  display_name: MoonWalker MDC24D Motor Driver
+  version: 1
+  codec_prefix: dajilog_moonwalker
+codec:
+  header: dajilog_can_moonwalker.h
+  decoded_type: dajilog_moonwalker_response_t
+  encode: dajilog_moonwalker_encode_request
+  decode: dajilog_moonwalker_decode_response
+can: {frame_format: standard, bitrate: 500000, byte_order: little}
+frames:
+  request: {direction: tx, default_id: 0x001, dlc: 8}
+  response: {direction: rx, default_id: 0x001, dlc: 8, timeout_ms: 2000}

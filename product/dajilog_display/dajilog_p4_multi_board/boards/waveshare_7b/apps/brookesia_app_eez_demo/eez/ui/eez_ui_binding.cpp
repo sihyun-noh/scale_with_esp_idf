@@ -24,6 +24,7 @@ constexpr uint32_t STRING_ID_RIDGE_WIDTH = 0x07010002U;
 constexpr uint32_t STRING_ID_ACTUAL_LENGTH = 0x07010003U;
 constexpr uint32_t STRING_ID_NITROGEN_RATE = 0x07010004U;
 constexpr uint32_t STRING_ID_DASHBOARD_BASE = 0x07011000U;
+constexpr uint32_t STRING_ID_MANUAL_MOTOR_BASE = 0x07012000U;
 constexpr size_t MAX_MESSAGES_PER_TICK = 4U;
 
 const char *TAG = "EezUiBinding7B";
@@ -45,6 +46,13 @@ char s_motor_state_text[DAJILOG_MOTOR_CHANNEL_COUNT][24] = {};
 char s_motor_speed_text[DAJILOG_MOTOR_CHANNEL_COUNT][24] = {};
 char s_motor_target_text[DAJILOG_MOTOR_CHANNEL_COUNT][24] = {};
 char s_motor_load_text[DAJILOG_MOTOR_CHANNEL_COUNT][24] = {};
+char s_manual_motor_selected_text[16] = {};
+char s_manual_motor_rpm_text[16] = {};
+char s_manual_motor_direction_text[32] = {};
+char s_manual_motor_operation_text[24] = {};
+bool s_manual_motor_1_running = false;
+dajilog_manual_motor_action_t s_manual_motor_direction =
+    DAJILOG_MANUAL_MOTOR_FORWARD;
 
 esp_err_t render_current_recipe();
 
@@ -218,6 +226,165 @@ esp_err_t submit_command(uint32_t topic)
     dajilog_ui_msg_t command;
     dajilog_ui_msg_init(&command, DAJILOG_UI_MSG_COMMAND, topic);
     return dajilog_ui_adaptor_submit(&command);
+}
+
+uint8_t manual_motor_rpm()
+{
+    int error = 0;
+    int32_t rpm = eez::flow::getGlobalVariable(
+                      FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_RPM)
+                      .toInt32(&error);
+    if (error != 0) {
+        rpm = objects.motor_manual_rpm_slider != nullptr
+                  ? lv_slider_get_value(objects.motor_manual_rpm_slider)
+                  : 0;
+    }
+    if (rpm < 0) {
+        rpm = 0;
+    } else if (rpm > 30) {
+        rpm = 30;
+    }
+    return static_cast<uint8_t>(rpm);
+}
+
+void set_manual_motor_text(uint32_t variable, char *storage,
+                           size_t storage_size, uint32_t string_offset,
+                           const char *text)
+{
+    set_string(variable, storage, storage_size,
+               STRING_ID_MANUAL_MOTOR_BASE + string_offset, text);
+}
+
+void reset_manual_motor_rpm_ui()
+{
+    eez::flow::setGlobalVariable(
+        FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_RPM,
+        eez::IntegerValue(0));
+    set_manual_motor_text(FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_RPM_TEXT,
+                          s_manual_motor_rpm_text,
+                          sizeof(s_manual_motor_rpm_text), 1, "0");
+    if (objects.motor_manual_rpm_slider != nullptr) {
+        lv_slider_set_value(objects.motor_manual_rpm_slider, 0, LV_ANIM_ON);
+    }
+}
+
+void set_manual_motor_operation_ui(bool running)
+{
+    set_manual_motor_text(FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_OPERATION_TEXT,
+                          s_manual_motor_operation_text,
+                          sizeof(s_manual_motor_operation_text), 3,
+                          running ? "RUNNING" : "STOPPED");
+    eez::flow::setGlobalVariable(
+        FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_RUN_ACTIVE,
+        eez::BooleanValue(running));
+    eez::flow::setGlobalVariable(
+        FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_STOP_ACTIVE,
+        eez::BooleanValue(!running));
+}
+
+esp_err_t submit_manual_motor(dajilog_manual_motor_action_t action)
+{
+    const dajilog_manual_motor_command_t payload = {
+        .motor_index = 0,
+        .rpm = manual_motor_rpm(),
+        .action = action,
+    };
+    dajilog_ui_msg_t command;
+    dajilog_ui_msg_init(&command, DAJILOG_UI_MSG_COMMAND,
+                        DAJILOG_UI_CMD_MOTOR_MANUAL);
+    command.payload.type = DAJILOG_UI_VALUE_BYTES;
+    command.payload.value.bytes.size = sizeof(payload);
+    std::memcpy(command.payload.value.bytes.data, &payload, sizeof(payload));
+    return dajilog_ui_adaptor_submit(&command);
+}
+
+void manual_motor_forward_event(lv_event_t *event)
+{
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
+        return;
+    }
+    s_manual_motor_direction = DAJILOG_MANUAL_MOTOR_FORWARD;
+}
+
+void manual_motor_reverse_event(lv_event_t *event)
+{
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
+        return;
+    }
+    s_manual_motor_direction = DAJILOG_MANUAL_MOTOR_REVERSE;
+    set_manual_motor_text(FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_DIRECTION_TEXT,
+                          s_manual_motor_direction_text,
+                          sizeof(s_manual_motor_direction_text), 2,
+                          "REVERSE");
+}
+
+void manual_motor_run_event(lv_event_t *event)
+{
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
+        return;
+    }
+    if (manual_motor_rpm() == 0U) {
+        s_manual_motor_1_running = false;
+        set_manual_motor_operation_ui(false);
+        ESP_LOGW(TAG, "manual motor 1 RUN rejected: target RPM is zero");
+        return;
+    }
+    const esp_err_t error = submit_manual_motor(s_manual_motor_direction);
+    s_manual_motor_1_running = error == ESP_OK;
+    set_manual_motor_operation_ui(s_manual_motor_1_running);
+    if (error != ESP_OK) {
+        ESP_LOGW(TAG, "manual motor 1 RUN submit failed: %s",
+                 esp_err_to_name(error));
+    }
+}
+
+void manual_motor_stop_event(lv_event_t *event)
+{
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
+        return;
+    }
+    s_manual_motor_1_running = false;
+    const esp_err_t error = submit_manual_motor(DAJILOG_MANUAL_MOTOR_STOP);
+    reset_manual_motor_rpm_ui();
+    set_manual_motor_operation_ui(false);
+    if (error != ESP_OK) {
+        ESP_LOGW(TAG, "manual motor 1 stop submit failed: %s",
+                 esp_err_to_name(error));
+    }
+}
+
+void manual_motor_slider_event(lv_event_t *event)
+{
+    if (lv_event_get_code(event) != LV_EVENT_RELEASED) {
+        return;
+    }
+    const uint8_t rpm = manual_motor_rpm();
+    std::snprintf(s_manual_motor_rpm_text, sizeof(s_manual_motor_rpm_text),
+                  "%u", static_cast<unsigned>(rpm));
+    eez::flow::setGlobalVariable(
+        FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_RPM_TEXT,
+        eez::Value::makeStringRef(s_manual_motor_rpm_text, -1,
+                                  STRING_ID_MANUAL_MOTOR_BASE + 1));
+    if (s_manual_motor_1_running) {
+        const esp_err_t error = submit_manual_motor(
+            DAJILOG_MANUAL_MOTOR_SET_RPM);
+        if (error != ESP_OK) {
+            ESP_LOGW(TAG, "manual motor 1 RPM submit failed: %s",
+                     esp_err_to_name(error));
+        }
+    }
+}
+
+void manual_motor_close_event(lv_event_t *event)
+{
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
+        return;
+    }
+    s_manual_motor_1_running = false;
+    s_manual_motor_direction = DAJILOG_MANUAL_MOTOR_FORWARD;
+    (void)submit_manual_motor(DAJILOG_MANUAL_MOTOR_STOP);
+    reset_manual_motor_rpm_ui();
+    set_manual_motor_operation_ui(false);
 }
 
 bool parse_int(const char *text, int32_t *value)
@@ -451,7 +618,17 @@ extern "C" bool eez_ui_binding_attach(void)
         objects.ridge_save_settings == nullptr ||
         objects.fertilizer_temp_save == nullptr ||
         objects.fertilizer_save_settings == nullptr ||
-        objects.dashboard_stop_button == nullptr) {
+        objects.dashboard_stop_button == nullptr ||
+        objects.motor_1_card == nullptr ||
+        objects.motor_2_card == nullptr ||
+        objects.motor_3_card == nullptr ||
+        objects.motor_4_card == nullptr ||
+        objects.motor_manual_close_button == nullptr ||
+        objects.motor_manual_rpm_slider == nullptr ||
+        objects.motor_manual_forward_button == nullptr ||
+        objects.motor_manual_reverse_button == nullptr ||
+        objects.motor_manual_run_button == nullptr ||
+        objects.motor_manual_stop_button == nullptr) {
         ESP_LOGE(TAG, "ridge or fertilizer save buttons are unavailable");
         (void)dajilog_ui_adaptor_detach(&s_adaptor);
         return false;
@@ -469,9 +646,27 @@ extern "C" bool eez_ui_binding_attach(void)
                         LV_EVENT_PRESSED, nullptr);
     lv_obj_add_event_cb(objects.dashboard_stop_button, stop_event,
                         LV_EVENT_PRESSED, nullptr);
+    lv_obj_add_state(objects.motor_2_card, LV_STATE_DISABLED);
+    lv_obj_add_state(objects.motor_3_card, LV_STATE_DISABLED);
+    lv_obj_add_state(objects.motor_4_card, LV_STATE_DISABLED);
+    lv_obj_add_event_cb(objects.motor_manual_forward_button,
+                        manual_motor_forward_event, LV_EVENT_PRESSED, nullptr);
+    lv_obj_add_event_cb(objects.motor_manual_reverse_button,
+                        manual_motor_reverse_event, LV_EVENT_PRESSED, nullptr);
+    lv_obj_add_event_cb(objects.motor_manual_run_button,
+                        manual_motor_run_event, LV_EVENT_PRESSED, nullptr);
+    lv_obj_add_event_cb(objects.motor_manual_stop_button,
+                        manual_motor_stop_event, LV_EVENT_PRESSED, nullptr);
+    lv_obj_add_event_cb(objects.motor_manual_rpm_slider,
+                        manual_motor_slider_event, LV_EVENT_RELEASED, nullptr);
+    lv_obj_add_event_cb(objects.motor_manual_close_button,
+                        manual_motor_close_event, LV_EVENT_PRESSED, nullptr);
+    set_manual_motor_text(FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_SELECTED_TEXT,
+                          s_manual_motor_selected_text,
+                          sizeof(s_manual_motor_selected_text), 0, "M1");
     render_latest_dashboard();
     s_attached = true;
-    ESP_LOGI(TAG, "System Core, settings and dashboard binding attached");
+    ESP_LOGI(TAG, "System Core, settings, dashboard and M1 manual binding attached");
     return true;
 }
 
@@ -488,6 +683,9 @@ extern "C" void eez_ui_binding_detach(void)
         return;
     }
 
+    s_manual_motor_1_running = false;
+    s_manual_motor_direction = DAJILOG_MANUAL_MOTOR_FORWARD;
+    (void)submit_manual_motor(DAJILOG_MANUAL_MOTOR_STOP);
     (void)dajilog_ui_adaptor_detach(&s_adaptor);
     // System Core and Storage Task remain active across app close/reopen.
     s_attached = false;

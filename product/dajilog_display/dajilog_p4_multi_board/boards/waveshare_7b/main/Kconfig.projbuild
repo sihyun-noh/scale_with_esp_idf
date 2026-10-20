@@ -44,6 +44,11 @@ menu "DAJILOG Configuration"
             bool "CAN Diagnostic app"
             depends on DAJILOG_CAN_ENABLE
             default n
+
+        config DAJILOG_CAN_DEBUG_LOG
+            bool "Print raw CAN frames in debug logs"
+            depends on DAJILOG_CAN_ENABLE
+            default n
     endmenu
 
     menu "CAN"

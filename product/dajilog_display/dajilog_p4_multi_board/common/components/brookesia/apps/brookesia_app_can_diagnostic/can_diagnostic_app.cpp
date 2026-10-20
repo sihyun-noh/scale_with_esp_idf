@@ -27,7 +27,7 @@ class CanDiagnosticApp : public phone::App {
     lv_label_set_text(title_, "CAN Diagnostic");
     lv_obj_align(title_, LV_ALIGN_TOP_MID, 0, 32);
     status_ = lv_label_create(screen);
-    lv_label_set_text(status_, "Starting CAN...");
+    lv_label_set_text(status_, "Reading CAN service...");
     lv_obj_set_width(status_, LV_PCT(90));
     lv_label_set_long_mode(status_, LV_LABEL_LONG_WRAP);
     lv_obj_center(status_);
@@ -36,24 +36,9 @@ class CanDiagnosticApp : public phone::App {
       lv_label_set_text(status_, "CAN GPIO is not configured.\nSet TX/RX in menuconfig.");
       return true;
     }
-    esp_err_t e = ESP_OK;
-    if (!service_started_) {
-      dajilog_can_config_t c = { .tx_gpio = b->tx_gpio,
-                                 .rx_gpio = b->rx_gpio,
-                                 .bitrate = b->bitrate,
-                                 .tx_queue_length = 16,
-                                 .rx_queue_length = 32,
-                                 .filter = dajilog_can_filter_accept_all() };
-      e = dajilog_can_init(&c);
-      if (e == ESP_OK)
-        e = dajilog_can_start();
-      if (e == ESP_OK)
-        e = dajilog_can_device_manager_start();
-      if (e == ESP_OK)
-        service_started_ = true;
-    }
-    if (e != ESP_OK) {
-      lv_label_set_text_fmt(status_, "CAN start failed: %s", esp_err_to_name(e));
+    dajilog_can_status_t bus = {};
+    if (dajilog_can_get_status(&bus) != ESP_OK) {
+      lv_label_set_text(status_, "CAN service is unavailable.\nCheck System Core startup logs.");
       return true;
     }
     timer_ = lv_timer_create([](lv_timer_t* t) { static_cast<CanDiagnosticApp*>(t->user_data)->refresh(); }, 200, this);
@@ -100,7 +85,6 @@ class CanDiagnosticApp : public phone::App {
     }
     lv_label_set_text(status_, text);
   }
-  static inline bool service_started_ = false;
   lv_obj_t* title_ = nullptr;
   lv_obj_t* status_ = nullptr;
   lv_timer_t* timer_ = nullptr;

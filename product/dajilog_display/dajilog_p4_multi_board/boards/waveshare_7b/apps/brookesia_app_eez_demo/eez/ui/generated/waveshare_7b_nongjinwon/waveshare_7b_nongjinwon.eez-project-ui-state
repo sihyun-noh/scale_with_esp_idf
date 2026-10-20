@@ -205,12 +205,23 @@
               "children": [
                 {
                   "type": "tab",
-                  "id": "#a0827476-4db1-4708-bb37-3a88d9b93ded",
-                  "name": "SystemSetting",
+                  "id": "#1a91607d-63ac-4344-bc59-dfec905b203f",
+                  "name": "MotorManual",
                   "component": "editor",
                   "config": {
                     "objectPath": "[waveshare_7b_nongjinwon.eez-project]:/userPages/2",
                     "permanent": false
+                  },
+                  "icon": "svg:page"
+                },
+                {
+                  "type": "tab",
+                  "id": "#a0827476-4db1-4708-bb37-3a88d9b93ded",
+                  "name": "StartupAnimation",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[waveshare_7b_nongjinwon.eez-project]:/userPages/0",
+                    "permanent": true
                   },
                   "icon": "svg:page"
                 },
@@ -1083,7 +1094,7 @@
           "x": -512,
           "y": 20.51251222658192
         },
-        "scale": 1.5
+        "scale": 1.1
       },
       "timeline": {
         "isEditorActive": false,
@@ -1100,16 +1111,17 @@
           "7": {
             "0": {}
           },
+          "9": {},
           "83": {}
         },
         "1": {}
       },
       "transform": {
         "translate": {
-          "x": -720.3300359816776,
-          "y": -493.72999891410143
+          "x": -724.9412714640291,
+          "y": -483.32449548728016
         },
-        "scale": 1.5
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1123,32 +1135,24 @@
       "selectionBack": {
         "0": {
           "1": {},
-          "2": {
-            "0": {}
-          },
+          "2": {},
           "4": {},
           "6": {},
           "8": {},
           "10": {},
           "12": {},
-          "23": {},
-          "27": {
-            "0": {
-              "$selected": true
-            },
-            "$selected": true
+          "13": {
+            "0": {}
           },
-          "28": {},
-          "29": {}
-        },
-        "8": {}
+          "14": {}
+        }
       },
       "transform": {
         "translate": {
-          "x": -565.3531886509486,
-          "y": -276.3859322752728
+          "x": -522.8168883822095,
+          "y": -194.03047959380774
         },
-        "scale": 0.9
+        "scale": 1.1
       },
       "timeline": {
         "isEditorActive": false,
@@ -1161,15 +1165,21 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
+          "2": {},
+          "3": {},
+          "5": {},
+          "7": {},
+          "9": {},
+          "11": {},
           "13": {}
         }
       },
       "transform": {
         "translate": {
-          "x": -517.7771240234376,
-          "y": -383.72836914062503
+          "x": -576.6610538543214,
+          "y": -789.7270885074465
         },
-        "scale": 0.9
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1186,7 +1196,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 0.9
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1203,7 +1213,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 0.9
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1220,7 +1230,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 0.9
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1237,7 +1247,24 @@
           "x": -512,
           "y": -300
         },
-        "scale": 0.9
+        "scale": 1.25
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[waveshare_7b_nongjinwon.eez-project]:/userPages/8[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {},
+      "transform": {
+        "translate": {
+          "x": -512,
+          "y": -300
+        },
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1253,6 +1280,7 @@
   "searchMatchWholeWord": false,
   "replaceEnabled": false,
   "replaceText": "",
+  "pageRuntimeFrontFace": true,
   "breakpoints": {},
   "watchExpressions": [],
   "showComponentDescriptions": true,
@@ -1269,6 +1297,6 @@
   ],
   "showInactiveFlowsInDebugger": true,
   "globalFlowZoom": true,
-  "flowZoom": 0.9,
+  "flowZoom": 1.1,
   "implementationLanguage": "C"
 }

@@ -53,13 +53,30 @@ typedef struct {
 typedef struct {
     uint32_t actual_rpm;
     uint32_t target_rpm;
+    uint32_t driver_status;
     float target_kg_min;
     float load_pct;
+    float output_voltage;
+    float output_current;
+    float temperature_c;
     uint32_t error_code;
     dajilog_motor_state_t state;
     bool enabled;
     bool online;
 } dajilog_motor_snapshot_t;
+
+typedef enum {
+    DAJILOG_MANUAL_MOTOR_STOP = 0,
+    DAJILOG_MANUAL_MOTOR_FORWARD,
+    DAJILOG_MANUAL_MOTOR_REVERSE,
+    DAJILOG_MANUAL_MOTOR_SET_RPM,
+} dajilog_manual_motor_action_t;
+
+typedef struct {
+    uint8_t motor_index;
+    uint8_t rpm;
+    dajilog_manual_motor_action_t action;
+} dajilog_manual_motor_command_t;
 
 typedef struct {
     uint32_t revision;
@@ -84,6 +101,7 @@ typedef enum {
     DAJILOG_UI_CMD_SETTINGS_DISCARD = 0x07020006U,
     DAJILOG_UI_CMD_CONFIG_IMPORT = 0x07020007U,
     DAJILOG_UI_CMD_CONFIG_EXPORT = 0x07020008U,
+    DAJILOG_UI_CMD_MOTOR_MANUAL = 0x07020009U,
 } dajilog_ui_command_topic_t;
 
 typedef enum {

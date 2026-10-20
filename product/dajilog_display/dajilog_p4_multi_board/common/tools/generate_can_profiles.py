@@ -50,19 +50,21 @@ extern const size_t DAJILOG_CAN_DEVICE_COUNT;
 }
 #endif
 ''', encoding="utf-8")
-    lines = ['#include "dajilog_can_profiles_generated.h"', '#include "dajilog_can_tr07e.h"', '',
-             'const dajilog_can_protocol_profile_t DAJILOG_CAN_PROFILES[] = {']
+    headers = sorted({data["codec"]["header"] for data in profiles.values()})
+    lines = ['#include "dajilog_can_profiles_generated.h"']
+    lines += [f'#include "{header}"' for header in headers]
+    lines += ['', 'const dajilog_can_protocol_profile_t DAJILOG_CAN_PROFILES[] = {']
     indexes = {}
     for index, (name, data) in enumerate(profiles.items()):
         indexes[name] = index; p=data["profile"]; frames=data["frames"]
         tx=next(v for v in frames.values() if v["direction"]=="tx"); rx=next(v for v in frames.values() if v["direction"]=="rx")
-        prefix=ident(p["codec_prefix"])
+        codec=data["codec"]
         lines += ['    {', f'        .name="{name}", .display_name="{p["display_name"]}",',
                   f'        .version={int(p["version"])}U, .bitrate={int(data["can"]["bitrate"])}U,',
                   f'        .default_command_id=0x{int(tx["default_id"]):03X}U, .default_status_id=0x{int(rx["default_id"]):03X}U,',
                   f'        .command_dlc={int(tx["dlc"])}U, .status_dlc={int(rx["dlc"])}U,',
-                  f'        .decoded_size=sizeof({prefix}_measurement_t),',
-                  f'        .encode_command={prefix}_encode_config, .decode_status={prefix}_decode_measurement,', '    },']
+                  f'        .decoded_size=sizeof({codec["decoded_type"]}),',
+                  f'        .encode_command={codec["encode"]}, .decode_status={codec["decode"]},', '    },']
     lines += ['};', 'const size_t DAJILOG_CAN_PROFILE_COUNT=sizeof(DAJILOG_CAN_PROFILES)/sizeof(DAJILOG_CAN_PROFILES[0]);', '',
               'const dajilog_can_device_config_t DAJILOG_CAN_DEVICES[] = {']
     for d in devices:
