@@ -8,6 +8,8 @@ set(DAJILOG_PLATFORM_COMPONENT_DIRS
 )
 
 set(DAJILOG_CONFIGURATION_COMPONENT_DIRS
+    "${COMMON_COMPONENTS}/configuration/dajilog_setting_table"
+    "${COMMON_COMPONENTS}/configuration/dajilog_setting_storage_nvs"
     "${COMMON_COMPONENTS}/configuration/dajilog_settings"
 )
 

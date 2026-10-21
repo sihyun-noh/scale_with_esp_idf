@@ -73,3 +73,31 @@ esp_err_t dajilog_system_core_update_motor(
                                                 s_implementation.context)
                : ESP_ERR_NOT_SUPPORTED;
 }
+
+esp_err_t dajilog_system_core_get_settings_draft(
+    dajilog_product_settings_snapshot_t *settings)
+{
+    return s_registered && s_implementation.get_settings_draft != NULL
+               ? s_implementation.get_settings_draft(
+                     settings, s_implementation.context)
+               : ESP_ERR_NOT_SUPPORTED;
+}
+
+esp_err_t dajilog_system_core_stage_ridge_settings(
+    const dajilog_ridge_settings_t *settings)
+{
+    return s_registered && s_implementation.stage_ridge_settings != NULL
+               ? s_implementation.stage_ridge_settings(
+                     settings, s_implementation.context)
+               : ESP_ERR_NOT_SUPPORTED;
+}
+
+esp_err_t dajilog_system_core_stage_prescription_settings(
+    const dajilog_prescription_settings_t *settings)
+{
+    return s_registered &&
+                   s_implementation.stage_prescription_settings != NULL
+               ? s_implementation.stage_prescription_settings(
+                     settings, s_implementation.context)
+               : ESP_ERR_NOT_SUPPORTED;
+}

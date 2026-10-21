@@ -8,7 +8,6 @@
 #include <cstring>
 
 #include "dajilog_system_core.h"
-#include "dajilog_settings.h"
 #include "dajilog_ui_adaptor.h"
 #include "dajilog_ui_msg.h"
 #include "esp_log.h"
@@ -30,10 +29,10 @@ constexpr size_t MAX_MESSAGES_PER_TICK = 4U;
 const char *TAG = "EezUiBinding7B";
 dajilog_ui_adaptor_t s_adaptor = {};
 bool s_attached = false;
-char s_ridge_count_text[DAJILOG_SETTING_STRING_CAPACITY] = {};
-char s_ridge_width_text[DAJILOG_SETTING_STRING_CAPACITY] = {};
-char s_actual_length_text[DAJILOG_SETTING_STRING_CAPACITY] = {};
-char s_nitrogen_rate_text[DAJILOG_SETTING_STRING_CAPACITY] = {};
+char s_ridge_count_text[32] = {};
+char s_ridge_width_text[32] = {};
+char s_actual_length_text[32] = {};
+char s_nitrogen_rate_text[32] = {};
 char s_operation_text[32] = {};
 char s_can_text[32] = {};
 char s_vehicle_speed_text[32] = {};
@@ -470,18 +469,16 @@ esp_err_t stage_ridge_from_ui()
         return ESP_ERR_INVALID_ARG;
     }
 
-    esp_err_t error = dajilog_settings_set_draft_int(
-        DAJILOG_SETTING_RECIPE_RIDGE_COUNT, ridge_count);
-    if (error == ESP_OK) {
-        error = dajilog_settings_set_draft_float(
-            DAJILOG_SETTING_RECIPE_RIDGE_WIDTH_M, ridge_width);
-    }
-    if (error == ESP_OK) {
-        error = dajilog_settings_set_draft_float(
-            DAJILOG_SETTING_RECIPE_ACTUAL_LENGTH_M, actual_length);
-    }
+    const dajilog_ridge_settings_t settings = {
+        .ridge_count = static_cast<uint32_t>(ridge_count),
+        .ridge_width_m = ridge_width,
+        .actual_length_m = actual_length,
+    };
+    const esp_err_t error =
+        ridge_count > 0
+            ? dajilog_system_core_stage_ridge_settings(&settings)
+            : ESP_ERR_INVALID_ARG;
     if (error != ESP_OK) {
-        (void)dajilog_settings_discard_all_drafts();
         ESP_LOGW(TAG, "ridge value is outside its schema range");
     }
     return error;
@@ -497,10 +494,12 @@ esp_err_t stage_fertilizer_from_ui()
         return ESP_ERR_INVALID_ARG;
     }
 
-    const esp_err_t error = dajilog_settings_set_draft_float(
-        DAJILOG_SETTING_RECIPE_NITROGEN_RATE_KG_N_PER_10A, nitrogen_rate);
+    const dajilog_prescription_settings_t settings = {
+        .nitrogen_rate_kg_n_per_10a = nitrogen_rate,
+    };
+    const esp_err_t error =
+        dajilog_system_core_stage_prescription_settings(&settings);
     if (error != ESP_OK) {
-        (void)dajilog_settings_discard_all_drafts();
         ESP_LOGW(TAG, "fertilizer value is outside its schema range");
     }
     return error;
@@ -508,42 +507,30 @@ esp_err_t stage_fertilizer_from_ui()
 
 esp_err_t render_current_recipe()
 {
-    int32_t ridge_count = 0;
-    float ridge_width = 0.0f;
-    float actual_length = 0.0f;
-    float nitrogen_rate = 0.0f;
-
-    esp_err_t error = dajilog_settings_get_int(
-        DAJILOG_SETTING_RECIPE_RIDGE_COUNT, &ridge_count);
-    if (error == ESP_OK) {
-        error = dajilog_settings_get_float(
-            DAJILOG_SETTING_RECIPE_RIDGE_WIDTH_M, &ridge_width);
-    }
-    if (error == ESP_OK) {
-        error = dajilog_settings_get_float(
-            DAJILOG_SETTING_RECIPE_ACTUAL_LENGTH_M, &actual_length);
-    }
-    if (error == ESP_OK) {
-        error = dajilog_settings_get_float(
-            DAJILOG_SETTING_RECIPE_NITROGEN_RATE_KG_N_PER_10A,
-            &nitrogen_rate);
-    }
+    dajilog_product_settings_snapshot_t settings = {};
+    const esp_err_t error =
+        dajilog_system_core_get_settings_draft(&settings);
     if (error != ESP_OK) {
         return error;
     }
 
     set_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_RIDGE_COUNT_TEXT,
              s_ridge_count_text, sizeof(s_ridge_count_text),
-             STRING_ID_RIDGE_COUNT, "%.0f", static_cast<double>(ridge_count));
+             STRING_ID_RIDGE_COUNT, "%.0f",
+             static_cast<double>(settings.ridge.ridge_count));
     set_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_RIDGE_WIDTH_M_TEXT,
              s_ridge_width_text, sizeof(s_ridge_width_text),
-             STRING_ID_RIDGE_WIDTH, "%.2f", static_cast<double>(ridge_width));
+             STRING_ID_RIDGE_WIDTH, "%.2f",
+             static_cast<double>(settings.ridge.ridge_width_m));
     set_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_ACTUAL_LENGTH_M_TEXT,
              s_actual_length_text, sizeof(s_actual_length_text),
-             STRING_ID_ACTUAL_LENGTH, "%.1f", static_cast<double>(actual_length));
+             STRING_ID_ACTUAL_LENGTH, "%.1f",
+             static_cast<double>(settings.ridge.actual_length_m));
     set_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_NITROGEN_RATE_KG_N_PER_10A_TEXT,
              s_nitrogen_rate_text, sizeof(s_nitrogen_rate_text),
-             STRING_ID_NITROGEN_RATE, "%g", static_cast<double>(nitrogen_rate));
+             STRING_ID_NITROGEN_RATE, "%g",
+             static_cast<double>(
+                 settings.prescription.nitrogen_rate_kg_n_per_10a));
     return ESP_OK;
 }
 

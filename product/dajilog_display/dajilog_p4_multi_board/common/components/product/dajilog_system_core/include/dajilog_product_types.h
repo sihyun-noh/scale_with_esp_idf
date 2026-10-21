@@ -11,6 +11,24 @@ extern "C" {
 #define DAJILOG_RECIPE_NAME_CAPACITY 32U
 #define DAJILOG_ALARM_TEXT_CAPACITY 64U
 
+typedef struct {
+    uint32_t ridge_count;
+    float ridge_width_m;
+    float actual_length_m;
+} dajilog_ridge_settings_t;
+
+typedef struct {
+    float nitrogen_rate_kg_n_per_10a;
+} dajilog_prescription_settings_t;
+
+typedef struct {
+    dajilog_ridge_settings_t ridge;
+    dajilog_prescription_settings_t prescription;
+    uint32_t ridge_revision;
+    uint32_t prescription_revision;
+    bool dirty;
+} dajilog_product_settings_snapshot_t;
+
 typedef enum {
     DAJILOG_OPERATION_BOOT = 0,
     DAJILOG_OPERATION_INITIALIZING,

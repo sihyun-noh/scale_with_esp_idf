@@ -1,5 +1,6 @@
 #include "dajilog_system_core.h"
 #include "dajilog_product_controller.h"
+#include "dajilog_product_settings.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -8,7 +9,6 @@
 #include "dajilog_board.h"
 #include "dajilog_can.h"
 #include "dajilog_can_device_manager.h"
-#include "dajilog_settings.h"
 #include "dajilog_ui_bridge.h"
 #include "dajilog_ui_msg.h"
 #include "esp_log.h"
@@ -292,8 +292,9 @@ static void storage_task(void* context) {
   (void)context;
   storage_request_t request;
   while (xQueueReceive(s_storage_queue, &request, portMAX_DELAY) == pdTRUE) {
-    esp_err_t error = request.operation == STORAGE_SAVE_SETTINGS ? dajilog_settings_save_all()
-                                                                 : dajilog_settings_discard_all_drafts();
+    esp_err_t error = request.operation == STORAGE_SAVE_SETTINGS
+                          ? dajilog_product_settings_apply()
+                          : dajilog_product_settings_discard();
     const core_message_t result = {
       .kind = CORE_MESSAGE_STORAGE_RESULT,
       .sequence = request.sequence,
@@ -310,7 +311,7 @@ static esp_err_t product_start(void* context) {
   if (s_started) {
     return ESP_OK;
   }
-  esp_err_t error = dajilog_settings_init();
+  esp_err_t error = dajilog_product_settings_init();
   if (error != ESP_OK) {
     return error;
   }
@@ -431,6 +432,24 @@ static esp_err_t product_update_motor(size_t index,
   return xQueueSend(s_system_queue, &message, 0) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
+static esp_err_t product_get_settings_draft(
+    dajilog_product_settings_snapshot_t* settings, void* context) {
+  (void)context;
+  return dajilog_product_settings_get_draft(settings);
+}
+
+static esp_err_t product_stage_ridge_settings(
+    const dajilog_ridge_settings_t* settings, void* context) {
+  (void)context;
+  return dajilog_product_settings_stage_ridge(settings);
+}
+
+static esp_err_t product_stage_prescription_settings(
+    const dajilog_prescription_settings_t* settings, void* context) {
+  (void)context;
+  return dajilog_product_settings_stage_prescription(settings);
+}
+
 esp_err_t dajilog_product_controller_register(void) {
   const dajilog_system_core_implementation_t implementation = {
     .start = product_start,
@@ -439,6 +458,9 @@ esp_err_t dajilog_product_controller_register(void) {
     .update_vehicle = product_update_vehicle,
     .update_motor = product_update_motor,
     .register_motor_backend = product_register_motor_backend,
+    .get_settings_draft = product_get_settings_draft,
+    .stage_ridge_settings = product_stage_ridge_settings,
+    .stage_prescription_settings = product_stage_prescription_settings,
     .context = NULL,
   };
   return dajilog_system_core_register_implementation(&implementation);

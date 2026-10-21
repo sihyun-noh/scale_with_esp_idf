@@ -32,6 +32,12 @@ typedef struct {
                               void *context);
     esp_err_t (*register_motor_backend)(
         const dajilog_motor_backend_t *backend, void *context);
+    esp_err_t (*get_settings_draft)(
+        dajilog_product_settings_snapshot_t *settings, void *context);
+    esp_err_t (*stage_ridge_settings)(
+        const dajilog_ridge_settings_t *settings, void *context);
+    esp_err_t (*stage_prescription_settings)(
+        const dajilog_prescription_settings_t *settings, void *context);
     void *context;
 } dajilog_system_core_implementation_t;
 
@@ -46,6 +52,12 @@ esp_err_t dajilog_system_core_update_vehicle(float speed_kmh, bool online,
                                              uint32_t signal_age_ms);
 esp_err_t dajilog_system_core_update_motor(size_t index,
                                            const dajilog_motor_snapshot_t *motor);
+esp_err_t dajilog_system_core_get_settings_draft(
+    dajilog_product_settings_snapshot_t *settings);
+esp_err_t dajilog_system_core_stage_ridge_settings(
+    const dajilog_ridge_settings_t *settings);
+esp_err_t dajilog_system_core_stage_prescription_settings(
+    const dajilog_prescription_settings_t *settings);
 
 #ifdef __cplusplus
 }
