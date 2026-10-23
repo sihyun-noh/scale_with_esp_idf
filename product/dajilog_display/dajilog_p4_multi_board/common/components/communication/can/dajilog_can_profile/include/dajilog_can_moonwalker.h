@@ -52,8 +52,10 @@ enum {
   DAJILOG_MOONWALKER_INDEX_VELOCITY = 0x007C,
 };
 
+/** @brief Encode a typed MoonWalker read/write request into a CAN frame. */
 esp_err_t dajilog_moonwalker_encode_request(const void *input, uint32_t id,
                                              dajilog_can_frame_t *frame);
+/** @brief Decode a MoonWalker response frame into a typed response record. */
 esp_err_t dajilog_moonwalker_decode_response(const dajilog_can_frame_t *frame,
                                              void *output, size_t output_size);
 

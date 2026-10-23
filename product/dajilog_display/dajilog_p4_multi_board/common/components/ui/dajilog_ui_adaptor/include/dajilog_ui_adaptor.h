@@ -36,20 +36,23 @@ typedef struct {
     void *render_context;
 } dajilog_ui_adaptor_config_t;
 
+/** @brief Create an adaptor queue and subscribe it to UI Bridge events. */
 esp_err_t dajilog_ui_adaptor_attach(
     dajilog_ui_adaptor_t *adaptor,
     const dajilog_ui_adaptor_config_t *config);
 
+/** @brief Unsubscribe an adaptor and release its queue resources. */
 esp_err_t dajilog_ui_adaptor_detach(dajilog_ui_adaptor_t *adaptor);
 
 /**
- * Drain pending Bridge messages and invoke the project render callback.
+ * @brief Drain pending Bridge messages and invoke the render callback.
+ *
  * Call only from the LVGL/EEZ UI context, normally from an LVGL timer.
  */
 size_t dajilog_ui_adaptor_process(dajilog_ui_adaptor_t *adaptor,
                                   size_t max_messages);
 
-/** Submit a fully typed, project-owned command message to the Bridge. */
+/** @brief Submit a fully typed, project-owned command message to the Bridge. */
 esp_err_t dajilog_ui_adaptor_submit(const dajilog_ui_msg_t *command);
 
 #ifdef __cplusplus

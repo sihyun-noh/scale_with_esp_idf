@@ -28,10 +28,15 @@ typedef struct {
     char message[96];
 } dajilog_pc_usb_update_status_t;
 
+/** @brief Start the PC-facing USB MSC firmware update service. */
 esp_err_t dajilog_pc_usb_update_start(void);
+/** @brief Validate and install the firmware copied through PC USB MSC. */
 esp_err_t dajilog_pc_usb_update_apply(void);
+/** @brief Clear a recoverable error and return to update-ready state. */
 esp_err_t dajilog_pc_usb_update_retry(void);
+/** @brief Reboot only after a firmware image is ready to boot. */
 esp_err_t dajilog_pc_usb_update_reboot(void);
+/** @brief Copy current PC USB update progress and error state. */
 void dajilog_pc_usb_update_get_status(dajilog_pc_usb_update_status_t *status);
 
 #ifdef __cplusplus

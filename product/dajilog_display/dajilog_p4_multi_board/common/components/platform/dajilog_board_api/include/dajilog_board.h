@@ -36,12 +36,19 @@ typedef struct {
     uint32_t bitrate;
 } dajilog_board_can_config_t;
 
+/** @brief Return immutable board capabilities and display geometry. */
 const dajilog_board_info_t *dajilog_board_get_info(void);
+/** @brief Return immutable board-specific CAN pins and bitrate. */
 const dajilog_board_can_config_t *dajilog_board_get_can_config(void);
+/** @brief Initialize the selected BSP and board peripherals. */
 esp_err_t dajilog_board_init(void);
+/** @brief Start the board display, touch input, and LVGL integration. */
 esp_err_t dajilog_board_display_start(void);
+/** @brief Enable the board backlight after the first screen is ready. */
 esp_err_t dajilog_board_backlight_on(void);
+/** @brief Acquire the board LVGL lock for safe UI access. */
 bool dajilog_board_display_lock(int timeout_ms);
+/** @brief Release the board LVGL lock. */
 void dajilog_board_display_unlock(void);
 
 #ifdef __cplusplus

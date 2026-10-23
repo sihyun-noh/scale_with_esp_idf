@@ -18,10 +18,12 @@ typedef struct {
     bool initialized;
 } dajilog_setting_storage_nvs_t;
 
+/** @brief Initialize a mutex-protected NVS namespace backend. */
 esp_err_t dajilog_setting_storage_nvs_init(
     dajilog_setting_storage_nvs_t *storage,
     const char *namespace_name);
 
+/** @brief Load and validate one versioned, checksummed payload blob. */
 esp_err_t dajilog_setting_storage_nvs_load(
     dajilog_setting_storage_nvs_t *storage,
     const char *key,
@@ -29,6 +31,7 @@ esp_err_t dajilog_setting_storage_nvs_load(
     void *payload,
     size_t payload_size);
 
+/** @brief Save one payload as a versioned record and commit it to NVS. */
 esp_err_t dajilog_setting_storage_nvs_save(
     dajilog_setting_storage_nvs_t *storage,
     const char *key,
@@ -36,6 +39,7 @@ esp_err_t dajilog_setting_storage_nvs_save(
     const void *payload,
     size_t payload_size);
 
+/** @brief Remove one stored payload key and commit the deletion. */
 esp_err_t dajilog_setting_storage_nvs_erase(
     dajilog_setting_storage_nvs_t *storage,
     const char *key);

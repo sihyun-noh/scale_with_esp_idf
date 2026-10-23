@@ -69,10 +69,12 @@ typedef struct {
     dajilog_ui_value_t payload;
 } dajilog_ui_msg_t;
 
+/** @brief Initialize a message header, timestamp, sequence, and empty payload. */
 void dajilog_ui_msg_init(dajilog_ui_msg_t *message,
                          dajilog_ui_msg_kind_t kind,
                          uint32_t topic);
 
+/** @brief Allocate the next nonzero process-wide UI message sequence. */
 uint32_t dajilog_ui_msg_next_sequence(void);
 
 #ifdef __cplusplus

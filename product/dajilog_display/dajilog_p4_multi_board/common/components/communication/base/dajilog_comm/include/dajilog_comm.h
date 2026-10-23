@@ -58,21 +58,26 @@ typedef struct {
                            dajilog_comm_state_t *out_state);
 } dajilog_comm_backend_ops_t;
 
-/** Register a backend during system initialization, before concurrent use. */
+/** @brief Register a backend during initialization, before concurrent use. */
 esp_err_t dajilog_comm_register_backend(dajilog_comm_type_t type,
                                         const dajilog_comm_backend_ops_t *ops,
                                         void *backend_context);
 
+/** @brief Start the registered backend for the selected communication type. */
 esp_err_t dajilog_comm_start(dajilog_comm_type_t type);
+/** @brief Stop the registered backend for the selected communication type. */
 esp_err_t dajilog_comm_stop(dajilog_comm_type_t type);
+/** @brief Route a typed request to its registered communication backend. */
 esp_err_t dajilog_comm_send(const dajilog_comm_request_t *request);
+/** @brief Read the current state reported by a registered backend. */
 esp_err_t dajilog_comm_get_state(dajilog_comm_type_t type,
                                  dajilog_comm_state_t *out_state);
 
+/** @brief Install the single application event callback used by all backends. */
 void dajilog_comm_set_event_handler(dajilog_comm_event_handler_t handler,
                                     void *user_context);
 
-/** Called by a backend to publish a decoded receive/error event. */
+/** @brief Publish a decoded receive or error event from a backend. */
 void dajilog_comm_publish_event(const dajilog_comm_event_t *event);
 
 #ifdef __cplusplus

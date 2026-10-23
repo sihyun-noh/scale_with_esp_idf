@@ -18,7 +18,9 @@ typedef struct {
   uint16_t rcs_dbm;
   bool reverse;
 } dajilog_tr07e_measurement_t;
+/** @brief Encode a TR07E configuration payload into a CAN command frame. */
 esp_err_t dajilog_tr07e_encode_config(const void *, uint32_t, dajilog_can_frame_t *);
+/** @brief Decode a TR07E status frame into speed and direction measurements. */
 esp_err_t dajilog_tr07e_decode_measurement(const dajilog_can_frame_t *, void *, size_t);
 #ifdef __cplusplus
 }

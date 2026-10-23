@@ -64,6 +64,7 @@ static bool s_started;
 static dajilog_motor_backend_t s_motor_backend;
 static bool s_motor_backend_registered;
 
+/** @brief Initialize the board CAN driver and start the device manager. */
 static esp_err_t start_can_service(void) {
   const dajilog_board_can_config_t* board_can = dajilog_board_get_can_config();
   if (board_can == NULL || !board_can->supported) {
@@ -92,6 +93,7 @@ static esp_err_t start_can_service(void) {
   return error;
 }
 
+/** @brief Return a log-friendly name for a product operation state. */
 static const char* state_name(dajilog_operation_state_t state) {
   static const char* names[] = {
     "BOOT", "INITIALIZING", "READY", "RUN_AUTO", "RUN_MANUAL", "STOPPING", "FAULT",
@@ -99,6 +101,7 @@ static const char* state_name(dajilog_operation_state_t state) {
   return (unsigned)state < (sizeof(names) / sizeof(names[0])) ? names[state] : "UNKNOWN";
 }
 
+/** @brief Convert an ESP-IDF result into the stable UI result contract. */
 static dajilog_ui_result_t map_result(esp_err_t error) {
   if (error == ESP_OK) {
     return DAJILOG_UI_RESULT_OK;
@@ -115,6 +118,7 @@ static dajilog_ui_result_t map_result(esp_err_t error) {
   return DAJILOG_UI_RESULT_INTERNAL_ERROR;
 }
 
+/** @brief Publish a scalar state or result message through the UI Bridge. */
 static void publish_u32(dajilog_ui_msg_kind_t kind, uint32_t topic, uint32_t sequence, dajilog_ui_result_t result,
                         uint32_t value) {
   dajilog_ui_msg_t message;
@@ -129,6 +133,7 @@ static void publish_u32(dajilog_ui_msg_kind_t kind, uint32_t topic, uint32_t seq
   }
 }
 
+/** @brief Advance the dashboard revision and notify UI subscribers. */
 static void publish_snapshot(void) {
   uint32_t revision;
   xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
@@ -141,10 +146,12 @@ static void publish_snapshot(void) {
   publish_u32(DAJILOG_UI_MSG_STATE, DAJILOG_UI_STATE_DASHBOARD_SNAPSHOT, 0, DAJILOG_UI_RESULT_OK, revision);
 }
 
+/** @brief Publish an asynchronous command result with its request sequence. */
 static void publish_result(uint32_t topic, uint32_t sequence, esp_err_t error) {
   publish_u32(DAJILOG_UI_MSG_RESULT, topic, sequence, map_result(error), (uint32_t)error);
 }
 
+/** @brief Update the FSM state stored in the protected dashboard snapshot. */
 static void set_state(dajilog_operation_state_t state) {
   xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
   s_snapshot.operation_state = state;
@@ -152,6 +159,7 @@ static void set_state(dajilog_operation_state_t state) {
   ESP_LOGI(TAG, "FSM state: %s", state_name(state));
 }
 
+/** @brief Replace the current alarm fields in the dashboard snapshot. */
 static void set_alarm(dajilog_alarm_severity_t severity, uint32_t code, const char* text) {
   xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
   s_snapshot.alarm_severity = severity;
@@ -160,6 +168,12 @@ static void set_alarm(dajilog_alarm_severity_t severity, uint32_t code, const ch
   xSemaphoreGive(s_snapshot_lock);
 }
 
+/**
+ * @brief Copy a UI command into the System Task queue.
+ *
+ * This callback runs in the command producer's context and never performs
+ * motor, storage, or FSM work directly.
+ */
 static esp_err_t bridge_command_handler(const dajilog_ui_msg_t* command, void* context) {
   QueueHandle_t queue = (QueueHandle_t)context;
   if (command == NULL || queue == NULL || command->kind != DAJILOG_UI_MSG_COMMAND) {
@@ -182,6 +196,7 @@ static esp_err_t bridge_command_handler(const dajilog_ui_msg_t* command, void* c
   return xQueueSend(queue, &queued_message, 0) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
+/** @brief Enqueue a settings operation for exclusive execution by Storage Task. */
 static esp_err_t request_storage(storage_operation_t operation, uint32_t sequence) {
   const storage_request_t request = {
     .operation = operation,
@@ -190,6 +205,12 @@ static esp_err_t request_storage(storage_operation_t operation, uint32_t sequenc
   return xQueueSend(s_storage_queue, &request, 0) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
+/**
+ * @brief Apply FSM policy to one UI command received by System Task.
+ *
+ * Long-running storage work is deferred to Storage Task. Immediate motor and
+ * alarm decisions remain serialized in System Task.
+ */
 static void process_command(const core_message_t* message) {
   esp_err_t error = ESP_OK;
   bool deferred = false;
@@ -243,6 +264,12 @@ static void process_command(const core_message_t* message) {
   }
 }
 
+/**
+ * @brief Own the product FSM and merge UI, storage, vehicle, and motor events.
+ *
+ * This is the only task that mutates the logical dashboard state in response
+ * to queued events.
+ */
 static void system_task(void* context) {
   (void)context;
   set_state(DAJILOG_OPERATION_READY);
@@ -288,6 +315,11 @@ static void system_task(void* context) {
   }
 }
 
+/**
+ * @brief Execute settings save/discard requests outside LVGL and System Task.
+ *
+ * Completion is returned to System Task as `CORE_MESSAGE_STORAGE_RESULT`.
+ */
 static void storage_task(void* context) {
   (void)context;
   storage_request_t request;
@@ -306,6 +338,12 @@ static void storage_task(void* context) {
   }
 }
 
+/**
+ * @brief Initialize product settings, queues, tasks, UI Bridge, and CAN service.
+ *
+ * Called through the common System Core facade after all product backends have
+ * been registered.
+ */
 static esp_err_t product_start(void* context) {
   (void)context;
   if (s_started) {
@@ -365,6 +403,7 @@ static esp_err_t product_start(void* context) {
   return ESP_OK;
 }
 
+/** @brief Install the board-specific motor callbacks before controller start. */
 static esp_err_t product_register_motor_backend(
     const dajilog_motor_backend_t* backend, void* context) {
   (void)context;
@@ -379,11 +418,13 @@ static esp_err_t product_register_motor_backend(
   return ESP_OK;
 }
 
+/** @brief Report whether product queues and worker tasks have been started. */
 static bool product_is_started(void* context) {
   (void)context;
   return s_started;
 }
 
+/** @brief Copy the mutex-protected dashboard snapshot for a reader. */
 static esp_err_t product_get_snapshot(dajilog_dashboard_snapshot_t* snapshot,
                                       void* context) {
   (void)context;
@@ -399,6 +440,7 @@ static esp_err_t product_get_snapshot(dajilog_dashboard_snapshot_t* snapshot,
   return ESP_OK;
 }
 
+/** @brief Queue a decoded vehicle-speed update for System Task processing. */
 static esp_err_t product_update_vehicle(float speed_kmh, bool online,
                                         uint32_t signal_age_ms,
                                         void* context) {
@@ -418,6 +460,7 @@ static esp_err_t product_update_vehicle(float speed_kmh, bool online,
   return xQueueSend(s_system_queue, &message, 0) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
+/** @brief Queue one decoded motor state update for System Task processing. */
 static esp_err_t product_update_motor(size_t index,
                                       const dajilog_motor_snapshot_t* motor,
                                       void* context) {
@@ -432,24 +475,28 @@ static esp_err_t product_update_motor(size_t index,
   return xQueueSend(s_system_queue, &message, 0) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
+/** @brief Forward a draft read through the product settings service. */
 static esp_err_t product_get_settings_draft(
     dajilog_product_settings_snapshot_t* settings, void* context) {
   (void)context;
   return dajilog_product_settings_get_draft(settings);
 }
 
+/** @brief Forward validated ridge input to the product settings draft. */
 static esp_err_t product_stage_ridge_settings(
     const dajilog_ridge_settings_t* settings, void* context) {
   (void)context;
   return dajilog_product_settings_stage_ridge(settings);
 }
 
+/** @brief Forward validated prescription input to the product settings draft. */
 static esp_err_t product_stage_prescription_settings(
     const dajilog_prescription_settings_t* settings, void* context) {
   (void)context;
   return dajilog_product_settings_stage_prescription(settings);
 }
 
+/** @brief Bind the 7B implementation callbacks to the common System Core API. */
 esp_err_t dajilog_product_controller_register(void) {
   const dajilog_system_core_implementation_t implementation = {
     .start = product_start,

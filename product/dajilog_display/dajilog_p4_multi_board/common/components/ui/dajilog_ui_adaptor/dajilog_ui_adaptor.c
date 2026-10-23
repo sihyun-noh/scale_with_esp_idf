@@ -5,6 +5,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 
+/** @brief Copy a Bridge notification into one adaptor's private UI queue. */
 static void bridge_observer(const dajilog_ui_msg_t *message, void *user_context)
 {
     dajilog_ui_adaptor_t *adaptor = (dajilog_ui_adaptor_t *)user_context;

@@ -11,6 +11,12 @@
 
 static const char *TAG = "DajilogSpeed7B";
 
+/**
+ * @brief Convert a decoded TR07E measurement to km/h and queue it to Core.
+ *
+ * This callback runs from CAN Device Manager notification context and performs
+ * no LVGL operations.
+ */
 static void speed_sensor_observer(
     size_t index, const dajilog_can_device_config_t *config,
     const dajilog_can_protocol_profile_t *profile,
@@ -40,6 +46,7 @@ static void speed_sensor_observer(
     }
 }
 
+/** @brief Subscribe the product speed adapter to CAN Device Manager updates. */
 esp_err_t dajilog_speed_sensor_register(void)
 {
     return dajilog_can_device_manager_add_observer(

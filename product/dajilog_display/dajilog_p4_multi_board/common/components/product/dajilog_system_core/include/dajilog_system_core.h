@@ -41,21 +41,31 @@ typedef struct {
     void *context;
 } dajilog_system_core_implementation_t;
 
+/** @brief Register one product-owned System Core implementation. */
 esp_err_t dajilog_system_core_register_implementation(
     const dajilog_system_core_implementation_t *implementation);
+/** @brief Register the product motor backend before System Core starts. */
 esp_err_t dajilog_system_core_register_motor_backend(
     const dajilog_motor_backend_t *backend);
+/** @brief Start the registered product implementation. */
 esp_err_t dajilog_system_core_start(void);
+/** @brief Report whether the registered product implementation is running. */
 bool dajilog_system_core_is_started(void);
+/** @brief Copy the product-owned dashboard snapshot. */
 esp_err_t dajilog_system_core_get_snapshot(dajilog_dashboard_snapshot_t *snapshot);
+/** @brief Forward decoded vehicle speed state to the product implementation. */
 esp_err_t dajilog_system_core_update_vehicle(float speed_kmh, bool online,
                                              uint32_t signal_age_ms);
+/** @brief Forward one decoded motor state to the product implementation. */
 esp_err_t dajilog_system_core_update_motor(size_t index,
                                            const dajilog_motor_snapshot_t *motor);
+/** @brief Copy the product-owned editable settings draft. */
 esp_err_t dajilog_system_core_get_settings_draft(
     dajilog_product_settings_snapshot_t *settings);
+/** @brief Forward ridge input to the product settings service. */
 esp_err_t dajilog_system_core_stage_ridge_settings(
     const dajilog_ridge_settings_t *settings);
+/** @brief Forward prescription input to the product settings service. */
 esp_err_t dajilog_system_core_stage_prescription_settings(
     const dajilog_prescription_settings_t *settings);
 

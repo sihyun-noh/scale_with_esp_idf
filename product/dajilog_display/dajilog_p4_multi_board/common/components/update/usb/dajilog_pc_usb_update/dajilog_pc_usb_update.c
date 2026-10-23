@@ -55,6 +55,7 @@ static bool s_apply_running;
  */
 static tinyusb_config_t s_tinyusb_config;
 
+/** @brief Atomically reserve the singleton PC USB update service. */
 static bool claim_service_start(void)
 {
     bool claimed = false;
@@ -69,6 +70,7 @@ static bool claim_service_start(void)
     return claimed;
 }
 
+/** @brief Publish whether singleton service startup completed successfully. */
 static void finish_service_start(bool success)
 {
     portENTER_CRITICAL(&s_status_lock);
@@ -77,6 +79,7 @@ static void finish_service_start(bool success)
     portEXIT_CRITICAL(&s_status_lock);
 }
 
+/** @brief Replace the mutex-protected update state and progress message. */
 static void set_status(
     dajilog_pc_usb_update_state_t state,
     esp_err_t error,
@@ -96,6 +99,7 @@ static void set_status(
     portEXIT_CRITICAL(&s_status_lock);
 }
 
+/** @brief Enter the recoverable error state with a user-facing message. */
 static void set_error(esp_err_t error, const char *message)
 {
     ESP_LOGE(TAG, "%s: %s", message, esp_err_to_name(error));
@@ -107,6 +111,7 @@ static void set_error(esp_err_t error, const char *message)
     set_status(DAJILOG_PC_USB_UPDATE_ERROR, error, 0, 0, 0, display_message);
 }
 
+/** @brief Delete an invalid update image so reboot cannot retry it forever. */
 static void remove_failed_update_file(void)
 {
     if (remove(UPDATE_FILE_PATH) == 0) {
@@ -114,6 +119,7 @@ static void remove_failed_update_file(void)
     }
 }
 
+/** @brief Verify the copied image is stable and matches its SHA-256 trailer. */
 static esp_err_t verify_update_file_hash(size_t file_size)
 {
     const size_t digest_size = 32;
@@ -177,6 +183,7 @@ static esp_err_t verify_update_file_hash(size_t file_size)
     return ESP_OK;
 }
 
+/** @brief Inspect file size, app metadata, version policy, and image hash. */
 static esp_err_t inspect_update_file(size_t *file_size)
 {
     struct stat file_stat;
@@ -283,6 +290,7 @@ static esp_err_t inspect_update_file(size_t *file_size)
     return ESP_OK;
 }
 
+/** @brief Detect a complete update image after the host finishes writing it. */
 static void scan_update_file(void)
 {
     dajilog_pc_usb_update_status_t current;
@@ -316,6 +324,7 @@ static void scan_update_file(void)
     );
 }
 
+/** @brief Periodically scan the USB MSC volume without blocking UI tasks. */
 static void service_task(void *arg)
 {
     (void)arg;
@@ -339,6 +348,7 @@ static void service_task(void *arg)
     vTaskDelete(NULL);
 }
 
+/** @brief Track TinyUSB MSC mount and unmount events. */
 static void storage_event_callback(
     tinyusb_msc_storage_handle_t handle,
     tinyusb_msc_event_t *event,
@@ -365,6 +375,7 @@ static void storage_event_callback(
     xQueueSend(s_event_queue, &event_id, 0);
 }
 
+/** @brief Convert TinyUSB bus events into update-service state changes. */
 static void usb_event_callback(tinyusb_event_t *event, void *arg)
 {
     (void)arg;
@@ -376,6 +387,7 @@ static void usb_event_callback(tinyusb_event_t *event, void *arg)
     }
 }
 
+/** @brief Validate and write the selected image in a dedicated OTA task. */
 static void apply_task(void *arg)
 {
     (void)arg;

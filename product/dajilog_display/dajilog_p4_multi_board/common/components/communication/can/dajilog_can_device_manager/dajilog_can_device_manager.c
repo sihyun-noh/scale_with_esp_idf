@@ -18,6 +18,7 @@ typedef struct {
 static observer_entry_t s_observers[MAX_OBSERVERS];
 static size_t s_observer_count;
 
+/** @brief Fan out one immutable device-state update to registered observers. */
 static void notify_observer(size_t index, const dajilog_can_device_state_t *state) {
   observer_entry_t observers[MAX_OBSERVERS];
   size_t observer_count;
@@ -33,6 +34,7 @@ static void notify_observer(size_t index, const dajilog_can_device_state_t *stat
   }
 }
 
+/** @brief Own CAN reception, profile decoding, online state, and timeouts. */
 static void rx_task(void *arg) {
   (void)arg;
   uint32_t raw_count = 0;

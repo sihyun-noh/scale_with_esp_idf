@@ -23,9 +23,13 @@ typedef struct {
     char message[160];
 } dajilog_usb_memory_update_status_t;
 
+/** @brief Start USB Host MSC discovery for a removable firmware drive. */
 esp_err_t dajilog_usb_memory_update_start(void);
+/** @brief Validate and install the firmware found on the mounted USB drive. */
 esp_err_t dajilog_usb_memory_update_apply(void);
+/** @brief Reboot only after the USB-drive firmware image is ready to boot. */
 esp_err_t dajilog_usb_memory_update_reboot(void);
+/** @brief Copy current USB-memory update progress and error state. */
 void dajilog_usb_memory_update_get_status(dajilog_usb_memory_update_status_t *status);
 
 #ifdef __cplusplus

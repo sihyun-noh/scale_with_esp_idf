@@ -22,6 +22,7 @@ static size_t s_driver_index = SIZE_MAX;
 static TaskHandle_t s_poll_task;
 static bool s_running;
 
+/** @brief Write one MoonWalker User Data register through the device manager. */
 static esp_err_t send_user_data(uint8_t sub_index, int32_t value)
 {
     if (s_driver_index == SIZE_MAX) {
@@ -38,6 +39,7 @@ static esp_err_t send_user_data(uint8_t sub_index, int32_t value)
         s_driver_index, &request, pdMS_TO_TICKS(100));
 }
 
+/** @brief Clear the common RUN signal and both front/rear target values. */
 static esp_err_t stop_motor(void *context)
 {
     (void)context;
@@ -51,6 +53,12 @@ static esp_err_t stop_motor(void *context)
     return front_error != ESP_OK ? front_error : rear_error;
 }
 
+/**
+ * @brief Translate a validated M1 manual command into MoonWalker User Data.
+ *
+ * Manual speed is limited to 30 RPM and is rejected while the driver is
+ * offline or faulted.
+ */
 static esp_err_t motor_command(const dajilog_manual_motor_command_t *command,
                                void *context)
 {
@@ -101,12 +109,14 @@ static esp_err_t motor_command(const dajilog_manual_motor_command_t *command,
     return error;
 }
 
+/** @brief Return the locally commanded RUN state for the manual motor backend. */
 static bool motor_is_running(void *context)
 {
     (void)context;
     return s_running;
 }
 
+/** @brief Decode one MoonWalker response into the matching dashboard motor. */
 static void update_motor_from_response(const dajilog_can_device_state_t *state)
 {
     const dajilog_moonwalker_response_t *response =
@@ -179,6 +189,11 @@ static void update_motor_from_response(const dajilog_can_device_state_t *state)
     (void)dajilog_system_core_update_motor(motor_index, &motor);
 }
 
+/**
+ * @brief Receive decoded MoonWalker device changes from CAN Device Manager.
+ *
+ * The observer forwards state through System Core instead of touching UI data.
+ */
 static void motor_observer(size_t index,
                            const dajilog_can_device_config_t *config,
                            const dajilog_can_protocol_profile_t *profile,
@@ -195,6 +210,7 @@ static void motor_observer(size_t index,
     update_motor_from_response(state);
 }
 
+/** @brief Periodically request status, fault, electrical, and RPM values. */
 static void motor_poll(void *context)
 {
     (void)context;
@@ -233,6 +249,7 @@ static void motor_poll(void *context)
     }
 }
 
+/** @brief Locate the configured MoonWalker device and start its polling task. */
 static esp_err_t motor_start(void *context)
 {
     (void)context;
@@ -259,6 +276,7 @@ static esp_err_t motor_start(void *context)
                : ESP_ERR_NO_MEM;
 }
 
+/** @brief Register the MoonWalker observer and expose motor callbacks to Core. */
 esp_err_t dajilog_motor_control_register(void)
 {
     esp_err_t error = dajilog_can_device_manager_add_observer(

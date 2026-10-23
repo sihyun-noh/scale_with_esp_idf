@@ -27,6 +27,7 @@ static dajilog_usb_memory_update_status_t s_status = {
     .message = "USB drive updater is not initialized",
 };
 
+/** @brief Replace the mutex-protected removable-drive update status. */
 static void set_status(dajilog_usb_memory_update_state_t state, esp_err_t error,
                        int progress, const char *message)
 {
@@ -38,6 +39,7 @@ static void set_status(dajilog_usb_memory_update_state_t state, esp_err_t error,
     portEXIT_CRITICAL(&s_lock);
 }
 
+/** @brief Enter the update error state with a user-facing message. */
 static void set_error(esp_err_t error, const char *message)
 {
     char text[sizeof(s_status.message)];
@@ -56,6 +58,7 @@ void dajilog_usb_memory_update_get_status(dajilog_usb_memory_update_status_t *st
     portEXIT_CRITICAL(&s_lock);
 }
 
+/** @brief Track USB Host MSC device connection and disconnection. */
 static void host_event_callback(esp_msc_host_handle_t handle,
                                 esp_msc_host_event_t event, void *user_ctx)
 {
@@ -89,6 +92,7 @@ static void host_event_callback(esp_msc_host_handle_t handle,
     }
 }
 
+/** @brief Convert MSC OTA progress events into a percentage for the UI. */
 static void ota_event_handler(void *arg, esp_event_base_t base,
                               int32_t event_id, void *event_data)
 {
@@ -101,6 +105,7 @@ static void ota_event_handler(void *arg, esp_event_base_t base,
     }
 }
 
+/** @brief Reject firmware built for another chip or product identity. */
 static esp_err_t validate_product(esp_msc_ota_handle_t ota)
 {
     esp_app_desc_t candidate;
@@ -124,6 +129,7 @@ static esp_err_t validate_product(esp_msc_ota_handle_t ota)
     return ESP_OK;
 }
 
+/** @brief Validate and install removable-drive firmware outside the UI task. */
 static void apply_task(void *arg)
 {
     (void)arg;

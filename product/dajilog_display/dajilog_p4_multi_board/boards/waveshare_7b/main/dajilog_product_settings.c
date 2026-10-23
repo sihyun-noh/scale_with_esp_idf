@@ -117,6 +117,7 @@ static bool s_dirty;
 static dajilog_setting_storage_nvs_t s_storage;
 static const char *TAG = "DajilogSettings";
 
+/** @brief Register product schemas and build current rows from NVS or defaults. */
 esp_err_t dajilog_product_settings_init(void)
 {
     if (s_lock != NULL) {
@@ -202,6 +203,7 @@ esp_err_t dajilog_product_settings_init(void)
     return ESP_OK;
 }
 
+/** @brief Copy editable drafts and their current table revisions. */
 esp_err_t dajilog_product_settings_get_draft(
     dajilog_product_settings_snapshot_t *settings)
 {
@@ -227,6 +229,7 @@ esp_err_t dajilog_product_settings_get_draft(
     return error;
 }
 
+/** @brief Validate and replace only the editable ridge draft. */
 esp_err_t dajilog_product_settings_stage_ridge(
     const dajilog_ridge_settings_t *settings)
 {
@@ -245,6 +248,7 @@ esp_err_t dajilog_product_settings_stage_ridge(
     return ESP_OK;
 }
 
+/** @brief Validate and replace only the editable prescription draft. */
 esp_err_t dajilog_product_settings_stage_prescription(
     const dajilog_prescription_settings_t *settings)
 {
@@ -263,6 +267,7 @@ esp_err_t dajilog_product_settings_stage_prescription(
     return ESP_OK;
 }
 
+/** @brief Commit one complete product snapshot, then update both table rows. */
 esp_err_t dajilog_product_settings_apply(void)
 {
     if (s_lock == NULL) {
@@ -307,6 +312,7 @@ esp_err_t dajilog_product_settings_apply(void)
     return error;
 }
 
+/** @brief Restore editable drafts from the current saved RAM table rows. */
 esp_err_t dajilog_product_settings_discard(void)
 {
     if (s_lock == NULL) {

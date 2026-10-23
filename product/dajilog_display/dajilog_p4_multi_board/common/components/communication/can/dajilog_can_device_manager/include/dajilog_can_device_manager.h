@@ -20,15 +20,21 @@ typedef void (*dajilog_can_device_observer_t)(
     const dajilog_can_device_state_t *state,
     void *context);
 
+/** @brief Replace all observers with one compatibility observer. */
 esp_err_t dajilog_can_device_manager_set_observer(
     dajilog_can_device_observer_t observer, void *context);
+/** @brief Add an observer notified after a configured device state changes. */
 esp_err_t dajilog_can_device_manager_add_observer(
     dajilog_can_device_observer_t observer, void *context);
+/** @brief Start RX processing and timeout supervision for configured devices. */
 esp_err_t dajilog_can_device_manager_start(void);
+/** @brief Copy one configured device description and its latest state. */
 esp_err_t dajilog_can_device_manager_get(size_t index, const dajilog_can_device_config_t **config,
                                          dajilog_can_device_state_t *state);
+/** @brief Encode and send a profile-specific command to one device instance. */
 esp_err_t dajilog_can_device_manager_send(size_t index, const void *command,
                                           TickType_t timeout);
+/** @brief Return the number of enabled device instances in the generated manifest. */
 size_t dajilog_can_device_manager_count(void);
 #ifdef __cplusplus
 }

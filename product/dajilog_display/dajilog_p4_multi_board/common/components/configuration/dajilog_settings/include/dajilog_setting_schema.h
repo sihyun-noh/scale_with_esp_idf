@@ -23,12 +23,15 @@ typedef struct {
     bool requires_reboot;
 } dajilog_setting_schema_t;
 
+/** @brief Return the legacy v0.1 schema entry for an enum ID. */
 const dajilog_setting_schema_t *dajilog_setting_schema_get(
     dajilog_setting_id_t id);
 
+/** @brief Find a legacy v0.1 schema entry by its stable string key. */
 const dajilog_setting_schema_t *dajilog_setting_schema_find(
     const char *key);
 
+/** @brief Return the number of entries in the legacy v0.1 schema. */
 size_t dajilog_setting_schema_count(void);
 
 #ifdef __cplusplus

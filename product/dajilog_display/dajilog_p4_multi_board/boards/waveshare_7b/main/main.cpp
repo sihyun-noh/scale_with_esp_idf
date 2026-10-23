@@ -5,6 +5,11 @@
 
 #include "esp_check.h"
 
+/**
+ * @brief Register product-specific backends and start the shared product UI.
+ *
+ * ESP-IDF invokes this entry point once after platform initialization.
+ */
 extern "C" void app_main(void)
 {
     ESP_ERROR_CHECK(dajilog_product_controller_register());
