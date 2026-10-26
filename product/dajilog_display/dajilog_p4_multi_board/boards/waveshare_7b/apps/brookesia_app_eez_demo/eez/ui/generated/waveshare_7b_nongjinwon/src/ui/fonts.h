@@ -10,6 +10,7 @@ extern "C" {
 extern const lv_font_t ui_font_maru_buri_regular_kr16;
 extern const lv_font_t ui_font_maru_buri_regular_kr20;
 extern const lv_font_t ui_font_maru_buri_regular_kr28;
+extern const lv_font_t ui_font_maru_buri_regular_num36;
 
 #ifndef EXT_FONT_DESC_T
 #define EXT_FONT_DESC_T

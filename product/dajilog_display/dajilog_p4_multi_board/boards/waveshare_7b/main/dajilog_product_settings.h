@@ -11,7 +11,8 @@ extern "C" {
  * @brief Initialize the 7B product schemas and restore saved settings from NVS.
  *
  * Valid restored values become both the current table rows and editable drafts.
- * Missing or rejected data falls back to firmware defaults.
+ * Missing or rejected data remains UNSET; example values are never installed
+ * as firmware defaults.
  */
 esp_err_t dajilog_product_settings_init(void);
 
@@ -48,6 +49,13 @@ esp_err_t dajilog_product_settings_apply(void);
  * @brief Discard unsaved edits and restore drafts from current table rows.
  */
 esp_err_t dajilog_product_settings_discard(void);
+
+/** @brief Confirm the saved configuration for use by the next RUN. */
+esp_err_t dajilog_product_settings_confirm(void);
+
+/** @brief Copy the confirmed applied configuration for a RUN context. */
+esp_err_t dajilog_product_settings_get_applied(
+    dajilog_product_settings_snapshot_t *settings);
 
 #ifdef __cplusplus
 }

@@ -1,6 +1,7 @@
 #include "dajilog_system_core.h"
 #include "dajilog_product_controller.h"
 #include "dajilog_product_settings.h"
+#include "dajilog_driver_policy.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -42,6 +43,8 @@ typedef struct {
   core_message_kind_t kind;
   uint32_t topic;
   uint32_t sequence;
+  uint32_t epoch;
+  int64_t posted_us;
   union {
     esp_err_t storage_error;
     dajilog_vehicle_snapshot_t vehicle;
@@ -49,7 +52,8 @@ typedef struct {
       size_t index;
       dajilog_motor_snapshot_t motor;
     } motor;
-    dajilog_manual_motor_command_t manual_motor;
+    dajilog_motor_voltage_command_t motor_voltage;
+    dajilog_driver_setting_t driver;
   } data;
 } core_message_t;
 
@@ -63,6 +67,43 @@ static dajilog_dashboard_snapshot_t s_snapshot;
 static bool s_started;
 static dajilog_motor_backend_t s_motor_backend;
 static bool s_motor_backend_registered;
+static uint32_t s_stop_epoch;
+static bool s_stop_requested;
+static bool s_test_active;
+static int64_t s_test_deadline;
+static dajilog_motor_voltage_command_t s_test_command;
+static int64_t s_command_time[DAJILOG_MOTOR_CHANNEL_COUNT];
+static uint8_t s_stop_pending_mask;
+static uint8_t s_unconfirmed_output_mask;
+static int64_t s_stop_deadline;
+
+/** @brief Validate both channels without changing output or the applied snapshot. */
+static esp_err_t validate_driver(const dajilog_driver_setting_t *driver) {
+  if (driver->mode == 1) return ESP_ERR_NOT_SUPPORTED;
+  return dajilog_driver_setting_valid(driver) ? ESP_OK : ESP_ERR_INVALID_ARG;
+}
+
+/** @brief Require live, fault-free feedback before authorizing energization. */
+static bool channel_ready(size_t index) {
+  return index < DAJILOG_MOTOR_CHANNEL_COUNT &&
+         dajilog_driver_feedback_ready(&s_snapshot.motors[index], esp_timer_get_time());
+}
+
+/** @brief Track requested voltage only after backend acceptance (not physical confirmation). */
+static esp_err_t command_voltage(const dajilog_motor_voltage_command_t *command) {
+  if (!s_motor_backend_registered || s_motor_backend.command == NULL)
+    return ESP_ERR_NOT_SUPPORTED;
+  esp_err_t error = s_motor_backend.command(command, s_motor_backend.context);
+  if (error == ESP_OK) {
+    xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
+    s_snapshot.motors[command->motor_index].command_decivolt = command->final_decivolt;
+    s_snapshot.motors[command->motor_index].command_pending = true;
+    s_command_time[command->motor_index] = esp_timer_get_time();
+    if (command->final_decivolt != 0) s_unconfirmed_output_mask |= 1U << command->motor_index;
+    xSemaphoreGive(s_snapshot_lock);
+  }
+  return error;
+}
 
 /** @brief Initialize the board CAN driver and start the device manager. */
 static esp_err_t start_can_service(void) {
@@ -185,13 +226,27 @@ static esp_err_t bridge_command_handler(const dajilog_ui_msg_t* command, void* c
     .sequence = command->sequence,
   };
   core_message_t queued_message = message;
-  if (command->topic == DAJILOG_UI_CMD_MOTOR_MANUAL) {
+  queued_message.epoch = __atomic_load_n(&s_stop_epoch, __ATOMIC_SEQ_CST);
+  queued_message.posted_us = esp_timer_get_time();
+  if (command->topic == DAJILOG_UI_CMD_STOP) {
+    __atomic_add_fetch(&s_stop_epoch, 1, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&s_stop_requested, true, __ATOMIC_SEQ_CST);
+    return ESP_OK; /* STOP cannot be lost when the ordinary queue is full. */
+  }
+  if (command->topic == DAJILOG_UI_CMD_DRIVER_APPLY) {
     if (command->payload.type != DAJILOG_UI_VALUE_BYTES ||
-        command->payload.value.bytes.size != sizeof(dajilog_manual_motor_command_t)) {
+        command->payload.value.bytes.size != sizeof(dajilog_driver_setting_t))
+      return ESP_ERR_INVALID_ARG;
+    memcpy(&queued_message.data.driver, command->payload.value.bytes.data,
+           sizeof(queued_message.data.driver));
+  }
+  if (command->topic == DAJILOG_UI_CMD_MOTOR_VOLTAGE_TEST) {
+    if (command->payload.type != DAJILOG_UI_VALUE_BYTES ||
+        command->payload.value.bytes.size != sizeof(dajilog_motor_voltage_command_t)) {
       return ESP_ERR_INVALID_ARG;
     }
-    memcpy(&queued_message.data.manual_motor, command->payload.value.bytes.data,
-           sizeof(queued_message.data.manual_motor));
+    memcpy(&queued_message.data.motor_voltage, command->payload.value.bytes.data,
+           sizeof(queued_message.data.motor_voltage));
   }
   return xQueueSend(queue, &queued_message, 0) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
@@ -214,23 +269,87 @@ static esp_err_t request_storage(storage_operation_t operation, uint32_t sequenc
 static void process_command(const core_message_t* message) {
   esp_err_t error = ESP_OK;
   bool deferred = false;
+  if (message->topic != DAJILOG_UI_CMD_STOP &&
+      message->epoch != __atomic_load_n(&s_stop_epoch, __ATOMIC_SEQ_CST)) {
+    publish_result(DAJILOG_UI_STATE_COMMAND_RESULT, message->sequence, ESP_ERR_INVALID_STATE);
+    return;
+  }
 
   switch (message->topic) {
     case DAJILOG_UI_CMD_STOP:
+      s_test_active = false;
+      s_stop_pending_mask = s_unconfirmed_output_mask;
+      for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
+        if (s_snapshot.motors[i].command_decivolt != 0)
+          s_stop_pending_mask |= 1U << i;
+      }
+      s_stop_deadline = esp_timer_get_time() + 3000000;
       set_state(DAJILOG_OPERATION_STOPPING);
       publish_snapshot();
       if (s_motor_backend_registered && s_motor_backend.stop != NULL) {
         error = s_motor_backend.stop(s_motor_backend.context);
       }
-      set_state(DAJILOG_OPERATION_READY);
-      set_alarm(DAJILOG_ALARM_NONE, 0, "");
-      break;
-    case DAJILOG_UI_CMD_MOTOR_MANUAL:
-      error = s_motor_backend_registered && s_motor_backend.command != NULL
-                  ? s_motor_backend.command(&message->data.manual_motor,
-                                            s_motor_backend.context)
-                  : ESP_ERR_NOT_SUPPORTED;
       if (error == ESP_OK) {
+        xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
+        for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
+          s_snapshot.motors[i].command_decivolt = 0;
+          s_snapshot.motors[i].command_pending = true;
+          s_command_time[i] = esp_timer_get_time();
+        }
+        xSemaphoreGive(s_snapshot_lock);
+      }
+      xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
+      s_snapshot.work_mode = (s_snapshot.drivers[0].mode == 2 || s_snapshot.drivers[1].mode == 2)
+                                ? DAJILOG_WORK_MODE_MANUAL : DAJILOG_WORK_MODE_AUTO;
+      xSemaphoreGive(s_snapshot_lock);
+      set_state(error != ESP_OK ? DAJILOG_OPERATION_FAULT :
+                s_stop_pending_mask ? DAJILOG_OPERATION_STOPPING : DAJILOG_OPERATION_READY);
+      if (error != ESP_OK) s_stop_pending_mask = 0;
+      set_alarm(error == ESP_OK ? DAJILOG_ALARM_NONE : DAJILOG_ALARM_CRITICAL,
+                error == ESP_OK ? 0 : 0x3102U,
+                error == ESP_OK ? "" : "STOP transmission failed; verify motor power");
+      break;
+    case DAJILOG_UI_CMD_DRIVER_APPLY:
+      error = validate_driver(&message->data.driver);
+      if (error == ESP_OK && (s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active))
+        error = ESP_ERR_INVALID_STATE;
+      if (error == ESP_OK && message->data.driver.mode != 0 &&
+          (!channel_ready(message->data.driver.driver_index * 2U) ||
+           !channel_ready(message->data.driver.driver_index * 2U + 1U)))
+        error = ESP_ERR_INVALID_STATE;
+      if (error == ESP_OK) {
+        xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
+        const size_t index = message->data.driver.driver_index;
+        uint32_t revision = s_snapshot.drivers[index].revision + 1U;
+        s_snapshot.drivers[index] = message->data.driver;
+        s_snapshot.drivers[index].revision = revision;
+        xSemaphoreGive(s_snapshot_lock);
+      }
+      break;
+    case DAJILOG_UI_CMD_MOTOR_VOLTAGE_TEST:
+      if (message->data.motor_voltage.motor_index >= DAJILOG_MOTOR_CHANNEL_COUNT ||
+          message->posted_us + 500000 < esp_timer_get_time() ||
+          (!s_test_active && s_snapshot.operation_state != DAJILOG_OPERATION_READY) ||
+          (s_test_active && message->data.motor_voltage.motor_index != s_test_command.motor_index) ||
+          !channel_ready(message->data.motor_voltage.motor_index)) {
+        error = ESP_ERR_INVALID_STATE;
+        break;
+      }
+      if (s_test_active &&
+          s_test_command.final_decivolt == message->data.motor_voltage.final_decivolt &&
+          s_test_command.output_step == message->data.motor_voltage.output_step &&
+          s_test_command.trim_decivolt == message->data.motor_voltage.trim_decivolt) {
+        s_test_deadline = message->posted_us + 500000;
+        return;
+      }
+      error = command_voltage(&message->data.motor_voltage);
+      if (error == ESP_OK) {
+        s_test_command = message->data.motor_voltage;
+        s_test_active = true;
+        s_test_deadline = message->posted_us + 500000;
+        xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
+        s_snapshot.work_mode = DAJILOG_WORK_MODE_TEST;
+        xSemaphoreGive(s_snapshot_lock);
         const bool running = s_motor_backend.is_running != NULL &&
                              s_motor_backend.is_running(s_motor_backend.context);
         set_state(running ? DAJILOG_OPERATION_RUN_MANUAL
@@ -238,7 +357,7 @@ static void process_command(const core_message_t* message) {
         set_alarm(DAJILOG_ALARM_NONE, 0, "");
       } else {
         set_alarm(DAJILOG_ALARM_WARNING, 0x3101U,
-                  "Manual motor 1 command rejected");
+                  "Motor voltage test command rejected");
       }
       break;
     case DAJILOG_UI_CMD_ACK_ALARM: set_alarm(DAJILOG_ALARM_NONE, 0, ""); break;
@@ -250,8 +369,42 @@ static void process_command(const core_message_t* message) {
       error = request_storage(STORAGE_DISCARD_SETTINGS, message->sequence);
       deferred = error == ESP_OK;
       break;
-    case DAJILOG_UI_CMD_START_AUTO:
     case DAJILOG_UI_CMD_START_MANUAL:
+      if (s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active ||
+          !s_motor_backend_registered) { error = ESP_ERR_INVALID_STATE; break; }
+      {
+        bool selected = false;
+        for (size_t d = 0; d < 2; ++d) {
+          if (s_snapshot.drivers[d].mode == 0) continue;
+          selected = true;
+          if (s_snapshot.drivers[d].mode != 2 || !channel_ready(d * 2) || !channel_ready(d * 2 + 1))
+            error = ESP_ERR_INVALID_STATE;
+        }
+        if (!selected) error = ESP_ERR_INVALID_STATE;
+        if (error != ESP_OK) break;
+        for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT && error == ESP_OK; ++i) {
+          const dajilog_driver_setting_t *driver = &s_snapshot.drivers[i / 2];
+          if (driver->mode == 0) continue;
+          const dajilog_motor_voltage_command_t command = {
+            .motor_index = i, .output_step = driver->step[i % 2],
+            .trim_decivolt = driver->fine_decivolt[i % 2],
+            .final_decivolt = driver->step[i % 2] * 5U + driver->fine_decivolt[i % 2],
+          };
+          error = command_voltage(&command);
+        }
+        if (error != ESP_OK) {
+          (void)s_motor_backend.stop(s_motor_backend.context);
+          set_state(DAJILOG_OPERATION_FAULT);
+          set_alarm(DAJILOG_ALARM_CRITICAL, 0x3103U, "RUN failed; verify all outputs stopped");
+        } else {
+          xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
+          s_snapshot.work_mode = DAJILOG_WORK_MODE_MANUAL;
+          xSemaphoreGive(s_snapshot_lock);
+          set_state(DAJILOG_OPERATION_RUN_MANUAL);
+        }
+      }
+      break;
+    case DAJILOG_UI_CMD_START_AUTO:
       error = ESP_ERR_NOT_SUPPORTED;
       set_alarm(DAJILOG_ALARM_WARNING, 0x1001U, "Motor control is not connected");
       break;
@@ -276,7 +429,45 @@ static void system_task(void* context) {
   publish_snapshot();
 
   core_message_t message;
-  while (xQueueReceive(s_system_queue, &message, portMAX_DELAY) == pdTRUE) {
+  for (;;) {
+    bool stop = __atomic_exchange_n(&s_stop_requested, false, __ATOMIC_SEQ_CST);
+    if (s_test_active && esp_timer_get_time() >= s_test_deadline) stop = true;
+    for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
+      const bool active = s_test_active ? i == s_test_command.motor_index :
+          s_snapshot.operation_state == DAJILOG_OPERATION_RUN_MANUAL &&
+          s_snapshot.drivers[i / 2].mode == 2;
+      if (active && !channel_ready(i)) stop = true;
+      if (active && s_snapshot.motors[i].command_decivolt != 0 &&
+          esp_timer_get_time() - s_command_time[i] > 3000000 &&
+          (s_snapshot.motors[i].command_pending ||
+           s_snapshot.motors[i].readback_timestamp_us < s_command_time[i]))
+        stop = true;
+    }
+    if (s_stop_pending_mask) {
+      for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
+        const dajilog_motor_snapshot_t *motor = &s_snapshot.motors[i];
+        if (motor->command_readback_valid && motor->command_readback_decivolt == 0 &&
+            motor->readback_timestamp_us >= s_command_time[i]) {
+          s_stop_pending_mask &= ~(1U << i);
+          s_unconfirmed_output_mask &= ~(1U << i);
+        }
+      }
+      if (!s_stop_pending_mask) {
+        set_state(DAJILOG_OPERATION_READY);
+        publish_snapshot();
+      } else if (esp_timer_get_time() >= s_stop_deadline) {
+        s_stop_pending_mask = 0;
+        set_state(DAJILOG_OPERATION_FAULT);
+        set_alarm(DAJILOG_ALARM_CRITICAL, 0x3104U, "STOP not confirmed; isolate motor power");
+        publish_snapshot();
+      }
+    }
+    if (stop) {
+      __atomic_add_fetch(&s_stop_epoch, 1, __ATOMIC_SEQ_CST);
+      const core_message_t request = {.topic = DAJILOG_UI_CMD_STOP};
+      process_command(&request);
+    }
+    if (xQueueReceive(s_system_queue, &message, pdMS_TO_TICKS(50)) != pdTRUE) continue;
     switch (message.kind) {
       case CORE_MESSAGE_UI_COMMAND: process_command(&message); break;
       case CORE_MESSAGE_STORAGE_RESULT:
@@ -301,7 +492,12 @@ static void system_task(void* context) {
       case CORE_MESSAGE_MOTOR_UPDATE:
         if (message.data.motor.index < DAJILOG_MOTOR_CHANNEL_COUNT) {
           xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
+          const uint16_t requested = s_snapshot.motors[message.data.motor.index].command_decivolt;
           s_snapshot.motors[message.data.motor.index] = message.data.motor.motor;
+          s_snapshot.motors[message.data.motor.index].command_decivolt = requested;
+          s_snapshot.motors[message.data.motor.index].command_pending =
+              !message.data.motor.motor.command_readback_valid ||
+              message.data.motor.motor.command_readback_decivolt != requested;
           s_snapshot.can_online = s_snapshot.vehicle.online;
           for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
             s_snapshot.can_online = s_snapshot.can_online || s_snapshot.motors[i].online;

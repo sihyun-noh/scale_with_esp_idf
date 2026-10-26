@@ -13,7 +13,7 @@ extern "C" {
 
 typedef struct {
     esp_err_t (*start)(void *context);
-    esp_err_t (*command)(const dajilog_manual_motor_command_t *command,
+    esp_err_t (*command)(const dajilog_motor_voltage_command_t *command,
                          void *context);
     esp_err_t (*stop)(void *context);
     bool (*is_running)(void *context);

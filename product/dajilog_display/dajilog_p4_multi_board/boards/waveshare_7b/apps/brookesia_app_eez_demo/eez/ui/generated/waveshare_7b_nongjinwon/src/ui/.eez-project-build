@@ -16,6 +16,7 @@
     "ui_font_maru_buri_regular_kr16.c",
     "ui_font_maru_buri_regular_kr20.c",
     "ui_font_maru_buri_regular_kr28.c",
+    "ui_font_maru_buri_regular_num36.c",
     "ui_image_hopper_icon_100.c",
     "ui_image_rda.c",
     "vars.h"

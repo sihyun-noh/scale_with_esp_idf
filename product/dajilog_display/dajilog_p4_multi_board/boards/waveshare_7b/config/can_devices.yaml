@@ -14,3 +14,10 @@ devices:
     frames:
       request: {id: 0x001}
       response: {id: 0x001}
+  - instance: motor_driver_2
+    display_name: Motor Driver 2
+    profile: moonwalker_mdc24
+    enabled: true
+    frames:
+      request: {id: 0x002}
+      response: {id: 0x002}

@@ -11,6 +11,7 @@
 #include "dajilog_ui_adaptor.h"
 #include "dajilog_ui_msg.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 
 #include "generated/waveshare_7b_nongjinwon/src/ui/eez-flow.h"
 #include "generated/waveshare_7b_nongjinwon/src/ui/screens.h"
@@ -23,7 +24,7 @@ constexpr uint32_t STRING_ID_RIDGE_WIDTH = 0x07010002U;
 constexpr uint32_t STRING_ID_ACTUAL_LENGTH = 0x07010003U;
 constexpr uint32_t STRING_ID_NITROGEN_RATE = 0x07010004U;
 constexpr uint32_t STRING_ID_DASHBOARD_BASE = 0x07011000U;
-constexpr uint32_t STRING_ID_MANUAL_MOTOR_BASE = 0x07012000U;
+constexpr uint32_t STRING_ID_MOTOR_VOLTAGE_BASE = 0x07012000U;
 constexpr size_t MAX_MESSAGES_PER_TICK = 4U;
 
 const char *TAG = "EezUiBinding7B";
@@ -46,15 +47,33 @@ char s_motor_speed_text[DAJILOG_MOTOR_CHANNEL_COUNT][24] = {};
 char s_motor_target_text[DAJILOG_MOTOR_CHANNEL_COUNT][24] = {};
 char s_motor_load_text[DAJILOG_MOTOR_CHANNEL_COUNT][24] = {};
 char s_setting_name_text[2][DAJILOG_RECIPE_NAME_CAPACITY] = {};
-char s_manual_motor_selected_text[48] = {};
-char s_manual_motor_rpm_text[16] = {};
-char s_manual_motor_direction_text[32] = {};
-char s_manual_motor_operation_text[24] = {};
-bool s_manual_motor_1_running = false;
-dajilog_manual_motor_action_t s_manual_motor_direction =
-    DAJILOG_MANUAL_MOTOR_FORWARD;
+char s_driver_summary_text[4][96] = {};
+char s_driver_output_state_text[2][24] = {};
+char s_detail_selected_driver_text[48] = {};
+char s_detail_selected_channel_text[16] = {};
+char s_detail_step_text[16] = {};
+char s_detail_final_voltage_text[24] = {};
+char s_detail_target_summary_text[64] = {};
+char s_detail_voltage_summary_text[64] = {};
+uint8_t s_detail_motor_index = 0U;
+uint8_t s_detail_output_step = 0U;
+int8_t s_detail_trim_decivolt = 0;
+bool s_detail_service_test = false;
+dajilog_driver_setting_t s_driver_draft = {};
+bool s_test_held = false;
+int64_t s_test_refresh_us = 0;
+uint32_t s_sequence = 1000;
+uint32_t s_apply_sequence = 0;
+int64_t s_apply_deadline = 0;
+int64_t s_run_deadline = 0;
+char s_draft_mode_text[24] = {};
+char s_countdown_text[16] = {};
+void end_test();
+void select_driver(size_t driver);
+void detail_close_event(lv_event_t *event);
 
 esp_err_t render_current_recipe();
+void render_detail_voltage();
 
 #ifdef CONFIG_DAJILOG_SETTINGS_DEBUG_LOG
 #define SETTINGS_LOGI(format, ...) ESP_LOGI(TAG, format, ##__VA_ARGS__)
@@ -80,7 +99,10 @@ void set_text(uint32_t variable, char *storage, size_t storage_size,
 void set_string(uint32_t variable, char *storage, size_t storage_size,
                 uint32_t string_id, const char *value)
 {
-    std::snprintf(storage, storage_size, "%s", value != nullptr ? value : "");
+    if (value != storage) {
+        std::snprintf(storage, storage_size, "%s",
+                      value != nullptr ? value : "");
+    }
     eez::flow::setGlobalVariable(
         variable, eez::Value::makeStringRef(storage, -1, string_id));
 }
@@ -219,6 +241,45 @@ void render_dashboard(const dajilog_dashboard_snapshot_t &snapshot)
         eez::flow::setGlobalVariable(setting_load_vars[i], eez::Value::makeStringRef(
             s_motor_load_text[i], -1, STRING_ID_DASHBOARD_BASE + 33 + i * 4));
     }
+    const uint32_t channel_vars[] = {
+        FLOW_GLOBAL_VARIABLE_DRIVER_1_CHANNEL_A_SUMMARY_TEXT,
+        FLOW_GLOBAL_VARIABLE_DRIVER_1_CHANNEL_B_SUMMARY_TEXT,
+        FLOW_GLOBAL_VARIABLE_DRIVER_2_CHANNEL_C_SUMMARY_TEXT,
+        FLOW_GLOBAL_VARIABLE_DRIVER_2_CHANNEL_D_SUMMARY_TEXT,
+    };
+    for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
+        const auto &motor = snapshot.motors[i];
+        const auto &driver = snapshot.drivers[i / 2];
+        const unsigned target = driver.mode == 2
+            ? driver.step[i % 2] * 5U + driver.fine_decivolt[i % 2] : 0;
+        char feedback[16] = "--.-";
+        if (motor.online && motor.measured_voltage_valid &&
+            esp_timer_get_time() - motor.measured_timestamp_us < 3000000)
+            std::snprintf(feedback, sizeof(feedback), "%.1f", motor.measured_decivolt / 10.0);
+        std::snprintf(s_driver_summary_text[i], sizeof(s_driver_summary_text[i]),
+                      "%.1f / %s", target / 10.0, feedback);
+        set_string(channel_vars[i], s_driver_summary_text[i],
+                   sizeof(s_driver_summary_text[i]), STRING_ID_DASHBOARD_BASE + 50U + i,
+                   s_driver_summary_text[i]);
+    }
+    const uint32_t mode_vars[] = {FLOW_GLOBAL_VARIABLE_DRIVER_1_STATE_TEXT,
+                                  FLOW_GLOBAL_VARIABLE_DRIVER_2_STATE_TEXT};
+    const uint32_t status_vars[] = {FLOW_GLOBAL_VARIABLE_DRIVER_1_OUTPUT_STATE_TEXT,
+                                    FLOW_GLOBAL_VARIABLE_DRIVER_2_OUTPUT_STATE_TEXT};
+    for (size_t d = 0; d < 2; ++d) {
+        set_string(mode_vars[d], s_motor_state_text[d], sizeof(s_motor_state_text[d]),
+                   STRING_ID_DASHBOARD_BASE + 70U + d,
+                   snapshot.drivers[d].mode == 2 ? "수동" :
+                   snapshot.drivers[d].mode == 1 ? "자동" : "사용 안 함");
+        const auto &a = snapshot.motors[d * 2], &b = snapshot.motors[d * 2 + 1];
+        set_string(status_vars[d], s_driver_output_state_text[d], sizeof(s_driver_output_state_text[d]),
+                   STRING_ID_DASHBOARD_BASE + 54U + d,
+                   !a.online || !b.online ? "통신 오류" :
+                   a.error_code || b.error_code ? "출력 오류" :
+                   !a.measured_voltage_valid || !b.measured_voltage_valid ? "피드백 없음" :
+                   snapshot.operation_state == DAJILOG_OPERATION_READY ? "정지" : "출력 중");
+    }
+    render_detail_voltage();
 }
 
 void render_latest_dashboard()
@@ -236,6 +297,22 @@ void render_message(const dajilog_ui_msg_t *message, void *)
     }
     if (message->topic == DAJILOG_UI_STATE_DASHBOARD_SNAPSHOT) {
         render_latest_dashboard();
+    } else if (message->topic == DAJILOG_UI_STATE_COMMAND_RESULT) {
+        if (message->sequence == s_apply_sequence && s_apply_sequence != 0) {
+            s_apply_sequence = 0;
+            if (message->result == DAJILOG_UI_RESULT_OK) {
+                select_driver(s_detail_motor_index / 2U);
+                lv_label_set_text(objects.driver_detail_safety_hint, "적용 완료 · 다음 RUN부터 사용 · 재부팅 시 초기화");
+            } else {
+                lv_label_set_text(objects.driver_detail_safety_hint, "적용 거부 · 정지 / CAN / Fault / 전압 범위를 확인하세요");
+            }
+        }
+        if (message->result != DAJILOG_UI_RESULT_OK) {
+            end_test();
+            lv_label_set_text(objects.driver_detail_safety_hint,
+                              "명령 거부 · 정지 상태와 CAN 전압/상태/Fault 응답을 확인하세요");
+            ESP_LOGW(TAG, "product command rejected: result=%u", (unsigned)message->result);
+        }
     } else if (message->topic == DAJILOG_UI_STATE_SETTINGS_RESULT &&
                message->result == DAJILOG_UI_RESULT_OK) {
         (void)render_current_recipe();
@@ -249,174 +326,280 @@ esp_err_t submit_command(uint32_t topic)
     return dajilog_ui_adaptor_submit(&command);
 }
 
-uint8_t manual_motor_rpm()
+/** @brief Maintain the driver editor draft and submit requests without direct hardware access. */
+uint16_t detail_final_decivolt()
 {
-    int error = 0;
-    int32_t rpm = eez::flow::getGlobalVariable(
-                      FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_RPM)
-                      .toInt32(&error);
-    if (error != 0) {
-        rpm = objects.motor_manual_rpm_slider != nullptr
-                  ? lv_slider_get_value(objects.motor_manual_rpm_slider)
-                  : 0;
+    const int32_t value =
+        (int32_t)s_detail_output_step * DAJILOG_MOTOR_DECIVOLT_PER_STEP +
+        s_detail_trim_decivolt;
+    return static_cast<uint16_t>(value < 0 ? 0 :
+        (value > DAJILOG_MOTOR_OUTPUT_DECIVOLT_MAX
+             ? static_cast<int32_t>(DAJILOG_MOTOR_OUTPUT_DECIVOLT_MAX) : value));
+}
+
+/** @brief Maintain the driver editor draft and submit requests without direct hardware access. */
+void render_detail_voltage()
+{
+    if (objects.driver_detail_trim_apply_label != nullptr) {
+        lv_label_set_text(objects.driver_detail_trim_apply_label,
+                          s_detail_service_test ? "누르는 동안" : "적용");
+        lv_label_set_text(objects.driver_detail_trim_reset_label,
+                          s_detail_service_test ? "즉시 정지" : "취소");
     }
-    if (rpm < 0) {
-        rpm = 0;
-    } else if (rpm > 30) {
-        rpm = 30;
+    const uint16_t final_decivolt = detail_final_decivolt();
+    s_driver_draft.step[s_detail_motor_index % 2] = s_detail_output_step;
+    s_driver_draft.fine_decivolt[s_detail_motor_index % 2] = s_detail_trim_decivolt;
+    set_string(FLOW_GLOBAL_VARIABLE_DRIVER_DETAIL_DRAFT_MODE_TEXT,
+               s_draft_mode_text, sizeof(s_draft_mode_text), STRING_ID_MOTOR_VOLTAGE_BASE + 9,
+               s_detail_service_test ? "출력 시험" : s_driver_draft.mode == 1 ? "자동" : "수동");
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_DRIVER_MODE_AUTO_SELECTED, eez::BooleanValue(!s_detail_service_test && s_driver_draft.mode == 1));
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_DRIVER_MODE_MANUAL_SELECTED, eez::BooleanValue(!s_detail_service_test && s_driver_draft.mode == 2));
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_DRIVER_MODE_DISABLED_SELECTED, eez::BooleanValue(s_detail_service_test));
+    std::snprintf(s_detail_step_text, sizeof(s_detail_step_text), "%u",
+                  static_cast<unsigned>(s_detail_output_step));
+    std::snprintf(s_detail_final_voltage_text,
+                  sizeof(s_detail_final_voltage_text), "%u.%u V",
+                  final_decivolt / 10U, final_decivolt % 10U);
+    std::snprintf(s_detail_target_summary_text,
+                  sizeof(s_detail_target_summary_text),
+                  "기본 %u.%u V · 보정 %+.1f V",
+                  (s_detail_output_step * 5U) / 10U,
+                  (s_detail_output_step * 5U) % 10U,
+                  static_cast<double>(s_detail_trim_decivolt) / 10.0);
+    dajilog_dashboard_snapshot_t snapshot = {};
+    const auto *motor = dajilog_system_core_get_snapshot(&snapshot) == ESP_OK
+                            ? &snapshot.motors[s_detail_motor_index] : nullptr;
+    const auto &applied = snapshot.drivers[s_detail_motor_index / 2];
+    const unsigned current = applied.step[s_detail_motor_index % 2] * 5U +
+                             applied.fine_decivolt[s_detail_motor_index % 2];
+    std::snprintf(s_detail_voltage_summary_text, sizeof(s_detail_voltage_summary_text),
+                  "현재 설정 %.1f → 예정 %.1f V / 변경 %+.1f V",
+                  current / 10.0, final_decivolt / 10.0,
+                  (static_cast<int>(final_decivolt) - static_cast<int>(current)) / 10.0);
+    (void)motor;
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_DETAIL_OUTPUT_STEP,
+                                 eez::IntegerValue(s_detail_output_step));
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_DETAIL_OUTPUT_DECIVOLT,
+                                 eez::IntegerValue(final_decivolt));
+    set_string(FLOW_GLOBAL_VARIABLE_DETAIL_OUTPUT_STEP_TEXT, s_detail_step_text,
+               sizeof(s_detail_step_text), STRING_ID_MOTOR_VOLTAGE_BASE + 1,
+               s_detail_step_text);
+    set_string(FLOW_GLOBAL_VARIABLE_DETAIL_FINAL_VOLTAGE_TEXT,
+               s_detail_final_voltage_text, sizeof(s_detail_final_voltage_text),
+               STRING_ID_MOTOR_VOLTAGE_BASE + 2, s_detail_final_voltage_text);
+    set_string(FLOW_GLOBAL_VARIABLE_DETAIL_TARGET_SUMMARY_TEXT,
+               s_detail_target_summary_text, sizeof(s_detail_target_summary_text),
+               STRING_ID_MOTOR_VOLTAGE_BASE + 3, s_detail_target_summary_text);
+    set_string(FLOW_GLOBAL_VARIABLE_DETAIL_VOLTAGE_SUMMARY_TEXT,
+               s_detail_voltage_summary_text, sizeof(s_detail_voltage_summary_text),
+               STRING_ID_MOTOR_VOLTAGE_BASE + 4, s_detail_voltage_summary_text);
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_DETAIL_OUTPUT_SAFE,
+                                 eez::BooleanValue(final_decivolt <= 120U));
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_DETAIL_APPLY_ACTIVE,
+                                 eez::BooleanValue(s_driver_draft.mode == 2 || s_detail_service_test));
+}
+
+/** @brief Maintain the driver editor draft and submit requests without direct hardware access. */
+void select_driver(size_t driver)
+{
+    s_detail_motor_index = static_cast<uint8_t>(driver * 2U);
+    dajilog_dashboard_snapshot_t snapshot = {};
+    (void)dajilog_system_core_get_snapshot(&snapshot);
+    s_driver_draft = snapshot.drivers[driver];
+    s_driver_draft.driver_index = driver;
+    if (s_driver_draft.mode == 0) s_driver_draft.mode = 2;
+    s_detail_output_step = s_driver_draft.step[0];
+    s_detail_trim_decivolt = s_driver_draft.fine_decivolt[0];
+    s_detail_service_test = false;
+    set_string(FLOW_GLOBAL_VARIABLE_DETAIL_SELECTED_DRIVER_TEXT,
+               s_detail_selected_driver_text, sizeof(s_detail_selected_driver_text),
+               STRING_ID_MOTOR_VOLTAGE_BASE + 5,
+               driver == 0U ? "D1 · 전층 드라이버" : "D2 · 심층 드라이버");
+    set_string(FLOW_GLOBAL_VARIABLE_DETAIL_SELECTED_CHANNEL_TEXT,
+               s_detail_selected_channel_text, sizeof(s_detail_selected_channel_text),
+               STRING_ID_MOTOR_VOLTAGE_BASE + 6, driver == 0U ? "A" : "C");
+    if (objects.driver_detail_channel_a_selector_label != nullptr) {
+        lv_label_set_text(objects.driver_detail_channel_a_selector_label,
+                          driver == 0U ? "A" : "C");
+        lv_label_set_text(objects.driver_detail_channel_b_selector_label,
+                          driver == 0U ? "B" : "D");
     }
-    return static_cast<uint8_t>(rpm);
+    render_detail_voltage();
 }
 
-void set_manual_motor_text(uint32_t variable, char *storage,
-                           size_t storage_size, uint32_t string_offset,
-                           const char *text)
+/** @brief Maintain the driver editor draft and submit requests without direct hardware access. */
+void driver_card_event(lv_event_t *event)
 {
-    set_string(variable, storage, storage_size,
-               STRING_ID_MANUAL_MOTOR_BASE + string_offset, text);
-}
-
-void reset_manual_motor_rpm_ui()
-{
-    eez::flow::setGlobalVariable(
-        FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_RPM,
-        eez::IntegerValue(0));
-    set_manual_motor_text(FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_RPM_TEXT,
-                          s_manual_motor_rpm_text,
-                          sizeof(s_manual_motor_rpm_text), 1, "0");
-    if (objects.motor_manual_rpm_slider != nullptr) {
-        lv_slider_set_value(objects.motor_manual_rpm_slider, 0, LV_ANIM_ON);
+    if (lv_event_get_code(event) == LV_EVENT_PRESSED) {
+        end_test();
+        select_driver((size_t)(uintptr_t)lv_event_get_user_data(event));
+        eez::flow::replacePageHook(SCREEN_ID_DRIVER_DETAIL, 0, 0, 0);
     }
 }
 
-void set_manual_motor_operation_ui(bool running)
+/** @brief Maintain the driver editor draft and submit requests without direct hardware access. */
+void detail_channel_event(lv_event_t *event)
 {
-    set_manual_motor_text(FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_OPERATION_TEXT,
-                          s_manual_motor_operation_text,
-                          sizeof(s_manual_motor_operation_text), 3,
-                          running ? "RUNNING" : "STOPPED");
-    eez::flow::setGlobalVariable(
-        FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_RUN_ACTIVE,
-        eez::BooleanValue(running));
-    eez::flow::setGlobalVariable(
-        FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_STOP_ACTIVE,
-        eez::BooleanValue(!running));
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED) return;
+    end_test();
+    const size_t local = (size_t)(uintptr_t)lv_event_get_user_data(event);
+    s_detail_motor_index = (uint8_t)((s_detail_motor_index / 2U) * 2U + local);
+    s_detail_output_step = s_driver_draft.step[local];
+    s_detail_trim_decivolt = s_driver_draft.fine_decivolt[local];
+    const char channel = static_cast<char>('A' + s_detail_motor_index);
+    char value[2] = {channel, '\0'};
+    set_string(FLOW_GLOBAL_VARIABLE_DETAIL_SELECTED_CHANNEL_TEXT,
+               s_detail_selected_channel_text, sizeof(s_detail_selected_channel_text),
+               STRING_ID_MOTOR_VOLTAGE_BASE + 6, value);
+    render_detail_voltage();
 }
 
-esp_err_t submit_manual_motor(dajilog_manual_motor_action_t action)
+/** @brief Select a draft mode; changing tabs never applies or energizes outputs. */
+void detail_mode_event(lv_event_t *event)
 {
-    const dajilog_manual_motor_command_t payload = {
-        .motor_index = 0,
-        .rpm = manual_motor_rpm(),
-        .action = action,
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED) return;
+    end_test();
+    const uintptr_t mode = (uintptr_t)lv_event_get_user_data(event);
+    s_detail_service_test = mode == 3;
+    if (!s_detail_service_test) s_driver_draft.mode = mode;
+    lv_label_set_text(objects.driver_detail_trim_apply_label, s_detail_service_test ? "누르는 동안" : "적용");
+    lv_label_set_text(objects.driver_detail_trim_reset_label, s_detail_service_test ? "즉시 정지" : "취소");
+    lv_label_set_text(objects.driver_detail_safety_hint, mode == 1
+        ? "자동 계산 미구현 · 적용할 수 없습니다"
+        : mode == 3 ? "정지 상태에서 한 채널만 시험 · 손을 떼면 0V"
+                    : "채널별 0~24단계 +0.0~0.4V · 적용은 출력하지 않습니다");
+    render_detail_voltage();
+}
+
+/** @brief Maintain the driver editor draft and submit requests without direct hardware access. */
+void detail_slider_event(lv_event_t *event)
+{
+    if (lv_event_get_code(event) != LV_EVENT_VALUE_CHANGED) return;
+    end_test();
+    int32_t value = lv_slider_get_value(lv_event_get_target_obj(event));
+    s_detail_output_step = static_cast<uint8_t>(value < 0 ? 0 :
+        (value > 24 ? 24 : value));
+    if (s_detail_output_step == 24) s_detail_trim_decivolt = 0;
+    render_detail_voltage();
+}
+
+/** @brief Maintain the driver editor draft and submit requests without direct hardware access. */
+void detail_trim_event(lv_event_t *event)
+{
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED) return;
+    end_test();
+    const intptr_t delta = (intptr_t)lv_event_get_user_data(event);
+    if (delta == 0) s_detail_trim_decivolt = 0;
+    else if (delta < 0 && s_detail_trim_decivolt > 0) --s_detail_trim_decivolt;
+    else if (delta > 0 && s_detail_trim_decivolt < 4 && s_detail_output_step < 24) ++s_detail_trim_decivolt;
+    render_detail_voltage();
+}
+
+/** @brief Maintain the driver editor draft and submit requests without direct hardware access. */
+esp_err_t submit_voltage_test(uint16_t final_decivolt)
+{
+    const dajilog_motor_voltage_command_t payload = {
+        .motor_index = s_detail_motor_index,
+        .output_step = s_detail_output_step,
+        .trim_decivolt = s_detail_trim_decivolt,
+        .final_decivolt = final_decivolt,
     };
     dajilog_ui_msg_t command;
     dajilog_ui_msg_init(&command, DAJILOG_UI_MSG_COMMAND,
-                        DAJILOG_UI_CMD_MOTOR_MANUAL);
+                        DAJILOG_UI_CMD_MOTOR_VOLTAGE_TEST);
     command.payload.type = DAJILOG_UI_VALUE_BYTES;
     command.payload.value.bytes.size = sizeof(payload);
     std::memcpy(command.payload.value.bytes.data, &payload, sizeof(payload));
     return dajilog_ui_adaptor_submit(&command);
 }
 
-void manual_motor_forward_event(lv_event_t *event)
+/** @brief Stop a hold session through the priority STOP path. */
+void end_test()
 {
-    if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
-        return;
-    }
-    s_manual_motor_direction = DAJILOG_MANUAL_MOTOR_FORWARD;
-    set_manual_motor_text(FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_DIRECTION_TEXT,
-                          s_manual_motor_direction_text,
-                          sizeof(s_manual_motor_direction_text), 2,
-                          "FORWARD");
+    if (!s_test_held) return;
+    s_test_held = false;
+    (void)submit_command(DAJILOG_UI_CMD_STOP);
 }
 
-void manual_motor_reverse_event(lv_event_t *event)
+/** @brief Apply both draft channels, or keep a temporary hold-to-run lease alive. */
+void detail_apply_event(lv_event_t *event)
 {
-    if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
+    const auto code = lv_event_get_code(event);
+    if (code == LV_EVENT_RELEASED || code == LV_EVENT_PRESS_LOST) { end_test(); return; }
+    if (code != LV_EVENT_PRESSED) return;
+    if (s_detail_service_test) {
+        if (s_run_deadline != 0) return;
+        s_test_held = submit_voltage_test(detail_final_decivolt()) == ESP_OK;
+        s_test_refresh_us = esp_timer_get_time();
         return;
     }
-    s_manual_motor_direction = DAJILOG_MANUAL_MOTOR_REVERSE;
-    set_manual_motor_text(FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_DIRECTION_TEXT,
-                          s_manual_motor_direction_text,
-                          sizeof(s_manual_motor_direction_text), 2,
-                          "REVERSE");
-}
-
-void manual_motor_run_event(lv_event_t *event)
-{
-    if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
-        return;
-    }
-    if (!eez::flow::getGlobalVariable(
-             FLOW_GLOBAL_VARIABLE_DRIVER_MODE_MANUAL_SELECTED).getBoolean()) {
-        s_manual_motor_1_running = false;
-        set_manual_motor_operation_ui(false);
-        ESP_LOGW(TAG, "manual motor 1 RUN rejected: driver mode is not MANUAL");
-        return;
-    }
-    if (manual_motor_rpm() == 0U) {
-        s_manual_motor_1_running = false;
-        set_manual_motor_operation_ui(false);
-        ESP_LOGW(TAG, "manual motor 1 RUN rejected: target RPM is zero");
-        return;
-    }
-    const esp_err_t error = submit_manual_motor(s_manual_motor_direction);
-    s_manual_motor_1_running = error == ESP_OK;
-    set_manual_motor_operation_ui(s_manual_motor_1_running);
-    if (error != ESP_OK) {
-        ESP_LOGW(TAG, "manual motor 1 RUN submit failed: %s",
-                 esp_err_to_name(error));
+    if (s_apply_sequence != 0) return;
+    dajilog_ui_msg_t message;
+    dajilog_ui_msg_init(&message, DAJILOG_UI_MSG_COMMAND, DAJILOG_UI_CMD_DRIVER_APPLY);
+    message.sequence = ++s_sequence;
+    message.payload.type = DAJILOG_UI_VALUE_BYTES;
+    message.payload.value.bytes.size = sizeof(s_driver_draft);
+    std::memcpy(message.payload.value.bytes.data, &s_driver_draft, sizeof(s_driver_draft));
+    if (dajilog_ui_adaptor_submit(&message) == ESP_OK) {
+        s_apply_sequence = message.sequence;
+        s_apply_deadline = esp_timer_get_time() + 2000000;
     }
 }
 
-void manual_motor_stop_event(lv_event_t *event)
+/** @brief Cancel editing, or stop a test without leaving its controls. */
+void detail_cancel_event(lv_event_t *event)
 {
-    if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
-        return;
-    }
-    s_manual_motor_1_running = false;
-    const esp_err_t error = submit_manual_motor(DAJILOG_MANUAL_MOTOR_STOP);
-    reset_manual_motor_rpm_ui();
-    set_manual_motor_operation_ui(false);
-    if (error != ESP_OK) {
-        ESP_LOGW(TAG, "manual motor 1 stop submit failed: %s",
-                 esp_err_to_name(error));
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED) return;
+    if (s_detail_service_test) {
+        end_test();
+        (void)submit_command(DAJILOG_UI_CMD_STOP);
+    } else {
+        detail_close_event(event);
     }
 }
 
-void manual_motor_slider_event(lv_event_t *event)
+/** @brief Discard local editing; service-test cancel is an immediate STOP. */
+void detail_close_event(lv_event_t *event)
 {
-    if (lv_event_get_code(event) != LV_EVENT_RELEASED) {
-        return;
-    }
-    const uint8_t rpm = manual_motor_rpm();
-    std::snprintf(s_manual_motor_rpm_text, sizeof(s_manual_motor_rpm_text),
-                  "%u", static_cast<unsigned>(rpm));
-    eez::flow::setGlobalVariable(
-        FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_RPM_TEXT,
-        eez::Value::makeStringRef(s_manual_motor_rpm_text, -1,
-                                  STRING_ID_MANUAL_MOTOR_BASE + 1));
-    if (s_manual_motor_1_running) {
-        const esp_err_t error = submit_manual_motor(
-            DAJILOG_MANUAL_MOTOR_SET_RPM);
-        if (error != ESP_OK) {
-            ESP_LOGW(TAG, "manual motor 1 RPM submit failed: %s",
-                     esp_err_to_name(error));
-        }
-    }
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED) return;
+    end_test();
+    if (s_detail_service_test) (void)submit_command(DAJILOG_UI_CMD_STOP);
+    select_driver(s_detail_motor_index / 2U);
+    eez::flow::replacePageHook(SCREEN_ID_DASHBOARD, 0, 0, 0);
 }
 
-void manual_motor_close_event(lv_event_t *event)
+/** @brief Reload Applied values without leaving the editor. */
+void detail_reset_event(lv_event_t *event)
 {
-    if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
-        return;
-    }
-    s_manual_motor_1_running = false;
-    s_manual_motor_direction = DAJILOG_MANUAL_MOTOR_FORWARD;
-    (void)submit_manual_motor(DAJILOG_MANUAL_MOTOR_STOP);
-    reset_manual_motor_rpm_ui();
-    set_manual_motor_operation_ui(false);
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED) return;
+    end_test();
+    select_driver(s_detail_motor_index / 2U);
+}
+
+/** @brief Start a cancellable three-second countdown before the manual RUN request. */
+void run_event(lv_event_t *event)
+{
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED) return;
+    dajilog_dashboard_snapshot_t snapshot = {};
+    if (dajilog_system_core_get_snapshot(&snapshot) != ESP_OK ||
+        snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_held) return;
+    s_run_deadline = esp_timer_get_time() + 3000000;
+    eez::flow::replacePageHook(SCREEN_ID_RUN_COUNTDOWN, 0, 0, 0);
+}
+
+/** @brief Own driver-card callbacks; generated Flow remains responsible for layout/tick. */
+void bind_driver_event(lv_obj_t *object, lv_event_cb_t callback, void *context = nullptr)
+{
+    while (lv_obj_get_event_count(object)) lv_obj_remove_event(object, 0);
+    lv_obj_add_flag(object, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(object, callback, LV_EVENT_ALL, context);
+}
+
+/** @brief Add native handling while preserving EEZ Flow state/style callbacks. */
+void bind_driver_selector_event(lv_obj_t *object, lv_event_cb_t callback, void *context)
+{
+    lv_obj_add_flag(object, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_event_cb(object, callback, LV_EVENT_ALL, context);
 }
 
 bool parse_int(const char *text, int32_t *value)
@@ -470,6 +653,9 @@ esp_err_t stage_ridge_from_ui()
     }
 
     const dajilog_ridge_settings_t settings = {
+        .presence_mask = DAJILOG_RIDGE_PRESENT_COUNT |
+                         DAJILOG_RIDGE_PRESENT_WIDTH |
+                         DAJILOG_RIDGE_PRESENT_SECTION_LENGTH,
         .ridge_count = static_cast<uint32_t>(ridge_count),
         .ridge_width_m = ridge_width,
         .actual_length_m = actual_length,
@@ -495,6 +681,9 @@ esp_err_t stage_fertilizer_from_ui()
     }
 
     const dajilog_prescription_settings_t settings = {
+        .presence_mask = DAJILOG_PRESCRIPTION_PRESENT_INPUT_MODE |
+                         DAJILOG_PRESCRIPTION_PRESENT_NITROGEN_TARGET,
+        .input_mode = DAJILOG_PRESCRIPTION_BY_NITROGEN,
         .nitrogen_rate_kg_n_per_10a = nitrogen_rate,
     };
     const esp_err_t error =
@@ -598,7 +787,11 @@ void fertilizer_save_settings_event(lv_event_t *event)
 void stop_event(lv_event_t *event)
 {
     if (lv_event_get_code(event) == LV_EVENT_PRESSED) {
+        s_run_deadline = 0;
+        s_test_held = false;
         const esp_err_t error = submit_command(DAJILOG_UI_CMD_STOP);
+        if (lv_screen_active() == objects.run_countdown)
+            eez::flow::replacePageHook(SCREEN_ID_DASHBOARD, 0, 0, 0);
         if (error != ESP_OK) {
             ESP_LOGW(TAG, "STOP submit failed: %s", esp_err_to_name(error));
         }
@@ -643,12 +836,15 @@ extern "C" bool eez_ui_binding_attach(void)
         objects.setting_1_card == nullptr ||
         objects.driver_2_card == nullptr ||
         objects.setting_2_card == nullptr ||
-        objects.motor_manual_close_button == nullptr ||
-        objects.motor_manual_rpm_slider == nullptr ||
-        objects.motor_manual_forward_button == nullptr ||
-        objects.motor_manual_reverse_button == nullptr ||
-        objects.motor_manual_run_button == nullptr ||
-        objects.motor_manual_stop_button == nullptr) {
+        objects.driver_detail_channel_a_selector == nullptr ||
+        objects.driver_detail_channel_b_selector == nullptr ||
+        objects.driver_detail_test_mode_button == nullptr ||
+        objects.driver_detail_output_slider == nullptr ||
+        objects.driver_detail_trim_minus_button == nullptr ||
+        objects.driver_detail_trim_plus_button == nullptr ||
+        objects.driver_detail_trim_reset_button == nullptr ||
+        objects.driver_detail_trim_apply_button == nullptr ||
+        objects.driver_detail_close_button == nullptr) {
         ESP_LOGE(TAG, "ridge or fertilizer save buttons are unavailable");
         (void)dajilog_ui_adaptor_detach(&s_adaptor);
         return false;
@@ -666,29 +862,36 @@ extern "C" bool eez_ui_binding_attach(void)
                         LV_EVENT_PRESSED, nullptr);
     lv_obj_add_event_cb(objects.dashboard_stop_button, stop_event,
                         LV_EVENT_PRESSED, nullptr);
-    // The first driver is the only motor currently enabled for bench testing.
     lv_obj_add_state(objects.setting_1_card, LV_STATE_DISABLED);
-    lv_obj_add_state(objects.driver_2_card, LV_STATE_DISABLED);
     lv_obj_add_state(objects.setting_2_card, LV_STATE_DISABLED);
-    lv_obj_add_event_cb(objects.motor_manual_forward_button,
-                        manual_motor_forward_event, LV_EVENT_PRESSED, nullptr);
-    lv_obj_add_event_cb(objects.motor_manual_reverse_button,
-                        manual_motor_reverse_event, LV_EVENT_PRESSED, nullptr);
-    lv_obj_add_event_cb(objects.motor_manual_run_button,
-                        manual_motor_run_event, LV_EVENT_PRESSED, nullptr);
-    lv_obj_add_event_cb(objects.motor_manual_stop_button,
-                        manual_motor_stop_event, LV_EVENT_PRESSED, nullptr);
-    lv_obj_add_event_cb(objects.motor_manual_rpm_slider,
-                        manual_motor_slider_event, LV_EVENT_RELEASED, nullptr);
-    lv_obj_add_event_cb(objects.motor_manual_close_button,
-                        manual_motor_close_event, LV_EVENT_PRESSED, nullptr);
-    set_manual_motor_text(FLOW_GLOBAL_VARIABLE_MANUAL_MOTOR_SELECTED_TEXT,
-                          s_manual_motor_selected_text,
-                          sizeof(s_manual_motor_selected_text), 0,
-                          "D1 · 전층 드라이버");
+    bind_driver_event(objects.driver_1_card, driver_card_event, (void *)0U);
+    bind_driver_event(objects.driver_2_card, driver_card_event, (void *)1U);
+    bind_driver_selector_event(objects.driver_detail_channel_a_selector, detail_channel_event, (void *)0U);
+    bind_driver_selector_event(objects.driver_detail_channel_b_selector, detail_channel_event, (void *)1U);
+    bind_driver_event(objects.driver_detail_auto_mode_button, detail_mode_event, (void *)1U);
+    bind_driver_event(objects.driver_detail_manual_mode_button, detail_mode_event, (void *)2U);
+    bind_driver_event(objects.driver_detail_test_mode_button, detail_mode_event, (void *)3U);
+    bind_driver_event(objects.driver_detail_output_slider, detail_slider_event);
+    bind_driver_event(objects.driver_detail_trim_minus_button, detail_trim_event, (void *)-1);
+    bind_driver_event(objects.driver_detail_trim_plus_button, detail_trim_event, (void *)1);
+    bind_driver_event(objects.driver_detail_trim_reset_button, detail_cancel_event);
+    bind_driver_event(objects.driver_detail_trim_apply_button, detail_apply_event);
+    bind_driver_event(objects.driver_detail_close_button, detail_close_event);
+    bind_driver_event(objects.dashboard_run_button, run_event);
+    bind_driver_event(objects.run_countdown_stop_button, stop_event);
+    // Generator has no reset widget yet. Add one without editing generated sources.
+    lv_obj_t *reset = lv_button_create(lv_obj_get_parent(objects.driver_detail_trim_reset_button));
+    lv_obj_set_pos(reset, 212, 478);
+    lv_obj_set_size(reset, 130, 32);
+    lv_obj_t *reset_label = lv_label_create(reset);
+    lv_obj_set_style_text_font(reset_label, lv_obj_get_style_text_font(objects.driver_detail_trim_reset_label, LV_PART_MAIN), 0);
+    lv_label_set_text(reset_label, "초기화");
+    lv_obj_center(reset_label);
+    bind_driver_event(reset, detail_reset_event);
+    select_driver(0U);
     render_latest_dashboard();
     s_attached = true;
-    ESP_LOGI(TAG, "System Core, settings, dashboard and M1 manual binding attached");
+    ESP_LOGI(TAG, "System Core, settings and A-D voltage binding attached");
     return true;
 }
 
@@ -696,6 +899,35 @@ extern "C" void eez_ui_binding_process(void)
 {
     if (s_attached) {
         (void)dajilog_ui_adaptor_process(&s_adaptor, MAX_MESSAGES_PER_TICK);
+        const int64_t now = esp_timer_get_time();
+        if (s_apply_sequence && now >= s_apply_deadline) {
+            s_apply_sequence = 0;
+            select_driver(s_detail_motor_index / 2U);
+            lv_label_set_text(objects.driver_detail_safety_hint, "응답 대기 종료 · 실제 적용 상태를 다시 읽었습니다");
+        }
+        if (s_test_held) {
+            if (lv_screen_active() != objects.driver_detail ||
+                !lv_obj_has_state(objects.driver_detail_trim_apply_button, LV_STATE_PRESSED)) {
+                end_test();
+            } else if (now - s_test_refresh_us >= 100000) {
+                if (submit_voltage_test(detail_final_decivolt()) != ESP_OK) end_test();
+                s_test_refresh_us = now;
+            }
+        }
+        if (s_run_deadline != 0) {
+            if (lv_screen_active() != objects.run_countdown) {
+                s_run_deadline = 0;
+            } else if (now >= s_run_deadline) {
+                s_run_deadline = 0;
+                (void)submit_command(DAJILOG_UI_CMD_START_MANUAL);
+                eez::flow::replacePageHook(SCREEN_ID_DASHBOARD, 0, 0, 0);
+            } else {
+                std::snprintf(s_countdown_text, sizeof(s_countdown_text), "%d",
+                              (int)((s_run_deadline - now + 999999) / 1000000));
+                set_string(FLOW_GLOBAL_VARIABLE_RUN_COUNTDOWN_TEXT, s_countdown_text,
+                           sizeof(s_countdown_text), STRING_ID_MOTOR_VOLTAGE_BASE + 10, s_countdown_text);
+            }
+        }
     }
 }
 
@@ -705,9 +937,9 @@ extern "C" void eez_ui_binding_detach(void)
         return;
     }
 
-    s_manual_motor_1_running = false;
-    s_manual_motor_direction = DAJILOG_MANUAL_MOTOR_FORWARD;
-    (void)submit_manual_motor(DAJILOG_MANUAL_MOTOR_STOP);
+    end_test();
+    s_run_deadline = 0;
+    s_apply_sequence = 0;
     (void)dajilog_ui_adaptor_detach(&s_adaptor);
     // System Core and Storage Task remain active across app close/reopen.
     s_attached = false;

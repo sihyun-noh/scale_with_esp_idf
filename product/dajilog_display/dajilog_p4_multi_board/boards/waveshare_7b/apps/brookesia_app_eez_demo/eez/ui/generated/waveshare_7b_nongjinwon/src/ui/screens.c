@@ -12,8 +12,8 @@
 
 objects_t objects;
 
-static const char *screen_names[] = { "StartupAnimation", "Dashboard", "MotorManual", "RunCountdown", "SystemSetting", "RidgeSetup", "Preparation", "Work", "WeighingTest", "NumericInput" };
-static const char *object_names[] = { "startup_animation", "dashboard", "motor_manual", "run_countdown", "system_setting", "ridge_setup", "preparation", "work", "weighing_test", "numeric_input", "startup_top_accent", "startup_brand_label", "startup_subtitle_label", "startup_hopper_backdrop", "startup_hopper_image", "startup_particle_1", "startup_particle_2", "startup_particle_3", "startup_particle_4", "startup_particle_5", "startup_particle_6", "startup_particle_7", "startup_particle_8", "startup_particle_9", "startup_percent_0", "startup_percent_25", "startup_percent_50", "startup_percent_75", "startup_percent_100", "startup_dispensed_label", "startup_progress_track", "startup_progress_fill", "startup_status_label", "startup_module_label", "startup_footer_label", "dashboard_header", "dashboard_brand", "dashboard_title", "dashboard_operation_label", "operation_state_value", "dashboard_can_label", "can_online_value", "dashboard_setting_button", "dashboard_setting_top_label", "dashboard_motor_section_hint", "driver_1_card", "driver_1_number", "driver_1_name", "driver_1_state_value", "driver_1_speed_label", "driver_1_target_label", "driver_1_speed_value", "driver_1_speed_unit", "driver_1_target_value", "driver_1_target_unit", "driver_1_progress_track", "driver_1_progress_fill", "driver_1_load_value", "setting_1_card", "setting_1_number", "setting_1_name", "setting_1_state_value", "setting_1_speed_label", "setting_1_target_label", "setting_1_speed_value", "setting_1_speed_unit", "setting_1_target_value", "setting_1_target_unit", "setting_1_progress_track", "setting_1_progress_fill", "setting_1_load_value", "driver_2_card", "driver_2_number", "driver_2_name", "driver_2_state_value", "driver_2_speed_label", "driver_2_target_label", "driver_2_speed_value", "driver_2_speed_unit", "driver_2_target_value", "driver_2_target_unit", "driver_2_progress_track", "driver_2_progress_fill", "driver_2_load_value", "setting_2_card", "setting_2_number", "setting_2_name", "setting_2_state_value", "setting_2_speed_label", "setting_2_target_label", "setting_2_speed_value", "setting_2_speed_unit", "setting_2_target_value", "setting_2_target_unit", "setting_2_progress_track", "setting_2_progress_fill", "setting_2_load_value", "vehicle_speed_card", "vehicle_speed_title", "vehicle_speed_divider", "vehicle_speed_label", "vehicle_speed_value", "vehicle_speed_unit", "vehicle_target_speed_label", "vehicle_target_speed_value", "vehicle_speed_progress_track", "vehicle_speed_progress_fill", "vehicle_speed_signal_label", "vehicle_speed_signal_value", "dashboard_run_button", "dashboard_system_title", "work_mode_label", "work_mode_value", "recipe_name_label", "recipe_name_value", "dashboard_alert_card", "dashboard_alert_title", "dashboard_alert_severity", "dashboard_alert_value", "dashboard_stop_button", "dashboard_setting_caption", "dashboard_setting_label", "dashboard_setting_description", "dashboard_setting_arrow", "motor_manual_backdrop", "motor_manual_panel", "motor_manual_title", "motor_manual_selected_value", "driver_mode_auto_button", "driver_mode_auto_label", "driver_mode_manual_button", "driver_mode_manual_label", "driver_mode_disabled_button", "driver_mode_disabled_label", "motor_manual_close_button", "motor_manual_close_label", "motor_manual_rpm_caption", "motor_manual_rpm_value", "motor_manual_rpm_unit", "motor_manual_rpm_slider", "motor_manual_range_hint", "motor_manual_direction_value", "motor_manual_operation_value", "motor_manual_forward_button", "motor_manual_forward_label", "motor_manual_reverse_button", "motor_manual_reverse_label", "motor_manual_run_button", "motor_manual_run_label", "motor_manual_stop_button", "motor_manual_stop_label", "motor_manual_run_lamp", "motor_manual_run_lamp_label", "motor_manual_stop_lamp", "motor_manual_stop_lamp_label", "motor_manual_safety_hint", "run_countdown_backdrop", "run_countdown_panel", "run_countdown_title", "run_countdown_value", "run_countdown_description", "run_countdown_summary_panel", "run_countdown_d1_summary", "run_countdown_d2_summary", "run_countdown_stop_button", "run_countdown_stop_label", "main_status", "main_stop", "main_stop_label", "main_tab_ridge", "main_tab_ridge_label", "main_tab_line_ridge", "main_tab_prescription", "main_tab_prescription_label", "main_tab_line_prescription", "main_tab_preparation", "main_tab_preparation_label", "main_tab_line_preparation", "main_tab_work", "main_tab_work_label", "main_tab_line_work", "main_tab_weighing", "main_tab_weighing_label", "main_tab_line_weighing", "main_content", "main_right_title", "main_nitrogen", "main_nitrogen_label", "main_direct", "main_direct_label", "main_nitrogen_amount_label", "recipe_nitrogen_rate_input", "main_nitrogen_unit", "main_upper_ratio_label", "main_upper_ratio", "main_lower_ratio_label", "main_lower_ratio", "main_upper_product_label", "main_upper_product", "main_lower_product_label", "main_lower_product", "fertilizer_temp_save", "fertilizer_temp_save_label", "fertilizer_save_settings", "fertilizer_save_settings_label", "main_stop_1", "main_stop_label_1", "ridge_divider_1", "ridge_app_title", "ridge_status", "ridge_stop", "ridge_stop_label", "ridge_tab_ridge", "ridge_tab_ridge_label", "ridge_tab_line_ridge", "ridge_tab_prescription", "ridge_tab_prescription_label", "ridge_tab_line_prescription", "ridge_tab_preparation", "ridge_tab_preparation_label", "ridge_tab_line_preparation", "ridge_tab_work", "ridge_tab_work_label", "ridge_tab_line_work", "ridge_tab_weighing", "ridge_tab_weighing_label", "ridge_tab_line_weighing", "ridge_content", "ridge_left_title", "ridge_divider", "ridge_ridge_label", "ridge_ridge_value", "ridge_count_label", "ridge_recipe_ridge_count_input", "ridge_count_unit", "ridge_width_label", "ridge_recipe_ridge_width_input", "ridge_width_unit", "ridge_length_label", "ridge_recipe_actual_length_input", "ridge_length_unit", "ridge_area_only", "ridge_area_only_label", "ridge_area_furrow", "ridge_area_furrow_label", "ridge_all", "ridge_all_label", "ridge_split", "ridge_split_label", "ridge_apply_length", "ridge_apply_length_label", "ridge_north_label", "ridge_north_value", "ridge_south_label", "ridge_south_value", "ridge_temp_save", "ridge_temp_save_label", "ridge_save_settings", "ridge_save_settings_label", "prep_app_title", "prep_status", "prep_stop", "prep_stop_label", "prep_tab_ridge", "prep_tab_ridge_label", "prep_tab_line_ridge", "prep_tab_prescription", "prep_tab_prescription_label", "prep_tab_line_prescription", "prep_tab_preparation", "prep_tab_preparation_label", "prep_tab_line_preparation", "prep_tab_work", "prep_tab_work_label", "prep_tab_line_work", "prep_tab_weighing", "prep_tab_weighing_label", "prep_tab_line_weighing", "prep_content", "prep_content_title", "prep_placeholder", "prep_guide", "workpage_app_title", "workpage_status", "workpage_stop", "workpage_stop_label", "workpage_tab_ridge", "workpage_tab_ridge_label", "workpage_tab_line_ridge", "workpage_tab_prescription", "workpage_tab_prescription_label", "workpage_tab_line_prescription", "workpage_tab_preparation", "workpage_tab_preparation_label", "workpage_tab_line_preparation", "workpage_tab_work", "workpage_tab_work_label", "workpage_tab_line_work", "workpage_tab_weighing", "workpage_tab_weighing_label", "workpage_tab_line_weighing", "workpage_content", "workpage_content_title", "workpage_placeholder", "workpage_guide", "weigh_app_title", "weigh_status", "weigh_stop", "weigh_stop_label", "weigh_tab_ridge", "weigh_tab_ridge_label", "weigh_tab_line_ridge", "weigh_tab_prescription", "weigh_tab_prescription_label", "weigh_tab_line_prescription", "weigh_tab_preparation", "weigh_tab_preparation_label", "weigh_tab_line_preparation", "weigh_tab_work", "weigh_tab_work_label", "weigh_tab_line_work", "weigh_tab_weighing", "weigh_tab_weighing_label", "weigh_tab_line_weighing", "weigh_content", "weigh_content_title", "weigh_placeholder", "weigh_guide", "numeric_input_card", "numeric_input_title_label", "numeric_input_editor", "numeric_input_unit_label", "numeric_input_keypad", "numeric_input_cancel_button", "numeric_input_cancel_button_label", "numeric_input_done_button", "numeric_input_done_button_label", "numeric_input_help_label" };
+static const char *screen_names[] = { "StartupAnimation", "Dashboard", "DriverDetail", "RunCountdown", "SystemSetting", "RidgeSetup", "Preparation", "Work", "WeighingTest", "NumericInput" };
+static const char *object_names[] = { "startup_animation", "dashboard", "driver_detail", "run_countdown", "system_setting", "ridge_setup", "preparation", "work", "weighing_test", "numeric_input", "startup_top_accent", "startup_brand_label", "startup_subtitle_label", "startup_hopper_backdrop", "startup_hopper_image", "startup_particle_1", "startup_particle_2", "startup_particle_3", "startup_particle_4", "startup_particle_5", "startup_particle_6", "startup_particle_7", "startup_particle_8", "startup_particle_9", "startup_percent_0", "startup_percent_25", "startup_percent_50", "startup_percent_75", "startup_percent_100", "startup_dispensed_label", "startup_progress_track", "startup_progress_fill", "startup_status_label", "startup_module_label", "startup_footer_label", "dashboard_header", "dashboard_brand", "dashboard_title", "dashboard_operation_label", "operation_state_value", "dashboard_can_label", "can_online_value", "dashboard_setting_button", "dashboard_setting_top_label", "dashboard_motor_section_hint", "driver_1_card", "driver_1_number", "driver_1_name", "driver_1_state_value", "driver_1_channel_a_label", "driver_1_channel_b_label", "driver_1_channel_a_value", "driver_1_channel_a_unit", "driver_1_channel_b_value", "driver_1_channel_b_unit", "driver_1_progress_track", "driver_1_progress_fill", "driver_1_output_state_value", "setting_1_card", "setting_1_number", "surface_setting_name", "setting_1_state_value", "surface_setting_name_label", "surface_setting_target_label", "surface_setting_summary_value", "surface_setting_name_unit", "setting_1_target_value", "surface_setting_target_unit", "setting_1_progress_track", "setting_1_progress_fill", "surface_calibration_state_value", "driver_2_card", "driver_2_number", "driver_2_name", "driver_2_state_value", "driver_2_channel_c_label", "driver_2_channel_d_label", "driver_2_channel_c_value", "driver_2_channel_c_unit", "driver_2_channel_d_value", "driver_2_channel_d_unit", "driver_2_progress_track", "driver_2_progress_fill", "driver_2_output_state_value", "setting_2_card", "setting_2_number", "subsurface_setting_name", "setting_2_state_value", "subsurface_setting_name_label", "subsurface_setting_target_label", "subsurface_setting_summary_value", "subsurface_setting_name_unit", "setting_2_target_value", "subsurface_setting_target_unit", "setting_2_progress_track", "setting_2_progress_fill", "subsurface_calibration_state_value", "vehicle_speed_card", "vehicle_speed_title", "vehicle_speed_divider", "vehicle_speed_label", "vehicle_speed_value", "vehicle_speed_unit", "vehicle_target_speed_label", "vehicle_target_speed_value", "vehicle_speed_progress_track", "vehicle_speed_progress_fill", "vehicle_speed_signal_label", "vehicle_speed_signal_value", "dashboard_run_button", "dashboard_system_title", "work_mode_label", "work_mode_value", "recipe_name_label", "recipe_name_value", "dashboard_alert_card", "dashboard_alert_title", "dashboard_alert_severity", "dashboard_alert_value", "dashboard_stop_button", "dashboard_setting_caption", "dashboard_setting_label", "dashboard_setting_description", "dashboard_setting_arrow", "driver_detail_backdrop", "driver_detail_panel", "driver_detail_title", "driver_detail_selected_value", "driver_detail_auto_mode_button", "driver_detail_auto_mode_label", "driver_detail_manual_mode_button", "driver_detail_manual_mode_label", "driver_detail_test_mode_button", "driver_detail_test_mode_label", "driver_detail_close_button", "driver_detail_close_label", "driver_detail_output_caption", "driver_detail_output_step_value", "driver_detail_output_step_unit", "driver_detail_output_slider", "driver_detail_range_hint", "driver_detail_target_summary", "driver_detail_voltage_summary", "driver_detail_trim_minus_button", "driver_detail_trim_minus_label", "driver_detail_trim_plus_button", "driver_detail_trim_plus_label", "driver_detail_trim_reset_button", "driver_detail_trim_reset_label", "driver_detail_trim_apply_button", "driver_detail_trim_apply_label", "driver_detail_channel_a_selector", "driver_detail_channel_a_selector_label", "driver_detail_channel_b_selector", "driver_detail_channel_b_selector_label", "driver_detail_safety_hint", "run_countdown_backdrop", "run_countdown_panel", "run_countdown_title", "run_countdown_value", "run_countdown_description", "run_countdown_summary_panel", "run_countdown_d1_summary", "run_countdown_d2_summary", "run_countdown_stop_button", "run_countdown_stop_label", "main_status", "main_stop", "main_stop_label", "main_tab_ridge", "main_tab_ridge_label", "main_tab_line_ridge", "main_tab_prescription", "main_tab_prescription_label", "main_tab_line_prescription", "main_tab_preparation", "main_tab_preparation_label", "main_tab_line_preparation", "main_tab_work", "main_tab_work_label", "main_tab_line_work", "main_tab_weighing", "main_tab_weighing_label", "main_tab_line_weighing", "main_content", "main_right_title", "main_nitrogen", "main_nitrogen_label", "main_direct", "main_direct_label", "main_nitrogen_amount_label", "recipe_nitrogen_rate_input", "main_nitrogen_unit", "main_upper_ratio_label", "main_upper_ratio", "main_lower_ratio_label", "main_lower_ratio", "main_upper_product_label", "main_upper_product", "main_lower_product_label", "main_lower_product", "fertilizer_temp_save", "fertilizer_temp_save_label", "fertilizer_save_settings", "fertilizer_save_settings_label", "main_stop_1", "main_stop_label_1", "ridge_divider_1", "ridge_app_title", "ridge_status", "ridge_stop", "ridge_stop_label", "ridge_tab_ridge", "ridge_tab_ridge_label", "ridge_tab_line_ridge", "ridge_tab_prescription", "ridge_tab_prescription_label", "ridge_tab_line_prescription", "ridge_tab_preparation", "ridge_tab_preparation_label", "ridge_tab_line_preparation", "ridge_tab_work", "ridge_tab_work_label", "ridge_tab_line_work", "ridge_tab_weighing", "ridge_tab_weighing_label", "ridge_tab_line_weighing", "ridge_content", "ridge_left_title", "ridge_divider", "ridge_ridge_label", "ridge_ridge_value", "ridge_count_label", "ridge_recipe_ridge_count_input", "ridge_count_unit", "ridge_width_label", "ridge_recipe_ridge_width_input", "ridge_width_unit", "ridge_length_label", "ridge_recipe_actual_length_input", "ridge_length_unit", "ridge_area_only", "ridge_area_only_label", "ridge_area_furrow", "ridge_area_furrow_label", "ridge_all", "ridge_all_label", "ridge_split", "ridge_split_label", "ridge_apply_length", "ridge_apply_length_label", "ridge_north_label", "ridge_north_value", "ridge_south_label", "ridge_south_value", "ridge_temp_save", "ridge_temp_save_label", "ridge_save_settings", "ridge_save_settings_label", "prep_app_title", "prep_status", "prep_stop", "prep_stop_label", "prep_tab_ridge", "prep_tab_ridge_label", "prep_tab_line_ridge", "prep_tab_prescription", "prep_tab_prescription_label", "prep_tab_line_prescription", "prep_tab_preparation", "prep_tab_preparation_label", "prep_tab_line_preparation", "prep_tab_work", "prep_tab_work_label", "prep_tab_line_work", "prep_tab_weighing", "prep_tab_weighing_label", "prep_tab_line_weighing", "prep_content", "prep_content_title", "prep_placeholder", "prep_guide", "workpage_app_title", "workpage_status", "workpage_stop", "workpage_stop_label", "workpage_tab_ridge", "workpage_tab_ridge_label", "workpage_tab_line_ridge", "workpage_tab_prescription", "workpage_tab_prescription_label", "workpage_tab_line_prescription", "workpage_tab_preparation", "workpage_tab_preparation_label", "workpage_tab_line_preparation", "workpage_tab_work", "workpage_tab_work_label", "workpage_tab_line_work", "workpage_tab_weighing", "workpage_tab_weighing_label", "workpage_tab_line_weighing", "workpage_content", "workpage_content_title", "workpage_placeholder", "workpage_guide", "weigh_app_title", "weigh_status", "weigh_stop", "weigh_stop_label", "weigh_tab_ridge", "weigh_tab_ridge_label", "weigh_tab_line_ridge", "weigh_tab_prescription", "weigh_tab_prescription_label", "weigh_tab_line_prescription", "weigh_tab_preparation", "weigh_tab_preparation_label", "weigh_tab_line_preparation", "weigh_tab_work", "weigh_tab_work_label", "weigh_tab_line_work", "weigh_tab_weighing", "weigh_tab_weighing_label", "weigh_tab_line_weighing", "weigh_content", "weigh_content_title", "weigh_placeholder", "weigh_guide", "numeric_input_card", "numeric_input_title_label", "numeric_input_editor", "numeric_input_unit_label", "numeric_input_keypad", "numeric_input_cancel_button", "numeric_input_cancel_button_label", "numeric_input_done_button", "numeric_input_done_button_label", "numeric_input_help_label" };
 
 //
 // Event handlers
@@ -87,7 +87,7 @@ static void event_handler_cb_dashboard_dashboard_run_button(lv_event_t *e) {
     }
 }
 
-static void event_handler_cb_motor_manual_driver_mode_auto_button(lv_event_t *e) {
+static void event_handler_cb_driver_detail_driver_detail_auto_mode_button(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -105,7 +105,7 @@ static void event_handler_cb_motor_manual_driver_mode_auto_button(lv_event_t *e)
     }
 }
 
-static void event_handler_cb_motor_manual_driver_mode_manual_button(lv_event_t *e) {
+static void event_handler_cb_driver_detail_driver_detail_manual_mode_button(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -123,7 +123,7 @@ static void event_handler_cb_motor_manual_driver_mode_manual_button(lv_event_t *
     }
 }
 
-static void event_handler_cb_motor_manual_driver_mode_disabled_button(lv_event_t *e) {
+static void event_handler_cb_driver_detail_driver_detail_test_mode_button(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -141,7 +141,7 @@ static void event_handler_cb_motor_manual_driver_mode_disabled_button(lv_event_t
     }
 }
 
-static void event_handler_cb_motor_manual_motor_manual_close_button(lv_event_t *e) {
+static void event_handler_cb_driver_detail_driver_detail_close_button(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -152,7 +152,7 @@ static void event_handler_cb_motor_manual_motor_manual_close_button(lv_event_t *
     }
 }
 
-static void event_handler_cb_motor_manual_motor_manual_rpm_slider(lv_event_t *e) {
+static void event_handler_cb_driver_detail_driver_detail_output_slider(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -170,7 +170,7 @@ static void event_handler_cb_motor_manual_motor_manual_rpm_slider(lv_event_t *e)
     }
 }
 
-static void event_handler_cb_motor_manual_motor_manual_forward_button(lv_event_t *e) {
+static void event_handler_cb_driver_detail_driver_detail_trim_minus_button(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -181,7 +181,7 @@ static void event_handler_cb_motor_manual_motor_manual_forward_button(lv_event_t
     }
 }
 
-static void event_handler_cb_motor_manual_motor_manual_reverse_button(lv_event_t *e) {
+static void event_handler_cb_driver_detail_driver_detail_trim_plus_button(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -192,7 +192,7 @@ static void event_handler_cb_motor_manual_motor_manual_reverse_button(lv_event_t
     }
 }
 
-static void event_handler_cb_motor_manual_motor_manual_run_button(lv_event_t *e) {
+static void event_handler_cb_driver_detail_driver_detail_trim_reset_button(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -203,7 +203,7 @@ static void event_handler_cb_motor_manual_motor_manual_run_button(lv_event_t *e)
     }
 }
 
-static void event_handler_cb_motor_manual_motor_manual_stop_button(lv_event_t *e) {
+static void event_handler_cb_driver_detail_driver_detail_trim_apply_button(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -214,7 +214,7 @@ static void event_handler_cb_motor_manual_motor_manual_stop_button(lv_event_t *e
     }
 }
 
-static void event_handler_cb_motor_manual_motor_manual_run_lamp(lv_event_t *e) {
+static void event_handler_cb_driver_detail_driver_detail_channel_a_selector(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -226,9 +226,13 @@ static void event_handler_cb_motor_manual_motor_manual_run_lamp(lv_event_t *e) {
             assignBooleanProperty(flowState, 28, 3, value, "Failed to assign Checked state");
         }
     }
+    if (event == LV_EVENT_PRESSED) {
+        e->user_data = (void *)0;
+        flowPropagateValueLVGLEvent(flowState, 28, 0, e);
+    }
 }
 
-static void event_handler_cb_motor_manual_motor_manual_stop_lamp(lv_event_t *e) {
+static void event_handler_cb_driver_detail_driver_detail_channel_b_selector(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
@@ -239,6 +243,10 @@ static void event_handler_cb_motor_manual_motor_manual_stop_lamp(lv_event_t *e) 
             bool value = lv_obj_has_state(ta, LV_STATE_CHECKED);
             assignBooleanProperty(flowState, 30, 3, value, "Failed to assign Checked state");
         }
+    }
+    if (event == LV_EVENT_PRESSED) {
+        e->user_data = (void *)0;
+        flowPropagateValueLVGLEvent(flowState, 30, 0, e);
     }
 }
 
@@ -1093,7 +1101,7 @@ void create_screen_dashboard() {
             // dashboard_operation_label
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.dashboard_operation_label = obj;
-            lv_obj_set_pos(obj, 655, 19);
+            lv_obj_set_pos(obj, 600, 19);
             lv_obj_set_size(obj, 52, 28);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1109,8 +1117,8 @@ void create_screen_dashboard() {
             // operation_state_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.operation_state_value = obj;
-            lv_obj_set_pos(obj, 707, 18);
-            lv_obj_set_size(obj, 64, 30);
+            lv_obj_set_pos(obj, 652, 18);
+            lv_obj_set_size(obj, 90, 30);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x33d17a), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1125,7 +1133,7 @@ void create_screen_dashboard() {
             // dashboard_can_label
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.dashboard_can_label = obj;
-            lv_obj_set_pos(obj, 781, 19);
+            lv_obj_set_pos(obj, 761, 19);
             lv_obj_set_size(obj, 46, 28);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1141,8 +1149,8 @@ void create_screen_dashboard() {
             // can_online_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.can_online_value = obj;
-            lv_obj_set_pos(obj, 827, 18);
-            lv_obj_set_size(obj, 66, 30);
+            lv_obj_set_pos(obj, 811, 18);
+            lv_obj_set_size(obj, 86, 30);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x33d17a), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1210,7 +1218,7 @@ void create_screen_dashboard() {
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.driver_1_card = obj;
             lv_obj_set_pos(obj, 24, 78);
-            lv_obj_set_size(obj, 316, 164);
+            lv_obj_set_size(obj, 367, 164);
             lv_obj_add_event_cb(obj, event_handler_cb_dashboard_driver_1_card, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x111922), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1244,7 +1252,7 @@ void create_screen_dashboard() {
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_1_name = obj;
             lv_obj_set_pos(obj, 82, 88);
-            lv_obj_set_size(obj, 127, 30);
+            lv_obj_set_size(obj, 194, 30);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1259,8 +1267,8 @@ void create_screen_dashboard() {
             // driver_1_state_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_1_state_value = obj;
-            lv_obj_set_pos(obj, 246, 88);
-            lv_obj_set_size(obj, 78, 30);
+            lv_obj_set_pos(obj, 288, 88);
+            lv_obj_set_size(obj, 86, 25);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x33d17a), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1272,11 +1280,11 @@ void create_screen_dashboard() {
             lv_label_set_text(obj, "");
         }
         {
-            // driver_1_speed_label
+            // driver_1_channel_a_label
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.driver_1_speed_label = obj;
-            lv_obj_set_pos(obj, 40, 132);
-            lv_obj_set_size(obj, 96, 24);
+            objects.driver_1_channel_a_label = obj;
+            lv_obj_set_pos(obj, 40, 129);
+            lv_obj_set_size(obj, 181, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8c9ead), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1285,35 +1293,34 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "현재 속도");
+            lv_label_set_text_static(obj, "A 호퍼(설정/상태)");
         }
         {
-            // driver_1_target_label
+            // driver_1_channel_b_label
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.driver_1_target_label = obj;
-            lv_obj_set_pos(obj, 200, 132);
-            lv_obj_set_size(obj, 72, 24);
-            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            objects.driver_1_channel_b_label = obj;
+            lv_obj_set_pos(obj, 215, 129);
+            lv_obj_set_size(obj, 158, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_color(obj, lv_color_hex(0x8c9ead), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "목표량");
+            lv_obj_set_style_text_color(obj, lv_color_hex(0x8c9ead), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text_static(obj, "B 호퍼(설정/상태)");
         }
         {
-            // driver_1_speed_value
+            // driver_1_channel_a_value
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.driver_1_speed_value = obj;
+            objects.driver_1_channel_a_value = obj;
             lv_obj_set_pos(obj, 40, 154);
-            lv_obj_set_size(obj, 284, 38);
+            lv_obj_set_size(obj, 158, 50);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr28, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1321,11 +1328,11 @@ void create_screen_dashboard() {
             lv_label_set_text(obj, "");
         }
         {
-            // driver_1_speed_unit
+            // driver_1_channel_a_unit
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.driver_1_speed_unit = obj;
+            objects.driver_1_channel_a_unit = obj;
             lv_obj_set_pos(obj, 138, 161);
-            lv_obj_set_size(obj, 48, 28);
+            lv_obj_set_size(obj, 0, 28);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8c9ead), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1334,19 +1341,18 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "rpm");
+            lv_label_set_text_static(obj, "");
         }
         {
-            // driver_1_target_value
+            // driver_1_channel_b_value
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.driver_1_target_value = obj;
-            lv_obj_set_pos(obj, 200, 154);
-            lv_obj_set_size(obj, 72, 38);
-            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            objects.driver_1_channel_b_value = obj;
+            lv_obj_set_pos(obj, 215, 154);
+            lv_obj_set_size(obj, 158, 50);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr28, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1354,11 +1360,11 @@ void create_screen_dashboard() {
             lv_label_set_text(obj, "");
         }
         {
-            // driver_1_target_unit
+            // driver_1_channel_b_unit
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.driver_1_target_unit = obj;
+            objects.driver_1_channel_b_unit = obj;
             lv_obj_set_pos(obj, 276, 161);
-            lv_obj_set_size(obj, 58, 28);
+            lv_obj_set_size(obj, 0, 28);
             lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1368,14 +1374,14 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "kg/min");
+            lv_label_set_text_static(obj, "");
         }
         {
             // driver_1_progress_track
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.driver_1_progress_track = obj;
-            lv_obj_set_pos(obj, 40, 208);
-            lv_obj_set_size(obj, 284, 8);
+            lv_obj_set_pos(obj, 40, 210);
+            lv_obj_set_size(obj, 330, 4);
             lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x1e2933), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1392,8 +1398,8 @@ void create_screen_dashboard() {
             // driver_1_progress_fill
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.driver_1_progress_fill = obj;
-            lv_obj_set_pos(obj, 40, 208);
-            lv_obj_set_size(obj, 204, 8);
+            lv_obj_set_pos(obj, 40, 210);
+            lv_obj_set_size(obj, 204, 4);
             lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x33d17a), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1407,16 +1413,15 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
         {
-            // driver_1_load_value
+            // driver_1_output_state_value
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.driver_1_load_value = obj;
-            lv_obj_set_pos(obj, 269, 189);
-            lv_obj_set_size(obj, 55, 18);
-            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            objects.driver_1_output_state_value = obj;
+            lv_obj_set_pos(obj, 40, 217);
+            lv_obj_set_size(obj, 330, 19);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x33d17a), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1427,8 +1432,8 @@ void create_screen_dashboard() {
             // setting_1_card
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.setting_1_card = obj;
-            lv_obj_set_pos(obj, 356, 78);
-            lv_obj_set_size(obj, 316, 164);
+            lv_obj_set_pos(obj, 404, 78);
+            lv_obj_set_size(obj, 354, 164);
             lv_obj_add_event_cb(obj, event_handler_cb_dashboard_setting_1_card, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x111922), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1445,7 +1450,7 @@ void create_screen_dashboard() {
             // setting_1_number
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.setting_1_number = obj;
-            lv_obj_set_pos(obj, 372, 90);
+            lv_obj_set_pos(obj, 420, 90);
             lv_obj_set_size(obj, 42, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1458,11 +1463,11 @@ void create_screen_dashboard() {
             lv_label_set_text_static(obj, "S1");
         }
         {
-            // setting_1_name
+            // surface_setting_name
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.setting_1_name = obj;
-            lv_obj_set_pos(obj, 414, 88);
-            lv_obj_set_size(obj, 155, 30);
+            objects.surface_setting_name = obj;
+            lv_obj_set_pos(obj, 462, 88);
+            lv_obj_set_size(obj, 181, 30);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1477,8 +1482,8 @@ void create_screen_dashboard() {
             // setting_1_state_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.setting_1_state_value = obj;
-            lv_obj_set_pos(obj, 578, 88);
-            lv_obj_set_size(obj, 78, 30);
+            lv_obj_set_pos(obj, 662, 88);
+            lv_obj_set_size(obj, 80, 30);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x318ff5), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1490,11 +1495,11 @@ void create_screen_dashboard() {
             lv_label_set_text(obj, "");
         }
         {
-            // setting_1_speed_label
+            // surface_setting_name_label
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.setting_1_speed_label = obj;
-            lv_obj_set_pos(obj, 372, 132);
-            lv_obj_set_size(obj, 96, 24);
+            objects.surface_setting_name_label = obj;
+            lv_obj_set_pos(obj, 420, 129);
+            lv_obj_set_size(obj, 168, 24);
             lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1504,14 +1509,14 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "현재 속도");
+            lv_label_set_text_static(obj, "제품 / Lot");
         }
         {
-            // setting_1_target_label
+            // surface_setting_target_label
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.setting_1_target_label = obj;
-            lv_obj_set_pos(obj, 532, 132);
-            lv_obj_set_size(obj, 72, 24);
+            objects.surface_setting_target_label = obj;
+            lv_obj_set_pos(obj, 606, 129);
+            lv_obj_set_size(obj, 130, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8c9ead), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1520,19 +1525,18 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "목표량");
+            lv_label_set_text_static(obj, "전체 목표");
         }
         {
-            // setting_1_speed_value
+            // surface_setting_summary_value
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.setting_1_speed_value = obj;
-            lv_obj_set_pos(obj, 372, 154);
-            lv_obj_set_size(obj, 96, 38);
-            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            objects.surface_setting_summary_value = obj;
+            lv_obj_set_pos(obj, 420, 156);
+            lv_obj_set_size(obj, 170, 44);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
-            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr28, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1540,11 +1544,11 @@ void create_screen_dashboard() {
             lv_label_set_text(obj, "");
         }
         {
-            // setting_1_speed_unit
+            // surface_setting_name_unit
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.setting_1_speed_unit = obj;
-            lv_obj_set_pos(obj, 470, 161);
-            lv_obj_set_size(obj, 48, 28);
+            objects.surface_setting_name_unit = obj;
+            lv_obj_set_pos(obj, 556, 161);
+            lv_obj_set_size(obj, 0, 28);
             lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1554,16 +1558,16 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "rpm");
+            lv_label_set_text_static(obj, "");
         }
         {
             // setting_1_target_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.setting_1_target_value = obj;
-            lv_obj_set_pos(obj, 532, 154);
-            lv_obj_set_size(obj, 72, 38);
+            lv_obj_set_pos(obj, 602, 153);
+            lv_obj_set_size(obj, 100, 48);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
-            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr28, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_num36, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1573,11 +1577,11 @@ void create_screen_dashboard() {
             lv_label_set_text(obj, "");
         }
         {
-            // setting_1_target_unit
+            // surface_setting_target_unit
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.setting_1_target_unit = obj;
-            lv_obj_set_pos(obj, 608, 161);
-            lv_obj_set_size(obj, 58, 28);
+            objects.surface_setting_target_unit = obj;
+            lv_obj_set_pos(obj, 704, 172);
+            lv_obj_set_size(obj, 52, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8c9ead), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1592,8 +1596,8 @@ void create_screen_dashboard() {
             // setting_1_progress_track
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.setting_1_progress_track = obj;
-            lv_obj_set_pos(obj, 372, 208);
-            lv_obj_set_size(obj, 284, 8);
+            lv_obj_set_pos(obj, 420, 210);
+            lv_obj_set_size(obj, 320, 4);
             lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x1e2933), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1610,8 +1614,8 @@ void create_screen_dashboard() {
             // setting_1_progress_fill
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.setting_1_progress_fill = obj;
-            lv_obj_set_pos(obj, 372, 208);
-            lv_obj_set_size(obj, 2, 8);
+            lv_obj_set_pos(obj, 420, 210);
+            lv_obj_set_size(obj, 2, 4);
             lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x318ff5), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1625,16 +1629,15 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
         {
-            // setting_1_load_value
+            // surface_calibration_state_value
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.setting_1_load_value = obj;
-            lv_obj_set_pos(obj, 601, 189);
-            lv_obj_set_size(obj, 55, 18);
-            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            objects.surface_calibration_state_value = obj;
+            lv_obj_set_pos(obj, 420, 217);
+            lv_obj_set_size(obj, 320, 19);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x318ff5), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1646,7 +1649,7 @@ void create_screen_dashboard() {
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.driver_2_card = obj;
             lv_obj_set_pos(obj, 24, 258);
-            lv_obj_set_size(obj, 316, 164);
+            lv_obj_set_size(obj, 367, 164);
             lv_obj_add_event_cb(obj, event_handler_cb_dashboard_driver_2_card, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x111922), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1680,7 +1683,7 @@ void create_screen_dashboard() {
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_2_name = obj;
             lv_obj_set_pos(obj, 82, 268);
-            lv_obj_set_size(obj, 127, 30);
+            lv_obj_set_size(obj, 194, 30);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1695,8 +1698,8 @@ void create_screen_dashboard() {
             // driver_2_state_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_2_state_value = obj;
-            lv_obj_set_pos(obj, 246, 268);
-            lv_obj_set_size(obj, 78, 30);
+            lv_obj_set_pos(obj, 288, 268);
+            lv_obj_set_size(obj, 86, 25);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x33d17a), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1708,11 +1711,11 @@ void create_screen_dashboard() {
             lv_label_set_text(obj, "");
         }
         {
-            // driver_2_speed_label
+            // driver_2_channel_c_label
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.driver_2_speed_label = obj;
-            lv_obj_set_pos(obj, 40, 312);
-            lv_obj_set_size(obj, 96, 24);
+            objects.driver_2_channel_c_label = obj;
+            lv_obj_set_pos(obj, 40, 309);
+            lv_obj_set_size(obj, 158, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8c9ead), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1721,15 +1724,14 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "현재 속도");
+            lv_label_set_text_static(obj, "C 호퍼(설정/상태)");
         }
         {
-            // driver_2_target_label
+            // driver_2_channel_d_label
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.driver_2_target_label = obj;
-            lv_obj_set_pos(obj, 200, 312);
-            lv_obj_set_size(obj, 72, 24);
-            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            objects.driver_2_channel_d_label = obj;
+            lv_obj_set_pos(obj, 215, 309);
+            lv_obj_set_size(obj, 158, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8c9ead), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1738,18 +1740,18 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "목표량");
+            lv_label_set_text_static(obj, "D 호퍼(설정/상태)");
         }
         {
-            // driver_2_speed_value
+            // driver_2_channel_c_value
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.driver_2_speed_value = obj;
+            objects.driver_2_channel_c_value = obj;
             lv_obj_set_pos(obj, 40, 334);
-            lv_obj_set_size(obj, 96, 38);
+            lv_obj_set_size(obj, 158, 50);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr28, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1757,11 +1759,11 @@ void create_screen_dashboard() {
             lv_label_set_text(obj, "");
         }
         {
-            // driver_2_speed_unit
+            // driver_2_channel_c_unit
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.driver_2_speed_unit = obj;
+            objects.driver_2_channel_c_unit = obj;
             lv_obj_set_pos(obj, 138, 341);
-            lv_obj_set_size(obj, 48, 28);
+            lv_obj_set_size(obj, 0, 28);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8c9ead), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1770,19 +1772,18 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "rpm");
+            lv_label_set_text_static(obj, "");
         }
         {
-            // driver_2_target_value
+            // driver_2_channel_d_value
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.driver_2_target_value = obj;
-            lv_obj_set_pos(obj, 200, 334);
-            lv_obj_set_size(obj, 72, 38);
-            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            objects.driver_2_channel_d_value = obj;
+            lv_obj_set_pos(obj, 215, 334);
+            lv_obj_set_size(obj, 158, 50);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr28, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1790,11 +1791,11 @@ void create_screen_dashboard() {
             lv_label_set_text(obj, "");
         }
         {
-            // driver_2_target_unit
+            // driver_2_channel_d_unit
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.driver_2_target_unit = obj;
+            objects.driver_2_channel_d_unit = obj;
             lv_obj_set_pos(obj, 276, 341);
-            lv_obj_set_size(obj, 58, 28);
+            lv_obj_set_size(obj, 0, 28);
             lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1804,14 +1805,14 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "kg/min");
+            lv_label_set_text_static(obj, "");
         }
         {
             // driver_2_progress_track
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.driver_2_progress_track = obj;
-            lv_obj_set_pos(obj, 40, 388);
-            lv_obj_set_size(obj, 284, 8);
+            lv_obj_set_pos(obj, 40, 390);
+            lv_obj_set_size(obj, 330, 4);
             lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x1e2933), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1828,8 +1829,8 @@ void create_screen_dashboard() {
             // driver_2_progress_fill
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.driver_2_progress_fill = obj;
-            lv_obj_set_pos(obj, 40, 388);
-            lv_obj_set_size(obj, 181, 8);
+            lv_obj_set_pos(obj, 40, 390);
+            lv_obj_set_size(obj, 181, 4);
             lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x33d17a), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1843,16 +1844,15 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
         {
-            // driver_2_load_value
+            // driver_2_output_state_value
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.driver_2_load_value = obj;
-            lv_obj_set_pos(obj, 269, 369);
-            lv_obj_set_size(obj, 55, 18);
-            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            objects.driver_2_output_state_value = obj;
+            lv_obj_set_pos(obj, 40, 397);
+            lv_obj_set_size(obj, 330, 19);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x33d17a), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1863,8 +1863,8 @@ void create_screen_dashboard() {
             // setting_2_card
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.setting_2_card = obj;
-            lv_obj_set_pos(obj, 356, 258);
-            lv_obj_set_size(obj, 316, 164);
+            lv_obj_set_pos(obj, 404, 258);
+            lv_obj_set_size(obj, 354, 164);
             lv_obj_add_event_cb(obj, event_handler_cb_dashboard_setting_2_card, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x111922), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1881,7 +1881,7 @@ void create_screen_dashboard() {
             // setting_2_number
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.setting_2_number = obj;
-            lv_obj_set_pos(obj, 372, 270);
+            lv_obj_set_pos(obj, 420, 270);
             lv_obj_set_size(obj, 42, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1894,11 +1894,11 @@ void create_screen_dashboard() {
             lv_label_set_text_static(obj, "S2");
         }
         {
-            // setting_2_name
+            // subsurface_setting_name
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.setting_2_name = obj;
-            lv_obj_set_pos(obj, 414, 268);
-            lv_obj_set_size(obj, 155, 30);
+            objects.subsurface_setting_name = obj;
+            lv_obj_set_pos(obj, 462, 268);
+            lv_obj_set_size(obj, 181, 30);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1913,8 +1913,8 @@ void create_screen_dashboard() {
             // setting_2_state_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.setting_2_state_value = obj;
-            lv_obj_set_pos(obj, 578, 268);
-            lv_obj_set_size(obj, 78, 30);
+            lv_obj_set_pos(obj, 662, 268);
+            lv_obj_set_size(obj, 80, 30);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xf04444), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1926,11 +1926,11 @@ void create_screen_dashboard() {
             lv_label_set_text(obj, "");
         }
         {
-            // setting_2_speed_label
+            // subsurface_setting_name_label
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.setting_2_speed_label = obj;
-            lv_obj_set_pos(obj, 372, 312);
-            lv_obj_set_size(obj, 96, 24);
+            objects.subsurface_setting_name_label = obj;
+            lv_obj_set_pos(obj, 420, 309);
+            lv_obj_set_size(obj, 168, 24);
             lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1940,14 +1940,14 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "현재 속도");
+            lv_label_set_text_static(obj, "제품 / Lot");
         }
         {
-            // setting_2_target_label
+            // subsurface_setting_target_label
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.setting_2_target_label = obj;
-            lv_obj_set_pos(obj, 532, 312);
-            lv_obj_set_size(obj, 72, 24);
+            objects.subsurface_setting_target_label = obj;
+            lv_obj_set_pos(obj, 606, 309);
+            lv_obj_set_size(obj, 130, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8c9ead), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1956,19 +1956,18 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "목표량");
+            lv_label_set_text_static(obj, "전체 목표");
         }
         {
-            // setting_2_speed_value
+            // subsurface_setting_summary_value
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.setting_2_speed_value = obj;
-            lv_obj_set_pos(obj, 372, 334);
-            lv_obj_set_size(obj, 96, 38);
-            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            objects.subsurface_setting_summary_value = obj;
+            lv_obj_set_pos(obj, 420, 336);
+            lv_obj_set_size(obj, 170, 44);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
-            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr28, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1976,11 +1975,11 @@ void create_screen_dashboard() {
             lv_label_set_text(obj, "");
         }
         {
-            // setting_2_speed_unit
+            // subsurface_setting_name_unit
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.setting_2_speed_unit = obj;
-            lv_obj_set_pos(obj, 470, 341);
-            lv_obj_set_size(obj, 48, 28);
+            objects.subsurface_setting_name_unit = obj;
+            lv_obj_set_pos(obj, 556, 341);
+            lv_obj_set_size(obj, 0, 28);
             lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -1990,16 +1989,16 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "rpm");
+            lv_label_set_text_static(obj, "");
         }
         {
             // setting_2_target_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.setting_2_target_value = obj;
-            lv_obj_set_pos(obj, 532, 334);
-            lv_obj_set_size(obj, 72, 38);
+            lv_obj_set_pos(obj, 602, 333);
+            lv_obj_set_size(obj, 100, 48);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
-            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr28, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_num36, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2009,11 +2008,11 @@ void create_screen_dashboard() {
             lv_label_set_text(obj, "");
         }
         {
-            // setting_2_target_unit
+            // subsurface_setting_target_unit
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.setting_2_target_unit = obj;
-            lv_obj_set_pos(obj, 608, 341);
-            lv_obj_set_size(obj, 58, 28);
+            objects.subsurface_setting_target_unit = obj;
+            lv_obj_set_pos(obj, 704, 352);
+            lv_obj_set_size(obj, 52, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8c9ead), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2028,8 +2027,8 @@ void create_screen_dashboard() {
             // setting_2_progress_track
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.setting_2_progress_track = obj;
-            lv_obj_set_pos(obj, 372, 388);
-            lv_obj_set_size(obj, 284, 8);
+            lv_obj_set_pos(obj, 420, 390);
+            lv_obj_set_size(obj, 320, 4);
             lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x1e2933), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2046,8 +2045,8 @@ void create_screen_dashboard() {
             // setting_2_progress_fill
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.setting_2_progress_fill = obj;
-            lv_obj_set_pos(obj, 372, 388);
-            lv_obj_set_size(obj, 51, 8);
+            lv_obj_set_pos(obj, 420, 390);
+            lv_obj_set_size(obj, 51, 4);
             lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0xf04444), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2061,16 +2060,15 @@ void create_screen_dashboard() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
         {
-            // setting_2_load_value
+            // subsurface_calibration_state_value
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.setting_2_load_value = obj;
-            lv_obj_set_pos(obj, 601, 369);
-            lv_obj_set_size(obj, 55, 18);
-            lv_obj_add_flag(obj, LV_OBJ_FLAG_HIDDEN);
+            objects.subsurface_calibration_state_value = obj;
+            lv_obj_set_pos(obj, 420, 397);
+            lv_obj_set_size(obj, 320, 19);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xf04444), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2081,8 +2079,8 @@ void create_screen_dashboard() {
             // vehicle_speed_card
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.vehicle_speed_card = obj;
-            lv_obj_set_pos(obj, 688, 78);
-            lv_obj_set_size(obj, 312, 218);
+            lv_obj_set_pos(obj, 779, 78);
+            lv_obj_set_size(obj, 221, 218);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x111922), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2098,8 +2096,8 @@ void create_screen_dashboard() {
             // vehicle_speed_title
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.vehicle_speed_title = obj;
-            lv_obj_set_pos(obj, 704, 88);
-            lv_obj_set_size(obj, 210, 30);
+            lv_obj_set_pos(obj, 794, 87);
+            lv_obj_set_size(obj, 194, 28);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2114,8 +2112,8 @@ void create_screen_dashboard() {
             // vehicle_speed_divider
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.vehicle_speed_divider = obj;
-            lv_obj_set_pos(obj, 704, 125);
-            lv_obj_set_size(obj, 280, 1);
+            lv_obj_set_pos(obj, 784, 118);
+            lv_obj_set_size(obj, 210, 1);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x293540), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2131,7 +2129,7 @@ void create_screen_dashboard() {
             // vehicle_speed_label
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.vehicle_speed_label = obj;
-            lv_obj_set_pos(obj, 704, 134);
+            lv_obj_set_pos(obj, 784, 126);
             lv_obj_set_size(obj, 100, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2147,10 +2145,10 @@ void create_screen_dashboard() {
             // vehicle_speed_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.vehicle_speed_value = obj;
-            lv_obj_set_pos(obj, 704, 154);
-            lv_obj_set_size(obj, 150, 64);
+            lv_obj_set_pos(obj, 796, 158);
+            lv_obj_set_size(obj, 135, 50);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
-            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr28, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_num36, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2163,8 +2161,8 @@ void create_screen_dashboard() {
             // vehicle_speed_unit
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.vehicle_speed_unit = obj;
-            lv_obj_set_pos(obj, 862, 176);
-            lv_obj_set_size(obj, 58, 30);
+            lv_obj_set_pos(obj, 936, 176);
+            lv_obj_set_size(obj, 55, 28);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8c9ead), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2179,7 +2177,7 @@ void create_screen_dashboard() {
             // vehicle_target_speed_label
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.vehicle_target_speed_label = obj;
-            lv_obj_set_pos(obj, 704, 223);
+            lv_obj_set_pos(obj, 781, 221);
             lv_obj_set_size(obj, 80, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2195,8 +2193,8 @@ void create_screen_dashboard() {
             // vehicle_target_speed_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.vehicle_target_speed_value = obj;
-            lv_obj_set_pos(obj, 810, 223);
-            lv_obj_set_size(obj, 174, 24);
+            lv_obj_set_pos(obj, 840, 221);
+            lv_obj_set_size(obj, 154, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2211,8 +2209,8 @@ void create_screen_dashboard() {
             // vehicle_speed_progress_track
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.vehicle_speed_progress_track = obj;
-            lv_obj_set_pos(obj, 704, 258);
-            lv_obj_set_size(obj, 280, 8);
+            lv_obj_set_pos(obj, 784, 258);
+            lv_obj_set_size(obj, 200, 8);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x1e2933), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2228,8 +2226,8 @@ void create_screen_dashboard() {
             // vehicle_speed_progress_fill
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.vehicle_speed_progress_fill = obj;
-            lv_obj_set_pos(obj, 704, 258);
-            lv_obj_set_size(obj, 252, 8);
+            lv_obj_set_pos(obj, 784, 258);
+            lv_obj_set_size(obj, 172, 8);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x318ff5), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2245,7 +2243,7 @@ void create_screen_dashboard() {
             // vehicle_speed_signal_label
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.vehicle_speed_signal_label = obj;
-            lv_obj_set_pos(obj, 704, 269);
+            lv_obj_set_pos(obj, 784, 268);
             lv_obj_set_size(obj, 80, 23);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2261,8 +2259,8 @@ void create_screen_dashboard() {
             // vehicle_speed_signal_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.vehicle_speed_signal_value = obj;
-            lv_obj_set_pos(obj, 779, 270);
-            lv_obj_set_size(obj, 198, 23);
+            lv_obj_set_pos(obj, 868, 269);
+            lv_obj_set_size(obj, 123, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x33d17a), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2277,8 +2275,8 @@ void create_screen_dashboard() {
             // dashboard_run_button
             lv_obj_t *obj = lv_button_create(parent_obj);
             objects.dashboard_run_button = obj;
-            lv_obj_set_pos(obj, 688, 308);
-            lv_obj_set_size(obj, 312, 114);
+            lv_obj_set_pos(obj, 779, 308);
+            lv_obj_set_size(obj, 221, 114);
             lv_obj_add_event_cb(obj, event_handler_cb_dashboard_dashboard_run_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0xf04444), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2295,7 +2293,7 @@ void create_screen_dashboard() {
             // dashboard_system_title
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.dashboard_system_title = obj;
-            lv_obj_set_pos(obj, 704, 318);
+            lv_obj_set_pos(obj, 790, 320);
             lv_obj_set_size(obj, 100, 28);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2311,7 +2309,7 @@ void create_screen_dashboard() {
             // work_mode_label
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.work_mode_label = obj;
-            lv_obj_set_pos(obj, 704, 352);
+            lv_obj_set_pos(obj, 790, 354);
             lv_obj_set_size(obj, 100, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2343,7 +2341,7 @@ void create_screen_dashboard() {
             // recipe_name_label
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.recipe_name_label = obj;
-            lv_obj_set_pos(obj, 704, 382);
+            lv_obj_set_pos(obj, 790, 384);
             lv_obj_set_size(obj, 100, 24);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2376,7 +2374,7 @@ void create_screen_dashboard() {
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.dashboard_alert_card = obj;
             lv_obj_set_pos(obj, 24, 437);
-            lv_obj_set_size(obj, 648, 92);
+            lv_obj_set_size(obj, 734, 92);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x111922), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2441,8 +2439,8 @@ void create_screen_dashboard() {
             // dashboard_stop_button
             lv_obj_t *obj = lv_button_create(parent_obj);
             objects.dashboard_stop_button = obj;
-            lv_obj_set_pos(obj, 688, 437);
-            lv_obj_set_size(obj, 312, 92);
+            lv_obj_set_pos(obj, 779, 437);
+            lv_obj_set_size(obj, 221, 92);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x2677d4), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_radius(obj, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2557,37 +2555,37 @@ void tick_screen_dashboard() {
     }
     {
         const char *new_val = evalTextProperty(flowState, 17, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.driver_1_speed_value);
+        const char *cur_val = lv_label_get_text(objects.driver_1_channel_a_value);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.driver_1_speed_value;
-            lv_label_set_text(objects.driver_1_speed_value, new_val);
+            tick_value_change_obj = objects.driver_1_channel_a_value;
+            lv_label_set_text(objects.driver_1_channel_a_value, new_val);
             tick_value_change_obj = NULL;
         }
     }
     {
         const char *new_val = evalTextProperty(flowState, 19, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.driver_1_target_value);
+        const char *cur_val = lv_label_get_text(objects.driver_1_channel_b_value);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.driver_1_target_value;
-            lv_label_set_text(objects.driver_1_target_value, new_val);
+            tick_value_change_obj = objects.driver_1_channel_b_value;
+            lv_label_set_text(objects.driver_1_channel_b_value, new_val);
             tick_value_change_obj = NULL;
         }
     }
     {
         const char *new_val = evalTextProperty(flowState, 23, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.driver_1_load_value);
+        const char *cur_val = lv_label_get_text(objects.driver_1_output_state_value);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.driver_1_load_value;
-            lv_label_set_text(objects.driver_1_load_value, new_val);
+            tick_value_change_obj = objects.driver_1_output_state_value;
+            lv_label_set_text(objects.driver_1_output_state_value, new_val);
             tick_value_change_obj = NULL;
         }
     }
     {
         const char *new_val = evalTextProperty(flowState, 26, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.setting_1_name);
+        const char *cur_val = lv_label_get_text(objects.surface_setting_name);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.setting_1_name;
-            lv_label_set_text(objects.setting_1_name, new_val);
+            tick_value_change_obj = objects.surface_setting_name;
+            lv_label_set_text(objects.surface_setting_name, new_val);
             tick_value_change_obj = NULL;
         }
     }
@@ -2602,10 +2600,10 @@ void tick_screen_dashboard() {
     }
     {
         const char *new_val = evalTextProperty(flowState, 30, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.setting_1_speed_value);
+        const char *cur_val = lv_label_get_text(objects.surface_setting_summary_value);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.setting_1_speed_value;
-            lv_label_set_text(objects.setting_1_speed_value, new_val);
+            tick_value_change_obj = objects.surface_setting_summary_value;
+            lv_label_set_text(objects.surface_setting_summary_value, new_val);
             tick_value_change_obj = NULL;
         }
     }
@@ -2620,10 +2618,10 @@ void tick_screen_dashboard() {
     }
     {
         const char *new_val = evalTextProperty(flowState, 36, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.setting_1_load_value);
+        const char *cur_val = lv_label_get_text(objects.surface_calibration_state_value);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.setting_1_load_value;
-            lv_label_set_text(objects.setting_1_load_value, new_val);
+            tick_value_change_obj = objects.surface_calibration_state_value;
+            lv_label_set_text(objects.surface_calibration_state_value, new_val);
             tick_value_change_obj = NULL;
         }
     }
@@ -2638,37 +2636,37 @@ void tick_screen_dashboard() {
     }
     {
         const char *new_val = evalTextProperty(flowState, 43, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.driver_2_speed_value);
+        const char *cur_val = lv_label_get_text(objects.driver_2_channel_c_value);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.driver_2_speed_value;
-            lv_label_set_text(objects.driver_2_speed_value, new_val);
+            tick_value_change_obj = objects.driver_2_channel_c_value;
+            lv_label_set_text(objects.driver_2_channel_c_value, new_val);
             tick_value_change_obj = NULL;
         }
     }
     {
         const char *new_val = evalTextProperty(flowState, 45, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.driver_2_target_value);
+        const char *cur_val = lv_label_get_text(objects.driver_2_channel_d_value);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.driver_2_target_value;
-            lv_label_set_text(objects.driver_2_target_value, new_val);
+            tick_value_change_obj = objects.driver_2_channel_d_value;
+            lv_label_set_text(objects.driver_2_channel_d_value, new_val);
             tick_value_change_obj = NULL;
         }
     }
     {
         const char *new_val = evalTextProperty(flowState, 50, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.driver_2_load_value);
+        const char *cur_val = lv_label_get_text(objects.driver_2_output_state_value);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.driver_2_load_value;
-            lv_label_set_text(objects.driver_2_load_value, new_val);
+            tick_value_change_obj = objects.driver_2_output_state_value;
+            lv_label_set_text(objects.driver_2_output_state_value, new_val);
             tick_value_change_obj = NULL;
         }
     }
     {
         const char *new_val = evalTextProperty(flowState, 52, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.setting_2_name);
+        const char *cur_val = lv_label_get_text(objects.subsurface_setting_name);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.setting_2_name;
-            lv_label_set_text(objects.setting_2_name, new_val);
+            tick_value_change_obj = objects.subsurface_setting_name;
+            lv_label_set_text(objects.subsurface_setting_name, new_val);
             tick_value_change_obj = NULL;
         }
     }
@@ -2683,10 +2681,10 @@ void tick_screen_dashboard() {
     }
     {
         const char *new_val = evalTextProperty(flowState, 56, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.setting_2_speed_value);
+        const char *cur_val = lv_label_get_text(objects.subsurface_setting_summary_value);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.setting_2_speed_value;
-            lv_label_set_text(objects.setting_2_speed_value, new_val);
+            tick_value_change_obj = objects.subsurface_setting_summary_value;
+            lv_label_set_text(objects.subsurface_setting_summary_value, new_val);
             tick_value_change_obj = NULL;
         }
     }
@@ -2701,10 +2699,10 @@ void tick_screen_dashboard() {
     }
     {
         const char *new_val = evalTextProperty(flowState, 62, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.setting_2_load_value);
+        const char *cur_val = lv_label_get_text(objects.subsurface_calibration_state_value);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.setting_2_load_value;
-            lv_label_set_text(objects.setting_2_load_value, new_val);
+            tick_value_change_obj = objects.subsurface_calibration_state_value;
+            lv_label_set_text(objects.subsurface_calibration_state_value, new_val);
             tick_value_change_obj = NULL;
         }
     }
@@ -2746,12 +2744,12 @@ void tick_screen_dashboard() {
     }
 }
 
-void create_screen_motor_manual() {
-    // motor_manual_screen
+void create_screen_driver_detail() {
+    // driver_detail_screen
     void *flowState = getFlowState(0, 2);
     (void)flowState;
     lv_obj_t *obj = lv_obj_create(0);
-    objects.motor_manual = obj;
+    objects.driver_detail = obj;
     lv_obj_set_pos(obj, 0, 0);
     lv_obj_set_size(obj, 1024, 600);
     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER);
@@ -2760,9 +2758,9 @@ void create_screen_motor_manual() {
     {
         lv_obj_t *parent_obj = obj;
         {
-            // motor_manual_backdrop
+            // driver_detail_backdrop
             lv_obj_t *obj = lv_obj_create(parent_obj);
-            objects.motor_manual_backdrop = obj;
+            objects.driver_detail_backdrop = obj;
             lv_obj_set_pos(obj, 0, 0);
             lv_obj_set_size(obj, 1024, 600);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
@@ -2775,9 +2773,9 @@ void create_screen_motor_manual() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
         {
-            // motor_manual_panel
+            // driver_detail_panel
             lv_obj_t *obj = lv_obj_create(parent_obj);
-            objects.motor_manual_panel = obj;
+            objects.driver_detail_panel = obj;
             lv_obj_set_pos(obj, 172, 20);
             lv_obj_set_size(obj, 680, 560);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
@@ -2795,23 +2793,23 @@ void create_screen_motor_manual() {
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
         {
-            // motor_manual_title
+            // driver_detail_title
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.motor_manual_title = obj;
+            objects.driver_detail_title = obj;
             lv_obj_set_pos(obj, 212, 38);
-            lv_obj_set_size(obj, 430, 38);
+            lv_obj_set_size(obj, 180, 38);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xf5f7fa), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr28, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "DRIVER CONTROL / TEST");
+            lv_label_set_text_static(obj, "드라이버 설정");
         }
         {
-            // motor_manual_selected_value
+            // driver_detail_selected_value
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.motor_manual_selected_value = obj;
-            lv_obj_set_pos(obj, 212, 86);
+            objects.driver_detail_selected_value = obj;
+            lv_obj_set_pos(obj, 392, 41);
             lv_obj_set_size(obj, 360, 30);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xf9b938), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2820,12 +2818,12 @@ void create_screen_motor_manual() {
             lv_label_set_text(obj, "");
         }
         {
-            // driver_mode_auto_button
+            // driver_detail_auto_mode_button
             lv_obj_t *obj = lv_button_create(parent_obj);
-            objects.driver_mode_auto_button = obj;
-            lv_obj_set_pos(obj, 212, 124);
+            objects.driver_detail_auto_mode_button = obj;
+            lv_obj_set_pos(obj, 212, 94);
             lv_obj_set_size(obj, 180, 44);
-            lv_obj_add_event_cb(obj, event_handler_cb_motor_manual_driver_mode_auto_button, LV_EVENT_ALL, flowState);
+            lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_auto_mode_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x263442), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2838,27 +2836,27 @@ void create_screen_motor_manual() {
             {
                 lv_obj_t *parent_obj = obj;
                 {
-                    // driver_mode_auto_label
+                    // driver_detail_auto_mode_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
-                    objects.driver_mode_auto_label = obj;
-                    lv_obj_set_pos(obj, 37, -4);
-                    lv_obj_set_size(obj, 64, 28);
+                    objects.driver_detail_auto_mode_label = obj;
+                    lv_obj_set_pos(obj, 46, -4);
+                    lv_obj_set_size(obj, 47, 28);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
                     lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    lv_label_set_text_static(obj, "AUTO");
+                    lv_label_set_text_static(obj, "자동");
                 }
             }
         }
         {
-            // driver_mode_manual_button
+            // driver_detail_manual_mode_button
             lv_obj_t *obj = lv_button_create(parent_obj);
-            objects.driver_mode_manual_button = obj;
-            lv_obj_set_pos(obj, 422, 124);
+            objects.driver_detail_manual_mode_button = obj;
+            lv_obj_set_pos(obj, 422, 94);
             lv_obj_set_size(obj, 180, 44);
-            lv_obj_add_event_cb(obj, event_handler_cb_motor_manual_driver_mode_manual_button, LV_EVENT_ALL, flowState);
+            lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_manual_mode_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x263442), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2871,27 +2869,27 @@ void create_screen_motor_manual() {
             {
                 lv_obj_t *parent_obj = obj;
                 {
-                    // driver_mode_manual_label
+                    // driver_detail_manual_mode_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
-                    objects.driver_mode_manual_label = obj;
-                    lv_obj_set_pos(obj, 24, -4);
-                    lv_obj_set_size(obj, 90, 28);
+                    objects.driver_detail_manual_mode_label = obj;
+                    lv_obj_set_pos(obj, 45, -4);
+                    lv_obj_set_size(obj, 48, 28);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
                     lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    lv_label_set_text_static(obj, "MANUAL");
+                    lv_label_set_text_static(obj, "수동");
                 }
             }
         }
         {
-            // driver_mode_disabled_button
+            // driver_detail_test_mode_button
             lv_obj_t *obj = lv_button_create(parent_obj);
-            objects.driver_mode_disabled_button = obj;
-            lv_obj_set_pos(obj, 632, 124);
+            objects.driver_detail_test_mode_button = obj;
+            lv_obj_set_pos(obj, 632, 94);
             lv_obj_set_size(obj, 180, 44);
-            lv_obj_add_event_cb(obj, event_handler_cb_motor_manual_driver_mode_disabled_button, LV_EVENT_ALL, flowState);
+            lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_test_mode_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x263442), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2904,27 +2902,27 @@ void create_screen_motor_manual() {
             {
                 lv_obj_t *parent_obj = obj;
                 {
-                    // driver_mode_disabled_label
+                    // driver_detail_test_mode_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
-                    objects.driver_mode_disabled_label = obj;
-                    lv_obj_set_pos(obj, 19, -4);
-                    lv_obj_set_size(obj, 101, 28);
+                    objects.driver_detail_test_mode_label = obj;
+                    lv_obj_set_pos(obj, 23, -4);
+                    lv_obj_set_size(obj, 92, 28);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
                     lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    lv_label_set_text_static(obj, "DISABLED");
+                    lv_label_set_text_static(obj, "출력 시험");
                 }
             }
         }
         {
-            // motor_manual_close_button
+            // driver_detail_close_button
             lv_obj_t *obj = lv_button_create(parent_obj);
-            objects.motor_manual_close_button = obj;
+            objects.driver_detail_close_button = obj;
             lv_obj_set_pos(obj, 770, 30);
             lv_obj_set_size(obj, 54, 54);
-            lv_obj_add_event_cb(obj, event_handler_cb_motor_manual_motor_manual_close_button, LV_EVENT_ALL, flowState);
+            lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_close_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x1c2833), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2938,9 +2936,9 @@ void create_screen_motor_manual() {
             {
                 lv_obj_t *parent_obj = obj;
                 {
-                    // motor_manual_close_label
+                    // driver_detail_close_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
-                    objects.motor_manual_close_label = obj;
+                    objects.driver_detail_close_label = obj;
                     lv_obj_set_pos(obj, 0, 9);
                     lv_obj_set_size(obj, 54, 32);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
@@ -2953,50 +2951,50 @@ void create_screen_motor_manual() {
             }
         }
         {
-            // motor_manual_rpm_caption
+            // driver_detail_output_caption
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.motor_manual_rpm_caption = obj;
-            lv_obj_set_pos(obj, 212, 196);
-            lv_obj_set_size(obj, 180, 26);
+            objects.driver_detail_output_caption = obj;
+            lv_obj_set_pos(obj, 522, 158);
+            lv_obj_set_size(obj, 280, 47);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8fa0ae), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "TARGET RPM");
+            lv_label_set_text_static(obj, "선택 채널: A 모터 · 기본 출력 단계");
         }
         {
-            // motor_manual_rpm_value
+            // driver_detail_output_step_value
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.motor_manual_rpm_value = obj;
-            lv_obj_set_pos(obj, 282, 184);
+            objects.driver_detail_output_step_value = obj;
+            lv_obj_set_pos(obj, 212, 213);
             lv_obj_set_size(obj, 240, 64);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xf5f7fa), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr28, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_num36, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_label_set_text(obj, "");
         }
         {
-            // motor_manual_rpm_unit
+            // driver_detail_output_step_unit
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.motor_manual_rpm_unit = obj;
-            lv_obj_set_pos(obj, 539, 208);
+            objects.driver_detail_output_step_unit = obj;
+            lv_obj_set_pos(obj, 469, 232);
             lv_obj_set_size(obj, 80, 28);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8fa0ae), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "rpm");
+            lv_label_set_text_static(obj, "/ 24");
         }
         {
-            // motor_manual_rpm_slider
+            // driver_detail_output_slider
             lv_obj_t *obj = lv_slider_create(parent_obj);
-            objects.motor_manual_rpm_slider = obj;
-            lv_obj_set_pos(obj, 222, 258);
+            objects.driver_detail_output_slider = obj;
+            lv_obj_set_pos(obj, 222, 282);
             lv_obj_set_size(obj, 580, 34);
-            lv_slider_set_range(obj, 0, 30);
-            lv_obj_add_event_cb(obj, event_handler_cb_motor_manual_motor_manual_rpm_slider, LV_EVENT_ALL, flowState);
+            lv_slider_set_range(obj, 0, 24);
+            lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_output_slider, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x263442), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3013,24 +3011,24 @@ void create_screen_motor_manual() {
             lv_obj_set_style_pad_bottom(obj, 7, LV_PART_KNOB | LV_STATE_DEFAULT);
         }
         {
-            // motor_manual_range_hint
+            // driver_detail_range_hint
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.motor_manual_range_hint = obj;
-            lv_obj_set_pos(obj, 222, 298);
+            objects.driver_detail_range_hint = obj;
+            lv_obj_set_pos(obj, 222, 320);
             lv_obj_set_size(obj, 580, 26);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x657786), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "0                                      30 RPM");
+            lv_label_set_text_static(obj, "0 OFF              단계당 0.5V              24 = 12.0V");
         }
         {
-            // motor_manual_direction_value
+            // driver_detail_target_summary
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.motor_manual_direction_value = obj;
-            lv_obj_set_pos(obj, 222, 332);
-            lv_obj_set_size(obj, 280, 28);
+            objects.driver_detail_target_summary = obj;
+            lv_obj_set_pos(obj, 212, 350);
+            lv_obj_set_size(obj, 240, 28);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8fa0ae), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3039,11 +3037,11 @@ void create_screen_motor_manual() {
             lv_label_set_text(obj, "");
         }
         {
-            // motor_manual_operation_value
+            // driver_detail_voltage_summary
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.motor_manual_operation_value = obj;
-            lv_obj_set_pos(obj, 522, 332);
-            lv_obj_set_size(obj, 280, 28);
+            objects.driver_detail_voltage_summary = obj;
+            lv_obj_set_pos(obj, 469, 350);
+            lv_obj_set_size(obj, 355, 28);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xf5f7fa), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3052,12 +3050,12 @@ void create_screen_motor_manual() {
             lv_label_set_text(obj, "");
         }
         {
-            // motor_manual_forward_button
+            // driver_detail_trim_minus_button
             lv_obj_t *obj = lv_button_create(parent_obj);
-            objects.motor_manual_forward_button = obj;
-            lv_obj_set_pos(obj, 212, 370);
+            objects.driver_detail_trim_minus_button = obj;
+            lv_obj_set_pos(obj, 212, 392);
             lv_obj_set_size(obj, 135, 76);
-            lv_obj_add_event_cb(obj, event_handler_cb_motor_manual_motor_manual_forward_button, LV_EVENT_ALL, flowState);
+            lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_trim_minus_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x2677d4), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3071,9 +3069,9 @@ void create_screen_motor_manual() {
             {
                 lv_obj_t *parent_obj = obj;
                 {
-                    // motor_manual_forward_label
+                    // driver_detail_trim_minus_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
-                    objects.motor_manual_forward_label = obj;
+                    objects.driver_detail_trim_minus_label = obj;
                     lv_obj_set_pos(obj, 0, 25);
                     lv_obj_set_size(obj, 135, 32);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
@@ -3081,17 +3079,17 @@ void create_screen_motor_manual() {
                     lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    lv_label_set_text_static(obj, "FORWARD");
+                    lv_label_set_text_static(obj, "-0.1V");
                 }
             }
         }
         {
-            // motor_manual_reverse_button
+            // driver_detail_trim_plus_button
             lv_obj_t *obj = lv_button_create(parent_obj);
-            objects.motor_manual_reverse_button = obj;
-            lv_obj_set_pos(obj, 367, 370);
+            objects.driver_detail_trim_plus_button = obj;
+            lv_obj_set_pos(obj, 367, 392);
             lv_obj_set_size(obj, 135, 76);
-            lv_obj_add_event_cb(obj, event_handler_cb_motor_manual_motor_manual_reverse_button, LV_EVENT_ALL, flowState);
+            lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_trim_plus_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0xd17a22), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3105,9 +3103,9 @@ void create_screen_motor_manual() {
             {
                 lv_obj_t *parent_obj = obj;
                 {
-                    // motor_manual_reverse_label
+                    // driver_detail_trim_plus_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
-                    objects.motor_manual_reverse_label = obj;
+                    objects.driver_detail_trim_plus_label = obj;
                     lv_obj_set_pos(obj, 0, 25);
                     lv_obj_set_size(obj, 135, 32);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
@@ -3115,17 +3113,17 @@ void create_screen_motor_manual() {
                     lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    lv_label_set_text_static(obj, "REVERSE");
+                    lv_label_set_text_static(obj, "+0.1V");
                 }
             }
         }
         {
-            // motor_manual_run_button
+            // driver_detail_trim_reset_button
             lv_obj_t *obj = lv_button_create(parent_obj);
-            objects.motor_manual_run_button = obj;
-            lv_obj_set_pos(obj, 522, 370);
+            objects.driver_detail_trim_reset_button = obj;
+            lv_obj_set_pos(obj, 522, 392);
             lv_obj_set_size(obj, 135, 76);
-            lv_obj_add_event_cb(obj, event_handler_cb_motor_manual_motor_manual_run_button, LV_EVENT_ALL, flowState);
+            lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_trim_reset_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x16a34a), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3139,9 +3137,9 @@ void create_screen_motor_manual() {
             {
                 lv_obj_t *parent_obj = obj;
                 {
-                    // motor_manual_run_label
+                    // driver_detail_trim_reset_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
-                    objects.motor_manual_run_label = obj;
+                    objects.driver_detail_trim_reset_label = obj;
                     lv_obj_set_pos(obj, 0, 25);
                     lv_obj_set_size(obj, 135, 32);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
@@ -3149,17 +3147,17 @@ void create_screen_motor_manual() {
                     lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    lv_label_set_text_static(obj, "TEST RUN");
+                    lv_label_set_text_static(obj, "취소");
                 }
             }
         }
         {
-            // motor_manual_stop_button
+            // driver_detail_trim_apply_button
             lv_obj_t *obj = lv_button_create(parent_obj);
-            objects.motor_manual_stop_button = obj;
-            lv_obj_set_pos(obj, 677, 370);
+            objects.driver_detail_trim_apply_button = obj;
+            lv_obj_set_pos(obj, 677, 392);
             lv_obj_set_size(obj, 135, 76);
-            lv_obj_add_event_cb(obj, event_handler_cb_motor_manual_motor_manual_stop_button, LV_EVENT_ALL, flowState);
+            lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_trim_apply_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0xe33d42), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3173,9 +3171,9 @@ void create_screen_motor_manual() {
             {
                 lv_obj_t *parent_obj = obj;
                 {
-                    // motor_manual_stop_label
+                    // driver_detail_trim_apply_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
-                    objects.motor_manual_stop_label = obj;
+                    objects.driver_detail_trim_apply_label = obj;
                     lv_obj_set_pos(obj, 0, 25);
                     lv_obj_set_size(obj, 135, 32);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
@@ -3183,76 +3181,78 @@ void create_screen_motor_manual() {
                     lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    lv_label_set_text_static(obj, "TEST STOP");
+                    lv_label_set_text_static(obj, "적용");
                 }
             }
         }
         {
-            // motor_manual_run_lamp
+            // driver_detail_channel_a_selector
             lv_obj_t *obj = lv_obj_create(parent_obj);
-            objects.motor_manual_run_lamp = obj;
-            lv_obj_set_pos(obj, 610, 190);
-            lv_obj_set_size(obj, 18, 18);
-            lv_obj_add_event_cb(obj, event_handler_cb_motor_manual_motor_manual_run_lamp, LV_EVENT_ALL, flowState);
-            lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
+            objects.driver_detail_channel_a_selector = obj;
+            lv_obj_set_pos(obj, 212, 158);
+            lv_obj_set_size(obj, 135, 36);
+            lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_channel_a_selector, LV_EVENT_ALL, flowState);
+            lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x263442), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_radius(obj, 9, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_radius(obj, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_color(obj, lv_color_hex(0x465664), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_bg_color(obj, lv_color_hex(0x22c55e), LV_PART_MAIN | LV_STATE_CHECKED);
-            lv_obj_set_style_border_color(obj, lv_color_hex(0x9affb8), LV_PART_MAIN | LV_STATE_CHECKED);
-            lv_obj_set_style_shadow_color(obj, lv_color_hex(0x22c55e), LV_PART_MAIN | LV_STATE_CHECKED);
-            lv_obj_set_style_shadow_opa(obj, 180, LV_PART_MAIN | LV_STATE_CHECKED);
-            lv_obj_set_style_shadow_width(obj, 8, LV_PART_MAIN | LV_STATE_CHECKED);
+            lv_obj_set_style_bg_color(obj, lv_color_hex(0xf9b938), LV_PART_MAIN | LV_STATE_CHECKED);
+            lv_obj_set_style_border_color(obj, lv_color_hex(0xffe08a), LV_PART_MAIN | LV_STATE_CHECKED);
+            lv_obj_set_style_shadow_color(obj, lv_color_hex(0xf9b938), LV_PART_MAIN | LV_STATE_CHECKED);
+            lv_obj_set_style_shadow_opa(obj, 120, LV_PART_MAIN | LV_STATE_CHECKED);
+            lv_obj_set_style_shadow_width(obj, 4, LV_PART_MAIN | LV_STATE_CHECKED);
         }
         {
-            // motor_manual_run_lamp_label
+            // driver_detail_channel_a_selector_label
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.motor_manual_run_lamp_label = obj;
-            lv_obj_set_pos(obj, 634, 186);
-            lv_obj_set_size(obj, 50, 26);
+            objects.driver_detail_channel_a_selector_label = obj;
+            lv_obj_set_pos(obj, 254, 163);
+            lv_obj_set_size(obj, 51, 26);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8fa0ae), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "RUN");
+            lv_label_set_text_static(obj, "A 모터");
         }
         {
-            // motor_manual_stop_lamp
+            // driver_detail_channel_b_selector
             lv_obj_t *obj = lv_obj_create(parent_obj);
-            objects.motor_manual_stop_lamp = obj;
-            lv_obj_set_pos(obj, 690, 190);
-            lv_obj_set_size(obj, 18, 18);
-            lv_obj_add_event_cb(obj, event_handler_cb_motor_manual_motor_manual_stop_lamp, LV_EVENT_ALL, flowState);
-            lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
+            objects.driver_detail_channel_b_selector = obj;
+            lv_obj_set_pos(obj, 367, 158);
+            lv_obj_set_size(obj, 135, 36);
+            lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_channel_b_selector, LV_EVENT_ALL, flowState);
+            lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x263442), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_radius(obj, 9, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_radius(obj, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_color(obj, lv_color_hex(0x465664), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_bg_color(obj, lv_color_hex(0xef4444), LV_PART_MAIN | LV_STATE_CHECKED);
-            lv_obj_set_style_border_color(obj, lv_color_hex(0xffaaaa), LV_PART_MAIN | LV_STATE_CHECKED);
-            lv_obj_set_style_shadow_color(obj, lv_color_hex(0xef4444), LV_PART_MAIN | LV_STATE_CHECKED);
-            lv_obj_set_style_shadow_opa(obj, 180, LV_PART_MAIN | LV_STATE_CHECKED);
-            lv_obj_set_style_shadow_width(obj, 8, LV_PART_MAIN | LV_STATE_CHECKED);
+            lv_obj_set_style_bg_color(obj, lv_color_hex(0xf9b938), LV_PART_MAIN | LV_STATE_CHECKED);
+            lv_obj_set_style_border_color(obj, lv_color_hex(0xffe08a), LV_PART_MAIN | LV_STATE_CHECKED);
+            lv_obj_set_style_shadow_color(obj, lv_color_hex(0xf9b938), LV_PART_MAIN | LV_STATE_CHECKED);
+            lv_obj_set_style_shadow_opa(obj, 120, LV_PART_MAIN | LV_STATE_CHECKED);
+            lv_obj_set_style_shadow_width(obj, 4, LV_PART_MAIN | LV_STATE_CHECKED);
         }
         {
-            // motor_manual_stop_lamp_label
+            // driver_detail_channel_b_selector_label
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.motor_manual_stop_lamp_label = obj;
-            lv_obj_set_pos(obj, 714, 186);
-            lv_obj_set_size(obj, 54, 26);
+            objects.driver_detail_channel_b_selector_label = obj;
+            lv_obj_set_pos(obj, 407, 163);
+            lv_obj_set_size(obj, 55, 26);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8fa0ae), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "STOP");
+            lv_label_set_text_static(obj, "B 모터");
         }
         {
-            // motor_manual_safety_hint
+            // driver_detail_safety_hint
             lv_obj_t *obj = lv_label_create(parent_obj);
-            objects.motor_manual_safety_hint = obj;
+            objects.driver_detail_safety_hint = obj;
             lv_obj_set_pos(obj, 212, 502);
             lv_obj_set_size(obj, 600, 28);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
@@ -3260,122 +3260,122 @@ void create_screen_motor_manual() {
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "MANUAL only · Hold TEST RUN to operate.");
+            lv_label_set_text_static(obj, "기본 출력은 24단계(0.5V) · 미세조정은 0.1V · 보정 범위 -0.4V ~ +0.4V");
         }
     }
     
-    tick_screen_motor_manual();
+    tick_screen_driver_detail();
 }
 
-void tick_screen_motor_manual() {
+void tick_screen_driver_detail() {
     void *flowState = getFlowState(0, 2);
     (void)flowState;
     {
         const char *new_val = evalTextProperty(flowState, 4, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.motor_manual_selected_value);
+        const char *cur_val = lv_label_get_text(objects.driver_detail_selected_value);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.motor_manual_selected_value;
-            lv_label_set_text(objects.motor_manual_selected_value, new_val);
+            tick_value_change_obj = objects.driver_detail_selected_value;
+            lv_label_set_text(objects.driver_detail_selected_value, new_val);
             tick_value_change_obj = NULL;
         }
     }
     {
         bool new_val = evalBooleanProperty(flowState, 5, 3, "Failed to evaluate Checked state");
-        bool cur_val = lv_obj_has_state(objects.driver_mode_auto_button, LV_STATE_CHECKED);
+        bool cur_val = lv_obj_has_state(objects.driver_detail_auto_mode_button, LV_STATE_CHECKED);
         if (new_val != cur_val) {
-            tick_value_change_obj = objects.driver_mode_auto_button;
+            tick_value_change_obj = objects.driver_detail_auto_mode_button;
             if (new_val) {
-                lv_obj_add_state(objects.driver_mode_auto_button, LV_STATE_CHECKED);
+                lv_obj_add_state(objects.driver_detail_auto_mode_button, LV_STATE_CHECKED);
             } else {
-                lv_obj_remove_state(objects.driver_mode_auto_button, LV_STATE_CHECKED);
+                lv_obj_remove_state(objects.driver_detail_auto_mode_button, LV_STATE_CHECKED);
             }
             tick_value_change_obj = NULL;
         }
     }
     {
         bool new_val = evalBooleanProperty(flowState, 7, 3, "Failed to evaluate Checked state");
-        bool cur_val = lv_obj_has_state(objects.driver_mode_manual_button, LV_STATE_CHECKED);
+        bool cur_val = lv_obj_has_state(objects.driver_detail_manual_mode_button, LV_STATE_CHECKED);
         if (new_val != cur_val) {
-            tick_value_change_obj = objects.driver_mode_manual_button;
+            tick_value_change_obj = objects.driver_detail_manual_mode_button;
             if (new_val) {
-                lv_obj_add_state(objects.driver_mode_manual_button, LV_STATE_CHECKED);
+                lv_obj_add_state(objects.driver_detail_manual_mode_button, LV_STATE_CHECKED);
             } else {
-                lv_obj_remove_state(objects.driver_mode_manual_button, LV_STATE_CHECKED);
+                lv_obj_remove_state(objects.driver_detail_manual_mode_button, LV_STATE_CHECKED);
             }
             tick_value_change_obj = NULL;
         }
     }
     {
         bool new_val = evalBooleanProperty(flowState, 9, 3, "Failed to evaluate Checked state");
-        bool cur_val = lv_obj_has_state(objects.driver_mode_disabled_button, LV_STATE_CHECKED);
+        bool cur_val = lv_obj_has_state(objects.driver_detail_test_mode_button, LV_STATE_CHECKED);
         if (new_val != cur_val) {
-            tick_value_change_obj = objects.driver_mode_disabled_button;
+            tick_value_change_obj = objects.driver_detail_test_mode_button;
             if (new_val) {
-                lv_obj_add_state(objects.driver_mode_disabled_button, LV_STATE_CHECKED);
+                lv_obj_add_state(objects.driver_detail_test_mode_button, LV_STATE_CHECKED);
             } else {
-                lv_obj_remove_state(objects.driver_mode_disabled_button, LV_STATE_CHECKED);
+                lv_obj_remove_state(objects.driver_detail_test_mode_button, LV_STATE_CHECKED);
             }
             tick_value_change_obj = NULL;
         }
     }
     {
         const char *new_val = evalTextProperty(flowState, 14, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.motor_manual_rpm_value);
+        const char *cur_val = lv_label_get_text(objects.driver_detail_output_step_value);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.motor_manual_rpm_value;
-            lv_label_set_text(objects.motor_manual_rpm_value, new_val);
+            tick_value_change_obj = objects.driver_detail_output_step_value;
+            lv_label_set_text(objects.driver_detail_output_step_value, new_val);
             tick_value_change_obj = NULL;
         }
     }
     {
         int32_t new_val = evalIntegerProperty(flowState, 16, 3, "Failed to evaluate Value in Slider widget");
-        int32_t cur_val = lv_slider_get_value(objects.motor_manual_rpm_slider);
+        int32_t cur_val = lv_slider_get_value(objects.driver_detail_output_slider);
         if (new_val != cur_val) {
-            tick_value_change_obj = objects.motor_manual_rpm_slider;
-            lv_slider_set_value(objects.motor_manual_rpm_slider, new_val, LV_ANIM_OFF);
+            tick_value_change_obj = objects.driver_detail_output_slider;
+            lv_slider_set_value(objects.driver_detail_output_slider, new_val, LV_ANIM_OFF);
             tick_value_change_obj = NULL;
         }
     }
     {
         const char *new_val = evalTextProperty(flowState, 18, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.motor_manual_direction_value);
+        const char *cur_val = lv_label_get_text(objects.driver_detail_target_summary);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.motor_manual_direction_value;
-            lv_label_set_text(objects.motor_manual_direction_value, new_val);
+            tick_value_change_obj = objects.driver_detail_target_summary;
+            lv_label_set_text(objects.driver_detail_target_summary, new_val);
             tick_value_change_obj = NULL;
         }
     }
     {
         const char *new_val = evalTextProperty(flowState, 19, 3, "Failed to evaluate Text in Label widget");
-        const char *cur_val = lv_label_get_text(objects.motor_manual_operation_value);
+        const char *cur_val = lv_label_get_text(objects.driver_detail_voltage_summary);
         if (strcmp(new_val, cur_val) != 0) {
-            tick_value_change_obj = objects.motor_manual_operation_value;
-            lv_label_set_text(objects.motor_manual_operation_value, new_val);
+            tick_value_change_obj = objects.driver_detail_voltage_summary;
+            lv_label_set_text(objects.driver_detail_voltage_summary, new_val);
             tick_value_change_obj = NULL;
         }
     }
     {
         bool new_val = evalBooleanProperty(flowState, 28, 3, "Failed to evaluate Checked state");
-        bool cur_val = lv_obj_has_state(objects.motor_manual_run_lamp, LV_STATE_CHECKED);
+        bool cur_val = lv_obj_has_state(objects.driver_detail_channel_a_selector, LV_STATE_CHECKED);
         if (new_val != cur_val) {
-            tick_value_change_obj = objects.motor_manual_run_lamp;
+            tick_value_change_obj = objects.driver_detail_channel_a_selector;
             if (new_val) {
-                lv_obj_add_state(objects.motor_manual_run_lamp, LV_STATE_CHECKED);
+                lv_obj_add_state(objects.driver_detail_channel_a_selector, LV_STATE_CHECKED);
             } else {
-                lv_obj_remove_state(objects.motor_manual_run_lamp, LV_STATE_CHECKED);
+                lv_obj_remove_state(objects.driver_detail_channel_a_selector, LV_STATE_CHECKED);
             }
             tick_value_change_obj = NULL;
         }
     }
     {
         bool new_val = evalBooleanProperty(flowState, 30, 3, "Failed to evaluate Checked state");
-        bool cur_val = lv_obj_has_state(objects.motor_manual_stop_lamp, LV_STATE_CHECKED);
+        bool cur_val = lv_obj_has_state(objects.driver_detail_channel_b_selector, LV_STATE_CHECKED);
         if (new_val != cur_val) {
-            tick_value_change_obj = objects.motor_manual_stop_lamp;
+            tick_value_change_obj = objects.driver_detail_channel_b_selector;
             if (new_val) {
-                lv_obj_add_state(objects.motor_manual_stop_lamp, LV_STATE_CHECKED);
+                lv_obj_add_state(objects.driver_detail_channel_b_selector, LV_STATE_CHECKED);
             } else {
-                lv_obj_remove_state(objects.motor_manual_stop_lamp, LV_STATE_CHECKED);
+                lv_obj_remove_state(objects.driver_detail_channel_b_selector, LV_STATE_CHECKED);
             }
             tick_value_change_obj = NULL;
         }
@@ -3410,7 +3410,7 @@ void create_screen_run_countdown() {
             // run_countdown_panel
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.run_countdown_panel = obj;
-            lv_obj_set_pos(obj, 172, 45);
+            lv_obj_set_pos(obj, 172, 31);
             lv_obj_set_size(obj, 680, 510);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x111922), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3426,7 +3426,7 @@ void create_screen_run_countdown() {
             // run_countdown_title
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.run_countdown_title = obj;
-            lv_obj_set_pos(obj, 252, 78);
+            lv_obj_set_pos(obj, 252, 64);
             lv_obj_set_size(obj, 520, 42);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xf5f7fa), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3439,7 +3439,7 @@ void create_screen_run_countdown() {
             // run_countdown_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.run_countdown_value = obj;
-            lv_obj_set_pos(obj, 362, 132);
+            lv_obj_set_pos(obj, 362, 118);
             lv_obj_set_size(obj, 300, 92);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xf9b938), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3452,7 +3452,7 @@ void create_screen_run_countdown() {
             // run_countdown_description
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.run_countdown_description = obj;
-            lv_obj_set_pos(obj, 252, 226);
+            lv_obj_set_pos(obj, 252, 212);
             lv_obj_set_size(obj, 520, 30);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xd9e0e6), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3465,7 +3465,7 @@ void create_screen_run_countdown() {
             // run_countdown_summary_panel
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.run_countdown_summary_panel = obj;
-            lv_obj_set_pos(obj, 242, 280);
+            lv_obj_set_pos(obj, 242, 266);
             lv_obj_set_size(obj, 540, 88);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x0b121a), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3478,7 +3478,7 @@ void create_screen_run_countdown() {
             // run_countdown_d1_summary
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.run_countdown_d1_summary = obj;
-            lv_obj_set_pos(obj, 266, 294);
+            lv_obj_set_pos(obj, 266, 280);
             lv_obj_set_size(obj, 492, 26);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3491,7 +3491,7 @@ void create_screen_run_countdown() {
             // run_countdown_d2_summary
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.run_countdown_d2_summary = obj;
-            lv_obj_set_pos(obj, 266, 330);
+            lv_obj_set_pos(obj, 266, 316);
             lv_obj_set_size(obj, 492, 26);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3504,7 +3504,7 @@ void create_screen_run_countdown() {
             // run_countdown_stop_button
             lv_obj_t *obj = lv_button_create(parent_obj);
             objects.run_countdown_stop_button = obj;
-            lv_obj_set_pos(obj, 302, 405);
+            lv_obj_set_pos(obj, 302, 391);
             lv_obj_set_size(obj, 440, 88);
             lv_obj_add_event_cb(obj, event_handler_cb_run_countdown_run_countdown_stop_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
@@ -6669,7 +6669,7 @@ typedef void (*tick_screen_func_t)();
 tick_screen_func_t tick_screen_funcs[] = {
     tick_screen_startup_animation,
     tick_screen_dashboard,
-    tick_screen_motor_manual,
+    tick_screen_driver_detail,
     tick_screen_run_countdown,
     tick_screen_system_setting,
     tick_screen_ridge_setup,
@@ -6695,6 +6695,7 @@ ext_font_desc_t fonts[] = {
     { "MaruBuri-Regular_KR16", &ui_font_maru_buri_regular_kr16 },
     { "MaruBuri-Regular_KR20", &ui_font_maru_buri_regular_kr20 },
     { "MaruBuri-Regular_KR28", &ui_font_maru_buri_regular_kr28 },
+    { "MaruBuri-Regular_NUM36", &ui_font_maru_buri_regular_num36 },
 #if LV_FONT_MONTSERRAT_8
     { "MONTSERRAT_8", &lv_font_montserrat_8 },
 #endif
@@ -6780,7 +6781,7 @@ void create_screens() {
     // Create screens
     create_screen_startup_animation();
     create_screen_dashboard();
-    create_screen_motor_manual();
+    create_screen_driver_detail();
     create_screen_run_countdown();
     create_screen_system_setting();
     create_screen_ridge_setup();
