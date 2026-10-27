@@ -10,6 +10,27 @@ extern "C" {
 #define DAJILOG_MOTOR_CHANNEL_COUNT 4U
 #define DAJILOG_RECIPE_NAME_CAPACITY 32U
 #define DAJILOG_ALARM_TEXT_CAPACITY 64U
+#define DAJILOG_SETTING_ZONE_COUNT 2U
+#define DAJILOG_SETTING_NAME_CAPACITY 40U
+#define DAJILOG_PRODUCT_ID_CAPACITY 40U
+#define DAJILOG_LOT_ID_CAPACITY 32U
+#define DAJILOG_RIDGE_PROFILE_LIMIT 8U
+
+typedef enum {
+    DAJILOG_SETTING_ZONE_SURFACE = 0,
+    DAJILOG_SETTING_ZONE_SUBSURFACE = 1,
+} dajilog_setting_zone_id_t;
+
+/** @brief Persistent product input; calculated output is never stored here. */
+typedef struct {
+    char name[DAJILOG_SETTING_NAME_CAPACITY];
+    char product[DAJILOG_PRODUCT_ID_CAPACITY];
+    char lot[DAJILOG_LOT_ID_CAPACITY];
+    float rate_kg_per_10a;
+    float reference_speed_kmh;
+    uint16_t first_channel_permille;
+    bool configured;
+} dajilog_zone_settings_t;
 
 typedef enum {
     DAJILOG_SETTING_UNSET = 0,
@@ -61,6 +82,30 @@ typedef struct {
     dajilog_work_width_mode_t work_width_mode;
 } dajilog_ridge_settings_t;
 
+/** @brief One independent ridge entered by the 7B screen; no NVS pointers. */
+typedef struct {
+    float width_m;
+    float furrow_width_m;
+    float whole_length_m;
+    float north_length_m;
+    float south_length_m;
+    uint8_t work_width_mode;
+    uint8_t split_section;
+    uint8_t reserved[2];
+} dajilog_ridge_profile_input_t;
+
+typedef struct {
+    uint32_t id;
+    dajilog_ridge_profile_input_t input;
+} dajilog_ridge_profile_t;
+
+typedef struct {
+    uint32_t count;
+    uint32_t selected_id;
+    dajilog_ridge_profile_t profiles[DAJILOG_RIDGE_PROFILE_LIMIT];
+    uint32_t next_id;
+} dajilog_ridge_profiles_snapshot_t;
+
 typedef struct {
     uint32_t presence_mask;
     dajilog_prescription_input_mode_t input_mode;
@@ -77,6 +122,7 @@ typedef struct {
 typedef struct {
     dajilog_ridge_settings_t ridge;
     dajilog_prescription_settings_t prescription;
+    dajilog_zone_settings_t zones[DAJILOG_SETTING_ZONE_COUNT];
     uint32_t ridge_revision;
     uint32_t prescription_revision;
     dajilog_setting_readiness_t draft_readiness;
@@ -198,6 +244,11 @@ typedef enum {
     DAJILOG_UI_CMD_CONFIG_EXPORT = 0x07020008U,
     DAJILOG_UI_CMD_MOTOR_VOLTAGE_TEST = 0x07020009U,
     DAJILOG_UI_CMD_DRIVER_APPLY = 0x0702000AU,
+    DAJILOG_UI_CMD_SETTINGS_SAVE = 0x0702000BU,
+    DAJILOG_UI_CMD_SETTINGS_CONFIRM = 0x0702000CU,
+    DAJILOG_UI_CMD_RIDGE_ADD = 0x0702000DU,
+    DAJILOG_UI_CMD_RIDGE_SELECT = 0x0702000EU,
+    DAJILOG_UI_CMD_RIDGE_DELETE = 0x0702000FU,
 } dajilog_ui_command_topic_t;
 
 typedef enum {
@@ -205,6 +256,7 @@ typedef enum {
     DAJILOG_UI_STATE_COMMAND_RESULT = 0x07021002U,
     DAJILOG_UI_STATE_SETTINGS_RESULT = 0x07021003U,
     DAJILOG_UI_STATE_STORAGE_PROGRESS = 0x07021004U,
+    DAJILOG_UI_STATE_RIDGE_RESULT = 0x07021005U,
 } dajilog_ui_state_topic_t;
 
 #ifdef __cplusplus

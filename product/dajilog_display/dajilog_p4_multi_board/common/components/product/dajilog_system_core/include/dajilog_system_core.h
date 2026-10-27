@@ -38,6 +38,13 @@ typedef struct {
         const dajilog_ridge_settings_t *settings, void *context);
     esp_err_t (*stage_prescription_settings)(
         const dajilog_prescription_settings_t *settings, void *context);
+    esp_err_t (*stage_zone_settings)(
+        dajilog_setting_zone_id_t zone,
+        const dajilog_zone_settings_t *settings, void *context);
+    esp_err_t (*get_settings_applied)(
+        dajilog_product_settings_snapshot_t *settings, void *context);
+    esp_err_t (*get_ridge_profiles)(
+        dajilog_ridge_profiles_snapshot_t *profiles, void *context);
     void *context;
 } dajilog_system_core_implementation_t;
 
@@ -68,6 +75,15 @@ esp_err_t dajilog_system_core_stage_ridge_settings(
 /** @brief Forward prescription input to the product settings service. */
 esp_err_t dajilog_system_core_stage_prescription_settings(
     const dajilog_prescription_settings_t *settings);
+/** @brief Stage one product zone without changing Saved or Applied. */
+esp_err_t dajilog_system_core_stage_zone_settings(
+    dajilog_setting_zone_id_t zone, const dajilog_zone_settings_t *settings);
+/** @brief Copy the independently retained Applied product settings. */
+esp_err_t dajilog_system_core_get_settings_applied(
+    dajilog_product_settings_snapshot_t *settings);
+/** @brief Copy the 7B product-owned independent ridge registry. */
+esp_err_t dajilog_system_core_get_ridge_profiles(
+    dajilog_ridge_profiles_snapshot_t *profiles);
 
 #ifdef __cplusplus
 }

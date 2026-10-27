@@ -101,3 +101,30 @@ esp_err_t dajilog_system_core_stage_prescription_settings(
                      settings, s_implementation.context)
                : ESP_ERR_NOT_SUPPORTED;
 }
+
+esp_err_t dajilog_system_core_stage_zone_settings(
+    dajilog_setting_zone_id_t zone, const dajilog_zone_settings_t *settings)
+{
+    return s_registered && s_implementation.stage_zone_settings != NULL
+               ? s_implementation.stage_zone_settings(
+                     zone, settings, s_implementation.context)
+               : ESP_ERR_NOT_SUPPORTED;
+}
+
+esp_err_t dajilog_system_core_get_settings_applied(
+    dajilog_product_settings_snapshot_t *settings)
+{
+    return s_registered && s_implementation.get_settings_applied != NULL
+               ? s_implementation.get_settings_applied(
+                     settings, s_implementation.context)
+               : ESP_ERR_NOT_SUPPORTED;
+}
+
+esp_err_t dajilog_system_core_get_ridge_profiles(
+    dajilog_ridge_profiles_snapshot_t *profiles)
+{
+    return s_registered && s_implementation.get_ridge_profiles != NULL
+               ? s_implementation.get_ridge_profiles(
+                     profiles, s_implementation.context)
+               : ESP_ERR_NOT_SUPPORTED;
+}

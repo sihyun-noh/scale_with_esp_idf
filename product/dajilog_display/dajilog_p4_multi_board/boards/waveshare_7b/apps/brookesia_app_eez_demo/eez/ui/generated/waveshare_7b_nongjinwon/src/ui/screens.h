@@ -14,20 +14,34 @@ enum ScreensEnum {
     SCREEN_ID_STARTUP_ANIMATION = 1,
     SCREEN_ID_DASHBOARD = 2,
     SCREEN_ID_DRIVER_DETAIL = 3,
-    SCREEN_ID_RUN_COUNTDOWN = 4,
-    SCREEN_ID_SYSTEM_SETTING = 5,
-    SCREEN_ID_RIDGE_SETUP = 6,
-    SCREEN_ID_PREPARATION = 7,
-    SCREEN_ID_WORK = 8,
-    SCREEN_ID_WEIGHING_TEST = 9,
-    SCREEN_ID_NUMERIC_INPUT = 10,
-    _SCREEN_ID_LAST = 10
+    SCREEN_ID_SETTING_DETAIL = 4,
+    SCREEN_ID_SETTING_CONFIRM = 5,
+    SCREEN_ID_SETTING_NUMBER_INPUT = 6,
+    SCREEN_ID_SETTING_TEXT_INPUT = 7,
+    SCREEN_ID_SETTING_TABLE = 8,
+    SCREEN_ID_SETTING_EDIT = 9,
+    SCREEN_ID_RUN_COUNTDOWN = 10,
+    SCREEN_ID_SYSTEM_SETTING = 11,
+    SCREEN_ID_RIDGE_SETUP = 12,
+    SCREEN_ID_PREPARATION = 13,
+    SCREEN_ID_WORK = 14,
+    SCREEN_ID_WEIGHING_TEST = 15,
+    SCREEN_ID_NUMERIC_INPUT = 16,
+    SCREEN_ID_RIDGE_NUMERIC_INPUT = 17,
+    SCREEN_ID_CALIBRATION_SELECT = 18,
+    _SCREEN_ID_LAST = 18
 };
 
 typedef struct _objects_t {
     lv_obj_t *startup_animation;
     lv_obj_t *dashboard;
     lv_obj_t *driver_detail;
+    lv_obj_t *setting_detail;
+    lv_obj_t *setting_confirm;
+    lv_obj_t *setting_number_input;
+    lv_obj_t *setting_text_input;
+    lv_obj_t *setting_table;
+    lv_obj_t *setting_edit;
     lv_obj_t *run_countdown;
     lv_obj_t *system_setting;
     lv_obj_t *ridge_setup;
@@ -35,6 +49,8 @@ typedef struct _objects_t {
     lv_obj_t *work;
     lv_obj_t *weighing_test;
     lv_obj_t *numeric_input;
+    lv_obj_t *ridge_numeric_input;
+    lv_obj_t *calibration_select;
     lv_obj_t *startup_top_accent;
     lv_obj_t *startup_brand_label;
     lv_obj_t *startup_subtitle_label;
@@ -181,6 +197,198 @@ typedef struct _objects_t {
     lv_obj_t *driver_detail_channel_b_selector;
     lv_obj_t *driver_detail_channel_b_selector_label;
     lv_obj_t *driver_detail_safety_hint;
+    lv_obj_t *setting_detail_header;
+    lv_obj_t *setting_detail_back_button;
+    lv_obj_t *setting_detail_back_label;
+    lv_obj_t *setting_detail_title;
+    lv_obj_t *setting_detail_name;
+    lv_obj_t *setting_detail_state_caption;
+    lv_obj_t *setting_detail_state;
+    lv_obj_t *setting_detail_info_card;
+    lv_obj_t *setting_detail_info_title;
+    lv_obj_t *setting_detail_info_divider;
+    lv_obj_t *setting_detail_info_caption_1;
+    lv_obj_t *setting_detail_info_value_1;
+    lv_obj_t *setting_detail_info_caption_2;
+    lv_obj_t *setting_detail_info_value_2;
+    lv_obj_t *setting_detail_info_caption_3;
+    lv_obj_t *setting_detail_info_value_3;
+    lv_obj_t *setting_detail_info_caption_4;
+    lv_obj_t *setting_detail_info_value_4;
+    lv_obj_t *setting_detail_info_caption_5;
+    lv_obj_t *setting_detail_info_value_5;
+    lv_obj_t *setting_detail_info_caption_6;
+    lv_obj_t *setting_detail_info_value_6;
+    lv_obj_t *setting_detail_validation_caption;
+    lv_obj_t *setting_detail_validation_value;
+    lv_obj_t *setting_detail_result_card;
+    lv_obj_t *setting_detail_result_title;
+    lv_obj_t *setting_detail_total_caption;
+    lv_obj_t *setting_detail_total_value;
+    lv_obj_t *setting_detail_total_unit;
+    lv_obj_t *setting_detail_result_divider;
+    lv_obj_t *setting_detail_channel_1_card;
+    lv_obj_t *setting_detail_channel_1_name;
+    lv_obj_t *setting_detail_channel_1_state;
+    lv_obj_t *setting_detail_channel_1_target_caption;
+    lv_obj_t *setting_detail_channel_1_target_value;
+    lv_obj_t *setting_detail_channel_1_target_unit;
+    lv_obj_t *setting_detail_channel_1_output_caption;
+    lv_obj_t *setting_detail_channel_1_output_value;
+    lv_obj_t *setting_detail_channel_1_voltage_caption;
+    lv_obj_t *setting_detail_channel_1_voltage_value;
+    lv_obj_t *setting_detail_channel_1_voltage_unit;
+    lv_obj_t *setting_detail_channel_2_card;
+    lv_obj_t *setting_detail_channel_2_name;
+    lv_obj_t *setting_detail_channel_2_state;
+    lv_obj_t *setting_detail_channel_2_target_caption;
+    lv_obj_t *setting_detail_channel_2_target_value;
+    lv_obj_t *setting_detail_channel_2_target_unit;
+    lv_obj_t *setting_detail_channel_2_output_caption;
+    lv_obj_t *setting_detail_channel_2_output_value;
+    lv_obj_t *setting_detail_channel_2_voltage_caption;
+    lv_obj_t *setting_detail_channel_2_voltage_value;
+    lv_obj_t *setting_detail_channel_2_voltage_unit;
+    lv_obj_t *setting_detail_table_status_caption;
+    lv_obj_t *setting_detail_table_status_value;
+    lv_obj_t *setting_detail_hint;
+    lv_obj_t *setting_detail_table_button;
+    lv_obj_t *setting_detail_table_button_label;
+    lv_obj_t *setting_detail_edit_button;
+    lv_obj_t *setting_detail_edit_button_label;
+    lv_obj_t *setting_detail_draft_button;
+    lv_obj_t *setting_detail_draft_button_label;
+    lv_obj_t *setting_detail_save_button;
+    lv_obj_t *setting_detail_save_button_label;
+    lv_obj_t *setting_detail_apply_button;
+    lv_obj_t *setting_detail_apply_button_label;
+    lv_obj_t *setting_detail_footer_status;
+    lv_obj_t *setting_detail_info_caption_7;
+    lv_obj_t *setting_detail_info_value_7;
+    lv_obj_t *setting_detail_change_state;
+    lv_obj_t *setting_detail_saved_at;
+    lv_obj_t *setting_detail_draft_notice;
+    lv_obj_t *setting_detail_original_total;
+    lv_obj_t *setting_detail_channel_1_trim;
+    lv_obj_t *setting_detail_channel_2_trim;
+    lv_obj_t *setting_confirm_dialog;
+    lv_obj_t *setting_confirm_title;
+    lv_obj_t *setting_confirm_message;
+    lv_obj_t *setting_confirm_block;
+    lv_obj_t *setting_confirm_cancel_button;
+    lv_obj_t *setting_confirm_cancel_button_label;
+    lv_obj_t *setting_confirm_ok_button;
+    lv_obj_t *setting_confirm_ok_button_label;
+    lv_obj_t *setting_number_input_card;
+    lv_obj_t *setting_number_input_title_label;
+    lv_obj_t *setting_number_input_editor;
+    lv_obj_t *setting_number_input_unit_label;
+    lv_obj_t *setting_number_input_keypad;
+    lv_obj_t *setting_number_input_cancel_button;
+    lv_obj_t *setting_number_input_cancel_button_label;
+    lv_obj_t *setting_number_input_done_button;
+    lv_obj_t *setting_number_input_done_button_label;
+    lv_obj_t *setting_number_input_help_label;
+    lv_obj_t *setting_text_input_card;
+    lv_obj_t *setting_text_input_title_label;
+    lv_obj_t *setting_text_input_editor;
+    lv_obj_t *setting_text_input_unit_label;
+    lv_obj_t *setting_text_input_keypad;
+    lv_obj_t *setting_text_input_cancel_button;
+    lv_obj_t *setting_text_input_cancel_button_label;
+    lv_obj_t *setting_text_input_done_button;
+    lv_obj_t *setting_text_input_done_button_label;
+    lv_obj_t *setting_text_input_help_label;
+    lv_obj_t *setting_table_header;
+    lv_obj_t *setting_table_back_button;
+    lv_obj_t *setting_table_back_button_label;
+    lv_obj_t *setting_table_title;
+    lv_obj_t *setting_table_zone;
+    lv_obj_t *setting_table_channel_1_card;
+    lv_obj_t *setting_table_channel_1_name;
+    lv_obj_t *setting_table_1_state_caption;
+    lv_obj_t *setting_table_1_state_value;
+    lv_obj_t *setting_table_1_table_id_caption;
+    lv_obj_t *setting_table_1_table_id_value;
+    lv_obj_t *setting_table_1_table_revision_caption;
+    lv_obj_t *setting_table_1_table_revision_value;
+    lv_obj_t *setting_table_1_lookup_caption;
+    lv_obj_t *setting_table_1_lookup_value;
+    lv_obj_t *setting_table_1_base_step_caption;
+    lv_obj_t *setting_table_1_base_step_value;
+    lv_obj_t *setting_table_1_fine_volt_caption;
+    lv_obj_t *setting_table_1_fine_volt_value;
+    lv_obj_t *setting_table_1_user_trim_volt_caption;
+    lv_obj_t *setting_table_1_user_trim_volt_value;
+    lv_obj_t *setting_table_1_final_voltage_caption;
+    lv_obj_t *setting_table_1_final_voltage_value;
+    lv_obj_t *setting_table_channel_2_card;
+    lv_obj_t *setting_table_channel_2_name;
+    lv_obj_t *setting_table_2_state_caption;
+    lv_obj_t *setting_table_2_state_value;
+    lv_obj_t *setting_table_2_table_id_caption;
+    lv_obj_t *setting_table_2_table_id_value;
+    lv_obj_t *setting_table_2_table_revision_caption;
+    lv_obj_t *setting_table_2_table_revision_value;
+    lv_obj_t *setting_table_2_lookup_caption;
+    lv_obj_t *setting_table_2_lookup_value;
+    lv_obj_t *setting_table_2_base_step_caption;
+    lv_obj_t *setting_table_2_base_step_value;
+    lv_obj_t *setting_table_2_fine_volt_caption;
+    lv_obj_t *setting_table_2_fine_volt_value;
+    lv_obj_t *setting_table_2_user_trim_volt_caption;
+    lv_obj_t *setting_table_2_user_trim_volt_value;
+    lv_obj_t *setting_table_2_final_voltage_caption;
+    lv_obj_t *setting_table_2_final_voltage_value;
+    lv_obj_t *setting_table_warning;
+    lv_obj_t *setting_table_open_selection_button;
+    lv_obj_t *setting_table_open_selection_button_label;
+    lv_obj_t *setting_edit_header;
+    lv_obj_t *setting_edit_back_button;
+    lv_obj_t *setting_edit_back_button_label;
+    lv_obj_t *setting_edit_title;
+    lv_obj_t *setting_edit_mode;
+    lv_obj_t *setting_edit_form;
+    lv_obj_t *setting_edit_form_title;
+    lv_obj_t *setting_edit_name_caption;
+    lv_obj_t *setting_edit_name_button;
+    lv_obj_t *setting_edit_name_button_label;
+    lv_obj_t *setting_edit_name_value;
+    lv_obj_t *setting_edit_product_caption;
+    lv_obj_t *setting_edit_product_button;
+    lv_obj_t *setting_edit_product_button_label;
+    lv_obj_t *setting_edit_product_value;
+    lv_obj_t *setting_edit_lot_caption;
+    lv_obj_t *setting_edit_lot_button;
+    lv_obj_t *setting_edit_lot_button_label;
+    lv_obj_t *setting_edit_lot_value;
+    lv_obj_t *setting_edit_prescription_caption;
+    lv_obj_t *setting_edit_prescription_button;
+    lv_obj_t *setting_edit_prescription_button_label;
+    lv_obj_t *setting_edit_prescription_value;
+    lv_obj_t *setting_edit_speed_caption;
+    lv_obj_t *setting_edit_speed_button;
+    lv_obj_t *setting_edit_speed_button_label;
+    lv_obj_t *setting_edit_speed_value;
+    lv_obj_t *setting_edit_distribution_caption;
+    lv_obj_t *setting_edit_distribution_button;
+    lv_obj_t *setting_edit_distribution_button_label;
+    lv_obj_t *setting_edit_distribution_value;
+    lv_obj_t *setting_edit_preview;
+    lv_obj_t *setting_edit_preview_title;
+    lv_obj_t *setting_edit_preview_hint;
+    lv_obj_t *setting_edit_driver_caption;
+    lv_obj_t *setting_edit_driver_value;
+    lv_obj_t *setting_edit_validation_caption;
+    lv_obj_t *setting_edit_validation_value;
+    lv_obj_t *setting_edit_draft_button;
+    lv_obj_t *setting_edit_draft_button_label;
+    lv_obj_t *setting_edit_save_button;
+    lv_obj_t *setting_edit_save_button_label;
+    lv_obj_t *setting_edit_apply_button;
+    lv_obj_t *setting_edit_apply_button_label;
+    lv_obj_t *setting_edit_table_button;
+    lv_obj_t *setting_edit_table_button_label;
     lv_obj_t *run_countdown_backdrop;
     lv_obj_t *run_countdown_panel;
     lv_obj_t *run_countdown_title;
@@ -233,6 +441,25 @@ typedef struct _objects_t {
     lv_obj_t *main_stop_1;
     lv_obj_t *main_stop_label_1;
     lv_obj_t *ridge_divider_1;
+    lv_obj_t *prescription_details_title;
+    lv_obj_t *prescription_ratio_label;
+    lv_obj_t *prescription_surface_ratio_input;
+    lv_obj_t *prescription_ratio_unit;
+    lv_obj_t *prescription_surface_n_label;
+    lv_obj_t *prescription_surface_n_input;
+    lv_obj_t *prescription_surface_n_unit;
+    lv_obj_t *prescription_subsurface_n_label;
+    lv_obj_t *prescription_subsurface_n_input;
+    lv_obj_t *prescription_subsurface_n_unit;
+    lv_obj_t *prescription_direct_surface_label;
+    lv_obj_t *prescription_direct_surface_input;
+    lv_obj_t *prescription_direct_surface_unit;
+    lv_obj_t *prescription_direct_subsurface_label;
+    lv_obj_t *prescription_direct_subsurface_input;
+    lv_obj_t *prescription_direct_subsurface_unit;
+    lv_obj_t *prescription_save_scope_notice;
+    lv_obj_t *prescription_confirm_notice;
+    lv_obj_t *prescription_active_mode;
     lv_obj_t *ridge_app_title;
     lv_obj_t *ridge_status;
     lv_obj_t *ridge_stop;
@@ -253,7 +480,11 @@ typedef struct _objects_t {
     lv_obj_t *ridge_tab_weighing_label;
     lv_obj_t *ridge_tab_line_weighing;
     lv_obj_t *ridge_content;
+    lv_obj_t *ridge_add_button;
+    lv_obj_t *ridge_add_button_label;
     lv_obj_t *ridge_left_title;
+    lv_obj_t *ridge_delete_button;
+    lv_obj_t *ridge_delete_button_label;
     lv_obj_t *ridge_divider;
     lv_obj_t *ridge_ridge_label;
     lv_obj_t *ridge_ridge_value;
@@ -284,6 +515,41 @@ typedef struct _objects_t {
     lv_obj_t *ridge_temp_save_label;
     lv_obj_t *ridge_save_settings;
     lv_obj_t *ridge_save_settings_label;
+    lv_obj_t *ridge_work_width_section_title;
+    lv_obj_t *ridge_furrow_width_label;
+    lv_obj_t *ridge_furrow_width_input;
+    lv_obj_t *ridge_furrow_unit;
+    lv_obj_t *ridge_save_scope_notice;
+    lv_obj_t *ridge_confirm_notice;
+    lv_obj_t *ridge_unsaved_notice;
+    lv_obj_t *ridge_active_work_width_mode;
+    lv_obj_t *ridge_result_card;
+    lv_obj_t *ridge_result_title;
+    lv_obj_t *ridge_result_width_caption;
+    lv_obj_t *ridge_result_width_value;
+    lv_obj_t *ridge_result_width_unit;
+    lv_obj_t *ridge_result_area_caption;
+    lv_obj_t *ridge_result_area_value;
+    lv_obj_t *ridge_result_area_unit;
+    lv_obj_t *ridge_result_preparation_caption;
+    lv_obj_t *ridge_result_surface_preparation;
+    lv_obj_t *ridge_result_preparation_separator;
+    lv_obj_t *ridge_result_subsurface_preparation;
+    lv_obj_t *ridge_result_preparation_unit;
+    lv_obj_t *ridge_result_flow_caption;
+    lv_obj_t *ridge_result_surface_flow;
+    lv_obj_t *ridge_result_flow_separator;
+    lv_obj_t *ridge_result_subsurface_flow;
+    lv_obj_t *ridge_result_flow_unit;
+    lv_obj_t *ridge_result_status;
+    lv_obj_t *ridge_delete_confirm_panel;
+    lv_obj_t *ridge_delete_confirm_title;
+    lv_obj_t *ridge_delete_confirm_target;
+    lv_obj_t *ridge_delete_confirm_warning;
+    lv_obj_t *ridge_delete_cancel_button;
+    lv_obj_t *ridge_delete_cancel_label;
+    lv_obj_t *ridge_delete_confirm_button;
+    lv_obj_t *ridge_delete_confirm_label;
     lv_obj_t *prep_app_title;
     lv_obj_t *prep_status;
     lv_obj_t *prep_stop;
@@ -363,6 +629,60 @@ typedef struct _objects_t {
     lv_obj_t *numeric_input_done_button;
     lv_obj_t *numeric_input_done_button_label;
     lv_obj_t *numeric_input_help_label;
+    lv_obj_t *ridge_numeric_input_card;
+    lv_obj_t *ridge_numeric_input_title_label;
+    lv_obj_t *ridge_numeric_input_editor;
+    lv_obj_t *ridge_numeric_input_unit_label;
+    lv_obj_t *ridge_numeric_input_keypad;
+    lv_obj_t *ridge_numeric_input_cancel_button;
+    lv_obj_t *ridge_numeric_input_cancel_button_label;
+    lv_obj_t *ridge_numeric_input_done_button;
+    lv_obj_t *ridge_numeric_input_done_button_label;
+    lv_obj_t *ridge_numeric_input_help_label;
+    lv_obj_t *calibration_select_header;
+    lv_obj_t *calibration_select_back;
+    lv_obj_t *calibration_select_back_label;
+    lv_obj_t *calibration_select_title;
+    lv_obj_t *calibration_select_zone;
+    lv_obj_t *calibration_select_slot_1;
+    lv_obj_t *calibration_select_slot_1_label;
+    lv_obj_t *calibration_select_slot_2;
+    lv_obj_t *calibration_select_slot_2_label;
+    lv_obj_t *calibration_select_context;
+    lv_obj_t *calibration_draft_card;
+    lv_obj_t *calibration_draft_caption;
+    lv_obj_t *calibration_draft_summary;
+    lv_obj_t *calibration_saved_card;
+    lv_obj_t *calibration_saved_caption;
+    lv_obj_t *calibration_saved_summary;
+    lv_obj_t *calibration_applied_card;
+    lv_obj_t *calibration_applied_caption;
+    lv_obj_t *calibration_applied_summary;
+    lv_obj_t *calibration_candidate_list;
+    lv_obj_t *calibration_list_title;
+    lv_obj_t *calibration_list_columns;
+    lv_obj_t *calibration_list_state;
+    lv_obj_t *calibration_candidate_detail;
+    lv_obj_t *calibration_detail_title;
+    lv_obj_t *calibration_detail_id_caption;
+    lv_obj_t *calibration_detail_id;
+    lv_obj_t *calibration_detail_revision_caption;
+    lv_obj_t *calibration_detail_revision;
+    lv_obj_t *calibration_detail_approval_caption;
+    lv_obj_t *calibration_detail_approval;
+    lv_obj_t *calibration_detail_range_caption;
+    lv_obj_t *calibration_detail_range;
+    lv_obj_t *calibration_detail_points_caption;
+    lv_obj_t *calibration_detail_points;
+    lv_obj_t *calibration_result_status;
+    lv_obj_t *calibration_refresh_button;
+    lv_obj_t *calibration_refresh_button_label;
+    lv_obj_t *calibration_select_button;
+    lv_obj_t *calibration_select_button_label;
+    lv_obj_t *calibration_save_button;
+    lv_obj_t *calibration_save_button_label;
+    lv_obj_t *calibration_confirm_button;
+    lv_obj_t *calibration_confirm_button_label;
 } objects_t;
 
 extern objects_t objects;
@@ -375,6 +695,24 @@ void tick_screen_dashboard();
 
 void create_screen_driver_detail();
 void tick_screen_driver_detail();
+
+void create_screen_setting_detail();
+void tick_screen_setting_detail();
+
+void create_screen_setting_confirm();
+void tick_screen_setting_confirm();
+
+void create_screen_setting_number_input();
+void tick_screen_setting_number_input();
+
+void create_screen_setting_text_input();
+void tick_screen_setting_text_input();
+
+void create_screen_setting_table();
+void tick_screen_setting_table();
+
+void create_screen_setting_edit();
+void tick_screen_setting_edit();
 
 void create_screen_run_countdown();
 void tick_screen_run_countdown();
@@ -396,6 +734,12 @@ void tick_screen_weighing_test();
 
 void create_screen_numeric_input();
 void tick_screen_numeric_input();
+
+void create_screen_ridge_numeric_input();
+void tick_screen_ridge_numeric_input();
+
+void create_screen_calibration_select();
+void tick_screen_calibration_select();
 
 void tick_screen_by_id(enum ScreensEnum screenId);
 void tick_screen(int screen_index);

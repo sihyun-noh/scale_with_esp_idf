@@ -290,7 +290,7 @@ static void motor_poll(void *context)
                     };
                     const esp_err_t error = send_request(slot, &request);
                     if (error != ESP_OK) {
-                        ESP_LOGW(TAG, "poll D%u index=0x%04X sub=%u failed: %s",
+                        ESP_LOGD(TAG, "poll D%u index=0x%04X sub=%u failed: %s",
                                  (unsigned)(slot + 1U), request.index,
                                  request.sub_index, esp_err_to_name(error));
                     }

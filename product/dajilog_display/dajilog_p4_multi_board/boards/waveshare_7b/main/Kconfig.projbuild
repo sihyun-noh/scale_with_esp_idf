@@ -33,6 +33,14 @@ menu "DAJILOG Configuration"
     endmenu
 
     menu "Diagnostics"
+        config DAJILOG_CALIBRATION_SAMPLE_TEST
+            bool "Show synthetic calibration candidates (UI test only)"
+            default n
+            help
+                Register four unapproved synthetic calibration summaries for
+                testing the selection screen. This does not enable automatic
+                motor voltage calculation, settings confirmation, or CAN output.
+
         config DAJILOG_SETTINGS_DEBUG_LOG
             bool "Print settings values in debug logs"
             default n

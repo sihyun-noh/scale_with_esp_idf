@@ -32,11 +32,18 @@ typedef enum {
 typedef enum {
   STORAGE_SAVE_SETTINGS = 0,
   STORAGE_DISCARD_SETTINGS,
+  STORAGE_CONFIRM_SETTINGS,
+  STORAGE_ADD_RIDGE,
+  STORAGE_SELECT_RIDGE,
+  STORAGE_DELETE_RIDGE,
 } storage_operation_t;
 
 typedef struct {
   storage_operation_t operation;
   uint32_t sequence;
+  uint32_t result_topic;
+  dajilog_ridge_profile_input_t ridge_input;
+  uint32_t ridge_id;
 } storage_request_t;
 
 typedef struct {
@@ -54,6 +61,8 @@ typedef struct {
     } motor;
     dajilog_motor_voltage_command_t motor_voltage;
     dajilog_driver_setting_t driver;
+    dajilog_ridge_profile_input_t ridge_input;
+    uint32_t ridge_id;
   } data;
 } core_message_t;
 
@@ -248,6 +257,18 @@ static esp_err_t bridge_command_handler(const dajilog_ui_msg_t* command, void* c
     memcpy(&queued_message.data.motor_voltage, command->payload.value.bytes.data,
            sizeof(queued_message.data.motor_voltage));
   }
+  if (command->topic == DAJILOG_UI_CMD_RIDGE_ADD) {
+    if (command->payload.type != DAJILOG_UI_VALUE_BYTES ||
+        command->payload.value.bytes.size != sizeof(dajilog_ridge_profile_input_t))
+      return ESP_ERR_INVALID_ARG;
+    memcpy(&queued_message.data.ridge_input, command->payload.value.bytes.data,
+           sizeof(queued_message.data.ridge_input));
+  }
+  if (command->topic == DAJILOG_UI_CMD_RIDGE_SELECT ||
+      command->topic == DAJILOG_UI_CMD_RIDGE_DELETE) {
+    if (command->payload.type != DAJILOG_UI_VALUE_U32) return ESP_ERR_INVALID_ARG;
+    queued_message.data.ridge_id = command->payload.value.u32;
+  }
   return xQueueSend(queue, &queued_message, 0) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
@@ -256,7 +277,23 @@ static esp_err_t request_storage(storage_operation_t operation, uint32_t sequenc
   const storage_request_t request = {
     .operation = operation,
     .sequence = sequence,
+    .result_topic = DAJILOG_UI_STATE_SETTINGS_RESULT,
   };
+  return xQueueSend(s_storage_queue, &request, 0) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
+}
+
+/** @brief Transfer an independent-ridge operation to Storage Task. */
+static esp_err_t request_ridge_storage(const core_message_t *message,
+                                       storage_operation_t operation) {
+  storage_request_t request = {
+    .operation = operation,
+    .sequence = message->sequence,
+    .result_topic = DAJILOG_UI_STATE_RIDGE_RESULT,
+  };
+  if (operation == STORAGE_ADD_RIDGE)
+    request.ridge_input = message->data.ridge_input;
+  else
+    request.ridge_id = message->data.ridge_id;
   return xQueueSend(s_storage_queue, &request, 0) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
@@ -361,12 +398,39 @@ static void process_command(const core_message_t* message) {
       }
       break;
     case DAJILOG_UI_CMD_ACK_ALARM: set_alarm(DAJILOG_ALARM_NONE, 0, ""); break;
-    case DAJILOG_UI_CMD_SETTINGS_APPLY:
+    case DAJILOG_UI_CMD_SETTINGS_APPLY: /* legacy setting screen: this means Save */
+    case DAJILOG_UI_CMD_SETTINGS_SAVE:
+      if (s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active) {
+        error = ESP_ERR_INVALID_STATE;
+        break;
+      }
       error = request_storage(STORAGE_SAVE_SETTINGS, message->sequence);
+      deferred = error == ESP_OK;
+      break;
+    case DAJILOG_UI_CMD_SETTINGS_CONFIRM:
+      if (s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active) {
+        error = ESP_ERR_INVALID_STATE;
+        break;
+      }
+      error = request_storage(STORAGE_CONFIRM_SETTINGS, message->sequence);
       deferred = error == ESP_OK;
       break;
     case DAJILOG_UI_CMD_SETTINGS_DISCARD:
       error = request_storage(STORAGE_DISCARD_SETTINGS, message->sequence);
+      deferred = error == ESP_OK;
+      break;
+    case DAJILOG_UI_CMD_RIDGE_ADD:
+    case DAJILOG_UI_CMD_RIDGE_SELECT:
+    case DAJILOG_UI_CMD_RIDGE_DELETE:
+      if (s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active) {
+        error = ESP_ERR_INVALID_STATE;
+        break;
+      }
+      error = request_ridge_storage(
+          message, message->topic == DAJILOG_UI_CMD_RIDGE_ADD
+                       ? STORAGE_ADD_RIDGE :
+                    message->topic == DAJILOG_UI_CMD_RIDGE_SELECT
+                       ? STORAGE_SELECT_RIDGE : STORAGE_DELETE_RIDGE);
       deferred = error == ESP_OK;
       break;
     case DAJILOG_UI_CMD_START_MANUAL:
@@ -476,7 +540,10 @@ static void system_task(void* context) {
         } else {
           set_alarm(DAJILOG_ALARM_WARNING, 0x2001U, "Settings operation failed");
         }
-        publish_result(DAJILOG_UI_STATE_SETTINGS_RESULT, message.sequence, message.data.storage_error);
+        publish_result(message.topic == DAJILOG_UI_STATE_RIDGE_RESULT
+                           ? DAJILOG_UI_STATE_RIDGE_RESULT
+                           : DAJILOG_UI_STATE_SETTINGS_RESULT,
+                       message.sequence, message.data.storage_error);
         publish_snapshot();
         break;
       case CORE_MESSAGE_VEHICLE_UPDATE:
@@ -520,11 +587,33 @@ static void storage_task(void* context) {
   (void)context;
   storage_request_t request;
   while (xQueueReceive(s_storage_queue, &request, portMAX_DELAY) == pdTRUE) {
-    esp_err_t error = request.operation == STORAGE_SAVE_SETTINGS
-                          ? dajilog_product_settings_apply()
-                          : dajilog_product_settings_discard();
+    esp_err_t error;
+    switch (request.operation) {
+      case STORAGE_SAVE_SETTINGS:
+        error = dajilog_product_settings_save();
+        break;
+      case STORAGE_CONFIRM_SETTINGS:
+        error = dajilog_product_settings_confirm();
+        break;
+      case STORAGE_DISCARD_SETTINGS:
+        error = dajilog_product_settings_discard();
+        break;
+      case STORAGE_ADD_RIDGE:
+        error = dajilog_product_settings_add_ridge_profile(&request.ridge_input);
+        break;
+      case STORAGE_SELECT_RIDGE:
+        error = dajilog_product_settings_select_ridge_profile(request.ridge_id);
+        break;
+      case STORAGE_DELETE_RIDGE:
+        error = dajilog_product_settings_delete_ridge_profile(request.ridge_id);
+        break;
+      default:
+        error = ESP_ERR_INVALID_ARG;
+        break;
+    }
     const core_message_t result = {
       .kind = CORE_MESSAGE_STORAGE_RESULT,
+      .topic = request.result_topic,
       .sequence = request.sequence,
       .data.storage_error = error,
     };
@@ -682,6 +771,8 @@ static esp_err_t product_get_settings_draft(
 static esp_err_t product_stage_ridge_settings(
     const dajilog_ridge_settings_t* settings, void* context) {
   (void)context;
+  if (!s_started || s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active)
+    return ESP_ERR_INVALID_STATE;
   return dajilog_product_settings_stage_ridge(settings);
 }
 
@@ -689,7 +780,33 @@ static esp_err_t product_stage_ridge_settings(
 static esp_err_t product_stage_prescription_settings(
     const dajilog_prescription_settings_t* settings, void* context) {
   (void)context;
+  if (!s_started || s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active)
+    return ESP_ERR_INVALID_STATE;
   return dajilog_product_settings_stage_prescription(settings);
+}
+
+/** @brief Stage a 7B zone only while the product is idle. */
+static esp_err_t product_stage_zone_settings(
+    dajilog_setting_zone_id_t zone, const dajilog_zone_settings_t* settings,
+    void* context) {
+  (void)context;
+  if (!s_started || s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active)
+    return ESP_ERR_INVALID_STATE;
+  return dajilog_product_settings_stage_zone(zone, settings);
+}
+
+/** @brief Copy the Applied settings retained separately from Saved. */
+static esp_err_t product_get_settings_applied(
+    dajilog_product_settings_snapshot_t* settings, void* context) {
+  (void)context;
+  return dajilog_product_settings_get_applied(settings);
+}
+
+/** @brief Expose committed ridge profiles without exposing NVS to the UI. */
+static esp_err_t product_get_ridge_profiles(
+    dajilog_ridge_profiles_snapshot_t* profiles, void* context) {
+  (void)context;
+  return dajilog_product_settings_get_ridge_profiles(profiles);
 }
 
 /** @brief Bind the 7B implementation callbacks to the common System Core API. */
@@ -704,6 +821,9 @@ esp_err_t dajilog_product_controller_register(void) {
     .get_settings_draft = product_get_settings_draft,
     .stage_ridge_settings = product_stage_ridge_settings,
     .stage_prescription_settings = product_stage_prescription_settings,
+    .stage_zone_settings = product_stage_zone_settings,
+    .get_settings_applied = product_get_settings_applied,
+    .get_ridge_profiles = product_get_ridge_profiles,
     .context = NULL,
   };
   return dajilog_system_core_register_implementation(&implementation);
