@@ -105,6 +105,8 @@ esp_err_t mqtt_init(void) {
     .broker.address.uri = CONFIG_MQTT_BROKER_URL,
   };
 
+  ESP_LOGW(TAG, "broker url : %s", CONFIG_MQTT_BROKER_URL);
+
   mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
   if (mqtt_client == NULL) {
     ESP_LOGE(TAG, "Failed to init mqtt client");
