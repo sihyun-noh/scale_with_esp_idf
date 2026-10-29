@@ -30,6 +30,12 @@ typedef struct {
 
 typedef struct {
   char address;
+  float temperature;
+  float humidity;
+} daji_data_t;
+
+typedef struct {
+  char address;
   float vwc;
   float temperature;
 } teros11_data_t;

@@ -142,6 +142,13 @@ sdi12_cmd_template_t cmd_table[SENSOR_TYPE_COUNT][SDI_CMD_COUNT] = {
     [SDI_CMD_M]  = { "M0!", 50 },
     [SDI_CMD_D0]  = { "D0!", 50 },
   },
+  [DAJILOG_DAJI01] = {
+    [SDI_CMD_INFO]  = { "I!",  30 },
+    [SDI_CMD_ADDR]  = { "A!",  100 },
+    [SDI_CMD_READ]  = { "R0!", 50 },
+    [SDI_CMD_M]  = { "M0!", 50 },
+    [SDI_CMD_D0]  = { "D0!", 50 },
+  },
 
 };
 
@@ -267,6 +274,11 @@ bool parse_sdi12_info(const char *resp, sdi12_sensor_info_t *out) {
     strcpy(out->manufacturer, "APOGEE");
     strcpy(out->model, "S2-411");
 
+  } else if (strstr(resp, "DAJI01") != 0) {
+    ESP_LOGE(TAG, "[INFO] Model DAJI01");
+    strcpy(out->manufacturer, "METER");
+    strcpy(out->model, "DAJI01");
+
   } else {
     ESP_LOGW(TAG, "[INFO] Not matching model found.");
   }
@@ -285,6 +297,43 @@ bool parse_sdi12_info(const char *resp, sdi12_sensor_info_t *out) {
 
   return true;
 }
+
+static bool parse_daji01_response(const char *resp, daji_data_t *out) {
+  if (!resp || !out)
+    return false;
+
+  // e.g. "0+1808.28+26.3"
+  char *ptr = (char *)resp;
+
+  // 1. Sensor address (1 char)
+  out->address = *ptr++;
+
+  // 2. Parse the 3 float/int values
+  for (int i = 0; i < 2; i++) {
+    if (*ptr != '+' && *ptr != '-')
+      return false;  // sign 체크
+    char *endptr = NULL;
+    float value = strtof(ptr, &endptr);
+    if (endptr == ptr)
+      return false;
+
+    // Handle sensor 'no data' value -9999
+    if (value <= -9999.0f) {
+      ESP_LOGW(TAG, "Field %d is invalid (-9999). Replacing with 0.0", i);
+      return false;
+    }
+
+    switch (i) {
+      case 0: out->temperature = value; break;
+      case 1: out->humidity = value; break;
+    }
+
+    ptr = endptr;
+  }
+
+  return true;
+}
+
 static bool parse_teros11_response(const char *resp, teros11_data_t *out) {
   if (!resp || !out)
     return false;
@@ -1077,6 +1126,18 @@ static bool parse_sdi12_payload(sdi12_sensor_type_t sensor_type, const char *pay
       }
     }
 
+    case DAJILOG_DAJI01: {
+      daji_data_t *daji01 = (daji_data_t *)out_data;
+      if (parse_daji01_response(payload, daji01)) {
+        ESP_LOGI(TAG, "[PARSED] ADDR: %c, humidity: %.2f, TEMP: %.2f", daji01->address, (float)daji01->humidity,
+                 (float)daji01->temperature);
+        return true;
+      } else {
+        ESP_LOGE(TAG, "Failed to parse DAJI01 response.");
+        return false;
+      }
+    }
+
     default: ESP_LOGW(TAG, "Unknown sensor type"); return false;
   }
 }
@@ -1105,6 +1166,34 @@ void print_sdi12_info(char i, sdi12_sensor_type_t SENSOR_TYPE, sdi12_sensor_info
   } else {
     ESP_LOGE(TAG, "Failed to parse SDI-12 info.\n");
   }
+}
+
+// dajilog data
+daji_data_t *sdi12_read_dajilog(uint8_t portId) {
+  static daji_data_t daji01;
+  ESP_LOGI(TAG, "[SDI12] Data Read to daji01");
+  // buffer clear
+  memset(&daji01, 0x00, sizeof(daji_data_t));
+  // TODO: This is the control point for buffer and power management
+  // Sets the MUX to match the data line and power control for the specified port.
+  ESP_ERROR_CHECK(sensor_buffer_select_port(portId));
+  ESP_ERROR_CHECK(sensor_control_pin_set(portId, 1));
+
+  vTaskDelay(pdMS_TO_TICKS(450));
+  mySDI12.begin();
+  if (!print_sdi12_data('0', DAJILOG_DAJI01, &daji01)) {
+    ESP_LOGE(TAG, "Sensor data parsing failed for address '0'");
+    return NULL;
+  }
+  mySDI12.end();
+
+  // It disables the connection.
+  ESP_ERROR_CHECK(sensor_buffer_disable());
+  ESP_ERROR_CHECK(sensor_control_pin_set(portId, 0));
+
+  ESP_LOGI(TAG, "End Search for SDI-12 Devices.");
+
+  return &daji01;
 }
 
 // TEROS11
@@ -1924,7 +2013,7 @@ void sdi12_app_main_2(void *param) {
 
   uint8_t portId = 0;
 
-#if 1
+#if 0
   sdi12_sensor_info_t *info = sdi12_info_start((uint8_t)portId);
   ESP_LOGI(TAG, "Menufanture : %s", info->model);
   while (1) {
@@ -1937,8 +2026,8 @@ void sdi12_app_main_2(void *param) {
   ESP_LOGI(TAG, "Menufanture : %s", info->model);
 
   while (1) {
-    // sdi12_sensor_info_t *info = sdi12_info_start((uint8_t)portId);
-    // ESP_LOGI(TAG, "Menufanture : %s", info->model);
+    sdi12_sensor_info_t *info = sdi12_info_start((uint8_t)portId);
+    ESP_LOGI(TAG, "Menufanture : %s", info->model);
 
     if (strcmp(info->model, "TER12") == 0) {
       teros12_data_t *teros12 = sdi12_read_teros12(portId);
@@ -1946,6 +2035,14 @@ void sdi12_app_main_2(void *param) {
         ESP_LOGW(TAG, "[TEROS12] SUCSSES : %.2f", teros12->temperature);
       } else {
         ESP_LOGW(TAG, "[TEROS12] READ FAILED");
+      }
+
+    } else if (strcmp(info->model, "DAJI01") == 0) {
+      daji_data_t *daji01 = sdi12_read_dajilog(portId);
+      if (daji01 != NULL) {
+        ESP_LOGW(TAG, "[DAJI01] SUCSSES : T: %.2f, H: %.2f", daji01->temperature, daji01->humidity);
+      } else {
+        ESP_LOGW(TAG, "[DAJI01] READ FAILED");
       }
 
     } else if (strcmp(info->model, "TER21") == 0) {

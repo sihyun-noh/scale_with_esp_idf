@@ -22,6 +22,7 @@ const char *sensor_names[] = {
   //"APOGEE_SP_421", 
   "APO_SQ_521",
   //"APOGEE_SU_221",  // ...
+  "DAJI01"
 };
 
 /* clang-format on */

@@ -65,6 +65,7 @@ static const sensor_model_map_t meter_model_map[] = {
   { "ATMOS22", ATMOS22, 9 },
   { "ATMOS41", ATMOS41, 17 },
   { "HYDROS21", HYDROS21, 3 },
+  { "DAJI01", DAJILOG_DAJI01, 2 },
 };
 
 // APOGEE Model map
