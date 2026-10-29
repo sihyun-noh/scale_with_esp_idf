@@ -14,6 +14,7 @@
 #include <nvs_flash.h>
 #include <cJSON.h>
 #include <esp_smartconfig.h>
+#include "restart_reason.h"
 #include "ssid_manager.h"
 
 #define TAG "WifiConfigurationAp"
@@ -370,7 +371,7 @@ void WifiConfigurationAp::StartWebServer() {
                                  // 再等待100ms确保所有连接都已关闭
                                  vTaskDelay(pdMS_TO_TICKS(100));
                                  // 执行重启
-                                 esp_restart();
+                                 restart_with_reason(APP_RESTART_REASON_WIFI_CONFIG_UPDATED);
                                },
                                "reboot_task", 4096, this_, 5, NULL);
 
@@ -524,7 +525,7 @@ void WifiConfigurationAp::SmartConfigEventHandler(void *arg, esp_event_base_t ev
             [](void *ctx) {
               ESP_LOGI(TAG, "Restarting in 3 second");
               vTaskDelay(pdMS_TO_TICKS(3000));
-              esp_restart();
+              restart_with_reason(APP_RESTART_REASON_SMARTCONFIG_UPDATED);
             },
             "restart_task", 4096, NULL, 5, NULL);
         break;

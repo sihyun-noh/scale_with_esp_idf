@@ -15,6 +15,7 @@
 #include "mqtt_publish.h"
 #include "mqtt_handler.h"
 #include "ota_update.h"
+#include "restart_reason.h"
 #include "sensor_auto_detect.h"
 #include "sensor_cfg_config.h"
 #include "file_manager.h"
@@ -141,7 +142,7 @@ void strategy_cmd_mqtt(const mqtt_message_t *msg) {
         BUILD_DEVICE_TOPIC(prefix_buff, TOPIC_TYPE_STATE);
         publish_data(prefix_buff, reboot_msg);
         vTaskDelay(pdMS_TO_TICKS(1000));
-        esp_restart();
+        restart_with_reason(APP_RESTART_REASON_REMOTE_COMMAND);
 
       } else if (strcmp(command->valuestring, "fileList") == 0) {
         ESP_LOGW(TAG, "[CMD_JSON] Sending saved file list response");

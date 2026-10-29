@@ -1,5 +1,5 @@
 set(req nvs_flash _console json sdi12)
-idf_component_register(SRCS "nvs_ext.c" "console_nvs.c" "nvs_cfg.c" "sensor_cfg_config.c"
+idf_component_register(SRCS "nvs_ext.c" "console_nvs.c" "nvs_cfg.c" "sensor_cfg_config.c" "restart_reason.c"
                       INCLUDE_DIRS "."
                       REQUIRES ${req}
 )

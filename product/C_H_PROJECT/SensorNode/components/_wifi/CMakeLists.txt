@@ -15,6 +15,7 @@ idf_component_register(
         "esp_http_server"
         "esp_wifi"
         "nvs_flash"
+        "_nvs"
         "json"
         "esp_timer"
 )

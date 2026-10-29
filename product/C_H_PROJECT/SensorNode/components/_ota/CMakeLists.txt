@@ -1,4 +1,4 @@
-set(req esp_http_client app_update esp_https_ota esp_netif mbedtls esp_psram)
+set(req esp_http_client app_update esp_https_ota esp_netif mbedtls esp_psram _nvs)
 
 idf_build_get_property(project_dir PROJECT_DIR)
 idf_component_register(SRCS "ota_update.c" 

@@ -16,6 +16,7 @@
 
 #include "sensor_auto_detect.h"
 #include "sensor_cfg_config.h"
+#include "restart_reason.h"
 #include "bsp_gpio.h"
 #include "sensor_config.h"
 
@@ -351,7 +352,7 @@ static void update_sensor_port_config(sensor_port_cfg_t *cfg, int portId, sdi12_
   blink_status_clear_leds(LED_GREEN);
 
   // Force reboot
-  esp_restart();
+  restart_with_reason(APP_RESTART_REASON_SENSOR_CONFIG_UPDATED);
 }
 
 static bool find_model_mapping(const sensor_model_map_t *table, size_t table_size, const char *model,
@@ -460,7 +461,7 @@ void sensor_auto_detect_task(void *arg) {
               blink_status_set_leds(LED_BLUE);
               vTaskDelay(pdMS_TO_TICKS(1500));
               blink_status_clear_leds(LED_BLUE);
-              esp_restart();
+              restart_with_reason(APP_RESTART_REASON_SENSOR_DETECTION_FAILED);
             }
           }
         };

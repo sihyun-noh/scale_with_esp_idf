@@ -15,6 +15,7 @@
 #include "esp_http_client.h"
 #include "esp_https_ota.h"
 #include "protocol_examples_common.h"
+#include "restart_reason.h"
 #include "string.h"
 #ifdef CONFIG_OTA_USE_CERT_BUNDLE
 #else if
@@ -121,7 +122,7 @@ void ota_start() {
   esp_err_t ret = esp_https_ota(&ota_config);
   if (ret == ESP_OK) {
     ESP_LOGI(TAG, "OTA Succeed, Rebooting...");
-    esp_restart();
+    restart_with_reason(APP_RESTART_REASON_OTA_UPDATE);
   } else {
     ESP_LOGE(TAG, "Firmware upgrade failed");
   }

@@ -14,6 +14,7 @@
 
 #include "mqtt_config.h"
 #include "mqtt_publish.h"
+#include "restart_reason.h"
 #include "file_log.h"
 #include "littlefs_impl.h"
 #include "sdi12_task.h"
@@ -1247,13 +1248,17 @@ static void fsm_task_loop(void* pvParameters) {
 
         if (bits & TASK_DONE_BIT) {
           ESP_LOGW(TAG, "[FSM] Task %s completed in %lu ms", task->task_name, (unsigned long)duration_ms);
+          if (time_out_count > 0) {
+            ESP_LOGI(TAG, "[FSM] Task completed, timeout count reset: %u -> 0", (unsigned int)time_out_count);
+          }
+          time_out_count = 0;
         } else {
           ESP_LOGW(TAG, "[FSM] Task %s timeout after %lu ms", task->task_name, (unsigned long)duration_ms);
           // NOTE: if timeout occur continuously, reboot
           time_out_count++;
           ESP_LOGE(TAG, "current_count [%d]", time_out_count);
           if (time_out_count == MAX_TIME_OUT_COUNT) {
-            esp_restart();
+            restart_with_reason(APP_RESTART_REASON_SENSOR_TASK_TIMEOUT);
           }
         }
 

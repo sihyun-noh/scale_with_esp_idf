@@ -1,11 +1,29 @@
 
 #include "cJSON.h"
 #include "esp_log.h"
+#include "esp_system.h"
 #include "mqtt_config.h"
+#include "restart_reason.h"
 #include "sensor_cfg_config.h"
 
 static const char *TAG = "mqtt_publish";
 extern mqtt_client_ctx_t mqtt_ctx;
+
+static const char *esp_reset_reason_to_string(esp_reset_reason_t reason) {
+  switch (reason) {
+    case ESP_RST_POWERON: return "power_on";
+    case ESP_RST_EXT: return "external_pin";
+    case ESP_RST_SW: return "software";
+    case ESP_RST_PANIC: return "panic";
+    case ESP_RST_INT_WDT: return "interrupt_watchdog";
+    case ESP_RST_TASK_WDT: return "task_watchdog";
+    case ESP_RST_WDT: return "watchdog";
+    case ESP_RST_DEEPSLEEP: return "deep_sleep";
+    case ESP_RST_BROWNOUT: return "brownout";
+    case ESP_RST_SDIO: return "sdio";
+    default: return "unknown";
+  }
+}
 
 void publish_device_status(esp_mqtt_client_handle_t client, const char *status, const char *topic) {
   char *device_id = NULL;
@@ -18,6 +36,19 @@ void publish_device_status(esp_mqtt_client_handle_t client, const char *status, 
   cJSON_AddStringToObject(root, "status", status);
   cJSON_AddStringToObject(root, "fw_ver", FW_VERSION);
   cJSON_AddStringToObject(root, "networkType", network_type);
+
+  esp_reset_reason_t esp_reset_reason_id = esp_reset_reason();
+  app_restart_reason_t restart_reason_id = APP_RESTART_REASON_NONE;
+  esp_err_t restart_reason_err = restart_reason_load(&restart_reason_id);
+  if (restart_reason_err != ESP_OK) {
+    ESP_LOGW(TAG, "Failed to load restart reason: %s", esp_err_to_name(restart_reason_err));
+    restart_reason_id = APP_RESTART_REASON_UNKNOWN;
+  }
+
+  cJSON_AddNumberToObject(root, "espResetReasonId", esp_reset_reason_id);
+  cJSON_AddStringToObject(root, "espResetReason", esp_reset_reason_to_string(esp_reset_reason_id));
+  cJSON_AddNumberToObject(root, "restartReasonId", restart_reason_id);
+  cJSON_AddStringToObject(root, "restartReason", restart_reason_to_string(restart_reason_id));
 
   sensor_port_cfg_t *cfg = sensor_cfg_instance();
   if (!cfg) {
@@ -51,7 +82,14 @@ void publish_device_status(esp_mqtt_client_handle_t client, const char *status, 
 
   char *json_str = cJSON_PrintUnformatted(root);
   if (json_str) {
-    esp_mqtt_client_publish(client, topic, json_str, 0, 1, 0);
+    int message_id = esp_mqtt_client_publish(client, topic, json_str, 0, 1, 0);
+    if (message_id >= 0 && restart_reason_id != APP_RESTART_REASON_NONE &&
+        restart_reason_id != APP_RESTART_REASON_UNKNOWN) {
+      esp_err_t clear_err = restart_reason_clear();
+      if (clear_err != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to clear restart reason: %s", esp_err_to_name(clear_err));
+      }
+    }
     free(json_str);
   }
 
