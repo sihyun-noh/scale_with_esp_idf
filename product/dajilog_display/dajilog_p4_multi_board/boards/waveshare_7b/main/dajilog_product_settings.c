@@ -1,3 +1,11 @@
+/**
+ * @file dajilog_product_settings.c
+ * @brief 7B 제품 설정의 RAM Draft, Saved/Applied, Bxx 목록 및 NVS 저장소.
+ *
+ * 찾을 때: Bxx 추가·선택·삭제=*_ridge_profile(), 두둑 카드 임시저장=
+ * stage_ridge_profile(), 처방 카드 임시저장=stage_prescription_products(),
+ * 설정 저장=save(), 재부팅 복원=init(). LVGL 화면 객체는 여기서 다루지 않는다.
+ */
 #include "dajilog_product_settings.h"
 
 #include <stddef.h>
@@ -24,7 +32,7 @@
 #define RIDGE_PROFILE_STORAGE_KEY       "ridge_list"
 #define RIDGE_PROFILE_SCHEMA_VERSION    2U
 
-/* The v1 NVS payload had no next_id; keep its exact layout for migration. */
+/* [저장소 호환] v1 NVS에는 next_id가 없으므로 이전 레이아웃을 유지해 이전한다. */
 typedef struct {
     uint32_t count;
     uint32_t selected_id;
@@ -434,7 +442,7 @@ static bool zone_settings_valid(const dajilog_zone_settings_t *settings)
            settings->first_channel_permille <= 1000U;
 }
 
-/** @brief Register setting schemas and restore v0.5 or migrate older NVS data. */
+/** @brief [부팅·저장소] 스키마를 등록하고 NVS의 Product 설정과 Bxx 목록을 복원한다. */
 esp_err_t dajilog_product_settings_init(void)
 {
     if (s_lock != NULL) {
@@ -663,7 +671,7 @@ esp_err_t dajilog_product_settings_init(void)
     return ESP_OK;
 }
 
-/** @brief Copy editable drafts and their current table revisions. */
+/** @brief [설정 카드 공통] RAM의 편집 중 Draft와 Table revision을 복사한다. */
 esp_err_t dajilog_product_settings_get_draft(
     dajilog_product_settings_snapshot_t *settings)
 {
@@ -697,7 +705,7 @@ esp_err_t dajilog_product_settings_get_draft(
     return error;
 }
 
-/** @brief Copy committed ridge profiles under the settings lock. */
+/** @brief [두둑 카드] 잠금 아래에서 현재 Bxx RAM 목록과 선택 ID를 복사한다. */
 esp_err_t dajilog_product_settings_get_ridge_profiles(
     dajilog_ridge_profiles_snapshot_t *profiles)
 {
@@ -709,7 +717,7 @@ esp_err_t dajilog_product_settings_get_ridge_profiles(
     return ESP_OK;
 }
 
-/** @brief Commit a new independent Bxx profile before publishing it in RAM. */
+/** @brief [두둑 카드·새 두둑 추가] 빈 B번호에 폭·길이 Profile을 RAM에 등록한다. */
 esp_err_t dajilog_product_settings_add_ridge_profile(
     const dajilog_ridge_profile_input_t *input)
 {
@@ -740,15 +748,42 @@ esp_err_t dajilog_product_settings_add_ridge_profile(
     next.profiles[insert_index].input = *input;
     next.count++;
     next.selected_id = id;
-    const esp_err_t error = dajilog_setting_storage_nvs_save(
-        &s_storage, RIDGE_PROFILE_STORAGE_KEY, RIDGE_PROFILE_SCHEMA_VERSION,
-        &next, sizeof(next));
-    if (error == ESP_OK) s_ridge_profiles = next;
+    s_ridge_profiles = next;
+    s_dirty = true;
+    ++s_draft_generation;
     xSemaphoreGive(s_lock);
-    return error;
+    return ESP_OK;
 }
 
-/** @brief Commit selection without changing the registered dimensions. */
+/** @brief [두둑 카드·두둑 변경] 선택 Bxx의 폭·실제 길이만 RAM에서 수정한다. */
+esp_err_t dajilog_product_settings_edit_ridge_profile(
+    const dajilog_ridge_profile_edit_t *edit)
+{
+    if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
+    if (edit == NULL || edit->id == 0U || !isfinite(edit->width_m) ||
+        edit->width_m <= 0.0f || edit->width_m > 100.0f ||
+        !isfinite(edit->length_m) || edit->length_m <= 0.0f ||
+        edit->length_m > 100000.0f) return ESP_ERR_INVALID_ARG;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    for (uint32_t i = 0; i < s_ridge_profiles.count; ++i) {
+        if (s_ridge_profiles.profiles[i].id != edit->id) continue;
+        dajilog_ridge_profile_input_t *input = &s_ridge_profiles.profiles[i].input;
+        if (input->split_section != 0U) {
+            xSemaphoreGive(s_lock);
+            return ESP_ERR_NOT_SUPPORTED;
+        }
+        input->width_m = edit->width_m;
+        input->whole_length_m = edit->length_m;
+        s_dirty = true;
+        ++s_draft_generation;
+        xSemaphoreGive(s_lock);
+        return ESP_OK;
+    }
+    xSemaphoreGive(s_lock);
+    return ESP_ERR_NOT_FOUND;
+}
+
+/** @brief [두둑 카드·두둑 선택] 선택 ID만 RAM에서 바꾸고 NVS는 쓰지 않는다. */
 esp_err_t dajilog_product_settings_select_ridge_profile(uint32_t id)
 {
     if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
@@ -760,17 +795,14 @@ esp_err_t dajilog_product_settings_select_ridge_profile(uint32_t id)
         xSemaphoreGive(s_lock);
         return ESP_ERR_INVALID_ARG;
     }
-    dajilog_ridge_profiles_snapshot_t next = s_ridge_profiles;
-    next.selected_id = id;
-    const esp_err_t error = dajilog_setting_storage_nvs_save(
-        &s_storage, RIDGE_PROFILE_STORAGE_KEY, RIDGE_PROFILE_SCHEMA_VERSION,
-        &next, sizeof(next));
-    if (error == ESP_OK) s_ridge_profiles = next;
+    s_ridge_profiles.selected_id = id;
+    s_dirty = true;
+    ++s_draft_generation;
     xSemaphoreGive(s_lock);
-    return error;
+    return ESP_OK;
 }
 
-/** @brief Delete a saved Bxx atomically, retaining all other IDs. */
+/** @brief [두둑 카드·삭제] 선택 Bxx를 RAM 목록에서 제거하고 다른 ID는 유지한다. */
 esp_err_t dajilog_product_settings_delete_ridge_profile(uint32_t id)
 {
     if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
@@ -791,15 +823,14 @@ esp_err_t dajilog_product_settings_delete_ridge_profile(uint32_t id)
     if (next.selected_id == id)
         next.selected_id = next.count == 0U ? 0U :
             next.profiles[index < next.count ? index : next.count - 1U].id;
-    const esp_err_t error = dajilog_setting_storage_nvs_save(
-        &s_storage, RIDGE_PROFILE_STORAGE_KEY, RIDGE_PROFILE_SCHEMA_VERSION,
-        &next, sizeof(next));
-    if (error == ESP_OK) s_ridge_profiles = next;
+    s_ridge_profiles = next;
+    s_dirty = true;
+    ++s_draft_generation;
     xSemaphoreGive(s_lock);
-    return error;
+    return ESP_OK;
 }
 
-/** @brief Keep one validated zone draft without changing Saved or Applied. */
+/** @brief [설정 카드 S1/S2] 구역 입력을 검증해 RAM Draft만 변경한다. */
 esp_err_t dajilog_product_settings_stage_zone(
     dajilog_setting_zone_id_t zone, const dajilog_zone_settings_t *settings)
 {
@@ -815,7 +846,7 @@ esp_err_t dajilog_product_settings_stage_zone(
     return ESP_OK;
 }
 
-/** @brief Validate and replace only the editable ridge draft. */
+/** @brief [두둑 카드 공통] 계산용 단일 Ridge Draft를 검증해 RAM에서 교체한다. */
 esp_err_t dajilog_product_settings_stage_ridge(
     const dajilog_ridge_settings_t *settings)
 {
@@ -835,7 +866,35 @@ esp_err_t dajilog_product_settings_stage_ridge(
     return ESP_OK;
 }
 
-/** @brief Validate and replace only the editable prescription draft. */
+/** @brief [두둑 카드 임시저장] 선택 Bxx 상세값과 계산용 Draft를 한 잠금에서 함께 교체한다. */
+esp_err_t dajilog_product_settings_stage_ridge_profile(
+    uint32_t id, const dajilog_ridge_profile_input_t *profile,
+    const dajilog_ridge_settings_t *settings)
+{
+    if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
+    if (id == 0U || !ridge_profile_valid(profile) || settings == NULL) return ESP_ERR_INVALID_ARG;
+    const esp_err_t error = dajilog_table_validate(
+        RIDGE_TABLE_ID, settings, sizeof(*settings));
+    if (error != ESP_OK) return error;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    if (s_ridge_profiles.selected_id != id) {
+        xSemaphoreGive(s_lock);
+        return ESP_ERR_INVALID_STATE;
+    }
+    for (uint32_t i = 0; i < s_ridge_profiles.count; ++i) {
+        if (s_ridge_profiles.profiles[i].id != id) continue;
+        s_ridge_profiles.profiles[i].input = *profile;
+        s_ridge_draft = *settings;
+        s_dirty = true;
+        ++s_draft_generation;
+        xSemaphoreGive(s_lock);
+        return ESP_OK;
+    }
+    xSemaphoreGive(s_lock);
+    return ESP_ERR_NOT_FOUND;
+}
+
+/** @brief [처방 카드] 처방 입력을 검증해 RAM Draft만 변경한다. */
 esp_err_t dajilog_product_settings_stage_prescription(
     const dajilog_prescription_settings_t *settings)
 {
@@ -855,7 +914,7 @@ esp_err_t dajilog_product_settings_stage_prescription(
     return ESP_OK;
 }
 
-/** @brief Stage a validated prescription and its selected catalog identities together. */
+/** @brief [처방 카드] 처방값과 선택 제품 코드를 RAM Draft에 함께 반영한다. */
 esp_err_t dajilog_product_settings_stage_prescription_products(
     const dajilog_prescription_settings_t *settings,
     const char codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY])
@@ -887,7 +946,7 @@ esp_err_t dajilog_product_settings_stage_prescription_products(
     return ESP_OK;
 }
 
-/** @brief Persist Saved inputs while retaining the independent Applied snapshot. */
+/** @brief [설정 저장 버튼] Product Draft와 전체 Bxx 목록을 NVS에 저장하고 Applied는 유지한다. */
 esp_err_t dajilog_product_settings_save(void)
 {
     if (s_lock == NULL) {
@@ -895,6 +954,7 @@ esp_err_t dajilog_product_settings_save(void)
     }
     xSemaphoreTake(s_lock, portMAX_DELAY);
     const dajilog_ridge_settings_t ridge = s_ridge_draft;
+    const dajilog_ridge_profiles_snapshot_t ridge_profiles = s_ridge_profiles;
     const dajilog_prescription_settings_t prescription =
         s_prescription_draft;
     dajilog_zone_settings_t zones[DAJILOG_SETTING_ZONE_COUNT];
@@ -957,6 +1017,11 @@ esp_err_t dajilog_product_settings_save(void)
             PRODUCT_STORAGE_SCHEMA_VERSION, &record, sizeof(record));
     }
     if (error == ESP_OK) {
+        error = dajilog_setting_storage_nvs_save(
+            &s_storage, RIDGE_PROFILE_STORAGE_KEY, RIDGE_PROFILE_SCHEMA_VERSION,
+            &ridge_profiles, sizeof(ridge_profiles));
+    }
+    if (error == ESP_OK) {
         error = dajilog_table_update(
             RIDGE_TABLE_ID, s_ridge_row_id, &ridge, sizeof(ridge));
     }
@@ -978,7 +1043,7 @@ esp_err_t dajilog_product_settings_save(void)
     return error;
 }
 
-/** @brief Reject production Apply until approved calibration lookup is installed. */
+/** @brief [설정 카드 Confirm] 승인 배출량표가 연결되기 전에는 운전 적용을 거부한다. */
 esp_err_t dajilog_product_settings_confirm(void)
 {
     if (s_lock == NULL) {
@@ -987,7 +1052,7 @@ esp_err_t dajilog_product_settings_confirm(void)
     return ESP_ERR_NOT_SUPPORTED;
 }
 
-/** @brief Return only a confirmed configuration for RUN context latching. */
+/** @brief [Dashboard RUN] 확인된 Applied 설정만 운전 시작 측에 제공한다. */
 esp_err_t dajilog_product_settings_get_applied(
     dajilog_product_settings_snapshot_t *settings)
 {
@@ -1020,7 +1085,7 @@ esp_err_t dajilog_product_settings_get_applied(
     return ESP_OK;
 }
 
-/** @brief Restore editable drafts from the current saved RAM table rows. */
+/** @brief [설정 취소] Saved Table Row에서 편집 중 Draft를 다시 불러온다. */
 esp_err_t dajilog_product_settings_discard(void)
 {
     if (s_lock == NULL) {

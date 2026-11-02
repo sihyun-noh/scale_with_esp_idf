@@ -1,3 +1,12 @@
+/**
+ * @file dajilog_product_controller.c
+ * @brief 7B 카드 명령의 System Task·Storage Task 경계와 운전 FSM.
+ *
+ * 찾을 때: Dashboard RUN/STOP·모터 제어=process_command(), 두둑·설정 저장=
+ * request_ridge_storage()/storage_task(), CAN 상태 수신=system_task(),
+ * UI가 부르는 제품 API=파일 하단 product_*() Facade.
+ * LVGL 객체와 EEZ 변수는 이 파일에서 직접 조작하지 않는다.
+ */
 #include "dajilog_system_core.h"
 #include "dajilog_product_controller.h"
 #include "dajilog_product_settings.h"
@@ -35,6 +44,7 @@ typedef enum {
   STORAGE_DISCARD_SETTINGS,
   STORAGE_CONFIRM_SETTINGS,
   STORAGE_ADD_RIDGE,
+  STORAGE_EDIT_RIDGE,
   STORAGE_SELECT_RIDGE,
   STORAGE_DELETE_RIDGE,
 } storage_operation_t;
@@ -44,6 +54,7 @@ typedef struct {
   uint32_t sequence;
   uint32_t result_topic;
   dajilog_ridge_profile_input_t ridge_input;
+  dajilog_ridge_profile_edit_t ridge_edit;
   uint32_t ridge_id;
 } storage_request_t;
 
@@ -63,6 +74,7 @@ typedef struct {
     dajilog_motor_voltage_command_t motor_voltage;
     dajilog_driver_setting_t driver;
     dajilog_ridge_profile_input_t ridge_input;
+    dajilog_ridge_profile_edit_t ridge_edit;
     uint32_t ridge_id;
   } data;
 } core_message_t;
@@ -87,19 +99,19 @@ static uint8_t s_stop_pending_mask;
 static uint8_t s_unconfirmed_output_mask;
 static int64_t s_stop_deadline;
 
-/** @brief Validate both channels without changing output or the applied snapshot. */
+/** @brief [DriverDetail 모터 카드] 두 채널 설정을 검증하며 실제 출력을 바꾸지 않는다. */
 static esp_err_t validate_driver(const dajilog_driver_setting_t *driver) {
   if (driver->mode == 1) return ESP_ERR_NOT_SUPPORTED;
   return dajilog_driver_setting_valid(driver) ? ESP_OK : ESP_ERR_INVALID_ARG;
 }
 
-/** @brief Require live, fault-free feedback before authorizing energization. */
+/** @brief [DriverDetail 모터 카드] 통신·Fault 상태를 확인한 뒤 전압 출력 허용을 판단한다. */
 static bool channel_ready(size_t index) {
   return index < DAJILOG_MOTOR_CHANNEL_COUNT &&
          dajilog_driver_feedback_ready(&s_snapshot.motors[index], esp_timer_get_time());
 }
 
-/** @brief Track requested voltage only after backend acceptance (not physical confirmation). */
+/** @brief [모터 출력] Backend가 명령을 수락한 경우에만 요청 전압을 Snapshot에 기록한다. */
 static esp_err_t command_voltage(const dajilog_motor_voltage_command_t *command) {
   if (!s_motor_backend_registered || s_motor_backend.command == NULL)
     return ESP_ERR_NOT_SUPPORTED;
@@ -197,7 +209,7 @@ static void publish_snapshot(void) {
   publish_u32(DAJILOG_UI_MSG_STATE, DAJILOG_UI_STATE_DASHBOARD_SNAPSHOT, 0, DAJILOG_UI_RESULT_OK, revision);
 }
 
-/** @brief Publish an asynchronous command result with its request sequence. */
+/** @brief [모든 카드 공통] 명령 번호를 붙여 비동기 처리 결과를 UI로 돌려보낸다. */
 static void publish_result(uint32_t topic, uint32_t sequence, esp_err_t error) {
   publish_u32(DAJILOG_UI_MSG_RESULT, topic, sequence, map_result(error), (uint32_t)error);
 }
@@ -258,6 +270,13 @@ static esp_err_t bridge_command_handler(const dajilog_ui_msg_t* command, void* c
     memcpy(&queued_message.data.motor_voltage, command->payload.value.bytes.data,
            sizeof(queued_message.data.motor_voltage));
   }
+  if (command->topic == DAJILOG_UI_CMD_RIDGE_EDIT) {
+    if (command->payload.type != DAJILOG_UI_VALUE_BYTES ||
+        command->payload.value.bytes.size != sizeof(dajilog_ridge_profile_edit_t))
+      return ESP_ERR_INVALID_ARG;
+    memcpy(&queued_message.data.ridge_edit, command->payload.value.bytes.data,
+           sizeof(queued_message.data.ridge_edit));
+  }
   if (command->topic == DAJILOG_UI_CMD_RIDGE_ADD) {
     if (command->payload.type != DAJILOG_UI_VALUE_BYTES ||
         command->payload.value.bytes.size != sizeof(dajilog_ridge_profile_input_t))
@@ -273,7 +292,7 @@ static esp_err_t bridge_command_handler(const dajilog_ui_msg_t* command, void* c
   return xQueueSend(queue, &queued_message, 0) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
-/** @brief Enqueue a settings operation for exclusive execution by Storage Task. */
+/** @brief [설정 저장 버튼] NVS 작업을 Storage Task Queue에 넣는다. */
 static esp_err_t request_storage(storage_operation_t operation, uint32_t sequence) {
   const storage_request_t request = {
     .operation = operation,
@@ -283,7 +302,7 @@ static esp_err_t request_storage(storage_operation_t operation, uint32_t sequenc
   return xQueueSend(s_storage_queue, &request, 0) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
-/** @brief Transfer an independent-ridge operation to Storage Task. */
+/** @brief [두둑 카드] Bxx 추가·변경·선택·삭제 요청을 Storage Task Queue에 넘긴다. */
 static esp_err_t request_ridge_storage(const core_message_t *message,
                                        storage_operation_t operation) {
   storage_request_t request = {
@@ -293,16 +312,17 @@ static esp_err_t request_ridge_storage(const core_message_t *message,
   };
   if (operation == STORAGE_ADD_RIDGE)
     request.ridge_input = message->data.ridge_input;
+  else if (operation == STORAGE_EDIT_RIDGE)
+    request.ridge_edit = message->data.ridge_edit;
   else
     request.ridge_id = message->data.ridge_id;
   return xQueueSend(s_storage_queue, &request, 0) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
 /**
- * @brief Apply FSM policy to one UI command received by System Task.
+ * @brief [Dashboard·모터·설정·두둑 카드] UI 명령을 System Task의 FSM 정책으로 판정한다.
  *
- * Long-running storage work is deferred to Storage Task. Immediate motor and
- * alarm decisions remain serialized in System Task.
+ * NVS 작업은 Storage Task에 넘기고 모터·알람 판정은 System Task에서 직렬 처리한다.
  */
 static void process_command(const core_message_t* message) {
   esp_err_t error = ESP_OK;
@@ -421,6 +441,7 @@ static void process_command(const core_message_t* message) {
       deferred = error == ESP_OK;
       break;
     case DAJILOG_UI_CMD_RIDGE_ADD:
+    case DAJILOG_UI_CMD_RIDGE_EDIT:
     case DAJILOG_UI_CMD_RIDGE_SELECT:
     case DAJILOG_UI_CMD_RIDGE_DELETE:
       if (s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active) {
@@ -430,6 +451,8 @@ static void process_command(const core_message_t* message) {
       error = request_ridge_storage(
           message, message->topic == DAJILOG_UI_CMD_RIDGE_ADD
                        ? STORAGE_ADD_RIDGE :
+                    message->topic == DAJILOG_UI_CMD_RIDGE_EDIT
+                       ? STORAGE_EDIT_RIDGE :
                     message->topic == DAJILOG_UI_CMD_RIDGE_SELECT
                        ? STORAGE_SELECT_RIDGE : STORAGE_DELETE_RIDGE);
       deferred = error == ESP_OK;
@@ -483,10 +506,9 @@ static void process_command(const core_message_t* message) {
 }
 
 /**
- * @brief Own the product FSM and merge UI, storage, vehicle, and motor events.
+ * @brief [제품 FSM] UI·저장소·속도센서·모터 이벤트를 한 Queue에서 받아 상태를 갱신한다.
  *
- * This is the only task that mutates the logical dashboard state in response
- * to queued events.
+ * Dashboard의 논리 상태를 변경하는 Task다. LVGL 객체는 여기서 변경하지 않는다.
  */
 static void system_task(void* context) {
   (void)context;
@@ -580,7 +602,7 @@ static void system_task(void* context) {
 }
 
 /**
- * @brief Execute settings save/discard requests outside LVGL and System Task.
+ * @brief [설정·두둑 카드] NVS 저장과 Bxx 목록 변경을 담당하는 Storage Task.
  *
  * Completion is returned to System Task as `CORE_MESSAGE_STORAGE_RESULT`.
  */
@@ -601,6 +623,9 @@ static void storage_task(void* context) {
         break;
       case STORAGE_ADD_RIDGE:
         error = dajilog_product_settings_add_ridge_profile(&request.ridge_input);
+        break;
+      case STORAGE_EDIT_RIDGE:
+        error = dajilog_product_settings_edit_ridge_profile(&request.ridge_edit);
         break;
       case STORAGE_SELECT_RIDGE:
         error = dajilog_product_settings_select_ridge_profile(request.ridge_id);
@@ -625,7 +650,7 @@ static void storage_task(void* context) {
 }
 
 /**
- * @brief Initialize product settings, queues, tasks, UI Bridge, and CAN service.
+ * @brief [제품 시작] 설정·Queue·Task·UI Bridge·CAN 서비스를 초기화한다.
  *
  * Called through the common System Core facade after all product backends have
  * been registered.
@@ -761,14 +786,14 @@ static esp_err_t product_update_motor(size_t index,
   return xQueueSend(s_system_queue, &message, 0) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
-/** @brief Forward a draft read through the product settings service. */
+/** @brief [설정 카드 공통] UI가 읽는 Product Draft 조회 창구. */
 static esp_err_t product_get_settings_draft(
     dajilog_product_settings_snapshot_t* settings, void* context) {
   (void)context;
   return dajilog_product_settings_get_draft(settings);
 }
 
-/** @brief Forward validated ridge input to the product settings draft. */
+/** @brief [두둑 카드] 계산용 Ridge Draft를 RAM에 반영하는 창구. */
 static esp_err_t product_stage_ridge_settings(
     const dajilog_ridge_settings_t* settings, void* context) {
   (void)context;
@@ -777,7 +802,17 @@ static esp_err_t product_stage_ridge_settings(
   return dajilog_product_settings_stage_ridge(settings);
 }
 
-/** @brief Forward validated prescription input to the product settings draft. */
+/** @brief [두둑 카드 임시저장] 선택 Bxx 상세값과 계산용 Draft를 RAM에 함께 반영한다. */
+static esp_err_t product_stage_ridge_profile_settings(
+    uint32_t id, const dajilog_ridge_profile_input_t* profile,
+    const dajilog_ridge_settings_t* settings, void* context) {
+  (void)context;
+  if (!s_started || s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active)
+    return ESP_ERR_INVALID_STATE;
+  return dajilog_product_settings_stage_ridge_profile(id, profile, settings);
+}
+
+/** @brief [처방 카드] 처방 입력을 RAM Draft에 반영하는 창구. */
 static esp_err_t product_stage_prescription_settings(
     const dajilog_prescription_settings_t* settings, void* context) {
   (void)context;
@@ -786,7 +821,7 @@ static esp_err_t product_stage_prescription_settings(
   return dajilog_product_settings_stage_prescription(settings);
 }
 
-/** @brief Stage prescription fields and selected products as one editable change. */
+/** @brief [처방 카드] 처방값과 선택 제품 코드를 한 변경으로 RAM에 반영한다. */
 static esp_err_t product_stage_prescription_products(
     const dajilog_prescription_settings_t* settings,
     const char codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY],
@@ -821,7 +856,7 @@ static esp_err_t product_get_settings_applied(
   return dajilog_product_settings_get_applied(settings);
 }
 
-/** @brief Expose committed ridge profiles without exposing NVS to the UI. */
+/** @brief [두둑 카드] NVS 직접 접근 없이 Bxx RAM 목록을 UI에 제공한다. */
 static esp_err_t product_get_ridge_profiles(
     dajilog_ridge_profiles_snapshot_t* profiles, void* context) {
   (void)context;
@@ -839,6 +874,7 @@ esp_err_t dajilog_product_controller_register(void) {
     .register_motor_backend = product_register_motor_backend,
     .get_settings_draft = product_get_settings_draft,
     .stage_ridge_settings = product_stage_ridge_settings,
+    .stage_ridge_profile_settings = product_stage_ridge_profile_settings,
     .stage_prescription_settings = product_stage_prescription_settings,
     .stage_prescription_products = product_stage_prescription_products,
     .get_product_catalog = product_get_catalog,

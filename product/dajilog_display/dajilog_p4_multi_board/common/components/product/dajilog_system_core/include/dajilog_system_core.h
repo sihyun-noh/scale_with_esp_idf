@@ -36,6 +36,9 @@ typedef struct {
         dajilog_product_settings_snapshot_t *settings, void *context);
     esp_err_t (*stage_ridge_settings)(
         const dajilog_ridge_settings_t *settings, void *context);
+    esp_err_t (*stage_ridge_profile_settings)(
+        uint32_t id, const dajilog_ridge_profile_input_t *profile,
+        const dajilog_ridge_settings_t *settings, void *context);
     esp_err_t (*stage_prescription_settings)(
         const dajilog_prescription_settings_t *settings, void *context);
     esp_err_t (*stage_prescription_products)(
@@ -77,6 +80,10 @@ esp_err_t dajilog_system_core_get_settings_draft(
     dajilog_product_settings_snapshot_t *settings);
 /** @brief Forward ridge input to the product settings service. */
 esp_err_t dajilog_system_core_stage_ridge_settings(
+    const dajilog_ridge_settings_t *settings);
+/** @brief Stage the selected Bxx fields and its legacy ridge draft together in RAM. */
+esp_err_t dajilog_system_core_stage_ridge_profile_settings(
+    uint32_t id, const dajilog_ridge_profile_input_t *profile,
     const dajilog_ridge_settings_t *settings);
 /** @brief Forward prescription input to the product settings service. */
 esp_err_t dajilog_system_core_stage_prescription_settings(

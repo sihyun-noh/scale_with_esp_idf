@@ -1,8 +1,8 @@
 {
   "navigation": {
     "selectedUserPageObject": "[waveshare_7b_nongjinwon.eez-project]:/userPages/0",
-    "selectedGlobalVariableObject": "[waveshare_7b_nongjinwon.eez-project]:/variables/globalVariables/1",
-    "selectedFontObject": "[waveshare_7b_nongjinwon.eez-project]:/fonts/1",
+    "selectedGlobalVariableObject": "[waveshare_7b_nongjinwon.eez-project]:/variables/globalVariables/217",
+    "selectedFontObject": "[waveshare_7b_nongjinwon.eez-project]:/fonts/0",
     "selectedBitmapObject": "[waveshare_7b_nongjinwon.eez-project]:/bitmaps/1",
     "subnavigationSelectedItems": {
       "variables-tab/sub-navigation/selected-item": "Global"
@@ -82,6 +82,7 @@
           },
           {
             "type": "border",
+            "selected": 0,
             "location": "bottom",
             "children": [
               {
@@ -1117,7 +1118,7 @@
           "x": -512,
           "y": -487.098932918508
         },
-        "scale": 2
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1135,17 +1136,14 @@
           "14": {},
           "16": {},
           "17": {},
-          "23": {
-            "$selected": true
-          },
+          "23": {},
           "36": {},
           "37": {},
           "78": {},
           "79": {},
           "80": {},
           "81": {},
-          "82": {},
-          "83": {}
+          "82": {}
         },
         "1": {},
         "8": {},
@@ -1153,10 +1151,10 @@
       },
       "transform": {
         "translate": {
-          "x": -1025.4746704101562,
-          "y": -260.36771912450473
+          "x": -804.2680664062502,
+          "y": -644.2405409037086
         },
-        "scale": 1.5
+        "scale": 0.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1189,7 +1187,7 @@
           "x": -727.7448012045113,
           "y": -483.1110909160525
         },
-        "scale": 2
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1207,18 +1205,18 @@
           "5": {},
           "7": {},
           "8": {},
-          "50": {
-            "$selected": true
-          }
+          "50": {}
         },
-        "2": {}
+        "2": {
+          "$selected": true
+        }
       },
       "transform": {
         "translate": {
-          "x": -744.957413999407,
-          "y": -321.63062322838323
+          "x": -348.9067548197195,
+          "y": -200.08570135338323
         },
-        "scale": 1.1
+        "scale": 0.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1239,7 +1237,7 @@
           "x": -415.85934109157984,
           "y": -498.6146577760684
         },
-        "scale": 1
+        "scale": 0.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1258,7 +1256,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1.1
+        "scale": 0.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1275,7 +1273,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1
+        "scale": 0.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1294,7 +1292,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1.1
+        "scale": 0.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1316,7 +1314,7 @@
           "x": -958.6967926025388,
           "y": -717.9366149902341
         },
-        "scale": 1
+        "scale": 0.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1333,7 +1331,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1
+        "scale": 0.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1350,7 +1348,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1.5
+        "scale": 1.1
       },
       "timeline": {
         "isEditorActive": false,
@@ -1367,25 +1365,28 @@
             "0": {}
           },
           "3": {},
+          "11": {},
           "12": {},
           "13": {},
-          "18": {
+          "17": {},
+          "19": {},
+          "20": {},
+          "22": {
             "$selected": true
           },
-          "20": {
-            "$selected": true
-          },
-          "21": {},
-          "27": {},
-          "28": {}
+          "25": {},
+          "26": {},
+          "27": {
+            "0": {}
+          }
         }
       },
       "transform": {
         "translate": {
-          "x": -646.3228869200627,
-          "y": -880.984447647396
+          "x": -786.0434507087909,
+          "y": -906.0782837944574
         },
-        "scale": 2
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1402,7 +1403,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1
+        "scale": 1.1
       },
       "timeline": {
         "isEditorActive": false,
@@ -1419,7 +1420,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1.5
+        "scale": 1.1
       },
       "timeline": {
         "isEditorActive": false,
@@ -1430,11 +1431,15 @@
     },
     "[waveshare_7b_nongjinwon.eez-project]:/userPages/15[flow-state]": {
       "selectionFront": {},
-      "selectionBack": {},
+      "selectionBack": {
+        "2": {
+          "$selected": true
+        }
+      },
       "transform": {
         "translate": {
-          "x": -512,
-          "y": -300
+          "x": -330.79046630859375,
+          "y": -291.6412353515625
         },
         "scale": 1.1
       },
@@ -1447,13 +1452,20 @@
     },
     "[waveshare_7b_nongjinwon.eez-project]:/userPages/16[flow-state]": {
       "selectionFront": {},
-      "selectionBack": {},
+      "selectionBack": {
+        "0": {
+          "0": {
+            "4": {}
+          }
+        },
+        "1": {}
+      },
       "transform": {
         "translate": {
-          "x": -512,
-          "y": -300
+          "x": -519.2382065575932,
+          "y": -425.93545707968804
         },
-        "scale": 1.1
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1466,32 +1478,41 @@
       "selectionFront": {},
       "selectionBack": {
         "0": {
+          "7": {},
           "9": {
             "0": {}
           },
           "11": {
             "0": {},
             "2": {},
+            "3": {},
             "15": {},
             "16": {},
             "17": {},
             "18": {},
-            "19": {}
+            "23": {
+              "$selected": true
+            }
           },
-          "20": {},
-          "21": {
-            "$selected": true
-          }
+          "16": {},
+          "20": {
+            "15": {}
+          },
+          "21": {},
+          "22": {},
+          "23": {}
         },
+        "9": {},
         "26": {},
-        "36": {}
+        "36": {},
+        "63": {}
       },
       "transform": {
         "translate": {
-          "x": -591.5292467146379,
-          "y": -341.0550223879923
+          "x": -924.8329876392049,
+          "y": -380.33321850542137
         },
-        "scale": 1
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1512,7 +1533,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1.1
+        "scale": 1.25
       },
       "timeline": {
         "isEditorActive": false,
@@ -1539,10 +1560,12 @@
   "lvglExpandedPropertiesGroup": [
     "LAYOUT",
     "TEXT",
+    "OUTLINE",
+    "MISCELLANEOUS",
     "BACKGROUND"
   ],
   "showInactiveFlowsInDebugger": true,
   "globalFlowZoom": true,
-  "flowZoom": 2,
+  "flowZoom": 1.25,
   "implementationLanguage": "C"
 }

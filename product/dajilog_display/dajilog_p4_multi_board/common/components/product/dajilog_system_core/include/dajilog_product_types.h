@@ -108,6 +108,13 @@ typedef struct {
     uint8_t reserved[2];
 } dajilog_ridge_profile_input_t;
 
+/** @brief Change only the dimensions of one registered Bxx draft. */
+typedef struct {
+    uint32_t id;
+    float width_m;
+    float length_m;
+} dajilog_ridge_profile_edit_t;
+
 typedef struct {
     uint32_t id;
     dajilog_ridge_profile_input_t input;
@@ -264,6 +271,7 @@ typedef enum {
     DAJILOG_UI_CMD_RIDGE_ADD = 0x0702000DU,
     DAJILOG_UI_CMD_RIDGE_SELECT = 0x0702000EU,
     DAJILOG_UI_CMD_RIDGE_DELETE = 0x0702000FU,
+    DAJILOG_UI_CMD_RIDGE_EDIT = 0x07020010U,
 } dajilog_ui_command_topic_t;
 
 typedef enum {

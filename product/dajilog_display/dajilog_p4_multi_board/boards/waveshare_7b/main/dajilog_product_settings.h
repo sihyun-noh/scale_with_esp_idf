@@ -70,6 +70,13 @@ esp_err_t dajilog_product_settings_get_ridge_profiles(
 /** @brief Validate and persist one new profile; called by Storage Task only. */
 esp_err_t dajilog_product_settings_add_ridge_profile(
     const dajilog_ridge_profile_input_t *input);
+/** @brief Change one registered Bxx draft without persisting it. */
+esp_err_t dajilog_product_settings_edit_ridge_profile(
+    const dajilog_ridge_profile_edit_t *edit);
+/** @brief Atomically stage selected Bxx details and the current legacy ridge draft in RAM. */
+esp_err_t dajilog_product_settings_stage_ridge_profile(
+    uint32_t id, const dajilog_ridge_profile_input_t *profile,
+    const dajilog_ridge_settings_t *settings);
 /** @brief Persist a selected registered profile; called by Storage Task only. */
 esp_err_t dajilog_product_settings_select_ridge_profile(uint32_t id);
 /** @brief Persist deletion of one Bxx ID without renumbering survivors. */

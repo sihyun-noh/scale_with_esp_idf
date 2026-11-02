@@ -92,6 +92,16 @@ esp_err_t dajilog_system_core_stage_ridge_settings(
                : ESP_ERR_NOT_SUPPORTED;
 }
 
+esp_err_t dajilog_system_core_stage_ridge_profile_settings(
+    uint32_t id, const dajilog_ridge_profile_input_t *profile,
+    const dajilog_ridge_settings_t *settings)
+{
+    return s_registered && s_implementation.stage_ridge_profile_settings != NULL
+               ? s_implementation.stage_ridge_profile_settings(
+                     id, profile, settings, s_implementation.context)
+               : ESP_ERR_NOT_SUPPORTED;
+}
+
 esp_err_t dajilog_system_core_stage_prescription_settings(
     const dajilog_prescription_settings_t *settings)
 {

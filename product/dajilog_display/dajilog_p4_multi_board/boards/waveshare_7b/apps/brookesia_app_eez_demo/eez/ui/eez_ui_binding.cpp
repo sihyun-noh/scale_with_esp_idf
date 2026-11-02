@@ -1,3 +1,13 @@
+/**
+ * @file eez_ui_binding.cpp
+ * @brief 7B 농진원 앱 화면 카드와 제품 서비스의 연결 지도.
+ *
+ * 찾을 때: Dashboard=render_dashboard(), 모터 카드=detail_*(),
+ * 설정 카드=render_setting_views()/setting_*(), 두둑 카드=ridge_*(),
+ * 처방 카드=stage_fertilizer_from_ui(), 배출량표=render_calibration_selection().
+ * 화면 입력의 RAM 반영은 stage_*(), 영구 저장 요청은 *_save_event()에서 시작한다.
+ * 이 파일에서 CAN 송신이나 NVS 쓰기를 직접 실행하지 않는다.
+ */
 #include "eez_ui_binding.h"
 
 #include <cerrno>
@@ -76,6 +86,7 @@ char s_calibration_list_text[1024] = {};
 dajilog_product_catalog_t s_product_catalog = {};
 int s_last_product_index[DAJILOG_SETTING_ZONE_COUNT] = {-1, -1};
 bool s_ridge_screen_was_active = false;
+bool s_ridge_form_was_visible = false;
 char s_ridge_preview_inputs[256] = {};
 uint32_t s_ridge_request_sequence = 0U;
 uint32_t s_ridge_pending_topic = 0U;
@@ -181,6 +192,7 @@ const char *motor_state_text(dajilog_motor_state_t state)
     }
 }
 
+/** @brief [Dashboard] 운전·CAN·속도·모터 1~4·설정 카드 상태를 Snapshot으로 표시한다. */
 void render_dashboard(const dajilog_dashboard_snapshot_t &snapshot)
 {
     set_string(FLOW_GLOBAL_VARIABLE_OPERATION_STATE_TEXT,
@@ -331,17 +343,33 @@ struct CalibrationPreview {
     bool in_range[2];
 };
 
-/** @brief Calculate display-only A/B or C/D voltage; no command is submitted. */
+/** @brief [설정 카드 계산] 등록 개수가 아닌 현재 선택 Bxx 하나의 작업폭을 사용한다. */
+double selected_ridge_width_m()
+{
+    dajilog_ridge_profiles_snapshot_t profiles = {};
+    if (dajilog_system_core_get_ridge_profiles(&profiles) != ESP_OK ||
+        profiles.selected_id == 0U) return 0.0;
+    for (uint32_t i = 0; i < profiles.count; ++i) {
+        if (profiles.profiles[i].id != profiles.selected_id) continue;
+        const auto &ridge = profiles.profiles[i].input;
+        double width = ridge.width_m;
+        if (ridge.work_width_mode == DAJILOG_WORK_WIDTH_RIDGE_AND_FURROW)
+            width += ridge.furrow_width_m;
+        if (ridge.work_width_mode != DAJILOG_WORK_WIDTH_RIDGE_ONLY &&
+            ridge.work_width_mode != DAJILOG_WORK_WIDTH_RIDGE_AND_FURROW)
+            return 0.0;
+        return std::isfinite(width) && width > 0.0 ? width : 0.0;
+    }
+    return 0.0;
+}
+
+/** @brief [설정 카드 계산] A/B 또는 C/D 전압 미리보기만 계산하며 모터 명령은 보내지 않는다. */
 CalibrationPreview calculate_calibration_preview(
     const dajilog_product_settings_snapshot_t &settings, size_t zone_index)
 {
     CalibrationPreview preview = {};
     const auto &zone = settings.zones[zone_index];
-    const double furrow = settings.ridge.work_width_mode ==
-        DAJILOG_WORK_WIDTH_RIDGE_AND_FURROW
-        ? settings.ridge.included_furrow_width_m : 0.0;
-    const double width = settings.ridge.ridge_count *
-        (settings.ridge.ridge_width_m + furrow);
+    const double width = selected_ridge_width_m();
     if (!zone.configured || width <= 0.0 || zone.reference_speed_kmh <= 0.0f ||
         zone.rate_kg_per_10a <= 0.0f) return preview;
     preview.total_kg_min = zone.rate_kg_per_10a * width *
@@ -371,7 +399,7 @@ CalibrationPreview calculate_calibration_preview(
     return preview;
 }
 
-/** @brief Present independent setting zones and calculation-only voltage previews. */
+/** @brief [Dashboard 설정 카드·SettingDetail] S1/S2 설정과 계산 미리보기를 표시한다. */
 void render_setting_views(bool include_detail)
 {
     dajilog_product_settings_snapshot_t draft = {};
@@ -593,6 +621,7 @@ void render_latest_dashboard()
     }
 }
 
+/** @brief [모든 카드 공통] Service 결과를 LVGL Task에서 받아 해당 카드의 표시를 갱신한다. */
 void render_message(const dajilog_ui_msg_t *message, void *)
 {
     if (message == nullptr) {
@@ -620,7 +649,9 @@ void render_message(const dajilog_ui_msg_t *message, void *)
             }
             setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
                          s_ridge_pending_topic == DAJILOG_UI_CMD_RIDGE_DELETE
-                             ? "두둑 삭제 완료" : "두둑 목록 NVS 저장 완료");
+                             ? "두둑 Draft 삭제 · 설정 저장 필요" :
+                         s_ridge_pending_topic == DAJILOG_UI_CMD_RIDGE_SELECT
+                             ? "두둑 선택 완료" : "두둑 Draft 반영 · 설정 저장 필요");
         } else {
             setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
                          s_ridge_pending_topic == DAJILOG_UI_CMD_RIDGE_DELETE
@@ -682,7 +713,7 @@ esp_err_t submit_command(uint32_t topic)
     return dajilog_ui_adaptor_submit(&command);
 }
 
-/** @brief Submit one setting command and correlate its asynchronous result. */
+/** @brief [설정 카드 공통] Save/Confirm 요청을 Queue에 넣고 비동기 결과 번호를 기억한다. */
 esp_err_t submit_setting_command(uint32_t topic)
 {
     dajilog_ui_msg_t command;
@@ -698,7 +729,7 @@ esp_err_t submit_setting_command(uint32_t topic)
     return error;
 }
 
-/** @brief Maintain the driver editor draft and submit requests without direct hardware access. */
+/** @brief [DriverDetail 모터 카드] 단계·보정값을 합쳐 화면에 표시할 목표 전압을 만든다. */
 uint16_t detail_final_decivolt()
 {
     const int32_t value =
@@ -709,7 +740,7 @@ uint16_t detail_final_decivolt()
              ? static_cast<int32_t>(DAJILOG_MOTOR_OUTPUT_DECIVOLT_MAX) : value));
 }
 
-/** @brief Maintain the driver editor draft and submit requests without direct hardware access. */
+/** @brief [DriverDetail 모터 카드] 목표·현재 전압과 단계 조작 상태를 다시 그린다. */
 void render_detail_voltage()
 {
     if (objects.driver_detail_trim_apply_label != nullptr) {
@@ -771,7 +802,7 @@ void render_detail_voltage()
                                  eez::BooleanValue(s_driver_draft.mode == 2 || s_detail_service_test));
 }
 
-/** @brief Maintain the driver editor draft and submit requests without direct hardware access. */
+/** @brief [DriverDetail 모터 카드] 선택 모터 드라이버의 Draft를 상세 화면에 불러온다. */
 void select_driver(size_t driver)
 {
     s_detail_motor_index = static_cast<uint8_t>(driver * 2U);
@@ -948,7 +979,7 @@ void detail_reset_event(lv_event_t *event)
     select_driver(s_detail_motor_index / 2U);
 }
 
-/** @brief Start a cancellable three-second countdown before the manual RUN request. */
+/** @brief [Dashboard 운전 카드] 수동 RUN 전에 취소 가능한 3초 카운트다운을 시작한다. */
 void run_event(lv_event_t *event)
 {
     if (lv_event_get_code(event) != LV_EVENT_PRESSED) return;
@@ -974,6 +1005,7 @@ void bind_driver_selector_event(lv_obj_t *object, lv_event_cb_t callback, void *
     lv_obj_add_event_cb(object, callback, LV_EVENT_ALL, context);
 }
 
+/** @brief [입력 공통] EEZ 문자열을 정수로 검증·변환한다. */
 bool parse_int(const char *text, int32_t *value)
 {
     if (text == nullptr || value == nullptr || text[0] == '\0') {
@@ -991,6 +1023,7 @@ bool parse_int(const char *text, int32_t *value)
     return true;
 }
 
+/** @brief [입력 공통] EEZ 문자열을 실수로 검증·변환한다. */
 bool parse_float(const char *text, float *value)
 {
     if (text == nullptr || value == nullptr || text[0] == '\0') {
@@ -1019,7 +1052,7 @@ bool parse_optional_float(uint32_t variable, float *value, uint32_t *mask,
     return true;
 }
 
-/** @brief Convert visible EEZ fields to typed Draft input without I/O. */
+/** @brief [RidgeSetup 두둑 카드] 화면의 두둑 수·폭·길이·고랑값을 typed Draft로 변환한다. */
 esp_err_t parse_ridge_from_ui(dajilog_ridge_settings_t *out)
 {
     if (out == nullptr) return ESP_ERR_INVALID_ARG;
@@ -1028,9 +1061,11 @@ esp_err_t parse_ridge_from_ui(dajilog_ridge_settings_t *out)
     const char *count =
         get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_RIDGE_COUNT_TEXT);
     if (count[0] != '\0') {
-        if (!parse_int(count, &ridge_count) || ridge_count <= 0) return ESP_ERR_INVALID_ARG;
-        settings.ridge_count = static_cast<uint32_t>(ridge_count);
-        settings.presence_mask |= DAJILOG_RIDGE_PRESENT_COUNT;
+        if (!parse_int(count, &ridge_count) || ridge_count < 0) return ESP_ERR_INVALID_ARG;
+        if (ridge_count > 0) {
+            settings.ridge_count = static_cast<uint32_t>(ridge_count);
+            settings.presence_mask |= DAJILOG_RIDGE_PRESENT_COUNT;
+        }
     }
     if (!parse_optional_float(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_RIDGE_WIDTH_M_TEXT,
                               &settings.ridge_width_m, &settings.presence_mask,
@@ -1059,19 +1094,56 @@ esp_err_t parse_ridge_from_ui(dajilog_ridge_settings_t *out)
     return ESP_OK;
 }
 
+/** @brief [RidgeSetup 임시저장] 현재 Bxx 상세값과 계산용 Draft를 RAM에 함께 반영한다. */
 esp_err_t stage_ridge_from_ui()
 {
     dajilog_ridge_settings_t settings = {};
     const esp_err_t parse_error = parse_ridge_from_ui(&settings);
     if (parse_error != ESP_OK) return parse_error;
-    const esp_err_t error = dajilog_system_core_stage_ridge_settings(&settings);
+    dajilog_ridge_profiles_snapshot_t profiles = {};
+    const esp_err_t profile_error = dajilog_system_core_get_ridge_profiles(&profiles);
+    if (profile_error != ESP_OK) return profile_error;
+    if (profiles.selected_id == 0U) {
+        return dajilog_system_core_stage_ridge_settings(&settings);
+    }
+    dajilog_ridge_profile_input_t input = {};
+    bool found = false;
+    for (uint32_t i = 0; i < profiles.count; ++i) {
+        if (profiles.profiles[i].id != profiles.selected_id) continue;
+        input = profiles.profiles[i].input;
+        found = true;
+        break;
+    }
+    if (!found || !(settings.presence_mask & DAJILOG_RIDGE_PRESENT_WIDTH))
+        return ESP_ERR_INVALID_STATE;
+    input.width_m = settings.ridge_width_m;
+    input.work_width_mode = settings.work_width_mode;
+    input.furrow_width_m = settings.work_width_mode == DAJILOG_WORK_WIDTH_RIDGE_AND_FURROW
+        ? settings.included_furrow_width_m : 0.0f;
+    input.split_section = eez::flow::getGlobalVariable(
+        FLOW_GLOBAL_VARIABLE_RIDGE_SECTION_SPLIT_SELECTED).getBoolean() ? 1U : 0U;
+    if (input.split_section) {
+        if (!parse_float(get_text(FLOW_GLOBAL_VARIABLE_RIDGE_NORTH_LENGTH_M_TEXT),
+                         &input.north_length_m) ||
+            !parse_float(get_text(FLOW_GLOBAL_VARIABLE_RIDGE_SOUTH_LENGTH_M_TEXT),
+                         &input.south_length_m)) return ESP_ERR_INVALID_ARG;
+        input.whole_length_m = 0.0f;
+    } else {
+        if (!(settings.presence_mask & DAJILOG_RIDGE_PRESENT_SECTION_LENGTH))
+            return ESP_ERR_INVALID_ARG;
+        input.whole_length_m = settings.actual_length_m;
+        input.north_length_m = 0.0f;
+        input.south_length_m = 0.0f;
+    }
+    const esp_err_t error = dajilog_system_core_stage_ridge_profile_settings(
+        profiles.selected_id, &input, &settings);
     if (error != ESP_OK) {
         ESP_LOGW(TAG, "ridge value is outside its schema range");
     }
     return error;
 }
 
-/** @brief Render only Backend draft width/area; other results stay unavailable. */
+/** @brief [RidgeSetup 계산 결과 카드] 유효 작업폭·면적을 재계산해 화면에 표시한다. */
 void render_ridge_preview()
 {
     dajilog_ridge_settings_t ridge = {};
@@ -1110,7 +1182,7 @@ void render_ridge_preview()
                  : "선택 두둑 면적 미리보기");
 }
 
-/** @brief Render the committed Bxx list summary and optionally its selected fields. */
+/** @brief [RidgeSetup 두둑 선택] 선택 Bxx의 폭·길이·고랑·구간 설정을 화면에 복원한다. */
 void render_ridge_profiles(bool load_fields)
 {
     dajilog_ridge_profiles_snapshot_t profiles = {};
@@ -1164,7 +1236,44 @@ void render_ridge_profiles(bool load_fields)
     render_ridge_preview();
 }
 
-/** @brief Submit validated UI input; only Storage Task commits NVS. */
+/** @brief [RidgeSetup 추가·변경 팝업] 자동 Bxx 번호와 현재 폭·길이를 입력칸에 채운다. */
+void prepare_ridge_form()
+{
+    const bool visible = eez::flow::getGlobalVariable(
+        FLOW_GLOBAL_VARIABLE_RIDGE_FORM_VISIBLE).getBoolean();
+    if (!visible) { s_ridge_form_was_visible = false; return; }
+    if (s_ridge_form_was_visible) return;
+    s_ridge_form_was_visible = true;
+    dajilog_ridge_profiles_snapshot_t profiles = {};
+    if (dajilog_system_core_get_ridge_profiles(&profiles) != ESP_OK) return;
+    const bool edit = std::strcmp(get_text(FLOW_GLOBAL_VARIABLE_RIDGE_FORM_MODE), "EDIT") == 0;
+    uint32_t id = 1U;
+    const dajilog_ridge_profile_input_t *selected = nullptr;
+    if (edit) {
+        id = profiles.selected_id;
+        for (uint32_t i = 0; i < profiles.count; ++i)
+            if (profiles.profiles[i].id == id) selected = &profiles.profiles[i].input;
+    } else {
+        for (uint32_t i = 0; i < profiles.count; ++i)
+            if (profiles.profiles[i].id == id) ++id;
+    }
+    char value[24];
+    std::snprintf(value, sizeof(value), "B%02lu", static_cast<unsigned long>(id));
+    lv_label_set_text(objects.ridge_form_auto_id_value, value);
+    if (selected != nullptr) {
+        std::snprintf(value, sizeof(value), "%.2f", static_cast<double>(selected->width_m));
+        lv_textarea_set_text(objects.ridge_form_width_input, value);
+        const float length = selected->split_section
+            ? selected->north_length_m + selected->south_length_m : selected->whole_length_m;
+        std::snprintf(value, sizeof(value), "%.2f", static_cast<double>(length));
+        lv_textarea_set_text(objects.ridge_form_length_input, value);
+    } else {
+        lv_textarea_set_text(objects.ridge_form_width_input, "");
+        lv_textarea_set_text(objects.ridge_form_length_input, "");
+    }
+}
+
+/** @brief [RidgeSetup 새 두둑 추가] 폭·실제 길이만 보내 RAM 목록에 새 Bxx를 만든다. */
 void ridge_add_request()
 {
     if (s_ridge_request_sequence != 0U) {
@@ -1173,33 +1282,24 @@ void ridge_add_request()
         return;
     }
     dajilog_ridge_profile_input_t input = {};
-    const char *mode = get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_WORK_WIDTH_MODE);
-    if (std::strcmp(mode, "RIDGE_ONLY") == 0)
-        input.work_width_mode = DAJILOG_WORK_WIDTH_RIDGE_ONLY;
-    else if (std::strcmp(mode, "RIDGE_PLUS_FURROW") == 0)
-        input.work_width_mode = DAJILOG_WORK_WIDTH_RIDGE_AND_FURROW;
-    else {
+    dajilog_ridge_profiles_snapshot_t profiles = {};
+    if (dajilog_system_core_get_ridge_profiles(&profiles) != ESP_OK) return;
+    uint32_t next_id = 1U;
+    for (uint32_t i = 0; i < profiles.count; ++i)
+        if (profiles.profiles[i].id == next_id) ++next_id;
+    char expected_id[24];
+    std::snprintf(expected_id, sizeof(expected_id), "B%02lu",
+                  static_cast<unsigned long>(next_id));
+    if (std::strcmp(lv_label_get_text(objects.ridge_form_auto_id_value), expected_id) != 0) {
         setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
-                     "작업폭 방식을 선택하세요");
+                     "새 두둑 ID는 자동 번호를 사용하세요");
         return;
     }
-    input.split_section = eez::flow::getGlobalVariable(
-        FLOW_GLOBAL_VARIABLE_RIDGE_SECTION_SPLIT_SELECTED).getBoolean() ? 1U : 0U;
-    bool valid = parse_float(get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_RIDGE_WIDTH_M_TEXT),
-                             &input.width_m);
-    if (input.work_width_mode == DAJILOG_WORK_WIDTH_RIDGE_AND_FURROW)
-        valid = valid && parse_float(
-            get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_INCLUDED_FURROW_WIDTH_M_TEXT),
-            &input.furrow_width_m);
-    if (input.split_section)
-        valid = valid && parse_float(
-            get_text(FLOW_GLOBAL_VARIABLE_RIDGE_NORTH_LENGTH_M_TEXT), &input.north_length_m) &&
-            parse_float(get_text(FLOW_GLOBAL_VARIABLE_RIDGE_SOUTH_LENGTH_M_TEXT),
-                        &input.south_length_m);
-    else
-        valid = valid && parse_float(
-            get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_ACTUAL_LENGTH_M_TEXT),
-            &input.whole_length_m);
+    input.work_width_mode = DAJILOG_WORK_WIDTH_RIDGE_ONLY;
+    const bool valid = parse_float(lv_textarea_get_text(objects.ridge_form_width_input),
+                                   &input.width_m) &&
+                       parse_float(lv_textarea_get_text(objects.ridge_form_length_input),
+                                   &input.whole_length_m);
     if (!valid) {
         setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
                      "폭·길이 숫자를 확인하세요");
@@ -1217,14 +1317,63 @@ void ridge_add_request()
         s_ridge_pending_topic = command.topic;
         s_ridge_request_deadline = esp_timer_get_time() + 5000000;
         setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
-                     "두둑 NVS 저장 중...");
+                     "새 두둑 Draft 등록 중...");
     } else {
         setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
                      "두둑 요청 전송 실패");
     }
 }
 
-/** @brief Cycle through saved Bxx profiles when EEZ raises the select action. */
+/** @brief [RidgeSetup 두둑 변경] 선택 Bxx의 폭·실제 길이 변경을 요청한다. */
+void ridge_edit_request()
+{
+    if (s_ridge_request_sequence != 0U) return;
+    dajilog_ridge_profiles_snapshot_t profiles = {};
+    if (dajilog_system_core_get_ridge_profiles(&profiles) != ESP_OK ||
+        profiles.selected_id == 0U) {
+        setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT, "변경할 두둑을 선택하세요");
+        return;
+    }
+    dajilog_ridge_profile_edit_t edit = {};
+    edit.id = profiles.selected_id;
+    for (uint32_t i = 0; i < profiles.count; ++i) {
+        if (profiles.profiles[i].id == edit.id &&
+            profiles.profiles[i].input.split_section != 0U) {
+            setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
+                         "북·남 분할 두둑은 이 화면에서 변경할 수 없습니다");
+            return;
+        }
+    }
+    char expected_id[24];
+    std::snprintf(expected_id, sizeof(expected_id), "B%02lu",
+                  static_cast<unsigned long>(edit.id));
+    if (std::strcmp(lv_label_get_text(objects.ridge_form_auto_id_value), expected_id) != 0) {
+        setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
+                     "두둑 ID는 변경할 수 없습니다");
+        return;
+    }
+    if (!parse_float(lv_textarea_get_text(objects.ridge_form_width_input), &edit.width_m) ||
+        !parse_float(lv_textarea_get_text(objects.ridge_form_length_input), &edit.length_m)) {
+        setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT, "폭·길이 숫자를 확인하세요");
+        return;
+    }
+    dajilog_ui_msg_t command;
+    dajilog_ui_msg_init(&command, DAJILOG_UI_MSG_COMMAND, DAJILOG_UI_CMD_RIDGE_EDIT);
+    command.payload.type = DAJILOG_UI_VALUE_BYTES;
+    command.payload.value.bytes.size = sizeof(edit);
+    static_assert(sizeof(edit) <= DAJILOG_UI_MSG_BYTES_CAPACITY, "ridge edit too large");
+    std::memcpy(command.payload.value.bytes.data, &edit, sizeof(edit));
+    if (dajilog_ui_adaptor_submit(&command) == ESP_OK) {
+        s_ridge_request_sequence = command.sequence;
+        s_ridge_pending_topic = command.topic;
+        s_ridge_request_deadline = esp_timer_get_time() + 5000000;
+        setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT, "두둑 Draft 변경 중...");
+    } else {
+        setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT, "두둑 변경 요청 실패");
+    }
+}
+
+/** @brief [RidgeSetup 두둑 선택] B01→B02 순환 명령을 보내며 NVS는 쓰지 않는다. */
 void ridge_select_request()
 {
     if (s_ridge_request_sequence != 0U) return;
@@ -1252,11 +1401,11 @@ void ridge_select_request()
         s_ridge_pending_topic = command.topic;
         s_ridge_request_deadline = esp_timer_get_time() + 5000000;
         setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
-                     "두둑 선택 저장 중...");
+                     "두둑 선택 중...");
     }
 }
 
-/** @brief Delete only the confirmed selected Bxx through System/Storage Task. */
+/** @brief [RidgeSetup 두둑 삭제] 확인된 Bxx만 RAM 목록에서 삭제 요청한다. */
 void ridge_delete_request()
 {
     if (s_ridge_request_sequence != 0U) {
@@ -1281,14 +1430,14 @@ void ridge_delete_request()
         s_ridge_pending_topic = command.topic;
         s_ridge_request_deadline = esp_timer_get_time() + 5000000;
         setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
-                     "두둑 삭제 저장 중...");
+                     "두둑 Draft 삭제 중...");
     } else {
         setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
                      "두둑 삭제 요청 실패");
     }
 }
 
-/** @brief Recompute only when source fields change or RidgeSetup reopens. */
+/** @brief [RidgeSetup 계산 결과 카드] 입력 또는 화면 복귀 시에만 미리보기를 갱신한다. */
 void refresh_ridge_preview_if_needed()
 {
     const bool active = lv_screen_active() == objects.ridge_setup;
@@ -1315,6 +1464,7 @@ void refresh_ridge_preview_if_needed()
     s_ridge_screen_was_active = true;
 }
 
+/** @brief [SystemSetting 처방 카드] 질소·제품·비율 입력을 처방 RAM Draft에 반영한다. */
 esp_err_t stage_fertilizer_from_ui()
 {
     dajilog_prescription_settings_t settings = {};
@@ -1379,7 +1529,7 @@ esp_err_t stage_fertilizer_from_ui()
     return error;
 }
 
-/** @brief Load the selected zone draft into EEZ's six edit fields. */
+/** @brief [SettingEdit 설정 카드] 선택 S1/S2 구역의 Draft를 편집 필드에 불러온다. */
 void load_setting_editor()
 {
     dajilog_product_settings_snapshot_t settings = {};
@@ -1403,7 +1553,7 @@ void load_setting_editor()
                  zone.configured ? value : "");
 }
 
-/** @brief Convert EEZ strings to a typed, RAM-only zone draft. */
+/** @brief [SettingEdit 설정 카드] 편집 문자열을 검증해 S1/S2 RAM Draft에 반영한다. */
 esp_err_t stage_setting_editor()
 {
     const char *name = get_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_NAME_TEXT);
@@ -1456,7 +1606,7 @@ void setting_edit_event(lv_event_t *event)
     load_setting_editor();
 }
 
-/** @brief Show every registered table, with detail for the selected physical channel. */
+/** @brief [CalibrationSelect 배출량표 카드] 등록 표 목록과 선택 채널의 상세 정보를 표시한다. */
 void render_calibration_selection(void)
 {
     const char *selected = get_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_SELECTED_CHANNEL);
@@ -1641,6 +1791,7 @@ void setting_cancel_event(lv_event_t *event)
         s_setting_pending_topic = 0U;
 }
 
+/** @brief [두둑·처방 카드 공통] 앱 진입 시 Product Draft와 선택 Bxx를 화면에 복원한다. */
 esp_err_t render_current_recipe()
 {
     dajilog_product_settings_snapshot_t settings = {};
@@ -1798,6 +1949,7 @@ void refresh_selected_products()
     }
 }
 
+/** @brief [RidgeSetup 임시저장 버튼] 현재 Bxx 입력을 RAM에만 보관한다. */
 void ridge_temporary_save_event(lv_event_t *event)
 {
     if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
@@ -1813,6 +1965,7 @@ void ridge_temporary_save_event(lv_event_t *event)
     }
 }
 
+/** @brief [SystemSetting 임시저장 버튼] 처방 입력을 RAM에만 보관한다. */
 void fertilizer_temporary_save_event(lv_event_t *event)
 {
     if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
@@ -1833,6 +1986,7 @@ esp_err_t submit_settings_apply(esp_err_t stage_error)
                : stage_error;
 }
 
+/** @brief [RidgeSetup 설정 저장 버튼] 현재 Bxx를 Stage한 후 Storage Task 저장을 요청한다. */
 void ridge_save_settings_event(lv_event_t *event)
 {
     if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
@@ -1846,6 +2000,7 @@ void ridge_save_settings_event(lv_event_t *event)
     }
 }
 
+/** @brief [SystemSetting 설정 저장 버튼] 처방을 Stage한 후 Storage Task 저장을 요청한다. */
 void fertilizer_save_settings_event(lv_event_t *event)
 {
     if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
@@ -1875,6 +2030,7 @@ void stop_event(lv_event_t *event)
 
 } // namespace
 
+/** @brief [앱 시작] 각 카드의 버튼 이벤트를 바인딩하고 저장된 Draft를 화면에 복원한다. */
 extern "C" bool eez_ui_binding_attach(void)
 {
     if (s_attached) {
@@ -2009,19 +2165,28 @@ extern "C" bool eez_ui_binding_attach(void)
     render_ridge_profiles(true);
     render_ridge_preview();
     s_attached = true;
+    s_ridge_form_was_visible = false;
     ESP_LOGI(TAG, "System Core, settings and A-D voltage binding attached");
     return true;
 }
 
+/** @brief [LVGL 주기 처리] 두둑 이벤트·UI 메시지·화면 미리보기를 한 Tick에서 처리한다. */
 extern "C" void eez_ui_binding_process(void)
 {
     if (s_attached) {
         (void)dajilog_ui_adaptor_process(&s_adaptor, MAX_MESSAGES_PER_TICK);
+        prepare_ridge_form();
         if (eez::flow::getGlobalVariable(
                 FLOW_GLOBAL_VARIABLE_EVT_RIDGE_ADD).getBoolean()) {
             eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_EVT_RIDGE_ADD,
                                          eez::BooleanValue(false));
             ridge_add_request();
+        }
+        if (eez::flow::getGlobalVariable(
+                FLOW_GLOBAL_VARIABLE_EVT_RIDGE_EDIT).getBoolean()) {
+            eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_EVT_RIDGE_EDIT,
+                                         eez::BooleanValue(false));
+            ridge_edit_request();
         }
         if (eez::flow::getGlobalVariable(
                 FLOW_GLOBAL_VARIABLE_EVT_RIDGE_SELECT).getBoolean()) {
@@ -2090,6 +2255,7 @@ extern "C" void eez_ui_binding_process(void)
     }
 }
 
+/** @brief [앱 종료] 카드 이벤트 상태와 UI Adaptor 연결을 정리한다. */
 extern "C" void eez_ui_binding_detach(void)
 {
     if (!s_attached) {
@@ -2105,5 +2271,6 @@ extern "C" void eez_ui_binding_detach(void)
     (void)dajilog_ui_adaptor_detach(&s_adaptor);
     // System Core and Storage Task remain active across app close/reopen.
     s_attached = false;
+    s_ridge_form_was_visible = false;
     ESP_LOGI(TAG, "Dashboard binding detached");
 }

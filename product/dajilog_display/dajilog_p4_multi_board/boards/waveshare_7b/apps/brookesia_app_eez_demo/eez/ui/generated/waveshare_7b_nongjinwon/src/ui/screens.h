@@ -160,8 +160,6 @@ typedef struct _objects_t {
     lv_obj_t *dashboard_setting_label;
     lv_obj_t *dashboard_setting_description;
     lv_obj_t *dashboard_setting_arrow;
-    lv_obj_t *dashboard_setting_button;
-    lv_obj_t *dashboard_setting_top_label;
     lv_obj_t *dashboard_setting_button_1;
     lv_obj_t *dashboard_setting_top_label_3;
     lv_obj_t *dashboard_setting_button_2;
@@ -484,6 +482,8 @@ typedef struct _objects_t {
     lv_obj_t *ridge_add_button;
     lv_obj_t *ridge_add_button_label;
     lv_obj_t *ridge_left_title;
+    lv_obj_t *ridge_edit_button;
+    lv_obj_t *ridge_edit_button_label;
     lv_obj_t *ridge_delete_button;
     lv_obj_t *ridge_delete_button_label;
     lv_obj_t *ridge_divider;
@@ -506,8 +506,6 @@ typedef struct _objects_t {
     lv_obj_t *ridge_all_label;
     lv_obj_t *ridge_split;
     lv_obj_t *ridge_split_label;
-    lv_obj_t *ridge_apply_length;
-    lv_obj_t *ridge_apply_length_label;
     lv_obj_t *ridge_north_label;
     lv_obj_t *ridge_north_value;
     lv_obj_t *ridge_south_label;
@@ -553,6 +551,20 @@ typedef struct _objects_t {
     lv_obj_t *ridge_delete_confirm_label;
     lv_obj_t *main_stop_2;
     lv_obj_t *main_stop_label_2;
+    lv_obj_t *ridge_form_panel;
+    lv_obj_t *ridge_form_title;
+    lv_obj_t *ridge_form_hint;
+    lv_obj_t *ridge_form_id_label;
+    lv_obj_t *ridge_form_auto_id_value;
+    lv_obj_t *ridge_form_width_label;
+    lv_obj_t *ridge_form_width_input;
+    lv_obj_t *ridge_form_length_label;
+    lv_obj_t *ridge_form_length_input;
+    lv_obj_t *ridge_form_note;
+    lv_obj_t *ridge_form_cancel_button;
+    lv_obj_t *ridge_form_cancel_button_label;
+    lv_obj_t *ridge_form_confirm_button;
+    lv_obj_t *ridge_form_confirm_button_label;
     lv_obj_t *prep_app_title;
     lv_obj_t *prep_status;
     lv_obj_t *prep_stop;
