@@ -71,7 +71,10 @@ int64_t s_apply_deadline = 0;
 int64_t s_run_deadline = 0;
 char s_draft_mode_text[24] = {};
 char s_countdown_text[16] = {};
-char s_setting_text[FLOW_GLOBAL_VARIABLE_RIDGE_RESULT_STATUS_TEXT + 1U][96] = {};
+char s_setting_text[FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SUBSURFACE_RATIO_PCT_TEXT + 1U][96] = {};
+char s_calibration_list_text[1024] = {};
+dajilog_product_catalog_t s_product_catalog = {};
+int s_last_product_index[DAJILOG_SETTING_ZONE_COUNT] = {-1, -1};
 bool s_ridge_screen_was_active = false;
 char s_ridge_preview_inputs[256] = {};
 uint32_t s_ridge_request_sequence = 0U;
@@ -319,7 +322,56 @@ void render_dashboard(const dajilog_dashboard_snapshot_t &snapshot)
     render_detail_voltage();
 }
 
-/** @brief Present independent setting zones without inventing calibration output. */
+struct CalibrationPreview {
+    double total_kg_min;
+    uint32_t target_g_min[2];
+    uint32_t expected_g_min[2];
+    uint16_t voltage_decivolt[2];
+    bool table_found[2];
+    bool in_range[2];
+};
+
+/** @brief Calculate display-only A/B or C/D voltage; no command is submitted. */
+CalibrationPreview calculate_calibration_preview(
+    const dajilog_product_settings_snapshot_t &settings, size_t zone_index)
+{
+    CalibrationPreview preview = {};
+    const auto &zone = settings.zones[zone_index];
+    const double furrow = settings.ridge.work_width_mode ==
+        DAJILOG_WORK_WIDTH_RIDGE_AND_FURROW
+        ? settings.ridge.included_furrow_width_m : 0.0;
+    const double width = settings.ridge.ridge_count *
+        (settings.ridge.ridge_width_m + furrow);
+    if (!zone.configured || width <= 0.0 || zone.reference_speed_kmh <= 0.0f ||
+        zone.rate_kg_per_10a <= 0.0f) return preview;
+    preview.total_kg_min = zone.rate_kg_per_10a * width *
+                           zone.reference_speed_kmh / 60.0;
+    if (!std::isfinite(preview.total_kg_min) || preview.total_kg_min <= 0.0 ||
+        preview.total_kg_min > 1000.0) {
+        preview.total_kg_min = 0.0;
+        return preview;
+    }
+    const uint32_t total_g_min = static_cast<uint32_t>(
+        std::lround(preview.total_kg_min * 1000.0));
+    preview.target_g_min[0] = static_cast<uint32_t>(
+        (static_cast<uint64_t>(total_g_min) * zone.first_channel_permille + 500U) / 1000U);
+    preview.target_g_min[1] = total_g_min - preview.target_g_min[0];
+    const char *product = settings.selected_product_codes[zone_index];
+    if (product[0] == '\0') return preview;
+    for (size_t i = 0; i < 2U; ++i) {
+        const char channel = static_cast<char>('A' + zone_index * 2U + i);
+        dajilog_calibration_summary_t table = {};
+        if (dajilog_calibration_catalog_list(channel, product, "", &table, 1U) == 0U ||
+            !table.approved) continue;
+        preview.table_found[i] = true;
+        preview.in_range[i] = dajilog_calibration_catalog_preview_voltage(
+            channel, table.table_id, table.revision, preview.target_g_min[i],
+            &preview.voltage_decivolt[i], &preview.expected_g_min[i]) == ESP_OK;
+    }
+    return preview;
+}
+
+/** @brief Present independent setting zones and calculation-only voltage previews. */
 void render_setting_views(bool include_detail)
 {
     dajilog_product_settings_snapshot_t draft = {};
@@ -362,15 +414,21 @@ void render_setting_views(bool include_detail)
                       zone.product[0] ? zone.product : "미설정",
                       zone.lot[0] ? " / " : "", zone.lot);
         setting_text(product_vars[i], label);
-        setting_text(target_vars[i], "--");
-        setting_text(table_vars[i], "승인 배출량표 없음");
+        const CalibrationPreview preview = calculate_calibration_preview(draft, i);
+        if (preview.total_kg_min > 0.0) {
+            std::snprintf(label, sizeof(label), "%.2f", preview.total_kg_min);
+            setting_text(target_vars[i], label);
+        } else setting_text(target_vars[i], "--");
+        setting_text(table_vars[i], preview.table_found[0] && preview.table_found[1]
+                                       ? "계산용 표 연결" : "배출량표 없음");
         setting_text(i == 0 ? FLOW_GLOBAL_VARIABLE_SETTING_1_STATE_TEXT :
                               FLOW_GLOBAL_VARIABLE_SETTING_2_STATE_TEXT, state);
         setting_text(i == 0 ? FLOW_GLOBAL_VARIABLE_SETTING_1_NAME_TEXT :
                               FLOW_GLOBAL_VARIABLE_SETTING_2_NAME_TEXT,
                      zone.name[0] ? zone.name : "미설정");
         setting_text(i == 0 ? FLOW_GLOBAL_VARIABLE_SETTING_1_TARGET_KG_MIN_TEXT :
-                              FLOW_GLOBAL_VARIABLE_SETTING_2_TARGET_KG_MIN_TEXT, "--");
+                              FLOW_GLOBAL_VARIABLE_SETTING_2_TARGET_KG_MIN_TEXT,
+                     preview.total_kg_min > 0.0 ? label : "--");
     }
 
     if (!include_detail) return;
@@ -425,17 +483,23 @@ void render_setting_views(bool include_detail)
                   static_cast<double>(zone.reference_speed_kmh));
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_SPEED_TEXT,
                  zone.configured ? value : "--");
-    setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_TOTAL_TARGET_TEXT, "--");
+    const CalibrationPreview preview = calculate_calibration_preview(draft, selected);
+    if (preview.total_kg_min > 0.0) {
+        std::snprintf(value, sizeof(value), "%.2f kg/min", preview.total_kg_min);
+        setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_TOTAL_TARGET_TEXT, value);
+    } else setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_TOTAL_TARGET_TEXT, "--");
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_ORIGINAL_TOTAL_TEXT, "--");
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_REFERENCE_TOTAL_TEXT, "--");
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CALIBRATION_TEXT,
-                 "승인 배출량표 없음");
+                 preview.table_found[0] && preview.table_found[1]
+                     ? "계산용 표 연결" : "배출량표 없음");
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_TABLE_STATUS_TEXT,
-                 "배출량표 미연결 · 적용 차단");
+                 "전압 계산 미리보기 · CAN 미전송");
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_VALIDATION_TEXT,
-                 "승인 배출량표가 필요합니다");
+                 preview.in_range[0] && preview.in_range[1]
+                     ? "A/B 또는 C/D 목표 전압 계산 완료" : "표 범위 또는 입력값 확인 필요");
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_APPLY_BLOCK_TEXT,
-                 "배출량표 확인 전 적용할 수 없습니다");
+                 "실제 모터 출력은 연결되지 않았습니다");
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_1_NAME_TEXT,
                  selected == 0 ? "A" : "C");
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_2_NAME_TEXT,
@@ -449,6 +513,32 @@ void render_setting_views(bool include_detail)
         FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_2_VOLTAGE_TEXT,
     };
     for (uint32_t variable : missing_vars) setting_text(variable, "--");
+    const uint32_t target_preview_vars[] = {
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_1_TARGET_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_2_TARGET_TEXT,
+    };
+    const uint32_t output_preview_vars[] = {
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_1_OUTPUT_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_2_OUTPUT_TEXT,
+    };
+    const uint32_t voltage_preview_vars[] = {
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_1_VOLTAGE_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_2_VOLTAGE_TEXT,
+    };
+    for (size_t i = 0; i < 2U; ++i) {
+        if (preview.total_kg_min <= 0.0) continue;
+        std::snprintf(value, sizeof(value), "%.3f", preview.target_g_min[i] / 1000.0);
+        setting_text(target_preview_vars[i], value);
+        if (!preview.in_range[i]) {
+            setting_text(output_preview_vars[i], preview.table_found[i]
+                         ? "범위 밖" : "표 없음");
+            continue;
+        }
+        std::snprintf(value, sizeof(value), "%.3f", preview.expected_g_min[i] / 1000.0);
+        setting_text(output_preview_vars[i], value);
+        std::snprintf(value, sizeof(value), "%.1f", preview.voltage_decivolt[i] / 10.0);
+        setting_text(voltage_preview_vars[i], value);
+    }
     const uint32_t table_bases[] = {
         FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_A_STATE_TEXT,
         FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_B_STATE_TEXT,
@@ -1228,6 +1318,21 @@ void refresh_ridge_preview_if_needed()
 esp_err_t stage_fertilizer_from_ui()
 {
     dajilog_prescription_settings_t settings = {};
+    char codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY] = {};
+    const int surface_index = eez::flow::getGlobalVariable(
+        FLOW_GLOBAL_VARIABLE_SURFACE_PRODUCT_SELECTED_INDEX).getInt();
+    const int subsurface_index = eez::flow::getGlobalVariable(
+        FLOW_GLOBAL_VARIABLE_SUBSURFACE_PRODUCT_SELECTED_INDEX).getInt();
+    const int indexes[DAJILOG_SETTING_ZONE_COUNT] = {surface_index, subsurface_index};
+    for (size_t i = 0; i < DAJILOG_SETTING_ZONE_COUNT; ++i) {
+        if (indexes[i] < 0 || indexes[i] > static_cast<int>(s_product_catalog.count))
+            return ESP_ERR_INVALID_ARG;
+        if (indexes[i] != 0) {
+            const auto &product = s_product_catalog.products[indexes[i] - 1];
+            if (!product.enabled) return ESP_ERR_INVALID_ARG;
+            std::snprintf(codes[i], sizeof(codes[i]), "%s", product.code);
+        }
+    }
     const char *mode = get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_INPUT_MODE);
     if (std::strcmp(mode, "BY_NITROGEN") == 0) {
         settings.input_mode = DAJILOG_PRESCRIPTION_BY_NITROGEN;
@@ -1237,29 +1342,37 @@ esp_err_t stage_fertilizer_from_ui()
         return ESP_ERR_INVALID_ARG;
     }
     settings.presence_mask = DAJILOG_PRESCRIPTION_PRESENT_INPUT_MODE;
-    if (!parse_optional_float(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_NITROGEN_RATE_KG_N_PER_10A_TEXT,
-                              &settings.nitrogen_rate_kg_n_per_10a, &settings.presence_mask,
-                              DAJILOG_PRESCRIPTION_PRESENT_NITROGEN_TARGET) ||
-        !parse_optional_float(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SURFACE_RATIO_PCT_TEXT,
-                              &settings.surface_nitrogen_ratio_pct, &settings.presence_mask,
-                              DAJILOG_PRESCRIPTION_PRESENT_SURFACE_RATIO) ||
-        !parse_optional_float(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SURFACE_NITROGEN_PCT_TEXT,
-                              &settings.surface_fertilizer_nitrogen_pct, &settings.presence_mask,
-                              DAJILOG_PRESCRIPTION_PRESENT_SURFACE_N_PCT) ||
-        !parse_optional_float(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SUBSURFACE_NITROGEN_PCT_TEXT,
-                              &settings.subsurface_fertilizer_nitrogen_pct, &settings.presence_mask,
-                              DAJILOG_PRESCRIPTION_PRESENT_SUBSURFACE_N_PCT) ||
-        !parse_optional_float(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SURFACE_PRODUCT_RATE_KG_PER_10A_TEXT,
-                              &settings.surface_product_rate_kg_per_10a, &settings.presence_mask,
-                              DAJILOG_PRESCRIPTION_PRESENT_SURFACE_PRODUCT) ||
-        !parse_optional_float(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SUBSURFACE_PRODUCT_RATE_KG_PER_10A_TEXT,
-                              &settings.subsurface_product_rate_kg_per_10a, &settings.presence_mask,
-                              DAJILOG_PRESCRIPTION_PRESENT_SUBSURFACE_PRODUCT)) {
+    const bool values_valid = settings.input_mode == DAJILOG_PRESCRIPTION_BY_NITROGEN
+        ? parse_optional_float(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_NITROGEN_RATE_KG_N_PER_10A_TEXT,
+                               &settings.nitrogen_rate_kg_n_per_10a, &settings.presence_mask,
+                               DAJILOG_PRESCRIPTION_PRESENT_NITROGEN_TARGET) &&
+          parse_optional_float(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SURFACE_RATIO_PCT_TEXT,
+                               &settings.surface_nitrogen_ratio_pct, &settings.presence_mask,
+                               DAJILOG_PRESCRIPTION_PRESENT_SURFACE_RATIO)
+        : parse_optional_float(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SURFACE_PRODUCT_RATE_KG_PER_10A_TEXT,
+                               &settings.surface_product_rate_kg_per_10a, &settings.presence_mask,
+                               DAJILOG_PRESCRIPTION_PRESENT_SURFACE_PRODUCT) &&
+          parse_optional_float(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SUBSURFACE_PRODUCT_RATE_KG_PER_10A_TEXT,
+                               &settings.subsurface_product_rate_kg_per_10a, &settings.presence_mask,
+                               DAJILOG_PRESCRIPTION_PRESENT_SUBSURFACE_PRODUCT);
+    if (!values_valid) {
         ESP_LOGW(TAG, "fertilizer settings contain an invalid number");
         return ESP_ERR_INVALID_ARG;
     }
+    if (settings.input_mode == DAJILOG_PRESCRIPTION_BY_NITROGEN) {
+        if (surface_index > 0) {
+            settings.surface_fertilizer_nitrogen_pct =
+                s_product_catalog.products[surface_index - 1].nitrogen_percent;
+            settings.presence_mask |= DAJILOG_PRESCRIPTION_PRESENT_SURFACE_N_PCT;
+        }
+        if (subsurface_index > 0) {
+            settings.subsurface_fertilizer_nitrogen_pct =
+                s_product_catalog.products[subsurface_index - 1].nitrogen_percent;
+            settings.presence_mask |= DAJILOG_PRESCRIPTION_PRESENT_SUBSURFACE_N_PCT;
+        }
+    }
     const esp_err_t error =
-        dajilog_system_core_stage_prescription_settings(&settings);
+        dajilog_system_core_stage_prescription_products(&settings, codes);
     if (error != ESP_OK) {
         ESP_LOGW(TAG, "fertilizer value is outside its schema range");
     }
@@ -1343,7 +1456,7 @@ void setting_edit_event(lv_event_t *event)
     load_setting_editor();
 }
 
-/** @brief Show only catalog-backed candidates; an empty catalog never implies approval. */
+/** @brief Show every registered table, with detail for the selected physical channel. */
 void render_calibration_selection(void)
 {
     const char *selected = get_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_SELECTED_CHANNEL);
@@ -1357,21 +1470,47 @@ void render_calibration_selection(void)
     }
     s_calibration_channel = channel;
 
-    dajilog_product_settings_snapshot_t settings = {};
-    const bool have_settings =
-        dajilog_system_core_get_settings_draft(&settings) == ESP_OK;
-    const dajilog_zone_settings_t *zone =
-        have_settings ? &settings.zones[s_selected_zone] : nullptr;
-    dajilog_calibration_summary_t candidate = {};
-    size_t count = dajilog_calibration_catalog_list(
-        channel, zone != nullptr ? zone->product : "",
-        zone != nullptr ? zone->lot : "", &candidate, 1U);
-#ifdef CONFIG_DAJILOG_CALIBRATION_SAMPLE_TEST
-    if (count == 0U) {
-        count = dajilog_calibration_catalog_list(
-            channel, "DEMO_ONLY", "SYNTHETIC", &candidate, 1U);
+    char list_text[sizeof(s_calibration_list_text)] = {};
+    size_t used = 0U;
+    size_t total_count = 0U;
+    for (char listed_channel = 'A'; listed_channel <= 'D'; ++listed_channel) {
+        dajilog_calibration_summary_t profiles[DAJILOG_CALIBRATION_MAX_PROFILES] = {};
+        const size_t found = dajilog_calibration_catalog_list(
+            listed_channel, "", "", profiles, DAJILOG_CALIBRATION_MAX_PROFILES);
+        for (size_t i = 0; i < found && i < DAJILOG_CALIBRATION_MAX_PROFILES; ++i) {
+            const auto &profile = profiles[i];
+            const int written = std::snprintf(
+                list_text + used, sizeof(list_text) - used,
+                "%c  %s  %s  r%lu  %s\n",
+                listed_channel, profile.table_id, profile.product_code,
+                static_cast<unsigned long>(profile.revision),
+                profile.approved ? "승인" : "미승인");
+            if (written < 0 || static_cast<size_t>(written) >= sizeof(list_text) - used)
+                break;
+            used += static_cast<size_t>(written);
+            ++total_count;
+        }
     }
-#endif
+    if (total_count == 0U)
+        std::snprintf(list_text, sizeof(list_text), "등록된 배출량표가 없습니다");
+    if (objects.calibration_candidate_list && objects.calibration_list_state) {
+        if (objects.calibration_list_columns)
+            lv_label_set_text(objects.calibration_list_columns,
+                              "채널 / 표 ID / 제품 / Revision / 상태");
+        lv_obj_add_flag(objects.calibration_candidate_list, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_set_scroll_dir(objects.calibration_candidate_list, LV_DIR_VER);
+        lv_obj_set_pos(objects.calibration_list_state, 16, 82);
+        lv_obj_set_size(objects.calibration_list_state, 440,
+                        static_cast<int32_t>(total_count * 24U + 28U));
+        lv_obj_set_style_text_align(objects.calibration_list_state,
+                                    LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
+    }
+    set_string(FLOW_GLOBAL_VARIABLE_CALIBRATION_LIST_STATE_TEXT,
+               s_calibration_list_text, sizeof(s_calibration_list_text),
+               STRING_ID_SETTING_BASE + 100U, list_text);
+    dajilog_calibration_summary_t candidate = {};
+    const size_t count = dajilog_calibration_catalog_list(
+        channel, "", "", &candidate, 1U);
 
     setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_DRAFT_SUMMARY_TEXT,
                  "선택 안 됨");
@@ -1386,30 +1525,42 @@ void render_calibration_selection(void)
         std::snprintf(value, sizeof(value), "%lu",
                       static_cast<unsigned long>(candidate.revision));
         setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_REVISION, value);
-        std::snprintf(value, sizeof(value), "%.1f~%.1f V · %lu~%lu g/min",
-                      candidate.min_decivolt / 10.0, candidate.max_decivolt / 10.0,
-                      static_cast<unsigned long>(candidate.min_discharge_g_min),
-                      static_cast<unsigned long>(candidate.max_discharge_g_min));
+        dajilog_calibration_point_t points[DAJILOG_CALIBRATION_MAX_POINTS] = {};
+        size_t point_count = 0U;
+        const esp_err_t point_error = dajilog_calibration_catalog_get_points(
+            channel, candidate.table_id, candidate.revision,
+            points, DAJILOG_CALIBRATION_MAX_POINTS, &point_count);
+        if (point_error == ESP_OK) {
+            size_t used = 0U;
+            value[0] = '\0';
+            for (size_t i = 0; i < point_count && used < sizeof(value); ++i) {
+                const int written = std::snprintf(
+                    value + used, sizeof(value) - used, "%s%.1fV:%lu",
+                    i == 0U ? "" : "  ", points[i].command_decivolt / 10.0,
+                    static_cast<unsigned long>(points[i].discharge_g_min));
+                if (written < 0 || static_cast<size_t>(written) >= sizeof(value) - used)
+                    break;
+                used += static_cast<size_t>(written);
+            }
+        } else {
+            std::snprintf(value, sizeof(value), "측정점 조회 실패");
+        }
         setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_RANGE_TEXT, value);
         setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_APPROVAL_TEXT,
-                     candidate.approved ? "승인" : "가상 데이터 · 미승인");
-        setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_LIST_STATE_TEXT,
-                     "가상 테스트 후보 · 실제 제품과 불일치");
+                     candidate.approved ? "계산 검증용 승인" : "미승인");
         setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_REASON_TEXT,
-                     "화면 조회 시험만 가능 · 운전 적용 금지");
+                     "계산 미리보기 가능 · CAN 출력 없음");
     } else {
         setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_REVISION, "--");
         setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_RANGE_TEXT, "--");
         setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_APPROVAL_TEXT, "--");
-        setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_LIST_STATE_TEXT,
-                     "등록된 배출량표 후보 없음");
         setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_REASON_TEXT,
                      "실측·검증된 CSV 등록이 필요합니다");
     }
     setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_RESULT_TEXT,
                  count != 0U
-                     ? "가상 데이터입니다. 모터 자동 제어는 차단됩니다"
-                     : "표가 없어 선택·저장·작업 전 확인이 차단됩니다");
+                     ? "CSV 배출량을 계산에 사용합니다. CAN 출력은 없습니다"
+                     : "선택 제품의 표가 없어 적용이 차단됩니다");
     if (objects.calibration_select_button)
         lv_obj_add_state(objects.calibration_select_button, LV_STATE_DISABLED);
     if (objects.calibration_save_button)
@@ -1499,6 +1650,39 @@ esp_err_t render_current_recipe()
         return error;
     }
 
+    dajilog_product_catalog_t catalog = {};
+    if (dajilog_system_core_get_product_catalog(&catalog) != ESP_OK)
+        return ESP_ERR_INVALID_STATE;
+    s_product_catalog = catalog;
+    eez::Value options = eez::Value::makeArrayRef(
+        static_cast<int>(catalog.count + 1U), eez::flow::defs_v3::ARRAY_TYPE_STRING,
+        0x07014000U);
+    if (options.getArray() == nullptr) return ESP_ERR_NO_MEM;
+    options.getArray()->values[0] = eez::Value::makeStringRef(
+        "제품 선택", -1, 0x07014001U);
+    for (uint32_t i = 0; i < catalog.count; ++i) {
+        options.getArray()->values[i + 1U] = eez::Value::makeStringRef(
+            catalog.products[i].name, -1, 0x07014002U + i);
+    }
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_FERTILIZER_PRODUCT_NAMES,
+                                 options);
+    for (size_t zone = 0; zone < DAJILOG_SETTING_ZONE_COUNT; ++zone) {
+        int index = 0;
+        for (uint32_t i = 0; i < catalog.count; ++i) {
+            if (std::strcmp(settings.selected_product_codes[zone],
+                            catalog.products[i].code) == 0) {
+                index = static_cast<int>(i + 1U);
+                break;
+            }
+        }
+        eez::flow::setGlobalVariable(
+            zone == DAJILOG_SETTING_ZONE_SURFACE
+                ? FLOW_GLOBAL_VARIABLE_SURFACE_PRODUCT_SELECTED_INDEX
+                : FLOW_GLOBAL_VARIABLE_SUBSURFACE_PRODUCT_SELECTED_INDEX,
+            eez::IntegerValue(index));
+        s_last_product_index[zone] = index;
+    }
+
     set_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_RIDGE_COUNT_TEXT,
              s_ridge_count_text, sizeof(s_ridge_count_text),
              STRING_ID_RIDGE_COUNT, "%.0f",
@@ -1540,6 +1724,13 @@ esp_err_t render_current_recipe()
     RENDER_RECIPE_FLOAT(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SURFACE_RATIO_PCT_TEXT,
                         DAJILOG_PRESCRIPTION_PRESENT_SURFACE_RATIO,
                         surface_nitrogen_ratio_pct);
+    if (settings.prescription.presence_mask & DAJILOG_PRESCRIPTION_PRESENT_SURFACE_RATIO) {
+        std::snprintf(value, sizeof(value), "%g",
+                      static_cast<double>(100.0f - settings.prescription.surface_nitrogen_ratio_pct));
+        setting_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SUBSURFACE_RATIO_PCT_TEXT, value);
+    } else {
+        setting_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SUBSURFACE_RATIO_PCT_TEXT, "");
+    }
     RENDER_RECIPE_FLOAT(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SURFACE_NITROGEN_PCT_TEXT,
                         DAJILOG_PRESCRIPTION_PRESENT_SURFACE_N_PCT,
                         surface_fertilizer_nitrogen_pct);
@@ -1578,6 +1769,33 @@ esp_err_t render_current_recipe()
                                  eez::BooleanValue(direct));
     render_ridge_profiles(true);
     return ESP_OK;
+}
+
+/** @brief Show catalog nitrogen values when an EEZ dropdown selection changes. */
+void refresh_selected_products()
+{
+    if (lv_screen_active() != objects.system_setting) return;
+    const uint32_t variables[DAJILOG_SETTING_ZONE_COUNT] = {
+        FLOW_GLOBAL_VARIABLE_SURFACE_PRODUCT_SELECTED_INDEX,
+        FLOW_GLOBAL_VARIABLE_SUBSURFACE_PRODUCT_SELECTED_INDEX,
+    };
+    const uint32_t nitrogen_variables[DAJILOG_SETTING_ZONE_COUNT] = {
+        FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SURFACE_NITROGEN_PCT_TEXT,
+        FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SUBSURFACE_NITROGEN_PCT_TEXT,
+    };
+    for (size_t zone = 0; zone < DAJILOG_SETTING_ZONE_COUNT; ++zone) {
+        const int index = eez::flow::getGlobalVariable(variables[zone]).getInt();
+        if (index == s_last_product_index[zone]) continue;
+        s_last_product_index[zone] = index;
+        if (index <= 0 || index > static_cast<int>(s_product_catalog.count)) {
+            setting_text(nitrogen_variables[zone], "");
+            continue;
+        }
+        char value[24];
+        std::snprintf(value, sizeof(value), "%g",
+                      static_cast<double>(s_product_catalog.products[index - 1].nitrogen_percent));
+        setting_text(nitrogen_variables[zone], value);
+    }
 }
 
 void ridge_temporary_save_event(lv_event_t *event)
@@ -1818,6 +2036,7 @@ extern "C" void eez_ui_binding_process(void)
             ridge_delete_request();
         }
         refresh_ridge_preview_if_needed();
+        refresh_selected_products();
         if (s_ridge_request_sequence != 0U &&
             esp_timer_get_time() > s_ridge_request_deadline) {
             s_ridge_request_sequence = 0U;

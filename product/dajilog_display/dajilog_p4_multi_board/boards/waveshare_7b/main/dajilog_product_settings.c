@@ -6,6 +6,7 @@
 
 #include "dajilog_table.h"
 #include "dajilog_setting_storage_nvs.h"
+#include "dajilog_product_catalog.h"
 #include "esp_log.h"
 #include "nvs.h"
 #include "freertos/FreeRTOS.h"
@@ -14,7 +15,8 @@
 #define RIDGE_TABLE_ID        0x07030101U
 #define PRESCRIPTION_TABLE_ID 0x07030102U
 #define PRODUCT_PROFILE_LIMIT 8U
-#define PRODUCT_STORAGE_SCHEMA_VERSION 4U
+#define PRODUCT_STORAGE_SCHEMA_VERSION 5U
+#define PRODUCT_STORAGE_V4_VERSION       4U
 #define PRODUCT_STORAGE_PREVIOUS_VERSION 3U
 #define PRODUCT_STORAGE_LEGACY_VERSION 1U
 #define PRODUCT_STORAGE_NAMESPACE      "dajilog_v02"
@@ -39,6 +41,19 @@ typedef struct {
     dajilog_setting_readiness_t saved_readiness;
     uint32_t saved_revision;
     uint32_t applied_revision;
+} product_settings_v4_record_t;
+
+typedef struct {
+    dajilog_ridge_settings_t ridge;
+    dajilog_prescription_settings_t prescription;
+    dajilog_zone_settings_t zones[DAJILOG_SETTING_ZONE_COUNT];
+    dajilog_ridge_settings_t applied_ridge;
+    dajilog_prescription_settings_t applied_prescription;
+    dajilog_zone_settings_t applied_zones[DAJILOG_SETTING_ZONE_COUNT];
+    dajilog_setting_readiness_t saved_readiness;
+    uint32_t saved_revision;
+    uint32_t applied_revision;
+    char selected_product_codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
 } product_settings_record_t;
 
 typedef struct {
@@ -284,8 +299,13 @@ static esp_err_t validate_prescription_row(const void *row, size_t row_size,
 static dajilog_setting_readiness_t calculate_readiness(
     const dajilog_ridge_settings_t *ridge,
     const dajilog_prescription_settings_t *prescription,
+    const char codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY],
     bool confirmed)
 {
+    for (size_t i = 0; i < DAJILOG_SETTING_ZONE_COUNT; ++i) {
+        if (dajilog_product_catalog_find(codes[i]) == NULL)
+            return DAJILOG_SETTING_UNSET;
+    }
     if ((ridge->presence_mask & DAJILOG_RIDGE_REQUIRED_MASK) !=
         DAJILOG_RIDGE_REQUIRED_MASK) {
         return DAJILOG_SETTING_UNSET;
@@ -295,10 +315,10 @@ static dajilog_setting_readiness_t calculate_readiness(
         return DAJILOG_SETTING_UNSET;
     }
 
-    uint32_t required = DAJILOG_PRESCRIPTION_PRESENT_INPUT_MODE |
-                        DAJILOG_PRESCRIPTION_PRESENT_SURFACE_RATIO;
+    uint32_t required = DAJILOG_PRESCRIPTION_PRESENT_INPUT_MODE;
     if (prescription->input_mode == DAJILOG_PRESCRIPTION_BY_NITROGEN) {
-        required |= DAJILOG_PRESCRIPTION_PRESENT_NITROGEN_TARGET |
+        required |= DAJILOG_PRESCRIPTION_PRESENT_SURFACE_RATIO |
+                    DAJILOG_PRESCRIPTION_PRESENT_NITROGEN_TARGET |
                     DAJILOG_PRESCRIPTION_PRESENT_SURFACE_N_PCT |
                     DAJILOG_PRESCRIPTION_PRESENT_SUBSURFACE_N_PCT;
     } else {
@@ -342,6 +362,8 @@ static dajilog_ridge_settings_t s_ridge_draft;
 static dajilog_prescription_settings_t s_prescription_draft;
 static dajilog_zone_settings_t s_zone_draft[DAJILOG_SETTING_ZONE_COUNT];
 static dajilog_zone_settings_t s_zone_saved[DAJILOG_SETTING_ZONE_COUNT];
+static char s_product_draft[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
+static char s_product_saved[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
 static dajilog_ridge_settings_t s_applied_ridge;
 static dajilog_prescription_settings_t s_applied_prescription;
 static dajilog_zone_settings_t s_applied_zones[DAJILOG_SETTING_ZONE_COUNT];
@@ -412,7 +434,7 @@ static bool zone_settings_valid(const dajilog_zone_settings_t *settings)
            settings->first_channel_permille <= 1000U;
 }
 
-/** @brief Register setting schemas and restore v0.4 or migrate older NVS data. */
+/** @brief Register setting schemas and restore v0.5 or migrate older NVS data. */
 esp_err_t dajilog_product_settings_init(void)
 {
     if (s_lock != NULL) {
@@ -435,6 +457,7 @@ esp_err_t dajilog_product_settings_init(void)
     dajilog_ridge_settings_t initial_ridge = {0};
     dajilog_prescription_settings_t initial_prescription = {0};
     dajilog_zone_settings_t initial_zones[DAJILOG_SETTING_ZONE_COUNT] = {0};
+    char initial_product_codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY] = {0};
     dajilog_ridge_settings_t initial_applied_ridge = {0};
     dajilog_prescription_settings_t initial_applied_prescription = {0};
     dajilog_zone_settings_t initial_applied_zones[DAJILOG_SETTING_ZONE_COUNT] = {0};
@@ -492,6 +515,18 @@ esp_err_t dajilog_product_settings_init(void)
     error = dajilog_setting_storage_nvs_load(
         &s_storage, PRODUCT_STORAGE_KEY, PRODUCT_STORAGE_SCHEMA_VERSION,
         &stored, sizeof(stored));
+    if (error != ESP_OK) {
+        product_settings_v4_record_t previous_v4 = {0};
+        const esp_err_t previous_v4_error = dajilog_setting_storage_nvs_load(
+            &s_storage, PRODUCT_STORAGE_KEY, PRODUCT_STORAGE_V4_VERSION,
+            &previous_v4, sizeof(previous_v4));
+        if (previous_v4_error == ESP_OK) {
+            memcpy(&stored, &previous_v4, sizeof(previous_v4));
+            stored.applied_revision = 0U;
+            error = ESP_OK;
+            ESP_LOGI(TAG, "migrating v0.4 product settings; products remain unselected");
+        }
+    }
     if (error == ESP_OK) {
         error = dajilog_table_validate(
             RIDGE_TABLE_ID, &stored.ridge, sizeof(stored.ridge));
@@ -515,7 +550,9 @@ esp_err_t dajilog_product_settings_init(void)
         }
         for (size_t i = 0; error == ESP_OK && i < DAJILOG_SETTING_ZONE_COUNT; ++i) {
             if (!zone_settings_valid(&stored.zones[i]) ||
-                !zone_settings_valid(&stored.applied_zones[i])) {
+                !zone_settings_valid(&stored.applied_zones[i]) ||
+                memchr(stored.selected_product_codes[i], '\0',
+                       sizeof(stored.selected_product_codes[i])) == NULL) {
                 error = ESP_ERR_INVALID_ARG;
             }
         }
@@ -523,6 +560,8 @@ esp_err_t dajilog_product_settings_init(void)
             initial_ridge = stored.ridge;
             initial_prescription = stored.prescription;
             memcpy(initial_zones, stored.zones, sizeof(initial_zones));
+            memcpy(initial_product_codes, stored.selected_product_codes,
+                   sizeof(initial_product_codes));
             initial_applied_ridge = stored.applied_ridge;
             initial_applied_prescription = stored.applied_prescription;
             memcpy(initial_applied_zones, stored.applied_zones,
@@ -530,11 +569,11 @@ esp_err_t dajilog_product_settings_init(void)
             initial_saved_revision = stored.saved_revision;
             initial_applied_revision = stored.applied_revision;
             initial_readiness = calculate_readiness(
-                &initial_ridge, &initial_prescription, false);
-            ESP_LOGI(TAG, "restored v0.4 product settings from NVS");
+                &initial_ridge, &initial_prescription, initial_product_codes, false);
+            ESP_LOGI(TAG, "restored product settings from NVS");
         } else {
             ESP_LOGW(TAG,
-                     "stored v0.4 settings failed validation; UNSET used: %s",
+                     "stored product settings failed validation; UNSET used: %s",
                      esp_err_to_name(error));
             error = ESP_OK;
         }
@@ -552,7 +591,7 @@ esp_err_t dajilog_product_settings_init(void)
             initial_prescription = previous.prescription;
             initial_saved_revision = previous.saved_revision;
             initial_readiness = calculate_readiness(
-                &initial_ridge, &initial_prescription, false);
+                &initial_ridge, &initial_prescription, initial_product_codes, false);
             if (previous.confirmed && initial_readiness == DAJILOG_SETTING_CONFIGURED) {
                 initial_applied_ridge = previous.ridge;
                 initial_applied_prescription = previous.prescription;
@@ -612,6 +651,8 @@ esp_err_t dajilog_product_settings_init(void)
     s_prescription_draft = initial_prescription;
     memcpy(s_zone_draft, initial_zones, sizeof(s_zone_draft));
     memcpy(s_zone_saved, initial_zones, sizeof(s_zone_saved));
+    memcpy(s_product_draft, initial_product_codes, sizeof(s_product_draft));
+    memcpy(s_product_saved, initial_product_codes, sizeof(s_product_saved));
     s_applied_ridge = initial_applied_ridge;
     s_applied_prescription = initial_applied_prescription;
     memcpy(s_applied_zones, initial_applied_zones, sizeof(s_applied_zones));
@@ -637,9 +678,11 @@ esp_err_t dajilog_product_settings_get_draft(
     settings->ridge = s_ridge_draft;
     settings->prescription = s_prescription_draft;
     memcpy(settings->zones, s_zone_draft, sizeof(settings->zones));
+    memcpy(settings->selected_product_codes, s_product_draft,
+           sizeof(settings->selected_product_codes));
     settings->dirty = s_dirty;
     settings->draft_readiness = calculate_readiness(
-        &s_ridge_draft, &s_prescription_draft, false);
+        &s_ridge_draft, &s_prescription_draft, s_product_draft, false);
     settings->saved_readiness = s_saved_readiness;
     settings->saved_revision = s_saved_revision;
     settings->applied_revision = s_applied_revision;
@@ -812,6 +855,38 @@ esp_err_t dajilog_product_settings_stage_prescription(
     return ESP_OK;
 }
 
+/** @brief Stage a validated prescription and its selected catalog identities together. */
+esp_err_t dajilog_product_settings_stage_prescription_products(
+    const dajilog_prescription_settings_t *settings,
+    const char codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY])
+{
+    if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
+    if (settings == NULL || codes == NULL) return ESP_ERR_INVALID_ARG;
+    esp_err_t error = dajilog_table_validate(
+        PRESCRIPTION_TABLE_ID, settings, sizeof(*settings));
+    if (error != ESP_OK) return error;
+    for (size_t i = 0; i < DAJILOG_SETTING_ZONE_COUNT; ++i) {
+        if (memchr(codes[i], '\0', DAJILOG_PRODUCT_ID_CAPACITY) == NULL)
+            return ESP_ERR_INVALID_ARG;
+        const dajilog_product_entry_t *product = dajilog_product_catalog_find(codes[i]);
+        if (codes[i][0] != '\0' && product == NULL) return ESP_ERR_NOT_FOUND;
+        if (settings->input_mode == DAJILOG_PRESCRIPTION_BY_NITROGEN && product != NULL) {
+            const float actual = i == DAJILOG_SETTING_ZONE_SURFACE
+                ? settings->surface_fertilizer_nitrogen_pct
+                : settings->subsurface_fertilizer_nitrogen_pct;
+            if (fabsf(actual - product->nitrogen_percent) > 0.001f)
+                return ESP_ERR_INVALID_ARG;
+        }
+    }
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    s_prescription_draft = *settings;
+    memcpy(s_product_draft, codes, sizeof(s_product_draft));
+    s_dirty = true;
+    ++s_draft_generation;
+    xSemaphoreGive(s_lock);
+    return ESP_OK;
+}
+
 /** @brief Persist Saved inputs while retaining the independent Applied snapshot. */
 esp_err_t dajilog_product_settings_save(void)
 {
@@ -824,6 +899,8 @@ esp_err_t dajilog_product_settings_save(void)
         s_prescription_draft;
     dajilog_zone_settings_t zones[DAJILOG_SETTING_ZONE_COUNT];
     memcpy(zones, s_zone_draft, sizeof(zones));
+    char product_codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
+    memcpy(product_codes, s_product_draft, sizeof(product_codes));
     const dajilog_ridge_settings_t applied_ridge = s_applied_ridge;
     const dajilog_prescription_settings_t applied_prescription = s_applied_prescription;
     dajilog_zone_settings_t applied_zones[DAJILOG_SETTING_ZONE_COUNT];
@@ -839,7 +916,7 @@ esp_err_t dajilog_product_settings_save(void)
             PRESCRIPTION_TABLE_ID, &prescription, sizeof(prescription));
     }
     const dajilog_setting_readiness_t readiness =
-        calculate_readiness(&ridge, &prescription, false);
+        calculate_readiness(&ridge, &prescription, product_codes, false);
     xSemaphoreTake(s_lock, portMAX_DELAY);
     const uint32_t current_revision = s_saved_revision;
     xSemaphoreGive(s_lock);
@@ -861,7 +938,7 @@ esp_err_t dajilog_product_settings_save(void)
         }
     }
     if (error == ESP_OK) {
-        const product_settings_record_t record = {
+        product_settings_record_t record = {
             .ridge = ridge,
             .prescription = prescription,
             .zones = {zones[0], zones[1]},
@@ -871,7 +948,10 @@ esp_err_t dajilog_product_settings_save(void)
             .saved_readiness = readiness,
             .saved_revision = next_revision,
             .applied_revision = applied_revision,
+            .selected_product_codes = {{0}},
         };
+        memcpy(record.selected_product_codes, product_codes,
+               sizeof(product_codes));
         error = dajilog_setting_storage_nvs_save(
             &s_storage, PRODUCT_STORAGE_KEY,
             PRODUCT_STORAGE_SCHEMA_VERSION, &record, sizeof(record));
@@ -891,6 +971,7 @@ esp_err_t dajilog_product_settings_save(void)
         s_dirty = s_draft_generation != draft_generation;
         s_saved_readiness = readiness;
         memcpy(s_zone_saved, zones, sizeof(s_zone_saved));
+        memcpy(s_product_saved, product_codes, sizeof(s_product_saved));
         s_saved_revision = next_revision;
         xSemaphoreGive(s_lock);
     }
@@ -960,6 +1041,7 @@ esp_err_t dajilog_product_settings_discard(void)
         s_ridge_draft = ridge;
         s_prescription_draft = prescription;
         memcpy(s_zone_draft, s_zone_saved, sizeof(s_zone_draft));
+        memcpy(s_product_draft, s_product_saved, sizeof(s_product_draft));
         s_dirty = false;
         xSemaphoreGive(s_lock);
     }

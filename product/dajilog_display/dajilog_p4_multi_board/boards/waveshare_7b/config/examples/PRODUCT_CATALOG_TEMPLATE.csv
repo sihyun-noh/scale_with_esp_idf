@@ -1,0 +1,3 @@
+schema_version,product_code,product_name,nitrogen_percent,enabled
+1,P001,비료_A_실측확인필요,21.0,1
+1,P002,비료_B_실측확인필요,18.0,1

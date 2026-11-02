@@ -102,6 +102,24 @@ esp_err_t dajilog_system_core_stage_prescription_settings(
                : ESP_ERR_NOT_SUPPORTED;
 }
 
+esp_err_t dajilog_system_core_stage_prescription_products(
+    const dajilog_prescription_settings_t *settings,
+    const char codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY])
+{
+    return s_registered && s_implementation.stage_prescription_products != NULL
+               ? s_implementation.stage_prescription_products(
+                     settings, codes, s_implementation.context)
+               : ESP_ERR_NOT_SUPPORTED;
+}
+
+esp_err_t dajilog_system_core_get_product_catalog(dajilog_product_catalog_t *catalog)
+{
+    return s_registered && s_implementation.get_product_catalog != NULL
+               ? s_implementation.get_product_catalog(catalog,
+                                                      s_implementation.context)
+               : ESP_ERR_NOT_SUPPORTED;
+}
+
 esp_err_t dajilog_system_core_stage_zone_settings(
     dajilog_setting_zone_id_t zone, const dajilog_zone_settings_t *settings)
 {

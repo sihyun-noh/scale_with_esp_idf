@@ -36,6 +36,10 @@ esp_err_t dajilog_product_settings_stage_ridge(
  */
 esp_err_t dajilog_product_settings_stage_prescription(
     const dajilog_prescription_settings_t *settings);
+/** @brief Atomically stage a prescription and two stable product codes in RAM. */
+esp_err_t dajilog_product_settings_stage_prescription_products(
+    const dajilog_prescription_settings_t *settings,
+    const char codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY]);
 /** @brief Stage one validated 7B setting zone in RAM. */
 esp_err_t dajilog_product_settings_stage_zone(
     dajilog_setting_zone_id_t zone, const dajilog_zone_settings_t *settings);

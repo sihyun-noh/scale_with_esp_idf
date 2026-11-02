@@ -33,13 +33,14 @@ menu "DAJILOG Configuration"
     endmenu
 
     menu "Diagnostics"
-        config DAJILOG_CALIBRATION_SAMPLE_TEST
-            bool "Show synthetic calibration candidates (UI test only)"
-            default n
+        config DAJILOG_CALIBRATION_CSV_BUILTIN
+            bool "Load built-in product calibration CSV for inspection"
+            default y
             help
-                Register four unapproved synthetic calibration summaries for
-                testing the selection screen. This does not enable automatic
-                motor voltage calculation, settings confirmation, or CAN output.
+                Compile config/calibration/PRODUCT_CALIBRATION.csv into the
+                firmware and make its full point rows visible to the 7B UI.
+                The CSV data is unverified and cannot enable automatic motor
+                voltage calculation, settings confirmation, or CAN output.
 
         config DAJILOG_SETTINGS_DEBUG_LOG
             bool "Print settings values in debug logs"

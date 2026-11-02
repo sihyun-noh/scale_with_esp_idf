@@ -1,10 +1,11 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[waveshare_7b_nongjinwon.eez-project]:/userPages/1",
-    "selectedFontObject": "[waveshare_7b_nongjinwon.eez-project]:/fonts/2",
+    "selectedUserPageObject": "[waveshare_7b_nongjinwon.eez-project]:/userPages/0",
+    "selectedGlobalVariableObject": "[waveshare_7b_nongjinwon.eez-project]:/variables/globalVariables/1",
+    "selectedFontObject": "[waveshare_7b_nongjinwon.eez-project]:/fonts/1",
     "selectedBitmapObject": "[waveshare_7b_nongjinwon.eez-project]:/bitmaps/1",
     "subnavigationSelectedItems": {
-      "variables-tab/sub-navigation/selected-item": "Actions"
+      "variables-tab/sub-navigation/selected-item": "Global"
     }
   },
   "layoutModel": {
@@ -81,7 +82,6 @@
           },
           {
             "type": "border",
-            "selected": 0,
             "location": "bottom",
             "children": [
               {
@@ -205,12 +205,23 @@
               "children": [
                 {
                   "type": "tab",
-                  "id": "#1a91607d-63ac-4344-bc59-dfec905b203f",
-                  "name": "Dashboard",
+                  "id": "#51449b8c-5257-41bd-9518-28b6795fd040",
+                  "name": "SystemSetting",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[waveshare_7b_nongjinwon.eez-project]:/userPages/1",
+                    "objectPath": "[waveshare_7b_nongjinwon.eez-project]:/userPages/10",
                     "permanent": false
+                  },
+                  "icon": "svg:page"
+                },
+                {
+                  "type": "tab",
+                  "id": "#1a91607d-63ac-4344-bc59-dfec905b203f",
+                  "name": "DriverDetail",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[waveshare_7b_nongjinwon.eez-project]:/userPages/2",
+                    "permanent": true
                   },
                   "icon": "svg:page"
                 },
@@ -477,17 +488,29 @@
             {
               "type": "tabset",
               "id": "RUNTIME-EDITORS",
-              "weight": 1,
-              "selected": -1,
+              "weight": 0.7019946412622804,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
-              "children": []
+              "children": [
+                {
+                  "type": "tab",
+                  "id": "#3b32050e-9255-40d3-8681-4d6d59211977",
+                  "name": "StartupAnimation",
+                  "component": "editor",
+                  "config": {
+                    "objectPath": "[waveshare_7b_nongjinwon.eez-project]:/userPages/0",
+                    "permanent": false
+                  },
+                  "icon": "svg:page"
+                }
+              ],
+              "active": true
             },
             {
               "type": "row",
               "id": "#1318bc81-e96a-4797-b0ab-6e0e99f7ecef",
-              "weight": 0,
-              "width": 320,
+              "weight": 0.29800535873771955,
+              "width": 1001,
               "children": [
                 {
                   "type": "tabset",
@@ -1092,9 +1115,9 @@
       "transform": {
         "translate": {
           "x": -512,
-          "y": 20.51251222658192
+          "y": -487.098932918508
         },
-        "scale": 1.5
+        "scale": 2
       },
       "timeline": {
         "isEditorActive": false,
@@ -1108,22 +1131,30 @@
       "selectionBack": {
         "0": {
           "2": {},
-          "7": {
-            "0": {}
+          "8": {},
+          "14": {},
+          "16": {},
+          "17": {},
+          "23": {
+            "$selected": true
           },
-          "9": {},
-          "24": {},
+          "36": {},
           "37": {},
+          "78": {},
           "79": {},
+          "80": {},
+          "81": {},
+          "82": {},
           "83": {}
         },
         "1": {},
-        "2": {}
+        "8": {},
+        "9": {}
       },
       "transform": {
         "translate": {
-          "x": -747.9242213157642,
-          "y": -356.9308849052596
+          "x": -1025.4746704101562,
+          "y": -260.36771912450473
         },
         "scale": 1.5
       },
@@ -1140,6 +1171,7 @@
         "0": {
           "1": {},
           "2": {},
+          "3": {},
           "4": {},
           "5": {},
           "6": {},
@@ -1147,15 +1179,17 @@
           "10": {},
           "12": {},
           "13": {},
-          "14": {}
-        }
+          "14": {},
+          "21": {}
+        },
+        "10": {}
       },
       "transform": {
         "translate": {
-          "x": -1236.801563374153,
-          "y": -732.6103659891228
+          "x": -727.7448012045113,
+          "y": -483.1110909160525
         },
-        "scale": 2.5
+        "scale": 2
       },
       "timeline": {
         "isEditorActive": false,
@@ -1172,15 +1206,19 @@
           "3": {},
           "5": {},
           "7": {},
-          "8": {}
-        }
+          "8": {},
+          "50": {
+            "$selected": true
+          }
+        },
+        "2": {}
       },
       "transform": {
         "translate": {
-          "x": -1180.1504709439178,
-          "y": -214.78525635435113
+          "x": -744.957413999407,
+          "y": -321.63062322838323
         },
-        "scale": 2.5
+        "scale": 1.1
       },
       "timeline": {
         "isEditorActive": false,
@@ -1191,13 +1229,17 @@
     },
     "[waveshare_7b_nongjinwon.eez-project]:/userPages/4[flow-state]": {
       "selectionFront": {},
-      "selectionBack": {},
+      "selectionBack": {
+        "0": {
+          "2": {}
+        }
+      },
       "transform": {
         "translate": {
-          "x": -512,
-          "y": -300
+          "x": -415.85934109157984,
+          "y": -498.6146577760684
         },
-        "scale": 2.5
+        "scale": 1
       },
       "timeline": {
         "isEditorActive": false,
@@ -1208,13 +1250,15 @@
     },
     "[waveshare_7b_nongjinwon.eez-project]:/userPages/5[flow-state]": {
       "selectionFront": {},
-      "selectionBack": {},
+      "selectionBack": {
+        "0": {}
+      },
       "transform": {
         "translate": {
           "x": -512,
           "y": -300
         },
-        "scale": 2.5
+        "scale": 1.1
       },
       "timeline": {
         "isEditorActive": false,
@@ -1231,7 +1275,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1.5
+        "scale": 1
       },
       "timeline": {
         "isEditorActive": false,
@@ -1242,6 +1286,64 @@
     },
     "[waveshare_7b_nongjinwon.eez-project]:/userPages/7[flow-state]": {
       "selectionFront": {},
+      "selectionBack": {
+        "0": {}
+      },
+      "transform": {
+        "translate": {
+          "x": -512,
+          "y": -300
+        },
+        "scale": 1.1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[waveshare_7b_nongjinwon.eez-project]:/userPages/8[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "2": {},
+          "5": {}
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -958.6967926025388,
+          "y": -717.9366149902341
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[waveshare_7b_nongjinwon.eez-project]:/userPages/9[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {},
+      "transform": {
+        "translate": {
+          "x": -512,
+          "y": -300
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[waveshare_7b_nongjinwon.eez-project]:/userPages/13[flow-state]": {
+      "selectionFront": {},
       "selectionBack": {},
       "transform": {
         "translate": {
@@ -1257,7 +1359,42 @@
         "scrollLeft": 0
       }
     },
-    "[waveshare_7b_nongjinwon.eez-project]:/userPages/8[flow-state]": {
+    "[waveshare_7b_nongjinwon.eez-project]:/userPages/10[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "1": {
+            "0": {}
+          },
+          "3": {},
+          "12": {},
+          "13": {},
+          "18": {
+            "$selected": true
+          },
+          "20": {
+            "$selected": true
+          },
+          "21": {},
+          "27": {},
+          "28": {}
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -646.3228869200627,
+          "y": -880.984447647396
+        },
+        "scale": 2
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[waveshare_7b_nongjinwon.eez-project]:/userPages/12[flow-state]": {
       "selectionFront": {},
       "selectionBack": {},
       "transform": {
@@ -1265,7 +1402,117 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1.25
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[waveshare_7b_nongjinwon.eez-project]:/userPages/14[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {},
+      "transform": {
+        "translate": {
+          "x": -512,
+          "y": -300
+        },
+        "scale": 1.5
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[waveshare_7b_nongjinwon.eez-project]:/userPages/15[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {},
+      "transform": {
+        "translate": {
+          "x": -512,
+          "y": -300
+        },
+        "scale": 1.1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[waveshare_7b_nongjinwon.eez-project]:/userPages/16[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {},
+      "transform": {
+        "translate": {
+          "x": -512,
+          "y": -300
+        },
+        "scale": 1.1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[waveshare_7b_nongjinwon.eez-project]:/userPages/11[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "9": {
+            "0": {}
+          },
+          "11": {
+            "0": {},
+            "2": {},
+            "15": {},
+            "16": {},
+            "17": {},
+            "18": {},
+            "19": {}
+          },
+          "20": {},
+          "21": {
+            "$selected": true
+          }
+        },
+        "26": {},
+        "36": {}
+      },
+      "transform": {
+        "translate": {
+          "x": -591.5292467146379,
+          "y": -341.0550223879923
+        },
+        "scale": 1
+      },
+      "timeline": {
+        "isEditorActive": false,
+        "position": 0,
+        "secondToPx": 200,
+        "scrollLeft": 0
+      }
+    },
+    "[waveshare_7b_nongjinwon.eez-project]:/userPages/17[flow-state]": {
+      "selectionFront": {},
+      "selectionBack": {
+        "0": {
+          "23": {}
+        }
+      },
+      "transform": {
+        "translate": {
+          "x": -512,
+          "y": -300
+        },
+        "scale": 1.1
       },
       "timeline": {
         "isEditorActive": false,
@@ -1290,14 +1537,12 @@
   "lvglPart": "MAIN",
   "lvglState": "DEFAULT",
   "lvglExpandedPropertiesGroup": [
-    "BACKGROUND",
     "LAYOUT",
-    "POSITION AND SIZE",
     "TEXT",
-    "BORDER"
+    "BACKGROUND"
   ],
   "showInactiveFlowsInDebugger": true,
   "globalFlowZoom": true,
-  "flowZoom": 1.5,
+  "flowZoom": 2,
   "implementationLanguage": "C"
 }

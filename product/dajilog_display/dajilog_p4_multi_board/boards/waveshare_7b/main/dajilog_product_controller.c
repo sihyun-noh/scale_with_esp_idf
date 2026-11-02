@@ -1,6 +1,7 @@
 #include "dajilog_system_core.h"
 #include "dajilog_product_controller.h"
 #include "dajilog_product_settings.h"
+#include "dajilog_product_catalog.h"
 #include "dajilog_driver_policy.h"
 
 #include <math.h>
@@ -785,6 +786,24 @@ static esp_err_t product_stage_prescription_settings(
   return dajilog_product_settings_stage_prescription(settings);
 }
 
+/** @brief Stage prescription fields and selected products as one editable change. */
+static esp_err_t product_stage_prescription_products(
+    const dajilog_prescription_settings_t* settings,
+    const char codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY],
+    void* context) {
+  (void)context;
+  if (!s_started || s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active)
+    return ESP_ERR_INVALID_STATE;
+  return dajilog_product_settings_stage_prescription_products(settings, codes);
+}
+
+/** @brief Expose product metadata without granting UI access to storage. */
+static esp_err_t product_get_catalog(dajilog_product_catalog_t* catalog,
+                                     void* context) {
+  (void)context;
+  return dajilog_product_catalog_get(catalog);
+}
+
 /** @brief Stage a 7B zone only while the product is idle. */
 static esp_err_t product_stage_zone_settings(
     dajilog_setting_zone_id_t zone, const dajilog_zone_settings_t* settings,
@@ -821,6 +840,8 @@ esp_err_t dajilog_product_controller_register(void) {
     .get_settings_draft = product_get_settings_draft,
     .stage_ridge_settings = product_stage_ridge_settings,
     .stage_prescription_settings = product_stage_prescription_settings,
+    .stage_prescription_products = product_stage_prescription_products,
+    .get_product_catalog = product_get_catalog,
     .stage_zone_settings = product_stage_zone_settings,
     .get_settings_applied = product_get_settings_applied,
     .get_ridge_profiles = product_get_ridge_profiles,

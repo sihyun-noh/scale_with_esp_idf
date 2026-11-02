@@ -15,6 +15,20 @@ extern "C" {
 #define DAJILOG_PRODUCT_ID_CAPACITY 40U
 #define DAJILOG_LOT_ID_CAPACITY 32U
 #define DAJILOG_RIDGE_PROFILE_LIMIT 8U
+#define DAJILOG_PRODUCT_CATALOG_LIMIT 8U
+#define DAJILOG_PRODUCT_NAME_CAPACITY 64U
+
+typedef struct {
+    char code[DAJILOG_PRODUCT_ID_CAPACITY];
+    char name[DAJILOG_PRODUCT_NAME_CAPACITY];
+    float nitrogen_percent;
+    bool enabled;
+} dajilog_product_entry_t;
+
+typedef struct {
+    uint32_t count;
+    dajilog_product_entry_t products[DAJILOG_PRODUCT_CATALOG_LIMIT];
+} dajilog_product_catalog_t;
 
 typedef enum {
     DAJILOG_SETTING_ZONE_SURFACE = 0,
@@ -122,6 +136,7 @@ typedef struct {
 typedef struct {
     dajilog_ridge_settings_t ridge;
     dajilog_prescription_settings_t prescription;
+    char selected_product_codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
     dajilog_zone_settings_t zones[DAJILOG_SETTING_ZONE_COUNT];
     uint32_t ridge_revision;
     uint32_t prescription_revision;

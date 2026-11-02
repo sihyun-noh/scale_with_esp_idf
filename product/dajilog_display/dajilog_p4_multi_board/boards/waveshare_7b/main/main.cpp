@@ -14,8 +14,8 @@
 extern "C" void app_main(void)
 {
     ESP_ERROR_CHECK(dajilog_calibration_catalog_init());
-#ifdef CONFIG_DAJILOG_CALIBRATION_SAMPLE_TEST
-    ESP_ERROR_CHECK(dajilog_calibration_catalog_load_test_samples());
+#ifdef CONFIG_DAJILOG_CALIBRATION_CSV_BUILTIN
+    ESP_ERROR_CHECK(dajilog_calibration_catalog_load_builtin_csv());
 #endif
     ESP_ERROR_CHECK(dajilog_product_controller_register());
     ESP_ERROR_CHECK(dajilog_motor_control_register());

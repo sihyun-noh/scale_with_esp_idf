@@ -38,6 +38,12 @@ typedef struct {
         const dajilog_ridge_settings_t *settings, void *context);
     esp_err_t (*stage_prescription_settings)(
         const dajilog_prescription_settings_t *settings, void *context);
+    esp_err_t (*stage_prescription_products)(
+        const dajilog_prescription_settings_t *settings,
+        const char codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY],
+        void *context);
+    esp_err_t (*get_product_catalog)(dajilog_product_catalog_t *catalog,
+                                     void *context);
     esp_err_t (*stage_zone_settings)(
         dajilog_setting_zone_id_t zone,
         const dajilog_zone_settings_t *settings, void *context);
@@ -75,6 +81,12 @@ esp_err_t dajilog_system_core_stage_ridge_settings(
 /** @brief Forward prescription input to the product settings service. */
 esp_err_t dajilog_system_core_stage_prescription_settings(
     const dajilog_prescription_settings_t *settings);
+/** @brief Stage prescription values with stable product identities. */
+esp_err_t dajilog_system_core_stage_prescription_products(
+    const dajilog_prescription_settings_t *settings,
+    const char codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY]);
+/** @brief Copy the build-time product catalog for UI option rendering. */
+esp_err_t dajilog_system_core_get_product_catalog(dajilog_product_catalog_t *catalog);
 /** @brief Stage one product zone without changing Saved or Applied. */
 esp_err_t dajilog_system_core_stage_zone_settings(
     dajilog_setting_zone_id_t zone, const dajilog_zone_settings_t *settings);
