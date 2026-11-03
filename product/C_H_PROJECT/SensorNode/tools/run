@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -eu
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+if [ -n "${IDF_PYTHON_ENV_PATH:-}" ] && [ -x "$IDF_PYTHON_ENV_PATH/bin/python" ]; then
+    PYTHON_BIN="$IDF_PYTHON_ENV_PATH/bin/python"
+elif [ -x "$HOME/.espressif/python_env/idf5.3_py3.9_env/bin/python" ]; then
+    PYTHON_BIN="$HOME/.espressif/python_env/idf5.3_py3.9_env/bin/python"
+else
+    PYTHON_BIN="python3"
+fi
+
+exec "$PYTHON_BIN" "$SCRIPT_DIR/fsm_heap_monitor.py" "$@"

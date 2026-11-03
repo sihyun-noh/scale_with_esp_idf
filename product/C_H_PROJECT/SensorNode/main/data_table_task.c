@@ -389,7 +389,7 @@ void dt_1min_smp_task(void* pvParameters) {
     /* serialize data-table and output in json format every 5-minutes (i.e. 12:00:00, 12:05:00, 12:10:00, etc.) */
     if (time_into_interval(dt_1min_tii_5min_hdl)) {
       // create root object for data-table
-      cJSON* dt_1min_json = cJSON_CreateObject();
+      cJSON* dt_1min_json = NULL;
 
       // convert the data-table to json object
       datatable_to_json(dt_1min_hdl, &dt_1min_json);

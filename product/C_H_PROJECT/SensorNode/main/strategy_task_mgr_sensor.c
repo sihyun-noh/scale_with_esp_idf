@@ -9,6 +9,9 @@
 #include "freertos/projdefs.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+#include "esp_heap_caps.h"
+#endif
 #include "esp_log.h"
 #include "cJSON.h"
 
@@ -286,43 +289,14 @@ static void handle_teros_series(void* param) {
 
 #endif
     // 데이터 처리 (평균, 필터링 등)
+    // 레거시의 분 경계 강제 대기는 SMP 샘플 교체 시 메모리를 안전하게 처리하도록 수정하여 제거했다.
     datatable_process_samples(dt[array_num].handle);
     ESP_LOGI(TAG, "[%s] Processed samples in data table", sensor_type);
-
-    // NOTE: 무조건 samples 데이터 처리해야 동작해. 아님. free 중복으로 에러남
-    // 1분마다 samples 처리하도록 설정이 되어있음 data_table config에
-    // 지금은 내부 internal time과 동기화가 되어 있지 않아서 수동으로 맞춰야 함.
-    //
-
-    /**
-     * @brief Enforces periodic processing of sample data to prevent memory errors.
-     *
-     * Sample data must be consumed and cleared regularly; otherwise, duplicate `free()`
-     * or memory corruption issues may occur. According to the data_table configuration,
-     * samples are expected to be processed every 1 minute.
-     *
-     * Currently, this timing is not automatically synchronized with the internal time system,
-     * so manual alignment is required to ensure sample processing occurs at the correct interval.
-     *
-     * Notes:
-     * - Sample lifecycle must be managed carefully to avoid double-free or memory leaks.
-     * - Timing should match the data_table's configuration (typically 60-second interval).
-     * - Internal clock synchronization is planned but not implemented.
-     */
-
-    int retry_count = 0;
-    while (dt[array_num].handle->sampling_count >= 3) {
-      datatable_process_samples(dt[array_num].handle);
-      // ESP_LOGI(TAG, "[%s] Processed samples in data table... count %d ", sensor_type, retry_count);
-      retry_count += 1;
-      vTaskDelay(pdMS_TO_TICKS(200));
-      // vTaskDelay(pdMS_TO_TICKS(50));
-    }
 
     /* serialize data-table and output in json format every 5-minutes (i.e. 12:00:00, 12:05:00, 12:10:00, etc.) */
     if (time_into_interval(dt[array_num].publish_interval.handle)) {
       // create root object for data-table
-      cJSON* dt_json = cJSON_CreateObject();
+      cJSON* dt_json = NULL;
 
       // convert the data-table to json object
       datatable_to_json(dt[array_num].handle, &dt_json);
@@ -490,41 +464,12 @@ static void handle_atmos_series(void* param) {
     datatable_process_samples(dt[array_num].handle);
     ESP_LOGI(TAG, "[%s] Processed samples in data table", sensor_type);
 
-    // NOTE: 무조건 samples 데이터 처리해야 동작해. 아님. free 중복으로 에러남
-    // 1분마다 samples 처리하도록 설정이 되어있음 data_table config에
-    // 지금은 내부 internal time과 동기화가 되어 있지 않아서 수동으로 맞춰야 함.
-
-    /**
-     * @brief Enforces periodic processing of sample data to prevent memory errors.
-     *
-     * Sample data must be consumed and cleared regularly; otherwise, duplicate `free()`
-     * or memory corruption issues may occur. According to the data_table configuration,
-     * samples are expected to be processed every 1 minute.
-     *
-     * Currently, this timing is not automatically synchronized with the internal time system,
-     * so manual alignment is required to ensure sample processing occurs at the correct interval.
-     *
-     * Notes:
-     * - Sample lifecycle must be managed carefully to avoid double-free or memory leaks.
-     * - Timing should match the data_table's configuration (typically 60-second interval).
-     * - Internal clock synchronization is planned but not implemented.
-     */
-
-    int retry_count = 0;
-    while (dt[array_num].handle->sampling_count >= 3) {
-      datatable_process_samples(dt[array_num].handle);
-      // ESP_LOGI(TAG, "[%s] Processed samples in data table... count %d ", sensor_type, retry_count);
-      retry_count += 1;
-      vTaskDelay(pdMS_TO_TICKS(200));
-      // vTaskDelay(pdMS_TO_TICKS(50));
-    }
-
   next:
     /* serialize data-table and output in json format every 5-minutes (i.e. 12:00:00,
      * 12:05:00, 12:10:00, etc.) */
     if (time_into_interval(dt[array_num].publish_interval.handle)) {
       // create root object for data-table
-      cJSON* dt_json = cJSON_CreateObject();
+      cJSON* dt_json = NULL;
 
       // convert the data-table to json object
 
@@ -635,41 +580,11 @@ static void handle_hydros_series(void* param) {
     datatable_process_samples(dt[array_num].handle);
     ESP_LOGI(TAG, "[%s] Processed samples in data table", sensor_type);
 
-    // NOTE: 무조건 samples 데이터 처리해야 동작해. 아님. free 중복으로 에러남
-    // 1분마다 samples 처리하도록 설정이 되어있음 data_table config에
-    // 지금은 내부 internal time과 동기화가 되어 있지 않아서 수동으로 맞춰야 함.
-    //
-
-    /**
-     * @brief Enforces periodic processing of sample data to prevent memory errors.
-     *
-     * Sample data must be consumed and cleared regularly; otherwise, duplicate `free()`
-     * or memory corruption issues may occur. According to the data_table configuration,
-     * samples are expected to be processed every 1 minute.
-     *
-     * Currently, this timing is not automatically synchronized with the internal time system,
-     * so manual alignment is required to ensure sample processing occurs at the correct interval.
-     *
-     * Notes:
-     * - Sample lifecycle must be managed carefully to avoid double-free or memory leaks.
-     * - Timing should match the data_table's configuration (typically 60-second interval).
-     * - Internal clock synchronization is planned but not implemented.
-     */
-
-    int retry_count = 0;
-    while (dt[array_num].handle->sampling_count >= 3) {
-      datatable_process_samples(dt[array_num].handle);
-      // ESP_LOGI(TAG, "[%s] Processed samples in data table... count %d ", sensor_type, retry_count);
-      retry_count += 1;
-      vTaskDelay(pdMS_TO_TICKS(200));
-      // vTaskDelay(pdMS_TO_TICKS(50));
-    }
-
   next:
     /* serialize data-table and output in json format every 5-minutes (i.e. 12:00:00, 12:05:00, 12:10:00, etc.) */
     if (time_into_interval(dt[array_num].publish_interval.handle)) {
       // create root object for data-table
-      cJSON* dt_json = cJSON_CreateObject();
+      cJSON* dt_json = NULL;
 
       // convert the data-table to json object
       datatable_to_json(dt[array_num].handle, &dt_json);
@@ -782,25 +697,12 @@ static void handle_apogee_series(void* param) {
     datatable_process_samples(dt[array_num].handle);
     ESP_LOGI(TAG, "[%s] Processed samples in data table", sensor_type);
 
-    // NOTE: 무조건 samples 데이터 처리해야 동작해. 아님. free 중복으로 에러남
-    // 1분마다 samples 처리하도록 설정이 되어있음 data_table config에
-    // 지금은 내부 internal time과 동기화가 되어 있지 않아서 수동으로 맞춰야 함.
-
-    int retry_count = 0;
-    while (dt[array_num].handle->sampling_count >= 3) {
-      datatable_process_samples(dt[array_num].handle);
-      // ESP_LOGI(TAG, "[%s] Processed samples in data table... count %d ", sensor_type, retry_count);
-      retry_count += 1;
-      vTaskDelay(pdMS_TO_TICKS(200));
-      // vTaskDelay(pdMS_TO_TICKS(50));
-    }
-
   next:
     /* serialize data-table and output in json format every 5-minutes (i.e. 12:00:00,
      * 12:05:00, 12:10:00, etc.) */
     if (time_into_interval(dt[array_num].publish_interval.handle)) {
       // create root object for data-table
-      cJSON* dt_json = cJSON_CreateObject();
+      cJSON* dt_json = NULL;
 
       // convert the data-table to json object
 
@@ -1191,10 +1093,34 @@ typedef struct {
   trigger_state_t state;
 } trigger_fsm_t;
 
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+typedef struct {
+  multi_heap_info_t heap_8bit;
+  size_t internal_free;
+  size_t internal_largest;
+} fsm_heap_snapshot_t;
+
+static void fsm_heap_capture(fsm_heap_snapshot_t* snapshot) {
+  heap_caps_get_info(&snapshot->heap_8bit, MALLOC_CAP_8BIT);
+  snapshot->internal_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+  snapshot->internal_largest = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+}
+
+static int64_t fsm_heap_delta(size_t after, size_t before) {
+  return (int64_t)after - (int64_t)before;
+}
+#endif
+
 static void fsm_task_loop(void* pvParameters) {
 
   uint8_t time_out_count = 0;
   TickType_t task_start_time = 0;
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+  fsm_heap_snapshot_t task_heap_before = { 0 };
+  fsm_heap_snapshot_t previous_cycle_heap = { 0 };
+  bool previous_cycle_heap_valid = false;
+  uint32_t heap_trace_cycle = 0;
+#endif
   trigger_fsm_t fsm = { 
     .current_index = 0, 
     .last_trigger_time = xTaskGetTickCount(), 
@@ -1225,6 +1151,9 @@ static void fsm_task_loop(void* pvParameters) {
         if (fsm.current_index < task_count) {
           sensor_task_t* task = &sensor_tasks[fsm.current_index];
 
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+          fsm_heap_capture(&task_heap_before);
+#endif
           xEventGroupClearBits(done_group, TASK_DONE_BIT);
           task_start_time = xTaskGetTickCount();
           xEventGroupSetBits(task->trigger_group, task->bit);
@@ -1245,6 +1174,27 @@ static void fsm_task_loop(void* pvParameters) {
 
         TickType_t task_end_time = xTaskGetTickCount();
         TickType_t duration_ms = (task_end_time - task_start_time) * portTICK_PERIOD_MS;
+
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+        fsm_heap_snapshot_t task_heap_after = { 0 };
+        fsm_heap_capture(&task_heap_after);
+        ESP_LOGW(TAG,
+                 "[FSM][HEAP][TASK] name=%s result=%s duration=%lu "
+                 "free8=%u delta8=%lld internal=%u delta_internal=%lld "
+                 "largest8=%u largest_internal=%u min8=%u blocks=%u delta_blocks=%lld",
+                 task->task_name, (bits & TASK_DONE_BIT) ? "done" : "timeout", (unsigned long)duration_ms,
+                 (unsigned int)task_heap_after.heap_8bit.total_free_bytes,
+                 (long long)fsm_heap_delta(task_heap_after.heap_8bit.total_free_bytes,
+                                           task_heap_before.heap_8bit.total_free_bytes),
+                 (unsigned int)task_heap_after.internal_free,
+                 (long long)fsm_heap_delta(task_heap_after.internal_free, task_heap_before.internal_free),
+                 (unsigned int)task_heap_after.heap_8bit.largest_free_block,
+                 (unsigned int)task_heap_after.internal_largest,
+                 (unsigned int)task_heap_after.heap_8bit.minimum_free_bytes,
+                 (unsigned int)task_heap_after.heap_8bit.allocated_blocks,
+                 (long long)fsm_heap_delta(task_heap_after.heap_8bit.allocated_blocks,
+                                           task_heap_before.heap_8bit.allocated_blocks));
+#endif
 
         if (bits & TASK_DONE_BIT) {
           ESP_LOGW(TAG, "[FSM] Task %s completed in %lu ms", task->task_name, (unsigned long)duration_ms);
@@ -1269,6 +1219,43 @@ static void fsm_task_loop(void* pvParameters) {
       }
 
       case TRIGGER_STATE_DONE:
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+        {
+          fsm_heap_snapshot_t cycle_heap = { 0 };
+          fsm_heap_capture(&cycle_heap);
+          heap_trace_cycle++;
+
+          if (previous_cycle_heap_valid) {
+            ESP_LOGW(TAG,
+                     "[FSM][HEAP][CYCLE] cycle=%lu free8=%u delta8=%lld internal=%u delta_internal=%lld "
+                     "largest8=%u largest_internal=%u min8=%u blocks=%u delta_blocks=%lld",
+                     (unsigned long)heap_trace_cycle, (unsigned int)cycle_heap.heap_8bit.total_free_bytes,
+                     (long long)fsm_heap_delta(cycle_heap.heap_8bit.total_free_bytes,
+                                               previous_cycle_heap.heap_8bit.total_free_bytes),
+                     (unsigned int)cycle_heap.internal_free,
+                     (long long)fsm_heap_delta(cycle_heap.internal_free, previous_cycle_heap.internal_free),
+                     (unsigned int)cycle_heap.heap_8bit.largest_free_block,
+                     (unsigned int)cycle_heap.internal_largest,
+                     (unsigned int)cycle_heap.heap_8bit.minimum_free_bytes,
+                     (unsigned int)cycle_heap.heap_8bit.allocated_blocks,
+                     (long long)fsm_heap_delta(cycle_heap.heap_8bit.allocated_blocks,
+                                               previous_cycle_heap.heap_8bit.allocated_blocks));
+          } else {
+            ESP_LOGW(TAG,
+                     "[FSM][HEAP][CYCLE] cycle=%lu baseline free8=%u internal=%u largest8=%u "
+                     "largest_internal=%u min8=%u blocks=%u",
+                     (unsigned long)heap_trace_cycle, (unsigned int)cycle_heap.heap_8bit.total_free_bytes,
+                     (unsigned int)cycle_heap.internal_free,
+                     (unsigned int)cycle_heap.heap_8bit.largest_free_block,
+                     (unsigned int)cycle_heap.internal_largest,
+                     (unsigned int)cycle_heap.heap_8bit.minimum_free_bytes,
+                     (unsigned int)cycle_heap.heap_8bit.allocated_blocks);
+          }
+
+          previous_cycle_heap = cycle_heap;
+          previous_cycle_heap_valid = true;
+        }
+#endif
         // fsm.last_trigger_time = xTaskGetTickCount();
         fsm.state = TRIGGER_STATE_WAIT;
         break;

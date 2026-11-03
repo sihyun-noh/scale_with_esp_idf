@@ -18,6 +18,18 @@ menu "C&H Sensor Node Porduct"
         Enable this option to use a wired Ethernet (LAN) connection for network access.
         If disabled, the device will operate in Wi-Fi mode by default.
 
+  menu "Debug Configuration"
+
+    config SENSOR_HEAP_TRACE
+      bool "Enable sensor FSM and data-table heap tracing"
+      default n
+      help
+        Enable detailed heap diagnostics for the sensor FSM and data-table
+        sample processing paths. This option adds [FSM][HEAP] and [DT][HEAP]
+        warning logs and should normally be disabled in release builds.
+
+  endmenu
+
 menu "Main Server Configuration"
 
 config SERVER_URL

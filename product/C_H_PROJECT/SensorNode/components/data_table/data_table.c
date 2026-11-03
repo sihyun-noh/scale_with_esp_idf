@@ -39,6 +39,9 @@
 #include <esp_log.h>
 #include <esp_check.h>
 #include <esp_timer.h>
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+#include <esp_heap_caps.h>
+#endif
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 #include <freertos/semphr.h>
@@ -57,6 +60,45 @@
  * static constant declarations
  */
 static const char *TAG = "data-table";
+
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+typedef struct {
+  multi_heap_info_t heap_8bit;
+  size_t internal_free;
+  size_t internal_largest;
+} datatable_heap_snapshot_t;
+
+static inline void datatable_heap_capture(datatable_heap_snapshot_t *snapshot) {
+  heap_caps_get_info(&snapshot->heap_8bit, MALLOC_CAP_8BIT);
+  snapshot->internal_free = heap_caps_get_free_size(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+  snapshot->internal_largest = heap_caps_get_largest_free_block(MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+}
+
+static inline int64_t datatable_heap_delta(size_t after, size_t before) {
+  return (int64_t)after - (int64_t)before;
+}
+
+static void datatable_heap_log(datatable_handle_t datatable_handle, const char *phase,
+                               const datatable_heap_snapshot_t *before,
+                               const datatable_heap_snapshot_t *after) {
+  ESP_LOGW(TAG,
+           "[DT][HEAP] table=%s phase=%s rows=%u/%u samples=%u/%u "
+           "free8=%u delta8=%lld internal=%u delta_internal=%lld "
+           "largest8=%u largest_internal=%u min8=%u blocks=%u delta_blocks=%lld",
+           datatable_handle->name, phase, (unsigned int)datatable_handle->rows_count,
+           (unsigned int)datatable_handle->rows_size, (unsigned int)datatable_handle->sampling_count,
+           (unsigned int)datatable_handle->samples_maximum_size,
+           (unsigned int)after->heap_8bit.total_free_bytes,
+           (long long)datatable_heap_delta(after->heap_8bit.total_free_bytes,
+                                           before->heap_8bit.total_free_bytes),
+           (unsigned int)after->internal_free,
+           (long long)datatable_heap_delta(after->internal_free, before->internal_free),
+           (unsigned int)after->heap_8bit.largest_free_block, (unsigned int)after->internal_largest,
+           (unsigned int)after->heap_8bit.minimum_free_bytes, (unsigned int)after->heap_8bit.allocated_blocks,
+           (long long)datatable_heap_delta(after->heap_8bit.allocated_blocks,
+                                           before->heap_8bit.allocated_blocks));
+}
+#endif
 
 /**
  * @brief Concatenates the `append` string to the `base` string.
@@ -704,20 +746,28 @@ static inline esp_err_t datatable_reset_data_buffer(datatable_handle_t datatable
       case DATATABLE_COLUMN_DATA_ID: break;
       case DATATABLE_COLUMN_DATA_TS: break;
       case DATATABLE_COLUMN_DATA_VECTOR:
-        if (datatable_handle->buffers[index]->vector_samples[i])
+        if (datatable_handle->buffers[index]->vector_samples[i]) {
           free(datatable_handle->buffers[index]->vector_samples[i]);
+          datatable_handle->buffers[index]->vector_samples[i] = NULL;
+        }
         break;
       case DATATABLE_COLUMN_DATA_BOOL:
-        if (datatable_handle->buffers[index]->bool_samples[i])
+        if (datatable_handle->buffers[index]->bool_samples[i]) {
           free(datatable_handle->buffers[index]->bool_samples[i]);
+          datatable_handle->buffers[index]->bool_samples[i] = NULL;
+        }
         break;
       case DATATABLE_COLUMN_DATA_FLOAT:
-        if (datatable_handle->buffers[index]->float_samples[i])
+        if (datatable_handle->buffers[index]->float_samples[i]) {
           free(datatable_handle->buffers[index]->float_samples[i]);
+          datatable_handle->buffers[index]->float_samples[i] = NULL;
+        }
         break;
       case DATATABLE_COLUMN_DATA_INT16:
-        if (datatable_handle->buffers[index]->int16_samples[i])
+        if (datatable_handle->buffers[index]->int16_samples[i]) {
           free(datatable_handle->buffers[index]->int16_samples[i]);
+          datatable_handle->buffers[index]->int16_samples[i] = NULL;
+        }
         break;
     }
   }
@@ -2506,6 +2556,22 @@ esp_err_t datatable_push_float_sample(datatable_handle_t datatable_handle, const
 
   /* handle column process-type */
   if (datatable_handle->processes[index]->process_type == DATATABLE_COLUMN_PROCESS_SMP) {
+    /*
+     * Legacy sensor handlers repeatedly called datatable_process_samples()
+     * while sampling_count was 3 or greater to force processing at the
+     * 1-minute boundary. This worked around stale SMP samples, memory leaks,
+     * and duplicate free errors, but could block the sensor task long enough
+     * to trigger the FSM timeout.
+     *
+     * SMP samples are now safely replaced, and reset buffers clear freed
+     * pointers. Sensor handlers should process samples once without waiting
+     * for the processing interval.
+     */
+    datatable_float_column_data_type_t **sample = &datatable_handle->buffers[index]->float_samples[0];
+    if (*sample) {
+      free(*sample);
+      *sample = NULL;
+    }
     datatable_handle->processes[index]->samples_count = 1;
     dt_column_data->value_ts = time_into_interval_get_epoch_timestamp();
     dt_column_data->value = value;
@@ -2617,6 +2683,11 @@ esp_err_t datatable_process_samples(datatable_handle_t datatable_handle) {
   /* validate arguments */
   ESP_ARG_CHECK(datatable_handle);
 
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+  datatable_heap_snapshot_t process_before = { 0 };
+  datatable_heap_capture(&process_before);
+#endif
+
   // increment sampling count, TODO - see if this can be sync'd to the sampling task
   datatable_handle->sampling_count += 1;
 
@@ -2638,8 +2709,18 @@ esp_err_t datatable_process_samples(datatable_handle_t datatable_handle) {
     datatable_handle->sampling_count = 0;
   } else if (datatable_handle->sampling_count < datatable_handle->samples_maximum_size) {
     /* insufficient number of data buffer samples at processing interval event, reset column data buffers */
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+    datatable_heap_snapshot_t reset_before = { 0 };
+    datatable_heap_snapshot_t reset_after = { 0 };
+    datatable_heap_capture(&reset_before);
+#endif
     ESP_RETURN_ON_ERROR(datatable_reset_data_buffers(datatable_handle), TAG,
                         "reset column data buffer for data-table process samples failed");
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+    datatable_heap_capture(&reset_after);
+    datatable_heap_log(datatable_handle, "reset_insufficient", &reset_before, &reset_after);
+    datatable_heap_log(datatable_handle, "process_total", &process_before, &reset_after);
+#endif
 
     /* exit the function */
     return ESP_OK;
@@ -2666,11 +2747,21 @@ esp_err_t datatable_process_samples(datatable_handle_t datatable_handle) {
       // ESP_LOGE(TAG, "datatable_process_samples rows_count %d", datatable_handle->rows_count);
 
       switch (datatable_handle->data_storage_type) {
-        case DATATABLE_DATA_STORAGE_MEMORY_RING:
+        case DATATABLE_DATA_STORAGE_MEMORY_RING: {
           // pop first row and push remaining rows to top of stack
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+          datatable_heap_snapshot_t fifo_before = { 0 };
+          datatable_heap_snapshot_t fifo_after = { 0 };
+          datatable_heap_capture(&fifo_before);
+#endif
           ESP_RETURN_ON_ERROR(datatable_fifo_rows(datatable_handle), TAG,
                               "data-table fifo rows for process samples failed");
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+          datatable_heap_capture(&fifo_after);
+          datatable_heap_log(datatable_handle, "fifo_rows", &fifo_before, &fifo_after);
+#endif
           break;
+        }
         case DATATABLE_DATA_STORAGE_MEMORY_RESET:
           // reset data-table by clearing rows
           ESP_RETURN_ON_ERROR(datatable_reset_rows(datatable_handle), TAG,
@@ -2684,6 +2775,12 @@ esp_err_t datatable_process_samples(datatable_handle_t datatable_handle) {
     }
   }
 
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+  datatable_heap_snapshot_t row_header_before = { 0 };
+  datatable_heap_snapshot_t row_header_after = { 0 };
+  datatable_heap_capture(&row_header_before);
+#endif
+
   /* validate memory availability for data-table row */
   datatable_row_t *dt_row = (datatable_row_t *)calloc(1, sizeof(datatable_row_t));
   ESP_RETURN_ON_FALSE(dt_row, ESP_ERR_NO_MEM, TAG,
@@ -2694,6 +2791,12 @@ esp_err_t datatable_process_samples(datatable_handle_t datatable_handle) {
       (datatable_row_data_column_t **)calloc(datatable_handle->columns_size, sizeof(datatable_row_data_column_t *));
   ESP_RETURN_ON_FALSE(dt_row->data_columns, ESP_ERR_NO_MEM, TAG,
                       "no memory for data-table row data columns, data-table handle process samples failed");
+
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+  datatable_heap_capture(&row_header_after);
+  datatable_heap_log(datatable_handle, "row_header", &row_header_before, &row_header_after);
+  datatable_heap_snapshot_t columns_before = row_header_after;
+#endif
 
   /* process data-table row data columns by data-type for each column */
   for (uint8_t i = 0; i < datatable_handle->columns_count; i++) {
@@ -2748,6 +2851,13 @@ esp_err_t datatable_process_samples(datatable_handle_t datatable_handle) {
 
   /* set data-table row */
   datatable_handle->rows[datatable_handle->rows_count - 1] = dt_row;
+
+#ifdef CONFIG_SENSOR_HEAP_TRACE
+  datatable_heap_snapshot_t columns_after = { 0 };
+  datatable_heap_capture(&columns_after);
+  datatable_heap_log(datatable_handle, "columns_reset", &columns_before, &columns_after);
+  datatable_heap_log(datatable_handle, "process_total", &process_before, &columns_after);
+#endif
 
   /* invoke data-logger event */
   datatable_invoke_event(datatable_handle, DATATABLE_EVENT_PROCESS, "samples processed successfully");
