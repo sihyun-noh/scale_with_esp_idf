@@ -41,6 +41,7 @@ typedef enum {
 
 typedef enum {
   STORAGE_SAVE_SETTINGS = 0,
+  STORAGE_SAVE_RIDGE,
   STORAGE_DISCARD_SETTINGS,
   STORAGE_CONFIRM_SETTINGS,
   STORAGE_ADD_RIDGE,
@@ -444,12 +445,15 @@ static void process_command(const core_message_t* message) {
     case DAJILOG_UI_CMD_RIDGE_EDIT:
     case DAJILOG_UI_CMD_RIDGE_SELECT:
     case DAJILOG_UI_CMD_RIDGE_DELETE:
+    case DAJILOG_UI_CMD_RIDGE_SAVE:
       if (s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active) {
         error = ESP_ERR_INVALID_STATE;
         break;
       }
       error = request_ridge_storage(
-          message, message->topic == DAJILOG_UI_CMD_RIDGE_ADD
+          message, message->topic == DAJILOG_UI_CMD_RIDGE_SAVE
+                       ? STORAGE_SAVE_RIDGE :
+                    message->topic == DAJILOG_UI_CMD_RIDGE_ADD
                        ? STORAGE_ADD_RIDGE :
                     message->topic == DAJILOG_UI_CMD_RIDGE_EDIT
                        ? STORAGE_EDIT_RIDGE :
@@ -614,6 +618,9 @@ static void storage_task(void* context) {
     switch (request.operation) {
       case STORAGE_SAVE_SETTINGS:
         error = dajilog_product_settings_save();
+        break;
+      case STORAGE_SAVE_RIDGE:
+        error = dajilog_product_settings_save_ridge_profiles();
         break;
       case STORAGE_CONFIRM_SETTINGS:
         error = dajilog_product_settings_confirm();

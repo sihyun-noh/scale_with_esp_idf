@@ -272,6 +272,7 @@ typedef enum {
     DAJILOG_UI_CMD_RIDGE_SELECT = 0x0702000EU,
     DAJILOG_UI_CMD_RIDGE_DELETE = 0x0702000FU,
     DAJILOG_UI_CMD_RIDGE_EDIT = 0x07020010U,
+    DAJILOG_UI_CMD_RIDGE_SAVE = 0x07020011U,
 } dajilog_ui_command_topic_t;
 
 typedef enum {

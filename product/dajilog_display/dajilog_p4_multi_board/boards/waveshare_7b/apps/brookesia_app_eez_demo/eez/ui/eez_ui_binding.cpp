@@ -20,6 +20,7 @@
 #include "dajilog_system_core.h"
 #include "dajilog_calibration_catalog.h"
 #include "dajilog_ridge_preview.h"
+#include "dajilog_flow_calculator.h"
 #include "dajilog_ui_adaptor.h"
 #include "dajilog_ui_msg.h"
 #include "esp_log.h"
@@ -43,6 +44,7 @@ constexpr size_t MAX_MESSAGES_PER_TICK = 4U;
 const char *TAG = "EezUiBinding7B";
 dajilog_ui_adaptor_t s_adaptor = {};
 bool s_attached = false;
+lv_obj_t *s_previous_setting_screen = nullptr;
 char s_ridge_count_text[32] = {};
 char s_ridge_width_text[32] = {};
 char s_actual_length_text[32] = {};
@@ -81,7 +83,7 @@ int64_t s_apply_deadline = 0;
 int64_t s_run_deadline = 0;
 char s_draft_mode_text[24] = {};
 char s_countdown_text[16] = {};
-char s_setting_text[FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SUBSURFACE_RATIO_PCT_TEXT + 1U][96] = {};
+char s_setting_text[FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_D_TABLE_LOOKUP_STATUS_TEXT + 1U][96] = {};
 char s_calibration_list_text[1024] = {};
 dajilog_product_catalog_t s_product_catalog = {};
 int s_last_product_index[DAJILOG_SETTING_ZONE_COUNT] = {-1, -1};
@@ -343,47 +345,20 @@ struct CalibrationPreview {
     bool in_range[2];
 };
 
-/** @brief [설정 카드 계산] 등록 개수가 아닌 현재 선택 Bxx 하나의 작업폭을 사용한다. */
-double selected_ridge_width_m()
-{
-    dajilog_ridge_profiles_snapshot_t profiles = {};
-    if (dajilog_system_core_get_ridge_profiles(&profiles) != ESP_OK ||
-        profiles.selected_id == 0U) return 0.0;
-    for (uint32_t i = 0; i < profiles.count; ++i) {
-        if (profiles.profiles[i].id != profiles.selected_id) continue;
-        const auto &ridge = profiles.profiles[i].input;
-        double width = ridge.width_m;
-        if (ridge.work_width_mode == DAJILOG_WORK_WIDTH_RIDGE_AND_FURROW)
-            width += ridge.furrow_width_m;
-        if (ridge.work_width_mode != DAJILOG_WORK_WIDTH_RIDGE_ONLY &&
-            ridge.work_width_mode != DAJILOG_WORK_WIDTH_RIDGE_AND_FURROW)
-            return 0.0;
-        return std::isfinite(width) && width > 0.0 ? width : 0.0;
-    }
-    return 0.0;
-}
-
 /** @brief [설정 카드 계산] A/B 또는 C/D 전압 미리보기만 계산하며 모터 명령은 보내지 않는다. */
 CalibrationPreview calculate_calibration_preview(
     const dajilog_product_settings_snapshot_t &settings, size_t zone_index)
 {
     CalibrationPreview preview = {};
-    const auto &zone = settings.zones[zone_index];
-    const double width = selected_ridge_width_m();
-    if (!zone.configured || width <= 0.0 || zone.reference_speed_kmh <= 0.0f ||
-        zone.rate_kg_per_10a <= 0.0f) return preview;
-    preview.total_kg_min = zone.rate_kg_per_10a * width *
-                           zone.reference_speed_kmh / 60.0;
-    if (!std::isfinite(preview.total_kg_min) || preview.total_kg_min <= 0.0 ||
-        preview.total_kg_min > 1000.0) {
-        preview.total_kg_min = 0.0;
-        return preview;
-    }
-    const uint32_t total_g_min = static_cast<uint32_t>(
-        std::lround(preview.total_kg_min * 1000.0));
-    preview.target_g_min[0] = static_cast<uint32_t>(
-        (static_cast<uint64_t>(total_g_min) * zone.first_channel_permille + 500U) / 1000U);
-    preview.target_g_min[1] = total_g_min - preview.target_g_min[0];
+    dajilog_ridge_profiles_snapshot_t ridges = {};
+    if (zone_index >= DAJILOG_SETTING_ZONE_COUNT ||
+        dajilog_system_core_get_ridge_profiles(&ridges) != ESP_OK) return preview;
+    dajilog_flow_target_t flow = {};
+    if (dajilog_flow_calculate_preview(&ridges, &settings.zones[zone_index], &flow) !=
+        DAJILOG_FLOW_CALC_OK) return preview;
+    preview.total_kg_min = flow.total_kg_min;
+    preview.target_g_min[0] = flow.channel_target_g_min[0];
+    preview.target_g_min[1] = flow.channel_target_g_min[1];
     const char *product = settings.selected_product_codes[zone_index];
     if (product[0] == '\0') return preview;
     for (size_t i = 0; i < 2U; ++i) {
@@ -431,6 +406,8 @@ void render_setting_views(bool include_detail)
         const bool active = has_applied && applied.zones[i].configured;
         const auto &zone = active ? applied.zones[i] : draft.zones[i];
         const char *state = active ? "적용됨" :
+            draft.zones[i].configured && draft.zones[i].rate_kg_per_10a <= 0.0f
+                ? "처방 계산 대기" :
             draft.zones[i].configured
                 ? (draft.dirty ? "편집 중 · 미적용" : "저장됨 · 미적용")
                 : draft.zones[i].name[0] ? "편집 중 · 입력 미완료"
@@ -484,6 +461,7 @@ void render_setting_views(bool include_detail)
                  zone.name[0] ? zone.name : "미설정");
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_APPLY_STATE_TEXT,
                  has_applied && applied.zones[selected].configured ? "적용됨" :
+                 zone.configured && zone.rate_kg_per_10a <= 0.0f ? "처방 계산 대기" :
                  zone.configured ? "저장/적용 대기" :
                  zone.name[0] ? "입력 미완료" : "미설정");
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_PRODUCT_TEXT,
@@ -506,12 +484,93 @@ void render_setting_views(bool include_detail)
     std::snprintf(value, sizeof(value), "%.1f kg/10a",
                   static_cast<double>(zone.rate_kg_per_10a));
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_PRESCRIPTION_TEXT,
-                 zone.configured ? value : "--");
+                 zone.configured && zone.rate_kg_per_10a > 0.0f ? value : "--");
     std::snprintf(value, sizeof(value), "%.1f km/h",
                   static_cast<double>(zone.reference_speed_kmh));
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_SPEED_TEXT,
-                 zone.configured ? value : "--");
+                 zone.reference_speed_kmh > 0.0f ? value : "--");
     const CalibrationPreview preview = calculate_calibration_preview(draft, selected);
+    /* 작업 전 확인: 선택 Bxx 한 구간의 길이와 처방 제품량으로 계획 준비량을 표시한다. */
+    setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_RIDGE_SECTION_TEXT, "--");
+    setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CALCULATED_WIDTH_M_TEXT, "--");
+    setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_ACTUAL_LENGTH_M_TEXT, "--");
+    setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_PREPARATION_KG_TEXT, "--");
+    dajilog_ridge_profiles_snapshot_t ridges = {};
+    if (dajilog_system_core_get_ridge_profiles(&ridges) == ESP_OK) {
+        for (uint32_t i = 0; i < ridges.count &&
+                             i < DAJILOG_RIDGE_PROFILE_LIMIT; ++i) {
+            const dajilog_ridge_profile_t &ridge = ridges.profiles[i];
+            if (ridge.id != ridges.selected_id) continue;
+            const auto &input = ridge.input;
+            std::snprintf(value, sizeof(value), "B%02lu · %s",
+                          static_cast<unsigned long>(ridge.id),
+                          input.split_section ? "북측+남측" : "전체");
+            setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_RIDGE_SECTION_TEXT, value);
+            const double width = static_cast<double>(input.width_m) +
+                (input.work_width_mode == DAJILOG_WORK_WIDTH_RIDGE_AND_FURROW
+                     ? static_cast<double>(input.furrow_width_m) : 0.0);
+            const double length = input.split_section
+                ? static_cast<double>(input.north_length_m) + input.south_length_m
+                : static_cast<double>(input.whole_length_m);
+            if (std::isfinite(width) && width > 0.0) {
+                std::snprintf(value, sizeof(value), "%.2f", width);
+                setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CALCULATED_WIDTH_M_TEXT, value);
+            }
+            if (std::isfinite(length) && length > 0.0) {
+                std::snprintf(value, sizeof(value), "%.2f", length);
+                setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_ACTUAL_LENGTH_M_TEXT, value);
+            }
+            if (std::isfinite(width) && width > 0.0 &&
+                std::isfinite(length) && length > 0.0 &&
+                zone.configured && std::isfinite(zone.rate_kg_per_10a) &&
+                zone.rate_kg_per_10a > 0.0f) {
+                const double preparation =
+                    static_cast<double>(zone.rate_kg_per_10a) * width * length / 1000.0;
+                std::snprintf(value, sizeof(value), "%.2f", preparation);
+                setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_PREPARATION_KG_TEXT, value);
+            }
+            break;
+        }
+    }
+    const uint32_t channel_target_vars[] = {
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_A_TARGET_G_MIN_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_B_TARGET_G_MIN_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_C_TARGET_G_MIN_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_D_TARGET_G_MIN_TEXT,
+    };
+    const uint32_t channel_voltage_vars[] = {
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_A_EXPECTED_COMMAND_VOLTAGE_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_B_EXPECTED_COMMAND_VOLTAGE_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_C_EXPECTED_COMMAND_VOLTAGE_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_D_EXPECTED_COMMAND_VOLTAGE_TEXT,
+    };
+    const uint32_t channel_table_vars[] = {
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_A_TABLE_LOOKUP_STATUS_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_B_TABLE_LOOKUP_STATUS_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_C_TABLE_LOOKUP_STATUS_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_D_TABLE_LOOKUP_STATUS_TEXT,
+    };
+    for (size_t i = 0; i < 4U; ++i) {
+        setting_text(channel_target_vars[i], "--");
+        setting_text(channel_voltage_vars[i], "--");
+        setting_text(channel_table_vars[i], "표 없음");
+    }
+    for (size_t i = 0; i < 2U; ++i) {
+        const size_t channel = selected * 2U + i;
+        if (preview.total_kg_min > 0.0) {
+            std::snprintf(value, sizeof(value), "%lu",
+                          static_cast<unsigned long>(preview.target_g_min[i]));
+            setting_text(channel_target_vars[channel], value);
+        }
+        setting_text(channel_table_vars[channel],
+                     !preview.table_found[i] ? "표 없음" :
+                     !preview.in_range[i] ? "범위 밖" : "조회 완료");
+        if (preview.in_range[i]) {
+            std::snprintf(value, sizeof(value), "%.1f",
+                          preview.voltage_decivolt[i] / 10.0);
+            setting_text(channel_voltage_vars[channel], value);
+        }
+    }
     if (preview.total_kg_min > 0.0) {
         std::snprintf(value, sizeof(value), "%.2f kg/min", preview.total_kg_min);
         setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_TOTAL_TARGET_TEXT, value);
@@ -585,13 +644,10 @@ void render_setting_views(bool include_detail)
     if (objects.setting_detail_apply_button &&
         !lv_obj_has_state(objects.setting_detail_apply_button, LV_STATE_DISABLED))
         lv_obj_add_state(objects.setting_detail_apply_button, LV_STATE_DISABLED);
-    if (objects.setting_edit_apply_button &&
-        !lv_obj_has_state(objects.setting_edit_apply_button, LV_STATE_DISABLED))
-        lv_obj_add_state(objects.setting_edit_apply_button, LV_STATE_DISABLED);
-    if (objects.setting_detail_edit_button &&
-        lv_obj_has_state(objects.setting_detail_edit_button, LV_STATE_DISABLED) == editable)
+    if (objects.setting_detail_info_card &&
+        lv_obj_has_state(objects.setting_detail_info_card, LV_STATE_DISABLED) == editable)
         (editable ? lv_obj_remove_state : lv_obj_add_state)(
-            objects.setting_detail_edit_button, LV_STATE_DISABLED);
+            objects.setting_detail_info_card, LV_STATE_DISABLED);
     if (objects.setting_detail_save_button &&
         lv_obj_has_state(objects.setting_detail_save_button, LV_STATE_DISABLED) == editable)
         (editable ? lv_obj_remove_state : lv_obj_add_state)(
@@ -603,7 +659,6 @@ void render_setting_views(bool include_detail)
         objects.setting_edit_prescription_button,
         objects.setting_edit_speed_button,
         objects.setting_edit_distribution_button,
-        objects.setting_edit_draft_button,
         objects.setting_edit_save_button,
     };
     for (lv_obj_t *control : edit_controls) {
@@ -611,6 +666,10 @@ void render_setting_views(bool include_detail)
             (editable ? lv_obj_remove_state : lv_obj_add_state)(
                 control, LV_STATE_DISABLED);
     }
+    if (objects.setting_edit_prescription_button)
+        lv_obj_add_state(objects.setting_edit_prescription_button, LV_STATE_DISABLED);
+    if (objects.setting_edit_prescription_caption)
+        lv_label_set_text(objects.setting_edit_prescription_caption, "처방 계산 제품량");
 }
 
 void render_latest_dashboard()
@@ -635,6 +694,7 @@ void render_message(const dajilog_ui_msg_t *message, void *)
         s_ridge_request_sequence = 0U;
         if (message->result == DAJILOG_UI_RESULT_OK) {
             render_ridge_profiles(true);
+            render_setting_views();
             if (s_ridge_pending_topic == DAJILOG_UI_CMD_RIDGE_DELETE) {
                 dajilog_ridge_profiles_snapshot_t profiles = {};
                 if (dajilog_system_core_get_ridge_profiles(&profiles) == ESP_OK &&
@@ -648,12 +708,16 @@ void render_message(const dajilog_ui_msg_t *message, void *)
                 }
             }
             setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
+                         s_ridge_pending_topic == DAJILOG_UI_CMD_RIDGE_SAVE
+                             ? "두둑 설정 NVS 저장 완료" :
                          s_ridge_pending_topic == DAJILOG_UI_CMD_RIDGE_DELETE
                              ? "두둑 Draft 삭제 · 설정 저장 필요" :
                          s_ridge_pending_topic == DAJILOG_UI_CMD_RIDGE_SELECT
                              ? "두둑 선택 완료" : "두둑 Draft 반영 · 설정 저장 필요");
         } else {
             setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
+                         s_ridge_pending_topic == DAJILOG_UI_CMD_RIDGE_SAVE
+                             ? "두둑 NVS 저장 실패 · 다시 시도하세요" :
                          s_ridge_pending_topic == DAJILOG_UI_CMD_RIDGE_DELETE
                              ? "두둑 삭제 실패 · 기존 목록 유지" :
                                "두둑 등록/선택 실패 · 입력 또는 저장소 확인");
@@ -1559,20 +1623,17 @@ esp_err_t stage_setting_editor()
     const char *name = get_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_NAME_TEXT);
     const char *product = get_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_PRODUCT_TEXT);
     const char *lot = get_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_LOT_TEXT);
-    const char *rate_text = get_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_PRESCRIPTION_TEXT);
     const char *speed_text = get_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_SPEED_TEXT);
     const char *distribution_text = get_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_DISTRIBUTION_TEXT);
-    const bool has_rate = rate_text[0] != '\0';
     const bool has_speed = speed_text[0] != '\0';
     const bool has_distribution = distribution_text[0] != '\0';
-    float rate = 0.0f, speed = 0.0f, distribution = 0.0f;
+    float speed = 0.0f, distribution = 0.0f;
     if (std::strlen(name) >= DAJILOG_SETTING_NAME_CAPACITY ||
         std::strlen(product) >= DAJILOG_PRODUCT_ID_CAPACITY ||
         std::strlen(lot) >= DAJILOG_LOT_ID_CAPACITY ||
-        (has_rate && !parse_float(rate_text, &rate)) ||
         (has_speed && !parse_float(speed_text, &speed)) ||
         (has_distribution && !parse_float(distribution_text, &distribution)) ||
-        (has_rate && rate <= 0.0f) || (has_speed && speed <= 0.0f) ||
+        (has_speed && speed <= 0.0f) ||
         distribution < 0.0f || distribution > 100.0f) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -1580,12 +1641,11 @@ esp_err_t stage_setting_editor()
     std::snprintf(zone.name, sizeof(zone.name), "%s", name);
     std::snprintf(zone.product, sizeof(zone.product), "%s", product);
     std::snprintf(zone.lot, sizeof(zone.lot), "%s", lot);
-    zone.rate_kg_per_10a = rate;
     zone.reference_speed_kmh = speed;
     zone.first_channel_permille =
         static_cast<uint16_t>(std::lround(distribution * 10.0f));
     zone.configured = name[0] != '\0' && product[0] != '\0' &&
-                      has_rate && has_speed && has_distribution;
+                      has_speed && has_distribution;
     return dajilog_system_core_stage_zone_settings(s_selected_zone, &zone);
 }
 
@@ -1734,16 +1794,6 @@ void calibration_open_event(lv_event_t *event)
                  s_selected_zone == DAJILOG_SETTING_ZONE_SURFACE ? "A" : "C");
     s_calibration_screen_was_active = false;
     render_calibration_selection();
-}
-
-void setting_draft_event(lv_event_t *event)
-{
-    if (lv_event_get_code(event) != LV_EVENT_PRESSED) return;
-    const esp_err_t error = stage_setting_editor();
-    std::snprintf(s_setting_status, sizeof(s_setting_status), "%s",
-                  error == ESP_OK ? "임시 저장 완료 · 운전에는 미반영" :
-                  "입력 오류 · 설정명/제품/처방량/속도/배분을 확인하세요");
-    render_setting_views();
 }
 
 void setting_save_event(lv_event_t *event)
@@ -1973,6 +2023,7 @@ void fertilizer_temporary_save_event(lv_event_t *event)
     }
 
     if (stage_fertilizer_from_ui() == ESP_OK) {
+        render_setting_views();
         SETTINGS_LOGI(
             "fertilizer draft: nitrogen_rate=%s kg N/10a",
             get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_NITROGEN_RATE_KG_N_PER_10A_TEXT));
@@ -1986,17 +2037,37 @@ esp_err_t submit_settings_apply(esp_err_t stage_error)
                : stage_error;
 }
 
-/** @brief [RidgeSetup 설정 저장 버튼] 현재 Bxx를 Stage한 후 Storage Task 저장을 요청한다. */
+/** @brief [RidgeSetup 설정 저장 버튼] 현재 Bxx를 Stage하고 Bxx 목록만 NVS 저장한다. */
 void ridge_save_settings_event(lv_event_t *event)
 {
     if (lv_event_get_code(event) != LV_EVENT_PRESSED) {
         return;
     }
-
-    const esp_err_t error = submit_settings_apply(stage_ridge_from_ui());
+    if (s_ridge_request_sequence != 0U) {
+        setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
+                     "두둑 작업 처리 중 · 완료 후 저장하세요");
+        return;
+    }
+    const esp_err_t error = stage_ridge_from_ui();
     if (error != ESP_OK) {
-        ESP_LOGW(TAG, "ridge settings apply failed: %s",
-                 esp_err_to_name(error));
+        setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
+                     "두둑 입력 오류 · 폭/길이/구간을 확인하세요");
+        ESP_LOGW(TAG, "ridge settings stage failed: %s", esp_err_to_name(error));
+        return;
+    }
+    dajilog_ui_msg_t command;
+    dajilog_ui_msg_init(&command, DAJILOG_UI_MSG_COMMAND, DAJILOG_UI_CMD_RIDGE_SAVE);
+    const esp_err_t submit_error = dajilog_ui_adaptor_submit(&command);
+    if (submit_error == ESP_OK) {
+        s_ridge_request_sequence = command.sequence;
+        s_ridge_pending_topic = command.topic;
+        s_ridge_request_deadline = esp_timer_get_time() + 5000000;
+        setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
+                     "두둑 설정 NVS 저장 중...");
+    } else {
+        setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
+                     "두둑 저장 요청 실패 · 다시 시도하세요");
+        ESP_LOGW(TAG, "ridge save submit failed: %s", esp_err_to_name(submit_error));
     }
 }
 
@@ -2067,10 +2138,9 @@ extern "C" bool eez_ui_binding_attach(void)
         objects.setting_1_card == nullptr ||
         objects.driver_2_card == nullptr ||
         objects.setting_2_card == nullptr ||
-        objects.setting_detail_edit_button == nullptr ||
+        objects.setting_detail_info_card == nullptr ||
         objects.setting_detail_save_button == nullptr ||
         objects.setting_detail_apply_button == nullptr ||
-        objects.setting_edit_draft_button == nullptr ||
         objects.setting_edit_save_button == nullptr ||
         objects.setting_confirm_ok_button == nullptr ||
         objects.driver_detail_channel_a_selector == nullptr ||
@@ -2105,19 +2175,13 @@ extern "C" bool eez_ui_binding_attach(void)
                         LV_EVENT_PRESSED, (void *)0U);
     lv_obj_add_event_cb(objects.setting_2_card, setting_card_event,
                         LV_EVENT_PRESSED, (void *)1U);
-    lv_obj_add_event_cb(objects.setting_detail_edit_button, setting_edit_event,
-                        LV_EVENT_PRESSED, nullptr);
-    lv_obj_add_event_cb(objects.setting_detail_draft_button, setting_draft_event,
-                        LV_EVENT_PRESSED, nullptr);
-    lv_obj_add_event_cb(objects.setting_edit_draft_button, setting_draft_event,
+    lv_obj_add_event_cb(objects.setting_detail_info_card, setting_edit_event,
                         LV_EVENT_PRESSED, nullptr);
     lv_obj_add_event_cb(objects.setting_detail_save_button, setting_save_event,
                         LV_EVENT_PRESSED, nullptr);
     lv_obj_add_event_cb(objects.setting_edit_save_button, setting_save_event,
                         LV_EVENT_PRESSED, nullptr);
     lv_obj_add_event_cb(objects.setting_detail_apply_button, setting_apply_event,
-                        LV_EVENT_PRESSED, nullptr);
-    lv_obj_add_event_cb(objects.setting_edit_apply_button, setting_apply_event,
                         LV_EVENT_PRESSED, nullptr);
     lv_obj_add_event_cb(objects.setting_confirm_ok_button, setting_confirm_event,
                         LV_EVENT_PRESSED, nullptr);
@@ -2175,6 +2239,19 @@ extern "C" void eez_ui_binding_process(void)
 {
     if (s_attached) {
         (void)dajilog_ui_adaptor_process(&s_adaptor, MAX_MESSAGES_PER_TICK);
+        /* EEZ Flow runs first in the timer. Its detail→edit action copies
+         * formatted labels (e.g. "5.0 km/h") into edit variables. Restore
+         * raw Draft fields only on that transition; a numeric/text popup
+         * returning to edit must keep the user's newly entered value. */
+        lv_obj_t *current_screen = lv_screen_active();
+        if (current_screen == objects.setting_edit &&
+            s_previous_setting_screen == objects.setting_detail) {
+            load_setting_editor();
+        } else if (current_screen == objects.setting_detail &&
+                   s_previous_setting_screen != objects.setting_detail) {
+            render_setting_views();
+        }
+        s_previous_setting_screen = current_screen;
         prepare_ridge_form();
         if (eez::flow::getGlobalVariable(
                 FLOW_GLOBAL_VARIABLE_EVT_RIDGE_ADD).getBoolean()) {
@@ -2258,6 +2335,7 @@ extern "C" void eez_ui_binding_process(void)
 /** @brief [앱 종료] 카드 이벤트 상태와 UI Adaptor 연결을 정리한다. */
 extern "C" void eez_ui_binding_detach(void)
 {
+    s_previous_setting_screen = nullptr;
     if (!s_attached) {
         return;
     }

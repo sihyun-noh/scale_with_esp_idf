@@ -15,6 +15,7 @@
 #include "dajilog_table.h"
 #include "dajilog_setting_storage_nvs.h"
 #include "dajilog_product_catalog.h"
+#include "dajilog_prescription_calculator.h"
 #include "esp_log.h"
 #include "nvs.h"
 #include "freertos/FreeRTOS.h"
@@ -442,6 +443,21 @@ static bool zone_settings_valid(const dajilog_zone_settings_t *settings)
            settings->first_channel_permille <= 1000U;
 }
 
+/** @brief [처방→S1/S2] 구역 제품량의 단일 출처를 처방 계산 결과로 맞춘다. */
+static void derive_zone_product_rates(
+    const dajilog_prescription_settings_t *prescription,
+    const char codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY],
+    dajilog_zone_settings_t zones[DAJILOG_SETTING_ZONE_COUNT])
+{
+    dajilog_prescription_product_rates_t rates = {0};
+    const dajilog_prescription_calc_status_t status =
+        dajilog_prescription_calculate_product_rates(prescription, codes, &rates);
+    zones[DAJILOG_SETTING_ZONE_SURFACE].rate_kg_per_10a =
+        status == DAJILOG_PRESCRIPTION_CALC_OK ? rates.surface_product_kg_per_10a : 0.0f;
+    zones[DAJILOG_SETTING_ZONE_SUBSURFACE].rate_kg_per_10a =
+        status == DAJILOG_PRESCRIPTION_CALC_OK ? rates.subsurface_product_kg_per_10a : 0.0f;
+}
+
 /** @brief [부팅·저장소] 스키마를 등록하고 NVS의 Product 설정과 Bxx 목록을 복원한다. */
 esp_err_t dajilog_product_settings_init(void)
 {
@@ -688,6 +704,8 @@ esp_err_t dajilog_product_settings_get_draft(
     memcpy(settings->zones, s_zone_draft, sizeof(settings->zones));
     memcpy(settings->selected_product_codes, s_product_draft,
            sizeof(settings->selected_product_codes));
+    derive_zone_product_rates(&settings->prescription,
+                              settings->selected_product_codes, settings->zones);
     settings->dirty = s_dirty;
     settings->draft_readiness = calculate_readiness(
         &s_ridge_draft, &s_prescription_draft, s_product_draft, false);
@@ -715,6 +733,20 @@ esp_err_t dajilog_product_settings_get_ridge_profiles(
     *profiles = s_ridge_profiles;
     xSemaphoreGive(s_lock);
     return ESP_OK;
+}
+
+/** @brief [두둑 설정 저장] 다른 처방·구역 Draft와 독립적으로 Bxx 목록을 NVS에 보존한다. */
+esp_err_t dajilog_product_settings_save_ridge_profiles(void)
+{
+    if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
+    dajilog_ridge_profiles_snapshot_t profiles = {0};
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    profiles = s_ridge_profiles;
+    xSemaphoreGive(s_lock);
+    if (!ridge_profiles_valid(&profiles)) return ESP_ERR_INVALID_STATE;
+    return dajilog_setting_storage_nvs_save(
+        &s_storage, RIDGE_PROFILE_STORAGE_KEY, RIDGE_PROFILE_SCHEMA_VERSION,
+        &profiles, sizeof(profiles));
 }
 
 /** @brief [두둑 카드·새 두둑 추가] 빈 B번호에 폭·길이 Profile을 RAM에 등록한다. */
@@ -840,6 +872,7 @@ esp_err_t dajilog_product_settings_stage_zone(
         return ESP_ERR_INVALID_ARG;
     xSemaphoreTake(s_lock, portMAX_DELAY);
     s_zone_draft[zone] = *settings;
+    derive_zone_product_rates(&s_prescription_draft, s_product_draft, s_zone_draft);
     s_dirty = true;
     ++s_draft_generation;
     xSemaphoreGive(s_lock);
@@ -961,6 +994,7 @@ esp_err_t dajilog_product_settings_save(void)
     memcpy(zones, s_zone_draft, sizeof(zones));
     char product_codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
     memcpy(product_codes, s_product_draft, sizeof(product_codes));
+    derive_zone_product_rates(&prescription, product_codes, zones);
     const dajilog_ridge_settings_t applied_ridge = s_applied_ridge;
     const dajilog_prescription_settings_t applied_prescription = s_applied_prescription;
     dajilog_zone_settings_t applied_zones[DAJILOG_SETTING_ZONE_COUNT];
@@ -986,12 +1020,9 @@ esp_err_t dajilog_product_settings_save(void)
     if (error == ESP_OK) {
         for (size_t i = 0; i < DAJILOG_SETTING_ZONE_COUNT; ++i) {
             const dajilog_zone_settings_t *zone = &zones[i];
-            const bool present = zone->name[0] != '\0' || zone->product[0] != '\0' ||
-                                 zone->lot[0] != '\0' || zone->rate_kg_per_10a > 0.0f;
-            if (present && (!zone->configured || zone->name[0] == '\0' ||
-                            zone->product[0] == '\0' ||
-                            zone->rate_kg_per_10a <= 0.0f ||
-                            zone->reference_speed_kmh <= 0.0f)) {
+            /* Save each zone independently, including an incomplete Draft.
+             * Readiness/Apply still require complete settings. */
+            if (!zone_settings_valid(zone)) {
                 error = ESP_ERR_INVALID_STATE;
                 break;
             }

@@ -1877,6 +1877,134 @@
         "defaultValue": "\"40.0\"",
         "persistent": false,
         "native": false
+      },
+      {
+        "objID": "b73c823c-a4a7-4c5f-9767-bf1a42a253b2",
+        "name": "setting_detail_ridge_section_text",
+        "type": "string",
+        "defaultValue": "\"--\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "6bef75e8-a558-4204-ae6c-6f77469ff3ed",
+        "name": "setting_detail_calculated_width_m_text",
+        "type": "string",
+        "defaultValue": "\"--\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "3f14ea87-d9f8-4cf1-9409-4f8e22e2f8df",
+        "name": "setting_detail_actual_length_m_text",
+        "type": "string",
+        "defaultValue": "\"--\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "4503ac52-c6ee-4ba3-8ed8-a0e161f7369a",
+        "name": "setting_detail_preparation_kg_text",
+        "type": "string",
+        "defaultValue": "\"--\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "483caafd-3dd1-4c3a-be7b-514f1f083959",
+        "name": "setting_detail_channel_a_target_g_min_text",
+        "type": "string",
+        "defaultValue": "\"--\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "ab02a9c7-3561-47cb-a9d5-4e79506e9925",
+        "name": "setting_detail_channel_a_expected_command_voltage_text",
+        "type": "string",
+        "defaultValue": "\"--\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "c030cb49-b79a-47a6-b270-26b623634a1e",
+        "name": "setting_detail_channel_a_table_lookup_status_text",
+        "type": "string",
+        "defaultValue": "\"표 미연결\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "29b7d277-0e2f-409d-a0c9-e3e8a7ec9aaf",
+        "name": "setting_detail_channel_b_target_g_min_text",
+        "type": "string",
+        "defaultValue": "\"--\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "069450c6-db86-4d30-b373-5208b6cba412",
+        "name": "setting_detail_channel_b_expected_command_voltage_text",
+        "type": "string",
+        "defaultValue": "\"--\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "66cf5c1a-a8d5-441b-88ff-e7ae5a522d3a",
+        "name": "setting_detail_channel_b_table_lookup_status_text",
+        "type": "string",
+        "defaultValue": "\"표 미연결\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "4a6f0b3f-9bc6-492f-b377-608e5c1981ee",
+        "name": "setting_detail_channel_c_target_g_min_text",
+        "type": "string",
+        "defaultValue": "\"--\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "3183dca3-d149-4b5c-a211-247530b9a83f",
+        "name": "setting_detail_channel_c_expected_command_voltage_text",
+        "type": "string",
+        "defaultValue": "\"--\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "61e8aa76-2af4-4d60-b1e5-e27d5e0769fb",
+        "name": "setting_detail_channel_c_table_lookup_status_text",
+        "type": "string",
+        "defaultValue": "\"표 미연결\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "d4311519-0a09-4adf-9be5-4fa1e6ca8ade",
+        "name": "setting_detail_channel_d_target_g_min_text",
+        "type": "string",
+        "defaultValue": "\"--\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "a24a6db1-755b-4623-a4f0-6134a221e7a2",
+        "name": "setting_detail_channel_d_expected_command_voltage_text",
+        "type": "string",
+        "defaultValue": "\"--\"",
+        "persistent": false,
+        "native": false
+      },
+      {
+        "objID": "45f856d2-e6ba-4602-b1bf-3a6ae60e5be1",
+        "name": "setting_detail_channel_d_table_lookup_status_text",
+        "type": "string",
+        "defaultValue": "\"표 미연결\"",
+        "persistent": false,
+        "native": false
       }
     ],
     "structures": [],
@@ -12615,10 +12743,10 @@
             {
               "objID": "bdc4ca07-46b9-4b46-b340-bbf6c62ca5df",
               "type": "LVGLLabelWidget",
-              "left": 20,
-              "top": 17,
-              "width": 82,
-              "height": 30,
+              "left": 32,
+              "top": 24,
+              "width": 58,
+              "height": 16,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -12908,7 +13036,14 @@
                 "childStyles": []
               },
               "timeline": [],
-              "eventHandlers": [],
+              "eventHandlers": [
+                {
+                  "objID": "298d9e3c-cb9d-45f9-9a42-e3a3883c688a",
+                  "eventName": "PRESSED",
+                  "handlerType": "flow",
+                  "userData": 0
+                }
+              ],
               "identifier": "setting_detail_info_card",
               "leftUnit": "px",
               "topUnit": "px",
@@ -12918,7 +13053,7 @@
               "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
               "hiddenFlag": false,
               "hiddenFlagType": "literal",
-              "clickableFlag": false,
+              "clickableFlag": true,
               "clickableFlagType": "literal",
               "checkedState": false,
               "checkedStateType": "literal",
@@ -12949,9 +13084,9 @@
               "objID": "968ebf92-5c25-44d7-9a52-6602c3f3acdf",
               "type": "LVGLLabelWidget",
               "left": 44,
-              "top": 93,
-              "width": 180,
-              "height": 30,
+              "top": 91,
+              "width": 310,
+              "height": 27,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -12983,7 +13118,7 @@
                   "MAIN": {
                     "DEFAULT": {
                       "text_font": "MaruBuri-Regular_KR20",
-                      "text_color": "#eef5fa",
+                      "text_color": "#f3bf43",
                       "text_align": "LEFT",
                       "pad_left": 0,
                       "pad_right": 0,
@@ -12995,7 +13130,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "설정 정보",
+              "text": "작업 전 확인 ",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -13058,9 +13193,9 @@
               "objID": "7349d74e-f101-4343-b19d-1a03c53309a5",
               "type": "LVGLLabelWidget",
               "left": 44,
-              "top": 142,
-              "width": 94,
-              "height": 25,
+              "top": 136,
+              "width": 148,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -13104,7 +13239,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "제품",
+              "text": "두둑/구간",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -13113,10 +13248,10 @@
             {
               "objID": "fc39dc7c-1887-4abe-9121-2a1ded3c7218",
               "type": "LVGLLabelWidget",
-              "left": 140,
-              "top": 141,
-              "width": 214,
-              "height": 28,
+              "left": 193,
+              "top": 136,
+              "width": 161,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -13160,7 +13295,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "setting_detail_product_text",
+              "text": "setting_detail_ridge_section_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -13170,9 +13305,9 @@
               "objID": "c6994609-7c8c-47b5-bf25-c1c2b69a7042",
               "type": "LVGLLabelWidget",
               "left": 44,
-              "top": 180,
-              "width": 94,
-              "height": 25,
+              "top": 166,
+              "width": 148,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -13216,7 +13351,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "생산 Lot",
+              "text": "계산폭 (m)",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -13225,10 +13360,10 @@
             {
               "objID": "142730e5-f8be-46e1-b23c-7c05cf92ef0d",
               "type": "LVGLLabelWidget",
-              "left": 140,
-              "top": 179,
-              "width": 214,
-              "height": 28,
+              "left": 193,
+              "top": 166,
+              "width": 161,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -13272,7 +13407,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "setting_detail_lot_text",
+              "text": "setting_detail_calculated_width_m_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -13282,9 +13417,9 @@
               "objID": "e33c5522-86c6-4473-a59a-d1a372fafc29",
               "type": "LVGLLabelWidget",
               "left": 44,
-              "top": 218,
-              "width": 94,
-              "height": 25,
+              "top": 196,
+              "width": 148,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -13328,7 +13463,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "적용 대상",
+              "text": "실제 길이 (m)",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -13337,10 +13472,10 @@
             {
               "objID": "1f705233-ea38-40f8-844e-ce70901e45e6",
               "type": "LVGLLabelWidget",
-              "left": 140,
-              "top": 217,
-              "width": 214,
-              "height": 28,
+              "left": 193,
+              "top": 196,
+              "width": 161,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -13384,7 +13519,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "setting_detail_driver_text",
+              "text": "setting_detail_actual_length_m_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -13394,9 +13529,9 @@
               "objID": "60f86bef-7f23-4e52-89d1-76934bda2092",
               "type": "LVGLLabelWidget",
               "left": 44,
-              "top": 256,
-              "width": 94,
-              "height": 25,
+              "top": 226,
+              "width": 148,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -13440,7 +13575,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "채널 배분",
+              "text": "제품명",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -13449,10 +13584,10 @@
             {
               "objID": "f9e6c327-4cc6-4400-a5e9-97bf7d35567f",
               "type": "LVGLLabelWidget",
-              "left": 140,
-              "top": 255,
-              "width": 214,
-              "height": 28,
+              "left": 193,
+              "top": 226,
+              "width": 161,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -13496,7 +13631,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "setting_detail_distribution_text",
+              "text": "setting_detail_product_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -13506,9 +13641,9 @@
               "objID": "ddfba68b-2f9f-42da-bf09-de61ef0a5468",
               "type": "LVGLLabelWidget",
               "left": 44,
-              "top": 294,
-              "width": 94,
-              "height": 25,
+              "top": 256,
+              "width": 148,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -13552,7 +13687,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "처방 목표",
+              "text": "Lot",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -13561,10 +13696,10 @@
             {
               "objID": "f45d8d97-7791-43d4-af9e-e55980283534",
               "type": "LVGLLabelWidget",
-              "left": 140,
-              "top": 293,
-              "width": 214,
-              "height": 28,
+              "left": 193,
+              "top": 256,
+              "width": 161,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -13608,7 +13743,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "setting_detail_prescription_text",
+              "text": "setting_detail_lot_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -13618,9 +13753,9 @@
               "objID": "da1931cf-bf14-43a9-b9d6-f12a91b4fd4d",
               "type": "LVGLLabelWidget",
               "left": 44,
-              "top": 332,
-              "width": 94,
-              "height": 25,
+              "top": 286,
+              "width": 148,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -13664,7 +13799,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "기준 속도",
+              "text": "처방량 (kg/10a)",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -13673,10 +13808,10 @@
             {
               "objID": "2011eb10-3efa-496b-a5c6-134790324b48",
               "type": "LVGLLabelWidget",
-              "left": 140,
-              "top": 331,
-              "width": 214,
-              "height": 28,
+              "left": 193,
+              "top": 286,
+              "width": 161,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -13720,119 +13855,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "setting_detail_speed_text",
-              "textType": "expression",
-              "longMode": "WRAP",
-              "recolor": false,
-              "useStaticText": false
-            },
-            {
-              "objID": "7c734f80-6840-4d8f-9595-0176615d3a28",
-              "type": "LVGLLabelWidget",
-              "left": 44,
-              "top": 421,
-              "width": 74,
-              "height": 22,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "36c09d06-8ab7-4837-a9ae-13751c81caf8",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "timeline": [],
-              "eventHandlers": [],
-              "identifier": "setting_detail_validation_caption",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "px",
-              "heightUnit": "px",
-              "children": [],
-              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
-              "hiddenFlagType": "literal",
-              "clickableFlag": false,
-              "clickableFlagType": "literal",
-              "checkedState": false,
-              "checkedStateType": "literal",
-              "disabledStateType": "literal",
-              "states": "",
-              "localStyles": {
-                "objID": "1c2e108c-fa7b-4762-813c-00566ccdd605",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_KR16",
-                      "text_color": "#8fa0ae",
-                      "text_align": "LEFT",
-                      "pad_left": 0,
-                      "pad_right": 0,
-                      "pad_top": 0,
-                      "pad_bottom": 0
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0,
-              "text": "검증",
-              "textType": "literal",
-              "longMode": "WRAP",
-              "recolor": false,
-              "useStaticText": true
-            },
-            {
-              "objID": "3285165c-9f33-4dd2-b0bc-2eeb9e0f209e",
-              "type": "LVGLLabelWidget",
-              "left": 116,
-              "top": 419,
-              "width": 238,
-              "height": 26,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "eca0a113-b2e0-48b5-b67c-fda0c34f1555",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "timeline": [],
-              "eventHandlers": [],
-              "identifier": "setting_detail_validation_value",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "px",
-              "heightUnit": "px",
-              "children": [],
-              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
-              "hiddenFlagType": "literal",
-              "clickableFlag": false,
-              "clickableFlagType": "literal",
-              "checkedState": false,
-              "checkedStateType": "literal",
-              "disabledStateType": "literal",
-              "states": "",
-              "localStyles": {
-                "objID": "42782ff7-ccf4-43d3-84da-1be26964de7d",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_KR16",
-                      "text_color": "#28c978",
-                      "text_align": "RIGHT",
-                      "pad_left": 0,
-                      "pad_right": 0,
-                      "pad_top": 0,
-                      "pad_bottom": 0
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0,
-              "text": "setting_detail_validation_text",
+              "text": "setting_detail_prescription_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -13895,9 +13918,9 @@
               "objID": "33d92aaf-611f-4fab-9adb-c422c3e13e15",
               "type": "LVGLLabelWidget",
               "left": 410,
-              "top": 93,
-              "width": 230,
-              "height": 30,
+              "top": 91,
+              "width": 220,
+              "height": 28,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -13928,7 +13951,7 @@
                 "definition": {
                   "MAIN": {
                     "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_KR20",
+                      "text_font": "MaruBuri-Regular_KR16",
                       "text_color": "#eef5fa",
                       "text_align": "LEFT",
                       "pad_left": 0,
@@ -13941,7 +13964,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "목표 및 계산 결과",
+              "text": "기준속도 계산 결과",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -13950,10 +13973,10 @@
             {
               "objID": "4a3d7b88-5290-42b6-8a3b-43f82d627bd3",
               "type": "LVGLLabelWidget",
-              "left": 690,
-              "top": 96,
-              "width": 108,
-              "height": 26,
+              "left": 645,
+              "top": 98,
+              "width": 85,
+              "height": 24,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -13984,7 +14007,7 @@
                 "definition": {
                   "MAIN": {
                     "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_font": "MaruBuri-Regular_KR20",
                       "text_color": "#8fa0ae",
                       "text_align": "RIGHT",
                       "pad_left": 0,
@@ -13997,7 +14020,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "현재 유효 목표",
+              "text": "총 목표",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -14006,10 +14029,10 @@
             {
               "objID": "f989e194-b5c5-4e22-b8e9-a12f4c045853",
               "type": "LVGLLabelWidget",
-              "left": 802,
-              "top": 87,
-              "width": 126,
-              "height": 48,
+              "left": 735,
+              "top": 84,
+              "width": 178,
+              "height": 50,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -14040,7 +14063,7 @@
                 "definition": {
                   "MAIN": {
                     "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_NUM36",
+                      "text_font": "MaruBuri-Regular_KR28",
                       "text_color": "#eef5fa",
                       "text_align": "RIGHT",
                       "pad_left": 0,
@@ -14062,9 +14085,9 @@
             {
               "objID": "c79cb778-e873-4aea-977d-b7b99e848b7b",
               "type": "LVGLLabelWidget",
-              "left": 932,
-              "top": 105,
-              "width": 56,
+              "left": 918,
+              "top": 101,
+              "width": 72,
               "height": 24,
               "customInputs": [],
               "customOutputs": [],
@@ -14337,9 +14360,9 @@
               "objID": "1620bc29-a4ec-4f5e-b089-7fb9147af8f0",
               "type": "LVGLLabelWidget",
               "left": 426,
-              "top": 210,
-              "width": 90,
-              "height": 23,
+              "top": 207,
+              "width": 64,
+              "height": 24,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -14383,7 +14406,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "목표 배출량",
+              "text": "목표",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -14392,9 +14415,9 @@
             {
               "objID": "9ac400e7-598b-40e9-9369-eecaddcf36fd",
               "type": "LVGLLabelWidget",
-              "left": 518,
-              "top": 201,
-              "width": 104,
+              "left": 493,
+              "top": 199,
+              "width": 111,
               "height": 43,
               "customInputs": [],
               "customOutputs": [],
@@ -14426,7 +14449,7 @@
                 "definition": {
                   "MAIN": {
                     "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_KR28",
+                      "text_font": "MaruBuri-Regular_KR20",
                       "text_color": "#eef5fa",
                       "text_align": "RIGHT",
                       "pad_left": 0,
@@ -14439,7 +14462,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "setting_detail_selected_zone == \"SURFACE\" ? setting_detail_channel_a_target_kg_min_text : setting_detail_channel_c_target_kg_min_text",
+              "text": "setting_detail_selected_zone == \"SURFACE\" ? setting_detail_channel_a_target_g_min_text : setting_detail_channel_c_target_g_min_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -14448,9 +14471,9 @@
             {
               "objID": "22804e1b-277f-4caa-9cdc-74923b97e0df",
               "type": "LVGLLabelWidget",
-              "left": 624,
-              "top": 218,
-              "width": 46,
+              "left": 612,
+              "top": 216,
+              "width": 60,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -14495,7 +14518,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "kg/min",
+              "text": "g/min",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -14505,9 +14528,9 @@
               "objID": "85b2933a-73ca-4c18-a536-bb3519d53dee",
               "type": "LVGLLabelWidget",
               "left": 426,
-              "top": 259,
-              "width": 74,
-              "height": 23,
+              "top": 258,
+              "width": 80,
+              "height": 24,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -14560,10 +14583,10 @@
             {
               "objID": "5405097d-2c4f-4c1c-9462-127efe5469f2",
               "type": "LVGLLabelWidget",
-              "left": 502,
-              "top": 255,
-              "width": 162,
-              "height": 32,
+              "left": 509,
+              "top": 254,
+              "width": 151,
+              "height": 30,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -14617,9 +14640,9 @@
               "objID": "4a44e6d1-e8aa-4acb-8045-ca958f7d4541",
               "type": "LVGLLabelWidget",
               "left": 426,
-              "top": 303,
-              "width": 74,
-              "height": 23,
+              "top": 298,
+              "width": 92,
+              "height": 24,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -14663,7 +14686,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "최종 전압",
+              "text": "예상 명령",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -14672,10 +14695,10 @@
             {
               "objID": "07984a2b-9a2f-4740-826b-9f44369892cb",
               "type": "LVGLLabelWidget",
-              "left": 502,
-              "top": 294,
-              "width": 132,
-              "height": 45,
+              "left": 523,
+              "top": 291,
+              "width": 106,
+              "height": 42,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -14706,7 +14729,7 @@
                 "definition": {
                   "MAIN": {
                     "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_NUM36",
+                      "text_font": "MaruBuri-Regular_KR20",
                       "text_color": "#eef5fa",
                       "text_align": "RIGHT",
                       "pad_left": 0,
@@ -14719,7 +14742,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "setting_detail_selected_zone == \"SURFACE\" ? setting_detail_channel_a_final_voltage_text : setting_detail_channel_c_final_voltage_text",
+              "text": "setting_detail_selected_zone == \"SURFACE\" ? setting_detail_channel_a_expected_command_voltage_text : setting_detail_channel_c_expected_command_voltage_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -14728,9 +14751,9 @@
             {
               "objID": "5cba0e9d-9cc6-451c-a83e-381477aa1cd5",
               "type": "LVGLLabelWidget",
-              "left": 638,
-              "top": 312,
-              "width": 26,
+              "left": 635,
+              "top": 307,
+              "width": 23,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -14950,9 +14973,9 @@
               "objID": "9f4d7490-277d-4a61-add9-fbb9f3760be5",
               "type": "LVGLLabelWidget",
               "left": 716,
-              "top": 210,
-              "width": 90,
-              "height": 23,
+              "top": 207,
+              "width": 64,
+              "height": 24,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -14996,7 +15019,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "목표 배출량",
+              "text": "목표",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -15005,9 +15028,9 @@
             {
               "objID": "1415b0bd-0a8a-4acf-a3b1-d97f9d7cdfab",
               "type": "LVGLLabelWidget",
-              "left": 808,
-              "top": 201,
-              "width": 104,
+              "left": 783,
+              "top": 199,
+              "width": 111,
               "height": 43,
               "customInputs": [],
               "customOutputs": [],
@@ -15039,7 +15062,7 @@
                 "definition": {
                   "MAIN": {
                     "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_KR28",
+                      "text_font": "MaruBuri-Regular_KR20",
                       "text_color": "#eef5fa",
                       "text_align": "RIGHT",
                       "pad_left": 0,
@@ -15052,7 +15075,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "setting_detail_selected_zone == \"SURFACE\" ? setting_detail_channel_b_target_kg_min_text : setting_detail_channel_d_target_kg_min_text",
+              "text": "setting_detail_selected_zone == \"SURFACE\" ? setting_detail_channel_b_target_g_min_text : setting_detail_channel_d_target_g_min_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -15061,9 +15084,9 @@
             {
               "objID": "5a2d4e2e-f298-41af-9169-5733c36cab44",
               "type": "LVGLLabelWidget",
-              "left": 914,
-              "top": 218,
-              "width": 46,
+              "left": 902,
+              "top": 216,
+              "width": 60,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -15108,7 +15131,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "kg/min",
+              "text": "g/min",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -15118,9 +15141,9 @@
               "objID": "c03e0a1b-bb3a-4651-866e-e16ec53ab992",
               "type": "LVGLLabelWidget",
               "left": 716,
-              "top": 259,
-              "width": 74,
-              "height": 23,
+              "top": 258,
+              "width": 80,
+              "height": 24,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -15173,10 +15196,10 @@
             {
               "objID": "2430748e-2f85-4403-b764-b40cf90b83f8",
               "type": "LVGLLabelWidget",
-              "left": 792,
-              "top": 255,
-              "width": 162,
-              "height": 32,
+              "left": 799,
+              "top": 254,
+              "width": 151,
+              "height": 30,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -15230,9 +15253,9 @@
               "objID": "404dc22f-eca2-4215-9c93-1ec64c141979",
               "type": "LVGLLabelWidget",
               "left": 716,
-              "top": 303,
-              "width": 74,
-              "height": 23,
+              "top": 298,
+              "width": 92,
+              "height": 24,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -15276,7 +15299,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "최종 전압",
+              "text": "예상 명령",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -15285,10 +15308,10 @@
             {
               "objID": "dd3aed8d-b4f5-4d80-9646-04ab51d19792",
               "type": "LVGLLabelWidget",
-              "left": 792,
-              "top": 294,
-              "width": 132,
-              "height": 45,
+              "left": 813,
+              "top": 291,
+              "width": 106,
+              "height": 42,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -15319,7 +15342,7 @@
                 "definition": {
                   "MAIN": {
                     "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_NUM36",
+                      "text_font": "MaruBuri-Regular_KR20",
                       "text_color": "#eef5fa",
                       "text_align": "RIGHT",
                       "pad_left": 0,
@@ -15332,7 +15355,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "setting_detail_selected_zone == \"SURFACE\" ? setting_detail_channel_b_final_voltage_text : setting_detail_channel_d_final_voltage_text",
+              "text": "setting_detail_selected_zone == \"SURFACE\" ? setting_detail_channel_b_expected_command_voltage_text : setting_detail_channel_d_expected_command_voltage_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -15341,9 +15364,9 @@
             {
               "objID": "2be379f3-34c7-494c-b1b5-014bb1f0c2b5",
               "type": "LVGLLabelWidget",
-              "left": 928,
-              "top": 312,
-              "width": 26,
+              "left": 925,
+              "top": 307,
+              "width": 23,
               "height": 22,
               "customInputs": [],
               "customOutputs": [],
@@ -15399,7 +15422,7 @@
               "type": "LVGLLabelWidget",
               "left": 410,
               "top": 383,
-              "width": 100,
+              "width": 98,
               "height": 24,
               "customInputs": [],
               "customOutputs": [],
@@ -15444,7 +15467,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "배출 보정",
+              "text": "배출량표",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -15454,9 +15477,9 @@
               "objID": "b1a07e42-3ddd-444c-8d8a-7cbfa61b5769",
               "type": "LVGLLabelWidget",
               "left": 510,
-              "top": 379,
+              "top": 380,
               "width": 470,
-              "height": 30,
+              "height": 27,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -15509,10 +15532,10 @@
             {
               "objID": "eab51106-8a5e-403d-a6cb-461d7b64b72c",
               "type": "LVGLLabelWidget",
-              "left": 410,
-              "top": 416,
+              "left": 414,
+              "top": 410,
               "width": 570,
-              "height": 26,
+              "height": 35,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -15556,364 +15579,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "단계 미세값과 AUTO 사용자 보정은 별도 값입니다. 출력시험은 드라이버 화면에서 진행합니다.",
-              "textType": "literal",
-              "longMode": "WRAP",
-              "recolor": false,
-              "useStaticText": true
-            },
-            {
-              "objID": "3ab929f6-3d7f-4260-a1a0-8a7938086cbd",
-              "type": "LVGLButtonWidget",
-              "left": 24,
-              "top": 462,
-              "width": 170,
-              "height": 52,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "e74bcf1c-91ac-4107-9656-74bcfe601fa1",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "timeline": [],
-              "eventHandlers": [
-                {
-                  "objID": "setting-detail-table-event",
-                  "eventName": "PRESSED",
-                  "handlerType": "flow",
-                  "userData": 0
-                }
-              ],
-              "identifier": "setting_detail_table_button",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "px",
-              "heightUnit": "px",
-              "children": [],
-              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
-              "hiddenFlag": false,
-              "hiddenFlagType": "literal",
-              "clickableFlag": true,
-              "clickableFlagType": "literal",
-              "checkedState": false,
-              "checkedStateType": "literal",
-              "disabledStateType": "literal",
-              "states": "",
-              "localStyles": {
-                "objID": "a0a3fa99-df62-4b3b-b337-7060e6633a92",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "bg_color": "#263442",
-                      "bg_opa": 255,
-                      "radius": 8,
-                      "border_width": 1,
-                      "pad_left": 0,
-                      "pad_right": 0,
-                      "pad_top": 0,
-                      "pad_bottom": 0,
-                      "border_color": "#263442"
-                    },
-                    "PRESSED": {
-                      "bg_color": "#195ba7"
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0
-            },
-            {
-              "objID": "2503246d-5fc6-446a-899a-5d70854aa9ac",
-              "type": "LVGLLabelWidget",
-              "left": 24,
-              "top": 474,
-              "width": 170,
-              "height": 30,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "c862b037-8086-4d40-99be-29df2f2c9cc3",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "timeline": [],
-              "eventHandlers": [],
-              "identifier": "setting_detail_table_button_label",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "px",
-              "heightUnit": "px",
-              "children": [],
-              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
-              "hiddenFlagType": "literal",
-              "clickableFlag": false,
-              "clickableFlagType": "literal",
-              "checkedState": false,
-              "checkedStateType": "literal",
-              "disabledStateType": "literal",
-              "states": "",
-              "localStyles": {
-                "objID": "a8e616f2-f71e-4df7-a0e9-540812a802cc",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_KR20",
-                      "text_color": "#eef5fa",
-                      "text_align": "CENTER",
-                      "pad_left": 0,
-                      "pad_right": 0,
-                      "pad_top": 0,
-                      "pad_bottom": 0
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0,
-              "text": "배출량표 보기",
-              "textType": "literal",
-              "longMode": "WRAP",
-              "recolor": false,
-              "useStaticText": true
-            },
-            {
-              "objID": "987a5e93-b1df-4fe3-ba0e-d1103ccfec88",
-              "type": "LVGLButtonWidget",
-              "left": 206,
-              "top": 462,
-              "width": 130,
-              "height": 52,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "cff800f2-0036-4caa-982b-37727e488611",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "timeline": [],
-              "eventHandlers": [
-                {
-                  "objID": "setting-detail-edit-event",
-                  "eventName": "PRESSED",
-                  "handlerType": "flow",
-                  "userData": 0
-                }
-              ],
-              "identifier": "setting_detail_edit_button",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "px",
-              "heightUnit": "px",
-              "children": [],
-              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
-              "hiddenFlag": false,
-              "hiddenFlagType": "literal",
-              "clickableFlag": true,
-              "clickableFlagType": "literal",
-              "checkedState": false,
-              "checkedStateType": "literal",
-              "disabledStateType": "literal",
-              "states": "",
-              "localStyles": {
-                "objID": "9b0b8599-505e-491e-8639-3e99feaac308",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "bg_color": "#263442",
-                      "bg_opa": 255,
-                      "radius": 8,
-                      "border_width": 1,
-                      "pad_left": 0,
-                      "pad_right": 0,
-                      "pad_top": 0,
-                      "pad_bottom": 0,
-                      "border_color": "#263442"
-                    },
-                    "PRESSED": {
-                      "bg_color": "#195ba7"
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0
-            },
-            {
-              "objID": "e165eea5-0c13-4f27-a11a-71f082ce8325",
-              "type": "LVGLLabelWidget",
-              "left": 206,
-              "top": 474,
-              "width": 130,
-              "height": 30,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "10231f25-7d8a-4bbf-af52-cdca4ba32286",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "timeline": [],
-              "eventHandlers": [],
-              "identifier": "setting_detail_edit_button_label",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "px",
-              "heightUnit": "px",
-              "children": [],
-              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
-              "hiddenFlagType": "literal",
-              "clickableFlag": false,
-              "clickableFlagType": "literal",
-              "checkedState": false,
-              "checkedStateType": "literal",
-              "disabledStateType": "literal",
-              "states": "",
-              "localStyles": {
-                "objID": "ee96715e-04e2-42a8-98a7-0867587aa38a",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_KR20",
-                      "text_color": "#eef5fa",
-                      "text_align": "CENTER",
-                      "pad_left": 0,
-                      "pad_right": 0,
-                      "pad_top": 0,
-                      "pad_bottom": 0
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0,
-              "text": "편집",
-              "textType": "literal",
-              "longMode": "WRAP",
-              "recolor": false,
-              "useStaticText": true
-            },
-            {
-              "objID": "391d4703-b1ec-4f40-a0a3-03879732af2c",
-              "type": "LVGLButtonWidget",
-              "left": 414,
-              "top": 462,
-              "width": 170,
-              "height": 52,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "9f417eef-445e-4868-8bff-23013d452c48",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "timeline": [],
-              "eventHandlers": [
-                {
-                  "objID": "setting-detail-draft-event",
-                  "eventName": "PRESSED",
-                  "handlerType": "flow",
-                  "userData": 0
-                }
-              ],
-              "identifier": "setting_detail_draft_button",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "px",
-              "heightUnit": "px",
-              "children": [],
-              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
-              "hiddenFlag": false,
-              "hiddenFlagType": "literal",
-              "clickableFlag": true,
-              "clickableFlagType": "literal",
-              "checkedState": false,
-              "checkedStateType": "literal",
-              "disabledStateType": "literal",
-              "states": "",
-              "localStyles": {
-                "objID": "237e5066-c734-444d-af2a-91c7d83f5fef",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "bg_color": "#263442",
-                      "bg_opa": 255,
-                      "radius": 8,
-                      "border_width": 1,
-                      "pad_left": 0,
-                      "pad_right": 0,
-                      "pad_top": 0,
-                      "pad_bottom": 0,
-                      "border_color": "#263442"
-                    },
-                    "PRESSED": {
-                      "bg_color": "#195ba7"
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0
-            },
-            {
-              "objID": "5d6c9930-aef6-4dd5-bc3d-e74e27def191",
-              "type": "LVGLLabelWidget",
-              "left": 414,
-              "top": 474,
-              "width": 170,
-              "height": 30,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "26973eb0-3860-44d6-a072-60c3c3a2b269",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "timeline": [],
-              "eventHandlers": [],
-              "identifier": "setting_detail_draft_button_label",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "px",
-              "heightUnit": "px",
-              "children": [],
-              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
-              "hiddenFlagType": "literal",
-              "clickableFlag": false,
-              "clickableFlagType": "literal",
-              "checkedState": false,
-              "checkedStateType": "literal",
-              "disabledStateType": "literal",
-              "states": "",
-              "localStyles": {
-                "objID": "bff0a8d0-ac8b-4efe-b3ec-8e9f69edbeed",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_KR20",
-                      "text_color": "#eef5fa",
-                      "text_align": "CENTER",
-                      "pad_left": 0,
-                      "pad_right": 0,
-                      "pad_top": 0,
-                      "pad_bottom": 0
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0,
-              "text": "임시 저장",
+              "text": "준비량: 구간 전체(kg)   목표 배출량: 분당(kg/min)",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -15922,7 +15588,7 @@
             {
               "objID": "b0a0bee7-783c-4d91-b48d-d26f9d48d0d3",
               "type": "LVGLButtonWidget",
-              "left": 596,
+              "left": 584,
               "top": 462,
               "width": 170,
               "height": 52,
@@ -15985,9 +15651,9 @@
             {
               "objID": "953f7460-7f92-4ae5-ac2e-f069822e4595",
               "type": "LVGLLabelWidget",
-              "left": 596,
-              "top": 474,
-              "width": 170,
+              "left": 620,
+              "top": 473,
+              "width": 99,
               "height": 30,
               "customInputs": [],
               "customOutputs": [],
@@ -16104,9 +15770,9 @@
             {
               "objID": "e13eecae-b8e9-452d-881f-ec4fececb769",
               "type": "LVGLLabelWidget",
-              "left": 778,
-              "top": 474,
-              "width": 222,
+              "left": 834,
+              "top": 473,
+              "width": 111,
               "height": 30,
               "customInputs": [],
               "customOutputs": [],
@@ -16151,7 +15817,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "설정 적용",
+              "text": "운전에 적용",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -16160,9 +15826,9 @@
             {
               "objID": "917d3714-ec53-4e18-9978-b69b91c13c14",
               "type": "LVGLLabelWidget",
-              "left": 24,
-              "top": 529,
-              "width": 976,
+              "left": 26,
+              "top": 473,
+              "width": 400,
               "height": 30,
               "customInputs": [],
               "customOutputs": [],
@@ -16217,9 +15883,9 @@
               "objID": "334f417f-d421-439b-bb48-4aa24e246662",
               "type": "LVGLLabelWidget",
               "left": 44,
-              "top": 370,
-              "width": 94,
-              "height": 24,
+              "top": 316,
+              "width": 148,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -16263,7 +15929,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "배출량표",
+              "text": "계획 준비량 (kg)",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -16272,10 +15938,10 @@
             {
               "objID": "84a8739c-c45e-4d3d-8436-9d2daee6abfc",
               "type": "LVGLLabelWidget",
-              "left": 140,
-              "top": 369,
-              "width": 214,
-              "height": 28,
+              "left": 193,
+              "top": 316,
+              "width": 161,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -16319,7 +15985,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "setting_detail_calibration_text",
+              "text": "setting_detail_preparation_kg_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -16328,8 +15994,8 @@
             {
               "objID": "3a7d6a7e-2135-44ca-8622-bd6f8e4b7f34",
               "type": "LVGLLabelWidget",
-              "left": 675,
-              "top": 43,
+              "left": 410,
+              "top": 45,
               "width": 145,
               "height": 20,
               "customInputs": [],
@@ -16384,8 +16050,8 @@
             {
               "objID": "8bec368e-0e90-4fc3-83ee-260e4165c295",
               "type": "LVGLLabelWidget",
-              "left": 825,
-              "top": 43,
+              "left": 845,
+              "top": 47,
               "width": 175,
               "height": 20,
               "customInputs": [],
@@ -16440,10 +16106,10 @@
             {
               "objID": "9b9bfcbf-ca43-4f1f-b636-47c1946ded6e",
               "type": "LVGLLabelWidget",
-              "left": 390,
-              "top": 63,
-              "width": 610,
-              "height": 17,
+              "left": 584,
+              "top": 47,
+              "width": 254,
+              "height": 22,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -16497,9 +16163,9 @@
               "objID": "06b8515e-20bd-4523-b2b5-103c493db4f9",
               "type": "LVGLLabelWidget",
               "left": 410,
-              "top": 119,
-              "width": 250,
-              "height": 18,
+              "top": 120,
+              "width": 300,
+              "height": 22,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -16543,19 +16209,19 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "setting_detail_original_total_text",
-              "textType": "expression",
+              "text": "설정 기준 · 분당 배출량",
+              "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
-              "useStaticText": false
+              "useStaticText": true
             },
             {
               "objID": "0f2b18b0-6d4c-4ffe-b3d8-45bac67f9ed2",
               "type": "LVGLLabelWidget",
               "left": 426,
-              "top": 343,
+              "top": 338,
               "width": 238,
-              "height": 19,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -16587,7 +16253,7 @@
                   "MAIN": {
                     "DEFAULT": {
                       "text_font": "MaruBuri-Regular_KR16",
-                      "text_color": "#8fa0ae",
+                      "text_color": "#f3bf43",
                       "text_align": "RIGHT",
                       "pad_left": 0,
                       "pad_right": 0,
@@ -16599,7 +16265,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "setting_detail_selected_zone == \"SURFACE\" ? setting_detail_channel_a_user_trim_volt_text : setting_detail_channel_c_user_trim_volt_text",
+              "text": "setting_detail_selected_zone == \"SURFACE\" ? setting_detail_channel_a_table_lookup_status_text : setting_detail_channel_c_table_lookup_status_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -16609,9 +16275,9 @@
               "objID": "f1854945-563c-4aa1-9673-27960eefff75",
               "type": "LVGLLabelWidget",
               "left": 716,
-              "top": 343,
+              "top": 338,
               "width": 238,
-              "height": 19,
+              "height": 26,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -16643,7 +16309,7 @@
                   "MAIN": {
                     "DEFAULT": {
                       "text_font": "MaruBuri-Regular_KR16",
-                      "text_color": "#8fa0ae",
+                      "text_color": "#f3bf43",
                       "text_align": "RIGHT",
                       "pad_left": 0,
                       "pad_right": 0,
@@ -16655,7 +16321,231 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "setting_detail_selected_zone == \"SURFACE\" ? setting_detail_channel_b_user_trim_volt_text : setting_detail_channel_d_user_trim_volt_text",
+              "text": "setting_detail_selected_zone == \"SURFACE\" ? setting_detail_channel_b_table_lookup_status_text : setting_detail_channel_d_table_lookup_status_text",
+              "textType": "expression",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": false
+            },
+            {
+              "objID": "3c41548d-ce8a-4876-8edd-70fefe36b36b",
+              "type": "LVGLLabelWidget",
+              "left": 44,
+              "top": 346,
+              "width": 148,
+              "height": 26,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "064b12e8-81c2-4583-a943-388554931b4f",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "setting_detail_info_caption_8",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "1b130e0b-a1b7-44ad-98a6-f53f31a91a73",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_color": "#8fa0ae",
+                      "text_align": "LEFT",
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "기준속도 (km/h)",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "f5843c93-7aad-4522-8374-ba90b1eb949c",
+              "type": "LVGLLabelWidget",
+              "left": 193,
+              "top": 346,
+              "width": 161,
+              "height": 26,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "26df4a7a-a0a6-4fa7-848f-abb8a8511e93",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "setting_detail_info_value_8",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "7215f8bd-8193-47c5-ac6b-9065cf88f1d7",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_color": "#edf3f7",
+                      "text_align": "RIGHT",
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "setting_detail_speed_text",
+              "textType": "expression",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": false
+            },
+            {
+              "objID": "62d38c0c-d9a2-47ab-abbc-ee246157210c",
+              "type": "LVGLLabelWidget",
+              "left": 44,
+              "top": 376,
+              "width": 148,
+              "height": 26,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "a7419e47-0e29-49f7-9840-70095eff699c",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "setting_detail_info_caption_9",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "2e43258a-e8fc-43ad-b8a5-88a2859c1089",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_color": "#8fa0ae",
+                      "text_align": "LEFT",
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "배출량표",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "09b442be-d70a-4da4-b623-faf68cab4e2f",
+              "type": "LVGLLabelWidget",
+              "left": 193,
+              "top": 376,
+              "width": 161,
+              "height": 26,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "c7b4d35b-8c70-4c2e-aaf0-6d6add048bff",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "setting_detail_info_value_9",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "9f4fccec-d3ff-4f7f-8734-5e8fb75dec35",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_color": "#edf3f7",
+                      "text_align": "RIGHT",
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "setting_detail_calibration_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -16699,49 +16589,6 @@
               "objID": "fbe34e57-3629-4d8b-9c6e-5567b0cfe999",
               "action": "changeScreen",
               "screen": "Dashboard",
-              "screenType": "literal",
-              "fadeMode": "FADE_IN",
-              "fadeModeType": "literal",
-              "speed": 100,
-              "speedType": "literal",
-              "delay": 0,
-              "delayType": "literal",
-              "useStack": false,
-              "useStackType": "literal"
-            }
-          ]
-        },
-        {
-          "objID": "cecf7c64-519f-4128-bc3a-d2b08dafba26",
-          "type": "SetVariableActionComponent",
-          "left": 286,
-          "top": 819,
-          "width": 539,
-          "height": 56,
-          "customInputs": [],
-          "customOutputs": [],
-          "entries": [
-            {
-              "objID": "46457367-e64f-441c-83c7-5f4ca746801e",
-              "variable": "evt_setting_detail_save_draft",
-              "value": "evt_setting_detail_save_draft ^ LV_STATE.CHECKED"
-            }
-          ]
-        },
-        {
-          "objID": "fe1e6978-da2d-4ec2-8650-9c6312f35cde",
-          "type": "LVGLActionComponent",
-          "left": -502,
-          "top": 478,
-          "width": 421,
-          "height": 52,
-          "customInputs": [],
-          "customOutputs": [],
-          "actions": [
-            {
-              "objID": "662693a6-328d-4f20-9916-b8884b528f79",
-              "action": "changeScreen",
-              "screen": "SettingTable",
               "screenType": "literal",
               "fadeMode": "FADE_IN",
               "fadeModeType": "literal",
@@ -16840,8 +16687,8 @@
         {
           "objID": "8b24d87b-665c-41fd-b88f-cc1e361dea36",
           "type": "SetVariableActionComponent",
-          "left": 859,
-          "top": 808,
+          "left": 574,
+          "top": 656,
           "width": 528,
           "height": 78,
           "customInputs": [],
@@ -16862,8 +16709,8 @@
         {
           "objID": "1c6a7fa4-eec3-49c0-a92f-567cba9d049c",
           "type": "LVGLActionComponent",
-          "left": 1483,
-          "top": 808,
+          "left": 1173,
+          "top": 656,
           "width": 433,
           "height": 52,
           "customInputs": [],
@@ -16910,8 +16757,8 @@
         {
           "objID": "fb44d91d-223f-478f-a526-03d7caf55866",
           "type": "LVGLActionComponent",
-          "left": 1076,
-          "top": 393,
+          "left": 1621,
+          "top": 491,
           "width": 433,
           "height": 52,
           "customInputs": [],
@@ -16940,27 +16787,6 @@
           "source": "40b3429d-a26c-4515-9b92-9ec97a61f466",
           "output": "PRESSED",
           "target": "0295a5cc-2306-41d0-9c49-e38cc3a194fc",
-          "input": "@seqin"
-        },
-        {
-          "objID": "6bc61e76-e5cc-4ffb-8583-9f5ae56b2ce8",
-          "source": "391d4703-b1ec-4f40-a0a3-03879732af2c",
-          "output": "PRESSED",
-          "target": "cecf7c64-519f-4128-bc3a-d2b08dafba26",
-          "input": "@seqin"
-        },
-        {
-          "objID": "ca5adcf3-22b9-44c7-be2b-bea9f56ab0e5",
-          "source": "3ab929f6-3d7f-4260-a1a0-8a7938086cbd",
-          "output": "PRESSED",
-          "target": "fe1e6978-da2d-4ec2-8650-9c6312f35cde",
-          "input": "@seqin"
-        },
-        {
-          "objID": "7f52c04f-2f79-48ab-a3d7-93da09e0def4",
-          "source": "987a5e93-b1df-4fe3-ba0e-d1103ccfec88",
-          "output": "PRESSED",
-          "target": "96d6b238-186c-4cf4-875a-01a9f20491b4",
           "input": "@seqin"
         },
         {
@@ -16996,6 +16822,13 @@
           "source": "dedfbea0-1858-493b-99b8-9cc04b672b07",
           "output": "@seqout",
           "target": "fb44d91d-223f-478f-a526-03d7caf55866",
+          "input": "@seqin"
+        },
+        {
+          "objID": "8ae2e2c3-7866-4155-e234-f9e84031d0e5",
+          "source": "c27332da-8fa1-485c-b8e9-4c0397986bdc",
+          "output": "PRESSED",
+          "target": "96d6b238-186c-4cf4-875a-01a9f20491b4",
           "input": "@seqin"
         }
       ],
@@ -22206,7 +22039,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "입력 원본 · Draft",
+              "text": "제품·처방 입력 · Draft",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -23655,7 +23488,7 @@
               "objID": "21d2bb79-d7c0-4b52-9496-02b728e9c683",
               "type": "LVGLLabelWidget",
               "left": 690,
-              "top": 86,
+              "top": 85,
               "width": 285,
               "height": 30,
               "customInputs": [],
@@ -23701,7 +23534,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "적용 전 확인",
+              "text": "작업 전 계산 조건",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -23711,9 +23544,9 @@
               "objID": "33943b92-10d4-45b8-87f2-9b8da12286e7",
               "type": "LVGLLabelWidget",
               "left": 690,
-              "top": 130,
-              "width": 280,
-              "height": 76,
+              "top": 119,
+              "width": 284,
+              "height": 27,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -23757,7 +23590,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "편집값은 Draft입니다.\nDashboard와 운전 출력은 바뀌지 않습니다.",
+              "text": "두둑/구간은 별도 화면에서 설정합니다.",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -23766,10 +23599,10 @@
             {
               "objID": "8bba396e-1d4b-48d3-8589-ea03e97871ba",
               "type": "LVGLLabelWidget",
-              "left": 690,
-              "top": 229,
-              "width": 120,
-              "height": 28,
+              "left": 688,
+              "top": 156,
+              "width": 125,
+              "height": 30,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -23813,7 +23646,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "적용 대상",
+              "text": "두둑/구간",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -23822,9 +23655,9 @@
             {
               "objID": "6c80430d-6569-477f-bd61-ca63eaeb5465",
               "type": "LVGLLabelWidget",
-              "left": 690,
-              "top": 260,
-              "width": 270,
+              "left": 817,
+              "top": 156,
+              "width": 160,
               "height": 30,
               "customInputs": [],
               "customOutputs": [],
@@ -23856,9 +23689,9 @@
                 "definition": {
                   "MAIN": {
                     "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_KR20",
+                      "text_font": "MaruBuri-Regular_KR16",
                       "text_color": "#edf3f7",
-                      "text_align": "LEFT",
+                      "text_align": "RIGHT",
                       "pad_left": 0,
                       "pad_right": 0,
                       "pad_top": 0,
@@ -23869,7 +23702,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "setting_detail_driver_text",
+              "text": "setting_detail_ridge_section_text",
               "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
@@ -23878,10 +23711,10 @@
             {
               "objID": "2cc78c6a-3de0-494c-ab7d-09f1076d0999",
               "type": "LVGLLabelWidget",
-              "left": 690,
-              "top": 323,
-              "width": 260,
-              "height": 26,
+              "left": 688,
+              "top": 197,
+              "width": 125,
+              "height": 30,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -23925,7 +23758,7 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "검증 및 계산 결과",
+              "text": "계산폭 (m)",
               "textType": "literal",
               "longMode": "WRAP",
               "recolor": false,
@@ -23934,10 +23767,10 @@
             {
               "objID": "31385206-f2c5-4f17-ad9b-223964efa0aa",
               "type": "LVGLLabelWidget",
-              "left": 690,
-              "top": 356,
-              "width": 275,
-              "height": 98,
+              "left": 817,
+              "top": 197,
+              "width": 160,
+              "height": 30,
               "customInputs": [],
               "customOutputs": [],
               "style": {
@@ -23970,7 +23803,7 @@
                     "DEFAULT": {
                       "text_font": "MaruBuri-Regular_KR16",
                       "text_color": "#f9b938",
-                      "text_align": "LEFT",
+                      "text_align": "RIGHT",
                       "pad_left": 0,
                       "pad_right": 0,
                       "pad_top": 0,
@@ -23981,135 +23814,16 @@
               },
               "group": "",
               "groupIndex": 0,
-              "text": "값을 입력한 뒤 검증하세요.\n미승인 배출량표는 적용할 수 없습니다.",
-              "textType": "literal",
+              "text": "setting_detail_calculated_width_m_text",
+              "textType": "expression",
               "longMode": "WRAP",
               "recolor": false,
-              "useStaticText": true
-            },
-            {
-              "objID": "2495a36d-a65e-4f9e-bbd9-9c0d6779f1c9",
-              "type": "LVGLButtonWidget",
-              "left": 24,
-              "top": 475,
-              "width": 196,
-              "height": 48,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "c655d896-6b3c-452e-bee7-f9e7fd5f6686",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "timeline": [],
-              "eventHandlers": [
-                {
-                  "objID": "02e7eefb-d79c-452f-abbd-50009fb9c104",
-                  "eventName": "PRESSED",
-                  "handlerType": "flow",
-                  "userData": 0
-                }
-              ],
-              "identifier": "setting_edit_draft_button",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "px",
-              "heightUnit": "px",
-              "children": [],
-              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
-              "hiddenFlag": false,
-              "hiddenFlagType": "literal",
-              "clickableFlag": true,
-              "clickableFlagType": "literal",
-              "checkedState": false,
-              "checkedStateType": "literal",
-              "disabledStateType": "literal",
-              "states": "",
-              "localStyles": {
-                "objID": "40ab7042-c160-435e-a729-ade404e2d12d",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "bg_color": "#263542",
-                      "bg_opa": 255,
-                      "radius": 8,
-                      "border_width": 1,
-                      "pad_left": 0,
-                      "pad_right": 0,
-                      "pad_top": 0,
-                      "pad_bottom": 0,
-                      "border_color": "#465664"
-                    },
-                    "PRESSED": {
-                      "bg_color": "#415669"
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0
-            },
-            {
-              "objID": "3efd13b9-c1f9-4d3b-bdb2-13dc85915d00",
-              "type": "LVGLLabelWidget",
-              "left": 24,
-              "top": 485,
-              "width": 196,
-              "height": 28,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "078907ae-c74b-4ef2-a280-2d18c9fd3738",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "timeline": [],
-              "eventHandlers": [],
-              "identifier": "setting_edit_draft_button_label",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "px",
-              "heightUnit": "px",
-              "children": [],
-              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
-              "hiddenFlagType": "literal",
-              "clickableFlag": false,
-              "clickableFlagType": "literal",
-              "checkedState": false,
-              "checkedStateType": "literal",
-              "disabledStateType": "literal",
-              "states": "",
-              "localStyles": {
-                "objID": "7e83c4bb-3596-4d34-9039-eef66c2d3aa2",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_KR20",
-                      "text_color": "#edf3f7",
-                      "text_align": "CENTER",
-                      "pad_left": 0,
-                      "pad_right": 0,
-                      "pad_top": 0,
-                      "pad_bottom": 0
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0,
-              "text": "임시 저장",
-              "textType": "literal",
-              "longMode": "WRAP",
-              "recolor": false,
-              "useStaticText": true
+              "useStaticText": false
             },
             {
               "objID": "85e9f8df-1514-46e6-a320-ceb12d2af418",
               "type": "LVGLButtonWidget",
-              "left": 236,
+              "left": 435,
               "top": 475,
               "width": 196,
               "height": 48,
@@ -24135,7 +23849,66 @@
               "topUnit": "px",
               "widthUnit": "px",
               "heightUnit": "px",
-              "children": [],
+              "children": [
+                {
+                  "objID": "36c8a9b4-bb5d-49f9-90b6-a3d3d50d1463",
+                  "type": "LVGLLabelWidget",
+                  "left": 54,
+                  "top": 9,
+                  "width": 87,
+                  "height": 28,
+                  "customInputs": [],
+                  "customOutputs": [],
+                  "style": {
+                    "objID": "e409ed37-c014-4930-b4c6-ac5d8f67dc90",
+                    "useStyle": "default",
+                    "conditionalStyles": [],
+                    "childStyles": []
+                  },
+                  "locked": false,
+                  "hiddenInEditor": false,
+                  "timeline": [],
+                  "eventHandlers": [],
+                  "identifier": "setting_edit_save_button_label",
+                  "leftUnit": "px",
+                  "topUnit": "px",
+                  "widthUnit": "px",
+                  "heightUnit": "px",
+                  "children": [],
+                  "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+                  "hiddenFlag": false,
+                  "hiddenFlagType": "literal",
+                  "clickableFlag": false,
+                  "clickableFlagType": "literal",
+                  "checkedState": false,
+                  "checkedStateType": "literal",
+                  "disabledStateType": "literal",
+                  "states": "",
+                  "localStyles": {
+                    "objID": "548a5158-dbbb-4b55-b0d9-b65138a2b900",
+                    "definition": {
+                      "MAIN": {
+                        "DEFAULT": {
+                          "text_font": "MaruBuri-Regular_KR20",
+                          "text_color": "#edf3f7",
+                          "text_align": "CENTER",
+                          "pad_left": 0,
+                          "pad_right": 0,
+                          "pad_top": 0,
+                          "pad_bottom": 0
+                        }
+                      }
+                    }
+                  },
+                  "group": "",
+                  "groupIndex": 0,
+                  "text": "설정 저장",
+                  "textType": "literal",
+                  "longMode": "WRAP",
+                  "recolor": false,
+                  "useStaticText": true
+                }
+              ],
               "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
               "hiddenFlag": false,
               "hiddenFlagType": "literal",
@@ -24168,181 +23941,6 @@
               },
               "group": "",
               "groupIndex": 0
-            },
-            {
-              "objID": "36c8a9b4-bb5d-49f9-90b6-a3d3d50d1463",
-              "type": "LVGLLabelWidget",
-              "left": 236,
-              "top": 485,
-              "width": 196,
-              "height": 28,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "e409ed37-c014-4930-b4c6-ac5d8f67dc90",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "timeline": [],
-              "eventHandlers": [],
-              "identifier": "setting_edit_save_button_label",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "px",
-              "heightUnit": "px",
-              "children": [],
-              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
-              "hiddenFlagType": "literal",
-              "clickableFlag": false,
-              "clickableFlagType": "literal",
-              "checkedState": false,
-              "checkedStateType": "literal",
-              "disabledStateType": "literal",
-              "states": "",
-              "localStyles": {
-                "objID": "548a5158-dbbb-4b55-b0d9-b65138a2b900",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_KR20",
-                      "text_color": "#edf3f7",
-                      "text_align": "CENTER",
-                      "pad_left": 0,
-                      "pad_right": 0,
-                      "pad_top": 0,
-                      "pad_bottom": 0
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0,
-              "text": "설정 저장",
-              "textType": "literal",
-              "longMode": "WRAP",
-              "recolor": false,
-              "useStaticText": true
-            },
-            {
-              "objID": "ab78cbaf-ff25-4816-beb8-607388658dc7",
-              "type": "LVGLButtonWidget",
-              "left": 448,
-              "top": 475,
-              "width": 196,
-              "height": 48,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "4c33f108-a75e-4af9-94f4-ef309dc3701a",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "timeline": [],
-              "eventHandlers": [
-                {
-                  "objID": "44a1fc05-2418-4477-9a31-7f790ff4f3c5",
-                  "eventName": "PRESSED",
-                  "handlerType": "flow",
-                  "userData": 0
-                }
-              ],
-              "identifier": "setting_edit_apply_button",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "px",
-              "heightUnit": "px",
-              "children": [],
-              "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
-              "hiddenFlag": false,
-              "hiddenFlagType": "literal",
-              "clickableFlag": true,
-              "clickableFlagType": "literal",
-              "checkedState": false,
-              "checkedStateType": "literal",
-              "disabledStateType": "literal",
-              "states": "",
-              "localStyles": {
-                "objID": "beb49ead-f281-4963-b919-c7e08d97a106",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "bg_color": "#f9b938",
-                      "bg_opa": 255,
-                      "radius": 8,
-                      "border_width": 1,
-                      "pad_left": 0,
-                      "pad_right": 0,
-                      "pad_top": 0,
-                      "pad_bottom": 0,
-                      "border_color": "#f9b938"
-                    },
-                    "PRESSED": {
-                      "bg_color": "#415669"
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0
-            },
-            {
-              "objID": "b7425ceb-bcce-43c7-9c46-e0c8fa499b95",
-              "type": "LVGLLabelWidget",
-              "left": 448,
-              "top": 485,
-              "width": 196,
-              "height": 28,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "4a7cca9e-fe3f-4959-a437-5fe029855fdc",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "timeline": [],
-              "eventHandlers": [],
-              "identifier": "setting_edit_apply_button_label",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "px",
-              "heightUnit": "px",
-              "children": [],
-              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
-              "hiddenFlagType": "literal",
-              "clickableFlag": false,
-              "clickableFlagType": "literal",
-              "checkedState": false,
-              "checkedStateType": "literal",
-              "disabledStateType": "literal",
-              "states": "",
-              "localStyles": {
-                "objID": "793d6af0-b69a-4664-a152-ea5bbd66353d",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "text_font": "MaruBuri-Regular_KR20",
-                      "text_color": "#17212b",
-                      "text_align": "CENTER",
-                      "pad_left": 0,
-                      "pad_right": 0,
-                      "pad_top": 0,
-                      "pad_bottom": 0
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0,
-              "text": "설정 적용",
-              "textType": "literal",
-              "longMode": "WRAP",
-              "recolor": false,
-              "useStaticText": true
             },
             {
               "objID": "8d3b2b13-42bd-486e-a98e-41bbdab98813",
@@ -24462,6 +24060,454 @@
               "longMode": "WRAP",
               "recolor": false,
               "useStaticText": true
+            },
+            {
+              "objID": "d5f66017-219f-438b-a719-9457599d0fcd",
+              "type": "LVGLLabelWidget",
+              "left": 688,
+              "top": 238,
+              "width": 125,
+              "height": 30,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "cf5027e6-4fe6-4faa-86da-2aead84c8ab7",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "setting_edit_review_caption_3",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "5a12e5dd-7bbc-4789-81a0-fe458b41b7af",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_color": "#9aacba",
+                      "text_align": "LEFT",
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "실제 길이 (m)",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "f03b43e7-07b7-4e49-bb04-82123fc85782",
+              "type": "LVGLLabelWidget",
+              "left": 817,
+              "top": 238,
+              "width": 160,
+              "height": 30,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "f3dfe508-c259-4288-b838-264b786c1b41",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "setting_edit_review_value_3",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "9a07009c-e032-4942-ad19-186c89e63eb9",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_color": "#edf3f7",
+                      "text_align": "RIGHT",
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "setting_detail_actual_length_m_text",
+              "textType": "expression",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": false
+            },
+            {
+              "objID": "1aedb35b-23de-46d7-a688-8ba9d724594c",
+              "type": "LVGLLabelWidget",
+              "left": 688,
+              "top": 279,
+              "width": 125,
+              "height": 30,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "48404ca8-b77f-42eb-9795-0622c13b9b29",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "setting_edit_review_caption_4",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "fa4bb448-47aa-4db0-8c9a-3ef7fdf2138b",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_color": "#9aacba",
+                      "text_align": "LEFT",
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "계획 준비량 (kg)",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "325b8a59-0c15-4c2f-a518-4be818e5eb06",
+              "type": "LVGLLabelWidget",
+              "left": 817,
+              "top": 279,
+              "width": 160,
+              "height": 30,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "72825d08-3434-4116-b3a2-7e11dfd978fd",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "setting_edit_review_value_4",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "db75e65e-99ad-47ac-a5f8-7bab5b780e7b",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_color": "#edf3f7",
+                      "text_align": "RIGHT",
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "setting_detail_preparation_kg_text",
+              "textType": "expression",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": false
+            },
+            {
+              "objID": "cb6341d9-d85a-424d-a41f-40f94cf418f4",
+              "type": "LVGLLabelWidget",
+              "left": 688,
+              "top": 320,
+              "width": 125,
+              "height": 30,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "b9f7151f-48e8-4d3a-a0b7-40c494b5e387",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "setting_edit_review_caption_5",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "64e085f7-e4fd-4c96-961e-d4a4d808a8f7",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_color": "#9aacba",
+                      "text_align": "LEFT",
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "총 목표 (kg/min)",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "d870b226-cdd7-4807-aaf7-52c1a5a35bcf",
+              "type": "LVGLLabelWidget",
+              "left": 817,
+              "top": 320,
+              "width": 160,
+              "height": 30,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "6a2e8bf4-9278-46c8-9dc6-00fcfa513093",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "setting_edit_review_value_5",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "17beeb74-1492-496e-8abc-be6e99c3bf2e",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_color": "#edf3f7",
+                      "text_align": "RIGHT",
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "setting_detail_total_target_text",
+              "textType": "expression",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": false
+            },
+            {
+              "objID": "77621cba-05df-46f7-97da-1916f269c4e8",
+              "type": "LVGLLabelWidget",
+              "left": 688,
+              "top": 361,
+              "width": 125,
+              "height": 30,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "99b2683a-346a-4fe3-bb66-b4caaf87ae74",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "setting_edit_review_caption_6",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "79742190-2da2-4955-8175-76ea288ec7b7",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_color": "#9aacba",
+                      "text_align": "LEFT",
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "배출량표",
+              "textType": "literal",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": true
+            },
+            {
+              "objID": "f6174356-0926-4ca2-8c21-aa002ea5191c",
+              "type": "LVGLLabelWidget",
+              "left": 817,
+              "top": 361,
+              "width": 160,
+              "height": 30,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "61534d28-1c41-471d-a9c0-4269369adc3c",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "setting_edit_review_value_6",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": false,
+              "hiddenFlagType": "literal",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "7716d31c-a9d7-49ad-a318-7a258ea98a60",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "text_font": "MaruBuri-Regular_KR16",
+                      "text_color": "#edf3f7",
+                      "text_align": "RIGHT",
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0,
+              "text": "setting_detail_calibration_text",
+              "textType": "expression",
+              "longMode": "WRAP",
+              "recolor": false,
+              "useStaticText": false
             }
           ],
           "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
@@ -24490,8 +24536,8 @@
         {
           "objID": "bded6cdb-9e55-44c5-8fec-9d973435cb5f",
           "type": "SetVariableActionComponent",
-          "left": 1120,
-          "top": 140,
+          "left": 1143,
+          "top": 51,
           "width": 348,
           "height": 121,
           "customInputs": [],
@@ -24522,8 +24568,8 @@
         {
           "objID": "e8c24b1a-4c53-43e7-8549-1f89832765c2",
           "type": "LVGLActionComponent",
-          "left": 1600,
-          "top": 140,
+          "left": 1911,
+          "top": 38,
           "width": 446,
           "height": 52,
           "customInputs": [],
@@ -24548,8 +24594,8 @@
         {
           "objID": "cfaea7ca-0191-4be8-b57b-c9719a260362",
           "type": "SetVariableActionComponent",
-          "left": 1120,
-          "top": 240,
+          "left": 1143,
+          "top": 189,
           "width": 367,
           "height": 121,
           "customInputs": [],
@@ -24606,8 +24652,8 @@
         {
           "objID": "5a6ff469-354b-4778-8ad4-6a7747f82a1f",
           "type": "SetVariableActionComponent",
-          "left": 1120,
-          "top": 340,
+          "left": 1149,
+          "top": 319,
           "width": 342,
           "height": 121,
           "customInputs": [],
@@ -24664,8 +24710,8 @@
         {
           "objID": "7536e120-876c-4041-ac90-e0d5589c4e61",
           "type": "SetVariableActionComponent",
-          "left": 1120,
-          "top": 440,
+          "left": 1143,
+          "top": 457,
           "width": 398,
           "height": 121,
           "customInputs": [],
@@ -24696,8 +24742,8 @@
         {
           "objID": "b13b3670-09f4-4c22-902c-658db4ab3ac7",
           "type": "LVGLActionComponent",
-          "left": 1600,
-          "top": 440,
+          "left": 1623,
+          "top": 457,
           "width": 458,
           "height": 52,
           "customInputs": [],
@@ -24722,8 +24768,8 @@
         {
           "objID": "71ec4358-db32-455a-b07a-e0d310d89a0b",
           "type": "SetVariableActionComponent",
-          "left": 1120,
-          "top": 540,
+          "left": 1143,
+          "top": 600,
           "width": 355,
           "height": 121,
           "customInputs": [],
@@ -24754,8 +24800,8 @@
         {
           "objID": "602ddba3-815f-49f9-a989-89676afba781",
           "type": "LVGLActionComponent",
-          "left": 1600,
-          "top": 540,
+          "left": 1623,
+          "top": 600,
           "width": 458,
           "height": 52,
           "customInputs": [],
@@ -24780,8 +24826,8 @@
         {
           "objID": "67788f87-1fac-4c09-a135-b96352e043f3",
           "type": "SetVariableActionComponent",
-          "left": 1120,
-          "top": 640,
+          "left": 1143,
+          "top": 736,
           "width": 398,
           "height": 121,
           "customInputs": [],
@@ -24812,8 +24858,8 @@
         {
           "objID": "60ae7802-e5a8-48b9-96c0-d8a3c4054f4c",
           "type": "LVGLActionComponent",
-          "left": 1600,
-          "top": 640,
+          "left": 1623,
+          "top": 736,
           "width": 458,
           "height": 52,
           "customInputs": [],
@@ -24838,8 +24884,8 @@
         {
           "objID": "94e53a24-3e42-4f33-96d2-43d46ee784bf",
           "type": "LVGLActionComponent",
-          "left": 1600,
-          "top": 120,
+          "left": 47,
+          "top": -133,
           "width": 427,
           "height": 52,
           "customInputs": [],
@@ -24862,53 +24908,10 @@
           ]
         },
         {
-          "objID": "d30effd1-de4d-48a6-ae01-c2795726b41e",
-          "type": "SetVariableActionComponent",
-          "left": 1120,
-          "top": 120,
-          "width": 539,
-          "height": 56,
-          "customInputs": [],
-          "customOutputs": [],
-          "entries": [
-            {
-              "objID": "d7a8857f-e8bd-49df-a135-e60c541e63a3",
-              "variable": "evt_setting_detail_save_draft",
-              "value": "evt_setting_detail_save_draft ^ LV_STATE.CHECKED"
-            }
-          ]
-        },
-        {
-          "objID": "bc1fff7e-dda4-4e26-879b-badbf0f99408",
-          "type": "LVGLActionComponent",
-          "left": 1600,
-          "top": 120,
-          "width": 427,
-          "height": 52,
-          "customInputs": [],
-          "customOutputs": [],
-          "actions": [
-            {
-              "objID": "e3a69170-c1a7-4eb7-8e64-62cbfe4dc934",
-              "action": "changeScreen",
-              "screen": "SettingDetail",
-              "screenType": "literal",
-              "fadeMode": "FADE_IN",
-              "fadeModeType": "literal",
-              "speed": 100,
-              "speedType": "literal",
-              "delay": 0,
-              "delayType": "literal",
-              "useStack": false,
-              "useStackType": "literal"
-            }
-          ]
-        },
-        {
           "objID": "4906fae7-c469-4338-b5e4-d633f342cc82",
           "type": "SetVariableActionComponent",
-          "left": 1120,
-          "top": 120,
+          "left": 1143,
+          "top": -107,
           "width": 528,
           "height": 78,
           "customInputs": [],
@@ -24929,8 +24932,8 @@
         {
           "objID": "7574d2d2-ea95-46ca-ba6e-c32bb1a7fae7",
           "type": "LVGLActionComponent",
-          "left": 1600,
-          "top": 120,
+          "left": 1911,
+          "top": -159,
           "width": 433,
           "height": 52,
           "customInputs": [],
@@ -24953,58 +24956,10 @@
           ]
         },
         {
-          "objID": "bc4aa980-1e76-4a05-af9c-2c6243b04be8",
-          "type": "SetVariableActionComponent",
-          "left": 1120,
-          "top": 120,
-          "width": 482,
-          "height": 78,
-          "customInputs": [],
-          "customOutputs": [],
-          "entries": [
-            {
-              "objID": "4f96461b-8511-4bfc-84a8-eb02ea17ed1c",
-              "variable": "setting_confirm_action_text",
-              "value": "\"설정 적용\""
-            },
-            {
-              "objID": "ae20233e-7014-41fe-bc82-ff40a9bb32f8",
-              "variable": "setting_confirm_message_text",
-              "value": "\"안전조건과 배출량표를 확인한 후 적용을 요청합니다.\""
-            }
-          ]
-        },
-        {
-          "objID": "2244e01a-24b2-464f-ba75-62686c5e9694",
-          "type": "LVGLActionComponent",
-          "left": 1600,
-          "top": 120,
-          "width": 433,
-          "height": 52,
-          "customInputs": [],
-          "customOutputs": [],
-          "actions": [
-            {
-              "objID": "f3dbf1ba-09cb-48ee-a41c-22bb0bbef45a",
-              "action": "changeScreen",
-              "screen": "SettingConfirm",
-              "screenType": "literal",
-              "fadeMode": "FADE_IN",
-              "fadeModeType": "literal",
-              "speed": 100,
-              "speedType": "literal",
-              "delay": 0,
-              "delayType": "literal",
-              "useStack": false,
-              "useStackType": "literal"
-            }
-          ]
-        },
-        {
           "objID": "b1d9c99c-431c-421b-88d6-2daf4aaa1aca",
           "type": "LVGLActionComponent",
-          "left": 1600,
-          "top": 120,
+          "left": 474,
+          "top": 635,
           "width": 421,
           "height": 52,
           "customInputs": [],
@@ -25120,20 +25075,6 @@
           "input": "@seqin"
         },
         {
-          "objID": "1e6265e5-fb28-45a4-aaa6-574c3042720b",
-          "source": "2495a36d-a65e-4f9e-bbd9-9c0d6779f1c9",
-          "output": "PRESSED",
-          "target": "d30effd1-de4d-48a6-ae01-c2795726b41e",
-          "input": "@seqin"
-        },
-        {
-          "objID": "27f0fd4c-a2a0-4b2f-9ca9-6b2c6b690426",
-          "source": "d30effd1-de4d-48a6-ae01-c2795726b41e",
-          "output": "@seqout",
-          "target": "bc1fff7e-dda4-4e26-879b-badbf0f99408",
-          "input": "@seqin"
-        },
-        {
           "objID": "27c831e7-c2be-4add-a973-30be67cda9f7",
           "source": "85e9f8df-1514-46e6-a320-ceb12d2af418",
           "output": "PRESSED",
@@ -25145,20 +25086,6 @@
           "source": "4906fae7-c469-4338-b5e4-d633f342cc82",
           "output": "@seqout",
           "target": "7574d2d2-ea95-46ca-ba6e-c32bb1a7fae7",
-          "input": "@seqin"
-        },
-        {
-          "objID": "c7deac1b-bb97-4d4c-84bc-682c537c25df",
-          "source": "ab78cbaf-ff25-4816-beb8-607388658dc7",
-          "output": "PRESSED",
-          "target": "bc4aa980-1e76-4a05-af9c-2c6243b04be8",
-          "input": "@seqin"
-        },
-        {
-          "objID": "16c093e9-08b9-493f-ae80-a6f3cb24c375",
-          "source": "bc4aa980-1e76-4a05-af9c-2c6243b04be8",
-          "output": "@seqout",
-          "target": "2244e01a-24b2-464f-ba75-62686c5e9694",
           "input": "@seqin"
         },
         {
@@ -26427,7 +26354,7 @@
                   "objID": "dd6c1530-340e-4068-be5a-ba53a7eb7a8a",
                   "type": "LVGLLabelWidget",
                   "left": 0,
-                  "top": 3,
+                  "top": -1,
                   "width": 164,
                   "height": 27,
                   "customInputs": [],
@@ -26502,59 +26429,6 @@
                     },
                     "PRESSED": {
                       "bg_color": "#21303c"
-                    }
-                  }
-                }
-              },
-              "group": "",
-              "groupIndex": 0
-            },
-            {
-              "objID": "1cf66cb3-16d0-4a1a-9b87-f30d2c6e7233",
-              "type": "LVGLPanelWidget",
-              "left": 602,
-              "top": 89,
-              "width": 176,
-              "height": 1,
-              "customInputs": [],
-              "customOutputs": [],
-              "style": {
-                "objID": "0effe8e6-f0ac-49cf-8cd6-0254d33ad985",
-                "useStyle": "default",
-                "conditionalStyles": [],
-                "childStyles": []
-              },
-              "timeline": [],
-              "eventHandlers": [],
-              "identifier": "main_tab_line_work",
-              "leftUnit": "px",
-              "topUnit": "px",
-              "widthUnit": "px",
-              "heightUnit": "px",
-              "children": [],
-              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
-              "hiddenFlag": false,
-              "hiddenFlagType": "literal",
-              "clickableFlag": false,
-              "clickableFlagType": "literal",
-              "checkedState": false,
-              "checkedStateType": "literal",
-              "disabledStateType": "literal",
-              "states": "",
-              "localStyles": {
-                "objID": "a413d71c-3d04-424c-9e44-39f39f38fbd1",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "bg_color": "#293540",
-                      "bg_opa": 255,
-                      "border_color": null,
-                      "border_width": 0,
-                      "radius": 0,
-                      "pad_left": 0,
-                      "pad_right": 0,
-                      "pad_top": 0,
-                      "pad_bottom": 0
                     }
                   }
                 }
@@ -29602,6 +29476,116 @@
               "longMode": "WRAP",
               "recolor": false,
               "useStaticText": true
+            },
+            {
+              "objID": "c5450a51-91ff-45ce-9c33-2bbed0ce3043",
+              "type": "LVGLPanelWidget",
+              "left": 44,
+              "top": 147,
+              "width": 214,
+              "height": 44,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "61c9b051-1087-4036-8333-814688f245d8",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "main_nitrogen_selection_outline",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": "recipe_draft_input_mode != \"BY_NITROGEN\"",
+              "hiddenFlagType": "expression",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "be832872-f36f-4d7b-b3c3-db3ea484c09f",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_opa": 0,
+                      "border_color": "#e0a800",
+                      "border_width": 3,
+                      "radius": 5,
+                      "shadow_color": "#e0a800",
+                      "shadow_width": 5,
+                      "shadow_opa": 48,
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
+            },
+            {
+              "objID": "ca67f0b0-0e71-4481-8d8f-9e8ff3491fc5",
+              "type": "LVGLPanelWidget",
+              "left": 270,
+              "top": 147,
+              "width": 222,
+              "height": 44,
+              "customInputs": [],
+              "customOutputs": [],
+              "style": {
+                "objID": "080910c6-6e10-4ce3-8fe7-af86a2b1a148",
+                "useStyle": "default",
+                "conditionalStyles": [],
+                "childStyles": []
+              },
+              "timeline": [],
+              "eventHandlers": [],
+              "identifier": "main_direct_selection_outline",
+              "leftUnit": "px",
+              "topUnit": "px",
+              "widthUnit": "px",
+              "heightUnit": "px",
+              "children": [],
+              "widgetFlags": "CLICK_FOCUSABLE|GESTURE_BUBBLE|PRESS_LOCK|SNAPPABLE",
+              "hiddenFlag": "recipe_draft_input_mode != \"DIRECT_PRODUCT\"",
+              "hiddenFlagType": "expression",
+              "clickableFlag": false,
+              "clickableFlagType": "literal",
+              "checkedState": false,
+              "checkedStateType": "literal",
+              "disabledStateType": "literal",
+              "states": "",
+              "localStyles": {
+                "objID": "a3bef6ff-b727-439e-93ab-38a5eba47ed1",
+                "definition": {
+                  "MAIN": {
+                    "DEFAULT": {
+                      "bg_opa": 0,
+                      "border_color": "#e0a800",
+                      "border_width": 3,
+                      "radius": 5,
+                      "shadow_color": "#e0a800",
+                      "shadow_width": 5,
+                      "shadow_opa": 48,
+                      "pad_left": 0,
+                      "pad_right": 0,
+                      "pad_top": 0,
+                      "pad_bottom": 0
+                    }
+                  }
+                }
+              },
+              "group": "",
+              "groupIndex": 0
             }
           ],
           "widgetFlags": "CLICKABLE|PRESS_LOCK|CLICK_FOCUSABLE|GESTURE_BUBBLE|SNAPPABLE",
@@ -29630,8 +29614,8 @@
         {
           "objID": "269150d7-8b83-459a-97b3-e21400adbb9f",
           "type": "LVGLActionComponent",
-          "left": 1060,
-          "top": 80,
+          "left": 881,
+          "top": -169,
           "width": 409,
           "height": 52,
           "customInputs": [],
@@ -31416,9 +31400,9 @@
                     {
                       "objID": "0a44898f-aec9-4926-8bd8-9e12900fd388",
                       "type": "LVGLLabelWidget",
-                      "left": 0,
+                      "left": 1,
                       "top": 0,
-                      "width": 73,
+                      "width": 82,
                       "height": 19,
                       "customInputs": [],
                       "customOutputs": [],
@@ -31450,7 +31434,7 @@
                         "definition": {
                           "MAIN": {
                             "DEFAULT": {
-                              "text_font": "MaruBuri-Regular_KR16",
+                              "text_font": "MaruBuri-Regular_KR20",
                               "text_color": "#1c2128",
                               "text_align": "CENTER",
                               "align": "CENTER"
@@ -31587,7 +31571,7 @@
                     {
                       "objID": "ab144f19-0ea1-4b8e-b0ed-4e53a00c128f",
                       "type": "LVGLLabelWidget",
-                      "left": 0,
+                      "left": 1,
                       "top": 0,
                       "width": 88,
                       "height": 21,
@@ -31621,7 +31605,7 @@
                         "definition": {
                           "MAIN": {
                             "DEFAULT": {
-                              "text_font": "MaruBuri-Regular_KR16",
+                              "text_font": "MaruBuri-Regular_KR20",
                               "text_color": "#eef5fa",
                               "text_align": "CENTER",
                               "align": "CENTER"
@@ -31699,9 +31683,9 @@
                     {
                       "objID": "3406c164-d6eb-4ab4-8358-b8c663691e49",
                       "type": "LVGLLabelWidget",
-                      "left": 0,
+                      "left": 1,
                       "top": 0,
-                      "width": 130,
+                      "width": 98,
                       "height": 21,
                       "customInputs": [],
                       "customOutputs": [],
@@ -33100,7 +33084,7 @@
                       "MAIN": {
                         "DEFAULT": {
                           "text_font": "MaruBuri-Regular_KR20",
-                          "text_color": "#687782",
+                          "text_color": "#B0851E",
                           "text_align": "CENTER",
                           "bg_color": "#16212b",
                           "border_color": "#364655",
@@ -33231,7 +33215,7 @@
                       "MAIN": {
                         "DEFAULT": {
                           "text_font": "MaruBuri-Regular_KR20",
-                          "text_color": "#687782",
+                          "text_color": "#B0851E",
                           "text_align": "CENTER",
                           "bg_color": "#16212b",
                           "border_color": "#364655",
@@ -46326,7 +46310,7 @@
       "descent": 4,
       "glyphs": [],
       "lvglRanges": "32-127",
-      "lvglSymbols": "·가간값개거검결경계고과구기길뀌남내널농누는능니다단당대도독동되된될됨두둑뒤드따라란랑량력로료류르를림립만며면명모목미및바반방배버번범변별보복본부북분비사산살상생서선설세소속수숫습승시신실안않알압야어업없에열영예오와완요용우운원위유으은을음의이인임입있자작장재저적전접정제조존종좌준중즉증지직진질집찾채처첫청체초최추출취측층치태택탭터통패퍼편포폭표품필하한할함합행험현호화확회효후점불일록연새리까됩",
+      "lvglSymbols": "·가간값개거검결경계고과구기길뀌남내널농누는능니다단당대도독동되된될됨두둑뒤드따라란랑량력로료류르를림립만며면명모목미및바반방배버번범변별보복본부북분비사산살상생서선설세소속수숫습승시신실안않알압야어업없에열영예오와완요용우운원위유으은을음의이인임입있자작장재저적전접정제조존종좌준중즉증지직진질집찾채처첫청체초최추출취측층치태택탭터통패퍼편포폭표품필하한할함합행험현호화확회효후점불일록연새리까됩획령",
       "lvglAdditionalSources": [],
       "lvglGlyphs": {
         "encodings": [
@@ -46354,7 +46338,7 @@
       "descent": 6,
       "glyphs": [],
       "lvglRanges": "32-127",
-      "lvglSymbols": "·가간값개거건검결경계고과교구기길뀌남내널농누는능니다단대도독동되된될됨두둑뒤드등따라란랑량력로록료류르를림립만메며면명모목미및바반방배버번범변별보복본부북분불비사산살상생서선설성세소속수숫습승시신실안않알압야어업없에열영예오와완요용운원위유으은을음의이인일임입있자작장재저적전접정제조존종준중즉증지직진질집찾채처첫청체초최추출취측층태택탭터패퍼편포폭표품필하한할함합행험현호화확회효후식아닙점치연당삭m²[\"제품 선택\"]새리",
+      "lvglSymbols": "·가간값개거건검결경계고과교구기길뀌남내널농누는능니다단대도독동되된될됨두둑뒤드등따라란랑량력로록료류르를림립만메며면명모목미및바반방배버번범변별보복본부북분불비사산살상생서선설성세소속수숫습승시신실안않알압야어업없에열영예오와완요용운원위유으은을음의이인일임입있자작장재저적전접정제조존종준중즉증지직진질집찾채처첫청체초최추출취측층태택탭터패퍼편포폭표품필하한할함합행험현호화확회효후식아닙점치연당삭m²[\"제품 선택\"]새리총",
       "lvglAdditionalSources": [],
       "lvglGlyphs": {
         "encodings": [
@@ -46383,7 +46367,7 @@
       "descent": 9,
       "glyphs": [],
       "lvglRanges": "32-127",
-      "lvglSymbols": "·가간값개거건검결경계고과교구기길뀌남내널농누는능니다단대도독동되된될됨두둑뒤드등따라란랑량력로록료류르를림립만며면명모목미및바반방배버번범변별보복본부북분불비사산살상생서선설성세소속수숫스습승시신실안않알압야어업없에열영예오온와완요용운원위유으은을음의이인일임입있자작장재저적전접정제조존종준중즉증지직진질집찾채처첫청체초촌최추출취측층태택탭터테트패퍼편포폭표품필하한할함합행험현호화확회효후흥점치연삭",
+      "lvglSymbols": "·가간값개거건검결경계고과교구기길뀌남내널농누는능니다단대도독동되된될됨두둑뒤드등따라란랑량력로록료류르를림립만며면명모목미및바반방배버번범변별보복본부북분불비사산살상생서선설성세소속수숫스습승시신실안않알압야어업없에열영예오온와완요용운원위유으은을음의이인일임입있자작장재저적전접정제조존종준중즉증지직진질집찾채처첫청체초촌최추출취측층태택탭터테트패퍼편포폭표품필하한할함합행험현호화확회효후흥점치연삭새",
       "lvglAdditionalSources": [],
       "lvglGlyphs": {
         "encodings": [

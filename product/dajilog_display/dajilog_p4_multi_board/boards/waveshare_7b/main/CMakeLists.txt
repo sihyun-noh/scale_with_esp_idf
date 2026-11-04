@@ -1,6 +1,7 @@
 idf_component_register(
     SRCS "main.cpp" "dajilog_product_controller.c"
          "dajilog_product_settings.c"
+         "dajilog_prescription_calculator.c"
          "dajilog_motor_control.c" "dajilog_speed_sensor.c"
          "dajilog_product_catalog.c"
     INCLUDE_DIRS "." "${CMAKE_CURRENT_BINARY_DIR}"

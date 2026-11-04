@@ -67,6 +67,8 @@ esp_err_t dajilog_product_settings_get_applied(
 /** @brief Copy independently registered ridge profiles and selection. */
 esp_err_t dajilog_product_settings_get_ridge_profiles(
     dajilog_ridge_profiles_snapshot_t *profiles);
+/** @brief Persist the current Bxx list and selection independently of S1/S2 settings. */
+esp_err_t dajilog_product_settings_save_ridge_profiles(void);
 /** @brief Validate and persist one new profile; called by Storage Task only. */
 esp_err_t dajilog_product_settings_add_ridge_profile(
     const dajilog_ridge_profile_input_t *input);
