@@ -84,7 +84,7 @@ int64_t s_run_deadline = 0;
 char s_draft_mode_text[24] = {};
 char s_countdown_text[16] = {};
 char s_setting_text[FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_D_TABLE_LOOKUP_STATUS_TEXT + 1U][96] = {};
-char s_calibration_list_text[1024] = {};
+char s_calibration_list_text[2048] = {};
 dajilog_product_catalog_t s_product_catalog = {};
 int s_last_product_index[DAJILOG_SETTING_ZONE_COUNT] = {-1, -1};
 bool s_ridge_screen_was_active = false;
@@ -94,9 +94,16 @@ uint32_t s_ridge_request_sequence = 0U;
 uint32_t s_ridge_pending_topic = 0U;
 int64_t s_ridge_request_deadline = 0;
 char s_calibration_channel = '\0';
+dajilog_calibration_summary_t s_calibration_candidates[DAJILOG_CALIBRATION_MAX_PROFILES] = {};
+size_t s_calibration_candidate_count = 0U;
+size_t s_calibration_candidate_index = 0U;
+size_t s_calibration_row_profile[DAJILOG_CALIBRATION_MAX_PROFILES + DAJILOG_CALIBRATION_MAX_POINTS] = {};
+size_t s_calibration_row_count = 0U;
 bool s_calibration_screen_was_active = false;
+char s_calibration_result[96] = {};
 dajilog_setting_zone_id_t s_selected_zone = DAJILOG_SETTING_ZONE_SURFACE;
 uint32_t s_setting_request_sequence = 0U;
+uint32_t s_setting_request_topic = 0U;
 uint32_t s_setting_pending_topic = 0U;
 int64_t s_setting_request_deadline = 0;
 char s_setting_status[96] = {};
@@ -364,8 +371,16 @@ CalibrationPreview calculate_calibration_preview(
     for (size_t i = 0; i < 2U; ++i) {
         const char channel = static_cast<char>('A' + zone_index * 2U + i);
         dajilog_calibration_summary_t table = {};
-        if (dajilog_calibration_catalog_list(channel, product, "", &table, 1U) == 0U ||
-            !table.approved) continue;
+        const auto &binding = settings.calibration[zone_index * 2U + i];
+        if (binding.table_id[0] != '\0') {
+            if (dajilog_calibration_catalog_find(
+                    channel, binding.table_id, binding.revision, &table) != ESP_OK ||
+                table.content_hash != binding.content_hash ||
+                std::strcmp(table.product_code, product) != 0 ||
+                !table.approved) continue;
+        } else if (dajilog_calibration_catalog_list(
+                       channel, product, "", &table, 1U) == 0U ||
+                   !table.approved) continue;
         preview.table_found[i] = true;
         preview.in_range[i] = dajilog_calibration_catalog_preview_voltage(
             channel, table.table_id, table.revision, preview.target_g_min[i],
@@ -637,13 +652,78 @@ void render_setting_views(bool include_detail)
         for (uint32_t offset = 1; offset < 10; ++offset)
             setting_text(base + offset, "--");
     }
+    const uint32_t table_bases_for_zone[] = {
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_A_STATE_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_B_STATE_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_C_STATE_TEXT,
+        FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_CHANNEL_D_STATE_TEXT,
+    };
+    char preview_reason[96] = {};
+    for (size_t i = 0; i < 2U; ++i) {
+        const size_t channel_index = selected * 2U + i;
+        const uint32_t base = table_bases_for_zone[channel_index];
+        const auto &binding = draft.calibration[channel_index];
+        dajilog_calibration_summary_t table = {};
+        const char channel = static_cast<char>('A' + channel_index);
+        const bool linked = binding.table_id[0] &&
+            dajilog_calibration_catalog_find(channel, binding.table_id,
+                                              binding.revision, &table) == ESP_OK &&
+            table.content_hash == binding.content_hash && table.approved &&
+            std::strcmp(table.product_code, draft.selected_product_codes[selected]) == 0 &&
+            (!draft.zones[selected].lot[0] ||
+             std::strcmp(table.product_lot, draft.zones[selected].lot) == 0);
+        setting_text(base, linked ? "연결됨" : binding.table_id[0] ? "연결 오류" : "선택 안 됨");
+        setting_text(base + 3U, binding.table_id[0] ? binding.table_id : "--");
+        std::snprintf(value, sizeof(value), "r%lu",
+                      static_cast<unsigned long>(binding.revision));
+        setting_text(base + 4U, binding.table_id[0] ? value : "--");
+        if (!linked) {
+            setting_text(base + 5U, "표·제품·Lot 확인");
+            if (preview_reason[0] == '\0')
+                std::snprintf(preview_reason, sizeof(preview_reason),
+                              "%c: 표·제품·Lot 연결 확인 필요", channel);
+        } else if (!preview.in_range[i]) {
+            std::snprintf(value, sizeof(value), "목표 %lu / 범위 %lu–%lu g/min",
+                          static_cast<unsigned long>(preview.target_g_min[i]),
+                          static_cast<unsigned long>(table.min_discharge_g_min),
+                          static_cast<unsigned long>(table.max_discharge_g_min));
+            setting_text(base + 5U, value);
+            if (preview_reason[0] == '\0')
+                std::snprintf(preview_reason, sizeof(preview_reason), "%c: %.90s",
+                              channel, value);
+        } else {
+            setting_text(base + 5U, "조회 완료");
+        }
+        if (preview.total_kg_min > 0.0) {
+            std::snprintf(value, sizeof(value), "%lu g/min",
+                          static_cast<unsigned long>(preview.target_g_min[i]));
+            setting_text(base + 6U, value);
+        }
+        if (linked && preview.in_range[i]) {
+            std::snprintf(value, sizeof(value), "%.1f V",
+                          preview.voltage_decivolt[i] / 10.0);
+            setting_text(base + 9U, value);
+        }
+    }
+    setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_TABLE_STATUS_TEXT,
+                 preview_reason[0] ? preview_reason :
+                 "전압 계산 미리보기 · CAN 미전송");
+    bool can_confirm = editable && !draft.dirty &&
+        draft.saved_revision != 0U &&
+        draft.saved_readiness == DAJILOG_SETTING_CONFIGURED;
+    for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i)
+        can_confirm = can_confirm && draft.calibration[i].table_id[0] != '\0';
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_FOOTER_STATUS_TEXT,
                  s_setting_status[0] ? s_setting_status :
-                 editable ? "설정 입력과 저장 가능 · 적용은 배출량표 필요" :
+                 can_confirm ? "A~D 표 선택·저장 완료 · 운전에 적용 가능" :
+                 editable ? "설정 저장과 A~D 배출량표 선택이 필요합니다" :
                             "운전 정지 후 변경할 수 있습니다");
-    if (objects.setting_detail_apply_button &&
-        !lv_obj_has_state(objects.setting_detail_apply_button, LV_STATE_DISABLED))
-        lv_obj_add_state(objects.setting_detail_apply_button, LV_STATE_DISABLED);
+    if (objects.setting_detail_apply_button) {
+        if (can_confirm)
+            lv_obj_remove_state(objects.setting_detail_apply_button, LV_STATE_DISABLED);
+        else
+            lv_obj_add_state(objects.setting_detail_apply_button, LV_STATE_DISABLED);
+    }
     if (objects.setting_detail_info_card &&
         lv_obj_has_state(objects.setting_detail_info_card, LV_STATE_DISABLED) == editable)
         (editable ? lv_obj_remove_state : lv_obj_add_state)(
@@ -757,12 +837,23 @@ void render_message(const dajilog_ui_msg_t *message, void *)
                s_setting_request_sequence != 0U &&
                message->sequence == s_setting_request_sequence) {
         s_setting_request_sequence = 0U;
+        const bool confirmed = s_setting_request_topic == DAJILOG_UI_CMD_SETTINGS_CONFIRM;
+        s_setting_request_topic = 0U;
         std::snprintf(s_setting_status, sizeof(s_setting_status), "%s",
                       message->result == DAJILOG_UI_RESULT_OK
-                          ? "설정 저장 완료 · 현재 운전에는 미적용"
-                          : "설정 처리 실패 · 입력과 저장소를 확인하세요");
+                          ? confirmed ? "설정 확정 완료 · Applied 반영"
+                                      : "설정 저장 완료 · 현재 운전에는 미적용"
+                          : confirmed ? "설정 확정 실패 · 제품·Lot·A~D 표 확인"
+                                      : "설정 저장 실패 · 입력과 저장소 확인");
         (void)render_current_recipe();
         render_setting_views();
+        if (lv_screen_active() == objects.calibration_select) {
+            std::snprintf(s_calibration_result, sizeof(s_calibration_result), "%s",
+                          message->result == DAJILOG_UI_RESULT_OK
+                              ? confirmed ? "Applied 설정 확정 완료" : "NVS 저장 완료 · Saved 갱신"
+                              : "NVS 저장 실패 · 기존 Saved 유지");
+            render_calibration_selection();
+        }
     } else if (message->topic == DAJILOG_UI_STATE_SETTINGS_RESULT &&
                message->result == DAJILOG_UI_RESULT_OK) {
         (void)render_current_recipe();
@@ -785,6 +876,7 @@ esp_err_t submit_setting_command(uint32_t topic)
     const esp_err_t error = dajilog_ui_adaptor_submit(&command);
     if (error == ESP_OK) {
         s_setting_request_sequence = command.sequence;
+        s_setting_request_topic = topic;
         s_setting_request_deadline = esp_timer_get_time() + 5000000;
         std::snprintf(s_setting_status, sizeof(s_setting_status),
                       "설정 처리 중...");
@@ -1680,25 +1772,50 @@ void render_calibration_selection(void)
     }
     s_calibration_channel = channel;
 
+    s_calibration_candidate_count = dajilog_calibration_catalog_list(
+        channel, "", "", s_calibration_candidates, DAJILOG_CALIBRATION_MAX_PROFILES);
+    if (s_calibration_candidate_count > DAJILOG_CALIBRATION_MAX_PROFILES)
+        s_calibration_candidate_count = DAJILOG_CALIBRATION_MAX_PROFILES;
+    if (s_calibration_candidate_index >= s_calibration_candidate_count)
+        s_calibration_candidate_index = 0U;
     char list_text[sizeof(s_calibration_list_text)] = {};
     size_t used = 0U;
-    size_t total_count = 0U;
-    for (char listed_channel = 'A'; listed_channel <= 'D'; ++listed_channel) {
-        dajilog_calibration_summary_t profiles[DAJILOG_CALIBRATION_MAX_PROFILES] = {};
-        const size_t found = dajilog_calibration_catalog_list(
-            listed_channel, "", "", profiles, DAJILOG_CALIBRATION_MAX_PROFILES);
-        for (size_t i = 0; i < found && i < DAJILOG_CALIBRATION_MAX_PROFILES; ++i) {
-            const auto &profile = profiles[i];
-            const int written = std::snprintf(
-                list_text + used, sizeof(list_text) - used,
-                "%c  %s  %s  r%lu  %s\n",
-                listed_channel, profile.table_id, profile.product_code,
-                static_cast<unsigned long>(profile.revision),
-                profile.approved ? "승인" : "미승인");
-            if (written < 0 || static_cast<size_t>(written) >= sizeof(list_text) - used)
-                break;
-            used += static_cast<size_t>(written);
-            ++total_count;
+    s_calibration_row_count = 0U;
+    const size_t total_count = s_calibration_candidate_count;
+    for (size_t i = 0; i < total_count; ++i) {
+        const auto &profile = s_calibration_candidates[i];
+        const int written = std::snprintf(
+            list_text + used, sizeof(list_text) - used,
+            "%s %c  %s  r%lu  %s / %s  %s\n",
+            i == s_calibration_candidate_index ? ">" : " ",
+            channel, profile.table_id,
+            static_cast<unsigned long>(profile.revision),
+            profile.product_code, profile.product_lot[0] ? profile.product_lot : "--",
+            profile.approved ? "승인" : "미승인");
+        if (written < 0 || static_cast<size_t>(written) >= sizeof(list_text) - used)
+            break;
+        used += static_cast<size_t>(written);
+        s_calibration_row_profile[s_calibration_row_count++] = i;
+        if (i == s_calibration_candidate_index) {
+            dajilog_calibration_point_t points[DAJILOG_CALIBRATION_MAX_POINTS] = {};
+            size_t point_count = 0U;
+            if (dajilog_calibration_catalog_get_points(
+                    channel, profile.table_id, profile.revision, points,
+                    DAJILOG_CALIBRATION_MAX_POINTS, &point_count) == ESP_OK) {
+                for (size_t j = 0; j < point_count; ++j) {
+                    const int point_written = std::snprintf(
+                        list_text + used, sizeof(list_text) - used,
+                        "    %u단계  %.1f V  %lu g/min\n",
+                        static_cast<unsigned>(points[j].command_step),
+                        points[j].command_decivolt / 10.0,
+                        static_cast<unsigned long>(points[j].discharge_g_min));
+                    if (point_written < 0 ||
+                        static_cast<size_t>(point_written) >= sizeof(list_text) - used)
+                        break;
+                    used += static_cast<size_t>(point_written);
+                    s_calibration_row_profile[s_calibration_row_count++] = i;
+                }
+            }
         }
     }
     if (total_count == 0U)
@@ -1706,12 +1823,12 @@ void render_calibration_selection(void)
     if (objects.calibration_candidate_list && objects.calibration_list_state) {
         if (objects.calibration_list_columns)
             lv_label_set_text(objects.calibration_list_columns,
-                              "채널 / 표 ID / 제품 / Revision / 상태");
+                              "표 ID / 제품·Lot / Revision · 아래는 측정점");
         lv_obj_add_flag(objects.calibration_candidate_list, LV_OBJ_FLAG_SCROLLABLE);
         lv_obj_set_scroll_dir(objects.calibration_candidate_list, LV_DIR_VER);
         lv_obj_set_pos(objects.calibration_list_state, 16, 82);
         lv_obj_set_size(objects.calibration_list_state, 440,
-                        static_cast<int32_t>(total_count * 24U + 28U));
+                        static_cast<int32_t>(s_calibration_row_count * 24U + 28U));
         lv_obj_set_style_text_align(objects.calibration_list_state,
                                     LV_TEXT_ALIGN_LEFT, LV_PART_MAIN);
     }
@@ -1719,48 +1836,69 @@ void render_calibration_selection(void)
                s_calibration_list_text, sizeof(s_calibration_list_text),
                STRING_ID_SETTING_BASE + 100U, list_text);
     dajilog_calibration_summary_t candidate = {};
-    const size_t count = dajilog_calibration_catalog_list(
-        channel, "", "", &candidate, 1U);
+    const size_t count = s_calibration_candidate_count;
+    if (count != 0U) candidate = s_calibration_candidates[s_calibration_candidate_index];
 
-    setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_DRAFT_SUMMARY_TEXT,
-                 "선택 안 됨");
-    setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_SAVED_SUMMARY_TEXT,
-                 "선택 안 됨");
-    setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_APPLIED_SUMMARY_TEXT,
-                 "선택 안 됨");
+    dajilog_product_settings_snapshot_t draft = {};
+    dajilog_product_settings_snapshot_t saved = {};
+    dajilog_product_settings_snapshot_t applied = {};
+    const bool have_draft = dajilog_system_core_get_settings_draft(&draft) == ESP_OK;
+    const bool have_saved = dajilog_system_core_get_settings_saved(&saved) == ESP_OK && saved.saved_revision != 0U;
+    const bool have_applied = dajilog_system_core_get_settings_applied(&applied) == ESP_OK;
+    const size_t channel_index = (size_t)(channel - 'A');
+    const auto format_binding = [](const dajilog_calibration_binding_t &binding,
+                                   bool available, char *buffer, size_t capacity) {
+        if (!available || binding.table_id[0] == '\0')
+            std::snprintf(buffer, capacity, "--");
+        else
+            std::snprintf(buffer, capacity, "%s · r%lu", binding.table_id,
+                          static_cast<unsigned long>(binding.revision));
+    };
+    char identity[72];
+    format_binding(draft.calibration[channel_index], have_draft,
+                   identity, sizeof(identity));
+    setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_DRAFT_SUMMARY_TEXT, identity);
+    format_binding(saved.calibration[channel_index], have_saved,
+                   identity, sizeof(identity));
+    setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_SAVED_SUMMARY_TEXT, identity);
+    format_binding(applied.calibration[channel_index], have_applied,
+                   identity, sizeof(identity));
+    setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_APPLIED_SUMMARY_TEXT, identity);
     setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_TABLE_ID,
                  count != 0U ? candidate.table_id : "--");
     char value[96];
     if (count != 0U) {
+        if (objects.calibration_detail_title) {
+            std::snprintf(value, sizeof(value), "선택 표 상세 · %s / %s",
+                          candidate.product_code,
+                          candidate.product_lot[0] ? candidate.product_lot : "--");
+            lv_label_set_text(objects.calibration_detail_title, value);
+        }
         std::snprintf(value, sizeof(value), "%lu",
                       static_cast<unsigned long>(candidate.revision));
         setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_REVISION, value);
-        dajilog_calibration_point_t points[DAJILOG_CALIBRATION_MAX_POINTS] = {};
-        size_t point_count = 0U;
-        const esp_err_t point_error = dajilog_calibration_catalog_get_points(
-            channel, candidate.table_id, candidate.revision,
-            points, DAJILOG_CALIBRATION_MAX_POINTS, &point_count);
-        if (point_error == ESP_OK) {
-            size_t used = 0U;
-            value[0] = '\0';
-            for (size_t i = 0; i < point_count && used < sizeof(value); ++i) {
-                const int written = std::snprintf(
-                    value + used, sizeof(value) - used, "%s%.1fV:%lu",
-                    i == 0U ? "" : "  ", points[i].command_decivolt / 10.0,
-                    static_cast<unsigned long>(points[i].discharge_g_min));
-                if (written < 0 || static_cast<size_t>(written) >= sizeof(value) - used)
-                    break;
-                used += static_cast<size_t>(written);
-            }
-        } else {
-            std::snprintf(value, sizeof(value), "측정점 조회 실패");
-        }
+        std::snprintf(value, sizeof(value), "%.1f–%.1f V / %lu–%lu g/min",
+                      candidate.min_decivolt / 10.0, candidate.max_decivolt / 10.0,
+                      static_cast<unsigned long>(candidate.min_discharge_g_min),
+                      static_cast<unsigned long>(candidate.max_discharge_g_min));
         setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_RANGE_TEXT, value);
         setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_APPROVAL_TEXT,
                      candidate.approved ? "계산 검증용 승인" : "미승인");
-        setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_REASON_TEXT,
-                     "계산 미리보기 가능 · CAN 출력 없음");
+        dajilog_product_settings_snapshot_t current = {};
+        const bool has_current = dajilog_system_core_get_settings_draft(&current) == ESP_OK;
+        const size_t zone_index = static_cast<size_t>(s_selected_zone);
+        const char *product = has_current ? current.selected_product_codes[zone_index] : "";
+        const char *lot = has_current ? current.zones[zone_index].lot : "";
+        const char *reason = !has_current ? "설정 조회 실패" :
+            product[0] == '\0' ? "제품 미선택" :
+            std::strcmp(candidate.product_code, product) != 0 ? "제품 불일치" :
+            lot[0] && std::strcmp(candidate.product_lot, lot) != 0 ? "Lot 불일치" :
+            !candidate.approved ? "미승인 표" :
+            "선택 가능 · Draft만 변경";
+        setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_REASON_TEXT, reason);
     } else {
+        if (objects.calibration_detail_title)
+            lv_label_set_text(objects.calibration_detail_title, "선택 표 상세 · 후보 없음");
         setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_REVISION, "--");
         setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_RANGE_TEXT, "--");
         setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_CANDIDATE_APPROVAL_TEXT, "--");
@@ -1768,15 +1906,103 @@ void render_calibration_selection(void)
                      "실측·검증된 CSV 등록이 필요합니다");
     }
     setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_RESULT_TEXT,
-                 count != 0U
-                     ? "CSV 배출량을 계산에 사용합니다. CAN 출력은 없습니다"
-                     : "선택 제품의 표가 없어 적용이 차단됩니다");
-    if (objects.calibration_select_button)
-        lv_obj_add_state(objects.calibration_select_button, LV_STATE_DISABLED);
-    if (objects.calibration_save_button)
-        lv_obj_add_state(objects.calibration_save_button, LV_STATE_DISABLED);
+                 s_calibration_result[0] ? s_calibration_result :
+                 count ? "후보 표를 조회한 뒤 채널별로 선택하세요" :
+                         "후보 없음 · 제품·Lot·채널을 확인하세요");
+    if (objects.calibration_select_button) {
+        dajilog_product_settings_snapshot_t current = {};
+        dajilog_dashboard_snapshot_t operation = {};
+        const bool ready = dajilog_system_core_get_snapshot(&operation) == ESP_OK &&
+                           operation.operation_state == DAJILOG_OPERATION_READY;
+        const bool product_ok = dajilog_system_core_get_settings_draft(&current) == ESP_OK &&
+            std::strcmp(candidate.product_code,
+                        current.selected_product_codes[static_cast<size_t>(s_selected_zone)]) == 0 &&
+            (!current.zones[static_cast<size_t>(s_selected_zone)].lot[0] ||
+             std::strcmp(candidate.product_lot,
+                         current.zones[static_cast<size_t>(s_selected_zone)].lot) == 0);
+        if (count != 0U && candidate.approved && product_ok && ready)
+            lv_obj_remove_state(objects.calibration_select_button, LV_STATE_DISABLED);
+        else
+            lv_obj_add_state(objects.calibration_select_button, LV_STATE_DISABLED);
+    }
+    if (objects.calibration_save_button) {
+        dajilog_dashboard_snapshot_t operation = {};
+        const bool ready = dajilog_system_core_get_snapshot(&operation) == ESP_OK &&
+                           operation.operation_state == DAJILOG_OPERATION_READY;
+        if (ready && s_setting_request_sequence == 0U)
+            lv_obj_remove_state(objects.calibration_save_button, LV_STATE_DISABLED);
+        else
+            lv_obj_add_state(objects.calibration_save_button, LV_STATE_DISABLED);
+    }
     if (objects.calibration_confirm_button)
-        lv_obj_add_state(objects.calibration_confirm_button, LV_STATE_DISABLED);
+        lv_obj_remove_state(objects.calibration_confirm_button, LV_STATE_DISABLED);
+}
+
+/** @brief Tap a row in the candidate list to inspect its stable table identity. */
+void calibration_list_event(lv_event_t *event)
+{
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED ||
+        s_calibration_candidate_count == 0U) return;
+    lv_indev_t *indev = lv_event_get_indev(event);
+    if (indev == nullptr) return;
+    lv_point_t point;
+    lv_indev_get_point(indev, &point);
+    lv_area_t area;
+    lv_obj_get_coords(objects.calibration_candidate_list, &area);
+    const int32_t row_y = point.y - area.y1 +
+        lv_obj_get_scroll_y(objects.calibration_candidate_list) - 82;
+    if (row_y < 0) return;
+    const size_t row = static_cast<size_t>(row_y / 24);
+    if (row >= s_calibration_row_count) return;
+    s_calibration_candidate_index = s_calibration_row_profile[row];
+    render_calibration_selection();
+}
+
+/** @brief Put the selected candidate into RAM Draft; no NVS write. */
+void calibration_select_event(lv_event_t *event)
+{
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED ||
+        s_calibration_candidate_index >= s_calibration_candidate_count) return;
+    const auto &table = s_calibration_candidates[s_calibration_candidate_index];
+    dajilog_dashboard_snapshot_t operation = {};
+    if (dajilog_system_core_get_snapshot(&operation) != ESP_OK ||
+        operation.operation_state != DAJILOG_OPERATION_READY) {
+        std::snprintf(s_calibration_result, sizeof(s_calibration_result),
+                      "운전 중에는 표를 변경할 수 없습니다");
+        setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_RESULT_TEXT, s_calibration_result);
+        return;
+    }
+    dajilog_calibration_binding_t binding = {};
+    std::snprintf(binding.table_id, sizeof(binding.table_id), "%s", table.table_id);
+    binding.revision = table.revision;
+    binding.content_hash = table.content_hash;
+    const esp_err_t error = dajilog_system_core_stage_calibration(
+        s_calibration_channel, &binding);
+    std::snprintf(s_calibration_result, sizeof(s_calibration_result), "%s",
+                  error == ESP_OK ? "Draft 변경 완료 · 저장 전 상태" :
+                  error == ESP_ERR_NOT_FOUND ? "표 선택 실패 · 후보 없음" :
+                  error == ESP_ERR_INVALID_STATE ? "표 선택 실패 · 제품·Lot 불일치 또는 미승인" :
+                  "표 선택 실패 · 채널과 표 정보를 확인하세요");
+    render_setting_views();
+    render_calibration_selection();
+}
+
+/** @brief Persist all current product Draft fields and four table choices. */
+void calibration_save_event(lv_event_t *event)
+{
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED) return;
+    dajilog_dashboard_snapshot_t operation = {};
+    if (dajilog_system_core_get_snapshot(&operation) != ESP_OK ||
+        operation.operation_state != DAJILOG_OPERATION_READY) {
+        std::snprintf(s_calibration_result, sizeof(s_calibration_result),
+                      "운전 중에는 저장할 수 없습니다");
+    } else {
+        const esp_err_t error = submit_setting_command(DAJILOG_UI_CMD_SETTINGS_SAVE);
+        std::snprintf(s_calibration_result, sizeof(s_calibration_result), "%s",
+                      error == ESP_OK ? "NVS 저장 요청 중 · Saved는 완료 후 갱신" :
+                                        "저장 명령 전달 실패");
+    }
+    render_calibration_selection();
 }
 
 /** @brief Refresh catalog state on demand without reading flash in LVGL. */
@@ -1792,6 +2018,8 @@ void calibration_open_event(lv_event_t *event)
     if (lv_event_get_code(event) != LV_EVENT_PRESSED) return;
     setting_text(FLOW_GLOBAL_VARIABLE_CALIBRATION_SELECTED_CHANNEL,
                  s_selected_zone == DAJILOG_SETTING_ZONE_SURFACE ? "A" : "C");
+    s_calibration_candidate_index = 0U;
+    s_calibration_result[0] = '\0';
     s_calibration_screen_was_active = false;
     render_calibration_selection();
 }
@@ -1818,7 +2046,7 @@ void setting_apply_event(lv_event_t *event)
     s_setting_pending_topic = DAJILOG_UI_CMD_SETTINGS_CONFIRM;
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_CONFIRM_ACTION_TEXT, "설정 적용");
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_CONFIRM_MESSAGE_TEXT,
-                 "승인 배출량표가 없어 적용할 수 없습니다.");
+                 "저장된 설정과 A~D 배출량표를 검증해 운전에 적용합니다.");
 }
 
 void setting_confirm_event(lv_event_t *event)
@@ -2193,6 +2421,17 @@ extern "C" bool eez_ui_binding_attach(void)
     if (objects.calibration_refresh_button)
         lv_obj_add_event_cb(objects.calibration_refresh_button,
                             calibration_refresh_event, LV_EVENT_PRESSED, nullptr);
+    if (objects.calibration_candidate_list) {
+        lv_obj_add_flag(objects.calibration_candidate_list, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_add_event_cb(objects.calibration_candidate_list,
+                            calibration_list_event, LV_EVENT_PRESSED, nullptr);
+    }
+    if (objects.calibration_select_button)
+        lv_obj_add_event_cb(objects.calibration_select_button,
+                            calibration_select_event, LV_EVENT_PRESSED, nullptr);
+    if (objects.calibration_save_button)
+        lv_obj_add_event_cb(objects.calibration_save_button,
+                            calibration_save_event, LV_EVENT_PRESSED, nullptr);
     bind_driver_event(objects.driver_1_card, driver_card_event, (void *)0U);
     bind_driver_event(objects.driver_2_card, driver_card_event, (void *)1U);
     bind_driver_selector_event(objects.driver_detail_channel_a_selector, detail_channel_event, (void *)0U);

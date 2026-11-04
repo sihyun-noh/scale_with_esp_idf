@@ -32,6 +32,8 @@ typedef struct {
                               void *context);
     esp_err_t (*register_motor_backend)(
         const dajilog_motor_backend_t *backend, void *context);
+    esp_err_t (*get_settings_saved)(
+        dajilog_product_settings_snapshot_t *settings, void *context);
     esp_err_t (*get_settings_draft)(
         dajilog_product_settings_snapshot_t *settings, void *context);
     esp_err_t (*stage_ridge_settings)(
@@ -50,6 +52,8 @@ typedef struct {
     esp_err_t (*stage_zone_settings)(
         dajilog_setting_zone_id_t zone,
         const dajilog_zone_settings_t *settings, void *context);
+    esp_err_t (*stage_calibration)(
+        char channel, const dajilog_calibration_binding_t *binding, void *context);
     esp_err_t (*get_settings_applied)(
         dajilog_product_settings_snapshot_t *settings, void *context);
     esp_err_t (*get_ridge_profiles)(
@@ -75,6 +79,9 @@ esp_err_t dajilog_system_core_update_vehicle(float speed_kmh, bool online,
 /** @brief Forward one decoded motor state to the product implementation. */
 esp_err_t dajilog_system_core_update_motor(size_t index,
                                            const dajilog_motor_snapshot_t *motor);
+/** @brief Copy the last successfully persisted product settings. */
+esp_err_t dajilog_system_core_get_settings_saved(
+    dajilog_product_settings_snapshot_t *settings);
 /** @brief Copy the product-owned editable settings draft. */
 esp_err_t dajilog_system_core_get_settings_draft(
     dajilog_product_settings_snapshot_t *settings);
@@ -97,6 +104,9 @@ esp_err_t dajilog_system_core_get_product_catalog(dajilog_product_catalog_t *cat
 /** @brief Stage one product zone without changing Saved or Applied. */
 esp_err_t dajilog_system_core_stage_zone_settings(
     dajilog_setting_zone_id_t zone, const dajilog_zone_settings_t *settings);
+/** @brief Stage one physical-channel calibration identity. */
+esp_err_t dajilog_system_core_stage_calibration(
+    char channel, const dajilog_calibration_binding_t *binding);
 /** @brief Copy the independently retained Applied product settings. */
 esp_err_t dajilog_system_core_get_settings_applied(
     dajilog_product_settings_snapshot_t *settings);

@@ -74,6 +74,15 @@ esp_err_t dajilog_system_core_update_motor(
                : ESP_ERR_NOT_SUPPORTED;
 }
 
+esp_err_t dajilog_system_core_get_settings_saved(
+    dajilog_product_settings_snapshot_t *settings)
+{
+    return s_registered && s_implementation.get_settings_saved != NULL
+               ? s_implementation.get_settings_saved(
+                     settings, s_implementation.context)
+               : ESP_ERR_NOT_SUPPORTED;
+}
+
 esp_err_t dajilog_system_core_get_settings_draft(
     dajilog_product_settings_snapshot_t *settings)
 {
@@ -136,6 +145,15 @@ esp_err_t dajilog_system_core_stage_zone_settings(
     return s_registered && s_implementation.stage_zone_settings != NULL
                ? s_implementation.stage_zone_settings(
                      zone, settings, s_implementation.context)
+               : ESP_ERR_NOT_SUPPORTED;
+}
+
+esp_err_t dajilog_system_core_stage_calibration(
+    char channel, const dajilog_calibration_binding_t *binding)
+{
+    return s_registered && s_implementation.stage_calibration != NULL
+               ? s_implementation.stage_calibration(
+                     channel, binding, s_implementation.context)
                : ESP_ERR_NOT_SUPPORTED;
 }
 

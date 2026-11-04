@@ -15,6 +15,7 @@
 #include "dajilog_table.h"
 #include "dajilog_setting_storage_nvs.h"
 #include "dajilog_product_catalog.h"
+#include "dajilog_calibration_catalog.h"
 #include "dajilog_prescription_calculator.h"
 #include "esp_log.h"
 #include "nvs.h"
@@ -24,7 +25,8 @@
 #define RIDGE_TABLE_ID        0x07030101U
 #define PRESCRIPTION_TABLE_ID 0x07030102U
 #define PRODUCT_PROFILE_LIMIT 8U
-#define PRODUCT_STORAGE_SCHEMA_VERSION 5U
+#define PRODUCT_STORAGE_SCHEMA_VERSION 6U
+#define PRODUCT_STORAGE_V5_VERSION       5U
 #define PRODUCT_STORAGE_V4_VERSION       4U
 #define PRODUCT_STORAGE_PREVIOUS_VERSION 3U
 #define PRODUCT_STORAGE_LEGACY_VERSION 1U
@@ -63,6 +65,22 @@ typedef struct {
     uint32_t saved_revision;
     uint32_t applied_revision;
     char selected_product_codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
+} product_settings_v5_record_t;
+
+typedef struct {
+    dajilog_ridge_settings_t ridge;
+    dajilog_prescription_settings_t prescription;
+    dajilog_zone_settings_t zones[DAJILOG_SETTING_ZONE_COUNT];
+    dajilog_ridge_settings_t applied_ridge;
+    dajilog_prescription_settings_t applied_prescription;
+    dajilog_zone_settings_t applied_zones[DAJILOG_SETTING_ZONE_COUNT];
+    dajilog_setting_readiness_t saved_readiness;
+    uint32_t saved_revision;
+    uint32_t applied_revision;
+    char selected_product_codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
+    dajilog_calibration_binding_t selected_calibration[DAJILOG_MOTOR_CHANNEL_COUNT];
+    dajilog_calibration_binding_t applied_calibration[DAJILOG_MOTOR_CHANNEL_COUNT];
+    char applied_product_codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
 } product_settings_record_t;
 
 typedef struct {
@@ -305,6 +323,9 @@ static esp_err_t validate_prescription_row(const void *row, size_t row_size,
     return ESP_OK;
 }
 
+static dajilog_ridge_profiles_snapshot_t s_ridge_profiles;
+static bool ridge_profile_valid(const dajilog_ridge_profile_input_t *input);
+
 static dajilog_setting_readiness_t calculate_readiness(
     const dajilog_ridge_settings_t *ridge,
     const dajilog_prescription_settings_t *prescription,
@@ -315,14 +336,21 @@ static dajilog_setting_readiness_t calculate_readiness(
         if (dajilog_product_catalog_find(codes[i]) == NULL)
             return DAJILOG_SETTING_UNSET;
     }
-    if ((ridge->presence_mask & DAJILOG_RIDGE_REQUIRED_MASK) !=
-        DAJILOG_RIDGE_REQUIRED_MASK) {
-        return DAJILOG_SETTING_UNSET;
+    bool selected_ridge_ready = false;
+    for (uint32_t i = 0; i < s_ridge_profiles.count; ++i) {
+        if (s_ridge_profiles.profiles[i].id == s_ridge_profiles.selected_id &&
+            ridge_profile_valid(&s_ridge_profiles.profiles[i].input)) {
+            selected_ridge_ready = true;
+            break;
+        }
     }
-    if (ridge->work_width_mode == DAJILOG_WORK_WIDTH_RIDGE_AND_FURROW &&
-        (ridge->presence_mask & DAJILOG_RIDGE_PRESENT_FURROW_WIDTH) == 0U) {
+    const bool legacy_ridge_ready =
+        (ridge->presence_mask & DAJILOG_RIDGE_REQUIRED_MASK) ==
+            DAJILOG_RIDGE_REQUIRED_MASK &&
+        (ridge->work_width_mode != DAJILOG_WORK_WIDTH_RIDGE_AND_FURROW ||
+         (ridge->presence_mask & DAJILOG_RIDGE_PRESENT_FURROW_WIDTH) != 0U);
+    if (!selected_ridge_ready && !legacy_ridge_ready)
         return DAJILOG_SETTING_UNSET;
-    }
 
     uint32_t required = DAJILOG_PRESCRIPTION_PRESENT_INPUT_MODE;
     if (prescription->input_mode == DAJILOG_PRESCRIPTION_BY_NITROGEN) {
@@ -373,6 +401,10 @@ static dajilog_zone_settings_t s_zone_draft[DAJILOG_SETTING_ZONE_COUNT];
 static dajilog_zone_settings_t s_zone_saved[DAJILOG_SETTING_ZONE_COUNT];
 static char s_product_draft[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
 static char s_product_saved[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
+static dajilog_calibration_binding_t s_calibration_draft[DAJILOG_MOTOR_CHANNEL_COUNT];
+static dajilog_calibration_binding_t s_calibration_saved[DAJILOG_MOTOR_CHANNEL_COUNT];
+static dajilog_calibration_binding_t s_calibration_applied[DAJILOG_MOTOR_CHANNEL_COUNT];
+static char s_product_applied[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
 static dajilog_ridge_settings_t s_applied_ridge;
 static dajilog_prescription_settings_t s_applied_prescription;
 static dajilog_zone_settings_t s_applied_zones[DAJILOG_SETTING_ZONE_COUNT];
@@ -382,7 +414,7 @@ static uint32_t s_draft_generation;
 static uint32_t s_saved_revision;
 static uint32_t s_applied_revision;
 static dajilog_setting_storage_nvs_t s_storage;
-static dajilog_ridge_profiles_snapshot_t s_ridge_profiles;
+
 static const char *TAG = "DajilogSettings";
 
 /** @brief Check one ridge's dimensions without accepting example defaults. */
@@ -482,6 +514,9 @@ esp_err_t dajilog_product_settings_init(void)
     dajilog_prescription_settings_t initial_prescription = {0};
     dajilog_zone_settings_t initial_zones[DAJILOG_SETTING_ZONE_COUNT] = {0};
     char initial_product_codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY] = {0};
+    dajilog_calibration_binding_t initial_calibration[DAJILOG_MOTOR_CHANNEL_COUNT] = {0};
+    dajilog_calibration_binding_t initial_applied_calibration[DAJILOG_MOTOR_CHANNEL_COUNT] = {0};
+    char initial_applied_product_codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY] = {0};
     dajilog_ridge_settings_t initial_applied_ridge = {0};
     dajilog_prescription_settings_t initial_applied_prescription = {0};
     dajilog_zone_settings_t initial_applied_zones[DAJILOG_SETTING_ZONE_COUNT] = {0};
@@ -540,6 +575,17 @@ esp_err_t dajilog_product_settings_init(void)
         &s_storage, PRODUCT_STORAGE_KEY, PRODUCT_STORAGE_SCHEMA_VERSION,
         &stored, sizeof(stored));
     if (error != ESP_OK) {
+        product_settings_v5_record_t previous_v5 = {0};
+        if (dajilog_setting_storage_nvs_load(
+                &s_storage, PRODUCT_STORAGE_KEY, PRODUCT_STORAGE_V5_VERSION,
+                &previous_v5, sizeof(previous_v5)) == ESP_OK) {
+            memcpy(&stored, &previous_v5, sizeof(previous_v5));
+            stored.applied_revision = 0U;
+            error = ESP_OK;
+            ESP_LOGI(TAG, "migrating v0.5 settings; calibration selection required");
+        }
+    }
+    if (error != ESP_OK) {
         product_settings_v4_record_t previous_v4 = {0};
         const esp_err_t previous_v4_error = dajilog_setting_storage_nvs_load(
             &s_storage, PRODUCT_STORAGE_KEY, PRODUCT_STORAGE_V4_VERSION,
@@ -586,6 +632,9 @@ esp_err_t dajilog_product_settings_init(void)
             memcpy(initial_zones, stored.zones, sizeof(initial_zones));
             memcpy(initial_product_codes, stored.selected_product_codes,
                    sizeof(initial_product_codes));
+            memcpy(initial_calibration, stored.selected_calibration, sizeof(initial_calibration));
+            memcpy(initial_applied_calibration, stored.applied_calibration, sizeof(initial_applied_calibration));
+            memcpy(initial_applied_product_codes, stored.applied_product_codes, sizeof(initial_applied_product_codes));
             initial_applied_ridge = stored.applied_ridge;
             initial_applied_prescription = stored.applied_prescription;
             memcpy(initial_applied_zones, stored.applied_zones,
@@ -677,6 +726,10 @@ esp_err_t dajilog_product_settings_init(void)
     memcpy(s_zone_saved, initial_zones, sizeof(s_zone_saved));
     memcpy(s_product_draft, initial_product_codes, sizeof(s_product_draft));
     memcpy(s_product_saved, initial_product_codes, sizeof(s_product_saved));
+    memcpy(s_calibration_draft, initial_calibration, sizeof(s_calibration_draft));
+    memcpy(s_calibration_saved, initial_calibration, sizeof(s_calibration_saved));
+    memcpy(s_calibration_applied, initial_applied_calibration, sizeof(s_calibration_applied));
+    memcpy(s_product_applied, initial_applied_product_codes, sizeof(s_product_applied));
     s_applied_ridge = initial_applied_ridge;
     s_applied_prescription = initial_applied_prescription;
     memcpy(s_applied_zones, initial_applied_zones, sizeof(s_applied_zones));
@@ -706,6 +759,7 @@ esp_err_t dajilog_product_settings_get_draft(
            sizeof(settings->selected_product_codes));
     derive_zone_product_rates(&settings->prescription,
                               settings->selected_product_codes, settings->zones);
+    memcpy(settings->calibration, s_calibration_draft, sizeof(settings->calibration));
     settings->dirty = s_dirty;
     settings->draft_readiness = calculate_readiness(
         &s_ridge_draft, &s_prescription_draft, s_product_draft, false);
@@ -979,6 +1033,25 @@ esp_err_t dajilog_product_settings_stage_prescription_products(
     return ESP_OK;
 }
 
+/** @brief [배출량표 조회] 마지막 NVS 저장 성공 값만 Saved로 반환한다. */
+esp_err_t dajilog_product_settings_get_saved(
+    dajilog_product_settings_snapshot_t *settings)
+{
+    if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
+    if (settings == NULL) return ESP_ERR_INVALID_ARG;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    memset(settings, 0, sizeof(*settings));
+    memcpy(settings->zones, s_zone_saved, sizeof(settings->zones));
+    memcpy(settings->selected_product_codes, s_product_saved,
+           sizeof(settings->selected_product_codes));
+    memcpy(settings->calibration, s_calibration_saved, sizeof(settings->calibration));
+    settings->saved_readiness = s_saved_readiness;
+    settings->saved_revision = s_saved_revision;
+    settings->applied_revision = s_applied_revision;
+    xSemaphoreGive(s_lock);
+    return ESP_OK;
+}
+
 /** @brief [설정 저장 버튼] Product Draft와 전체 Bxx 목록을 NVS에 저장하고 Applied는 유지한다. */
 esp_err_t dajilog_product_settings_save(void)
 {
@@ -994,6 +1067,12 @@ esp_err_t dajilog_product_settings_save(void)
     memcpy(zones, s_zone_draft, sizeof(zones));
     char product_codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
     memcpy(product_codes, s_product_draft, sizeof(product_codes));
+    dajilog_calibration_binding_t calibration[DAJILOG_MOTOR_CHANNEL_COUNT];
+    dajilog_calibration_binding_t applied_calibration[DAJILOG_MOTOR_CHANNEL_COUNT];
+    memcpy(calibration, s_calibration_draft, sizeof(calibration));
+    memcpy(applied_calibration, s_calibration_applied, sizeof(applied_calibration));
+    char applied_product_codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
+    memcpy(applied_product_codes, s_product_applied, sizeof(applied_product_codes));
     derive_zone_product_rates(&prescription, product_codes, zones);
     const dajilog_ridge_settings_t applied_ridge = s_applied_ridge;
     const dajilog_prescription_settings_t applied_prescription = s_applied_prescription;
@@ -1043,6 +1122,9 @@ esp_err_t dajilog_product_settings_save(void)
         };
         memcpy(record.selected_product_codes, product_codes,
                sizeof(product_codes));
+        memcpy(record.selected_calibration, calibration, sizeof(calibration));
+        memcpy(record.applied_calibration, applied_calibration, sizeof(applied_calibration));
+        memcpy(record.applied_product_codes, applied_product_codes, sizeof(applied_product_codes));
         error = dajilog_setting_storage_nvs_save(
             &s_storage, PRODUCT_STORAGE_KEY,
             PRODUCT_STORAGE_SCHEMA_VERSION, &record, sizeof(record));
@@ -1068,19 +1150,106 @@ esp_err_t dajilog_product_settings_save(void)
         s_saved_readiness = readiness;
         memcpy(s_zone_saved, zones, sizeof(s_zone_saved));
         memcpy(s_product_saved, product_codes, sizeof(s_product_saved));
+        memcpy(s_calibration_saved, calibration, sizeof(s_calibration_saved));
         s_saved_revision = next_revision;
         xSemaphoreGive(s_lock);
     }
     return error;
 }
 
-/** @brief [설정 카드 Confirm] 승인 배출량표가 연결되기 전에는 운전 적용을 거부한다. */
-esp_err_t dajilog_product_settings_confirm(void)
+/** @brief [배출량표 선택] 표의 ID, revision, hash를 해당 채널 Draft에 고정한다. */
+esp_err_t dajilog_product_settings_stage_calibration(
+    char channel, const dajilog_calibration_binding_t *binding)
 {
-    if (s_lock == NULL) {
+    if (s_lock == NULL || channel < 'A' || channel > 'D' || binding == NULL ||
+        memchr(binding->table_id, '\0', sizeof(binding->table_id)) == NULL ||
+        binding->table_id[0] == '\0' || binding->revision == 0U ||
+        binding->content_hash == 0U) return ESP_ERR_INVALID_ARG;
+    dajilog_calibration_summary_t table = {0};
+    esp_err_t error = dajilog_calibration_catalog_find(
+        channel, binding->table_id, binding->revision, &table);
+    if (error != ESP_OK) return error;
+    if (!table.approved || table.content_hash != binding->content_hash)
+        return ESP_ERR_INVALID_STATE;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    const size_t zone_index = (size_t)(channel - 'A') / 2U;
+    if (strcmp(table.product_code, s_product_draft[zone_index]) != 0 ||
+        (s_zone_draft[zone_index].lot[0] != '\0' &&
+         strcmp(table.product_lot, s_zone_draft[zone_index].lot) != 0)) {
+        xSemaphoreGive(s_lock);
         return ESP_ERR_INVALID_STATE;
     }
-    return ESP_ERR_NOT_SUPPORTED;
+    s_calibration_draft[channel - 'A'] = *binding;
+    s_dirty = true;
+    ++s_draft_generation;
+    xSemaphoreGive(s_lock);
+    return ESP_OK;
+}
+
+/** @brief [설정 카드 Confirm] Saved와 4채널 승인 표를 검증한 뒤 Applied를 NVS에 기록한다. */
+esp_err_t dajilog_product_settings_confirm(void)
+{
+    if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    product_settings_record_t current = {0};
+    const bool ready = !s_dirty && s_saved_revision != 0U &&
+        s_saved_readiness == DAJILOG_SETTING_CONFIGURED &&
+        s_ridge_profiles.selected_id != 0U;
+    const uint32_t revision = s_saved_revision;
+    dajilog_calibration_binding_t selected[DAJILOG_MOTOR_CHANNEL_COUNT];
+    memcpy(selected, s_calibration_saved, sizeof(selected));
+    dajilog_zone_settings_t zones[DAJILOG_SETTING_ZONE_COUNT];
+    memcpy(zones, s_zone_saved, sizeof(zones));
+    char codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
+    memcpy(codes, s_product_saved, sizeof(codes));
+    const dajilog_ridge_settings_t ridge = s_ridge_draft;
+    const dajilog_prescription_settings_t prescription = s_prescription_draft;
+    xSemaphoreGive(s_lock);
+    if (!ready) return ESP_ERR_INVALID_STATE;
+    for (size_t i = 0; i < DAJILOG_SETTING_ZONE_COUNT; ++i) {
+        if (!zones[i].configured || zones[i].name[0] == '\0' ||
+            zones[i].reference_speed_kmh <= 0.0f ||
+            zones[i].rate_kg_per_10a <= 0.0f || codes[i][0] == '\0')
+            return ESP_ERR_INVALID_STATE;
+    }
+    for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
+        const dajilog_calibration_binding_t *binding = &selected[i];
+        dajilog_calibration_summary_t table = {0};
+        if (binding->table_id[0] == '\0' || binding->revision == 0U ||
+            dajilog_calibration_catalog_find((char)('A' + i), binding->table_id,
+                                             binding->revision, &table) != ESP_OK ||
+            !table.approved || table.content_hash != binding->content_hash ||
+            strcmp(table.product_code, codes[i / 2U]) != 0 ||
+            (zones[i / 2U].lot[0] != '\0' &&
+             strcmp(table.product_lot, zones[i / 2U].lot) != 0))
+            return ESP_ERR_INVALID_STATE;
+    }
+    esp_err_t error = dajilog_setting_storage_nvs_load(
+        &s_storage, PRODUCT_STORAGE_KEY, PRODUCT_STORAGE_SCHEMA_VERSION,
+        &current, sizeof(current));
+    if (error != ESP_OK) return error;
+    if (current.saved_revision != revision ||
+        memcmp(current.selected_calibration, selected, sizeof(selected)) != 0)
+        return ESP_ERR_INVALID_STATE;
+    current.applied_ridge = ridge;
+    current.applied_prescription = prescription;
+    memcpy(current.applied_zones, zones, sizeof(zones));
+    memcpy(current.applied_calibration, selected, sizeof(selected));
+    memcpy(current.applied_product_codes, codes, sizeof(codes));
+    current.applied_revision = revision;
+    error = dajilog_setting_storage_nvs_save(
+        &s_storage, PRODUCT_STORAGE_KEY, PRODUCT_STORAGE_SCHEMA_VERSION,
+        &current, sizeof(current));
+    if (error != ESP_OK) return error;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    s_applied_ridge = ridge;
+    s_applied_prescription = prescription;
+    memcpy(s_applied_zones, zones, sizeof(zones));
+    memcpy(s_calibration_applied, selected, sizeof(selected));
+    memcpy(s_product_applied, codes, sizeof(codes));
+    s_applied_revision = revision;
+    xSemaphoreGive(s_lock);
+    return ESP_OK;
 }
 
 /** @brief [Dashboard RUN] 확인된 Applied 설정만 운전 시작 측에 제공한다. */
@@ -1104,11 +1273,23 @@ esp_err_t dajilog_product_settings_get_applied(
     settings->ridge = s_applied_ridge;
     settings->prescription = s_applied_prescription;
     memcpy(settings->zones, s_applied_zones, sizeof(settings->zones));
+    memcpy(settings->calibration, s_calibration_applied, sizeof(settings->calibration));
+    memcpy(settings->selected_product_codes, s_product_applied, sizeof(settings->selected_product_codes));
     settings->draft_readiness = DAJILOG_SETTING_CONFIRMED;
     settings->saved_readiness = DAJILOG_SETTING_CONFIRMED;
     settings->saved_revision = s_applied_revision;
     settings->applied_revision = s_applied_revision;
     xSemaphoreGive(s_lock);
+    for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
+        const dajilog_calibration_binding_t *binding = &settings->calibration[i];
+        dajilog_calibration_summary_t table = {0};
+        if (binding->table_id[0] == '\0' ||
+            dajilog_calibration_catalog_find((char)('A' + i), binding->table_id,
+                                             binding->revision, &table) != ESP_OK ||
+            !table.approved || table.content_hash != binding->content_hash ||
+            strcmp(table.product_code, settings->selected_product_codes[i / 2U]) != 0)
+            return ESP_ERR_INVALID_STATE;
+    }
     (void)dajilog_table_get_revision(RIDGE_TABLE_ID,
                                      &settings->ridge_revision);
     (void)dajilog_table_get_revision(PRESCRIPTION_TABLE_ID,

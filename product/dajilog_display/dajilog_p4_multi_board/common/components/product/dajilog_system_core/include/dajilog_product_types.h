@@ -140,11 +140,19 @@ typedef struct {
     float manual_subsurface_rate_kg_min;
 } dajilog_prescription_settings_t;
 
+#define DAJILOG_CALIBRATION_BINDING_ID_SIZE 40U
+typedef struct {
+    char table_id[DAJILOG_CALIBRATION_BINDING_ID_SIZE];
+    uint32_t revision;
+    uint32_t content_hash;
+} dajilog_calibration_binding_t;
+
 typedef struct {
     dajilog_ridge_settings_t ridge;
     dajilog_prescription_settings_t prescription;
     char selected_product_codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
     dajilog_zone_settings_t zones[DAJILOG_SETTING_ZONE_COUNT];
+    dajilog_calibration_binding_t calibration[DAJILOG_MOTOR_CHANNEL_COUNT];
     uint32_t ridge_revision;
     uint32_t prescription_revision;
     dajilog_setting_readiness_t draft_readiness;

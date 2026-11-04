@@ -57,6 +57,14 @@ esp_err_t dajilog_product_settings_save(void);
  */
 esp_err_t dajilog_product_settings_discard(void);
 
+/** @brief Stage one exact calibration table identity for physical channel A-D. */
+esp_err_t dajilog_product_settings_stage_calibration(
+    char channel, const dajilog_calibration_binding_t *binding);
+
+/** @brief Copy the last successfully persisted Saved snapshot, independent of Draft. */
+esp_err_t dajilog_product_settings_get_saved(
+    dajilog_product_settings_snapshot_t *settings);
+
 /** @brief Confirm the saved configuration for use by the next RUN. */
 esp_err_t dajilog_product_settings_confirm(void);
 

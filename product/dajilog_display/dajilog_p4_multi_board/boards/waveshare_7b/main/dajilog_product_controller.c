@@ -696,7 +696,7 @@ static esp_err_t product_start(void* context) {
   if (error != ESP_OK) {
     return error;
   }
-  if (xTaskCreate(storage_task, "dajilog_storage", 4096, NULL, 7, &s_storage_task) != pdPASS) {
+  if (xTaskCreate(storage_task, "dajilog_storage", 8192, NULL, 7, &s_storage_task) != pdPASS) {
     return ESP_ERR_NO_MEM;
   }
   if (xTaskCreate(system_task, "dajilog_system", 4096, NULL, 9, &s_system_task) != pdPASS) {
@@ -794,6 +794,13 @@ static esp_err_t product_update_motor(size_t index,
 }
 
 /** @brief [설정 카드 공통] UI가 읽는 Product Draft 조회 창구. */
+static esp_err_t product_get_settings_saved(
+    dajilog_product_settings_snapshot_t *settings, void *context)
+{
+  (void)context;
+  return dajilog_product_settings_get_saved(settings);
+}
+
 static esp_err_t product_get_settings_draft(
     dajilog_product_settings_snapshot_t* settings, void* context) {
   (void)context;
@@ -856,6 +863,15 @@ static esp_err_t product_stage_zone_settings(
   return dajilog_product_settings_stage_zone(zone, settings);
 }
 
+/** @brief Stage a calibration choice only in the idle product state. */
+static esp_err_t product_stage_calibration(
+    char channel, const dajilog_calibration_binding_t* binding, void* context) {
+  (void)context;
+  if (!s_started || s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active)
+    return ESP_ERR_INVALID_STATE;
+  return dajilog_product_settings_stage_calibration(channel, binding);
+}
+
 /** @brief Copy the Applied settings retained separately from Saved. */
 static esp_err_t product_get_settings_applied(
     dajilog_product_settings_snapshot_t* settings, void* context) {
@@ -879,6 +895,7 @@ esp_err_t dajilog_product_controller_register(void) {
     .update_vehicle = product_update_vehicle,
     .update_motor = product_update_motor,
     .register_motor_backend = product_register_motor_backend,
+    .get_settings_saved = product_get_settings_saved,
     .get_settings_draft = product_get_settings_draft,
     .stage_ridge_settings = product_stage_ridge_settings,
     .stage_ridge_profile_settings = product_stage_ridge_profile_settings,
@@ -886,6 +903,7 @@ esp_err_t dajilog_product_controller_register(void) {
     .stage_prescription_products = product_stage_prescription_products,
     .get_product_catalog = product_get_catalog,
     .stage_zone_settings = product_stage_zone_settings,
+    .stage_calibration = product_stage_calibration,
     .get_settings_applied = product_get_settings_applied,
     .get_ridge_profiles = product_get_ridge_profiles,
     .context = NULL,
