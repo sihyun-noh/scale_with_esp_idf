@@ -56,11 +56,11 @@ esp_err_t dajilog_system_core_get_snapshot(
 }
 
 esp_err_t dajilog_system_core_update_vehicle(
-    float speed_kmh, bool online, uint32_t signal_age_ms)
+    float speed_kmh, bool online, bool reverse, uint32_t signal_age_ms)
 {
     return s_registered
                ? s_implementation.update_vehicle(
-                     speed_kmh, online, signal_age_ms,
+                     speed_kmh, online, reverse, signal_age_ms,
                      s_implementation.context)
                : ESP_ERR_NOT_SUPPORTED;
 }

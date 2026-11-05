@@ -219,7 +219,10 @@ void render_dashboard(const dajilog_dashboard_snapshot_t &snapshot)
         FLOW_GLOBAL_VARIABLE_VEHICLE_TARGET_SPEED_KMH_TEXT,
         eez::Value::makeStringRef(s_vehicle_target_text, -1,
                                   STRING_ID_DASHBOARD_BASE + 3));
-    if (snapshot.vehicle.online) {
+    if (snapshot.vehicle.simulated) {
+        std::snprintf(s_vehicle_signal_text, sizeof(s_vehicle_signal_text),
+                      "SIM · 1-2-3-4-3-2 km/h");
+    } else if (snapshot.vehicle.online) {
         std::snprintf(s_vehicle_signal_text, sizeof(s_vehicle_signal_text),
                       "정상 · %lu ms", (unsigned long)snapshot.vehicle.signal_age_ms);
     } else {
@@ -272,14 +275,15 @@ void render_dashboard(const dajilog_dashboard_snapshot_t &snapshot)
         FLOW_GLOBAL_VARIABLE_SETTING_2_LOAD_PCT_TEXT,
     };
     for (size_t i = 0; i < 2U; ++i) {
-        const auto &motor = snapshot.motors[i];
+        const auto &motor = snapshot.motors[i * 2U];
+        const auto &paired_motor = snapshot.motors[i * 2U + 1U];
         set_string(driver_state_vars[i], s_motor_state_text[i], sizeof(s_motor_state_text[i]),
                    STRING_ID_DASHBOARD_BASE + 10 + i * 4,
                    motor_state_text(motor.state));
         std::snprintf(s_motor_speed_text[i], sizeof(s_motor_speed_text[i]), "%lu",
                       (unsigned long)motor.actual_rpm);
-        std::snprintf(s_motor_target_text[i], sizeof(s_motor_target_text[i]), "%.1f",
-                      static_cast<double>(motor.target_kg_min));
+        std::snprintf(s_motor_target_text[i], sizeof(s_motor_target_text[i]), "%.3f",
+                      static_cast<double>(motor.target_kg_min + paired_motor.target_kg_min));
         std::snprintf(s_motor_load_text[i], sizeof(s_motor_load_text[i]), "%.0f%%",
                       static_cast<double>(motor.load_pct));
         eez::flow::setGlobalVariable(driver_speed_vars[i], eez::Value::makeStringRef(
@@ -311,8 +315,10 @@ void render_dashboard(const dajilog_dashboard_snapshot_t &snapshot)
     for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
         const auto &motor = snapshot.motors[i];
         const auto &driver = snapshot.drivers[i / 2];
-        const unsigned target = driver.mode == 2
-            ? driver.step[i % 2] * 5U + driver.fine_decivolt[i % 2] : 0;
+        const unsigned target = driver.mode == 1
+            ? motor.command_decivolt
+            : driver.mode == 2
+                ? driver.step[i % 2] * 5U + driver.fine_decivolt[i % 2] : 0;
         char feedback[16] = "--.-";
         if (motor.online && motor.measured_voltage_valid &&
             esp_timer_get_time() - motor.measured_timestamp_us < 3000000)
@@ -955,7 +961,7 @@ void render_detail_voltage()
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_DETAIL_OUTPUT_SAFE,
                                  eez::BooleanValue(final_decivolt <= 120U));
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_DETAIL_APPLY_ACTIVE,
-                                 eez::BooleanValue(s_driver_draft.mode == 2 || s_detail_service_test));
+                                 eez::BooleanValue(s_driver_draft.mode == 1 || s_driver_draft.mode == 2 || s_detail_service_test));
 }
 
 /** @brief [DriverDetail 모터 카드] 선택 모터 드라이버의 Draft를 상세 화면에 불러온다. */
@@ -1024,7 +1030,7 @@ void detail_mode_event(lv_event_t *event)
     lv_label_set_text(objects.driver_detail_trim_apply_label, s_detail_service_test ? "누르는 동안" : "적용");
     lv_label_set_text(objects.driver_detail_trim_reset_label, s_detail_service_test ? "즉시 정지" : "취소");
     lv_label_set_text(objects.driver_detail_safety_hint, mode == 1
-        ? "자동 계산 미구현 · 적용할 수 없습니다"
+        ? "시험용 AUTO · 적용된 설정과 전진 속도가 필요합니다"
         : mode == 3 ? "정지 상태에서 한 채널만 시험 · 손을 떼면 0V"
                     : "채널별 0~24단계 +0.0~0.4V · 적용은 출력하지 않습니다");
     render_detail_voltage();
@@ -1128,7 +1134,7 @@ void detail_close_event(lv_event_t *event)
 }
 
 /** @brief Reload Applied values without leaving the editor. */
-void detail_reset_event(lv_event_t *event)
+[[maybe_unused]] void detail_reset_event(lv_event_t *event)
 {
     if (lv_event_get_code(event) != LV_EVENT_PRESSED) return;
     end_test();
@@ -2452,15 +2458,8 @@ extern "C" bool eez_ui_binding_attach(void)
     lv_obj_add_state(objects.ridge_recipe_ridge_count_input, LV_STATE_DISABLED);
     setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
                  "두둑 추가로 저장 · B번호를 눌러 선택");
-    // Generator has no reset widget yet. Add one without editing generated sources.
-    lv_obj_t *reset = lv_button_create(lv_obj_get_parent(objects.driver_detail_trim_reset_button));
-    lv_obj_set_pos(reset, 212, 478);
-    lv_obj_set_size(reset, 130, 32);
-    lv_obj_t *reset_label = lv_label_create(reset);
-    lv_obj_set_style_text_font(reset_label, lv_obj_get_style_text_font(objects.driver_detail_trim_reset_label, LV_PART_MAIN), 0);
-    lv_label_set_text(reset_label, "초기화");
-    lv_obj_center(reset_label);
-    bind_driver_event(reset, detail_reset_event);
+    // 생성 UI에 driver_detail_reset_button이 추가되면 detail_reset_event를 연결한다.
+    // 현재는 고정 좌표의 임시 LVGL 버튼을 생성하지 않는다.
     select_driver(0U);
     render_latest_dashboard();
     render_setting_views(false);
@@ -2559,7 +2558,13 @@ extern "C" void eez_ui_binding_process(void)
                 s_run_deadline = 0;
             } else if (now >= s_run_deadline) {
                 s_run_deadline = 0;
-                (void)submit_command(DAJILOG_UI_CMD_START_MANUAL);
+                dajilog_dashboard_snapshot_t snapshot = {};
+                if (dajilog_system_core_get_snapshot(&snapshot) == ESP_OK) {
+                    const bool auto_selected = snapshot.drivers[0].mode == 1 ||
+                                               snapshot.drivers[1].mode == 1;
+                    (void)submit_command(auto_selected ? DAJILOG_UI_CMD_START_AUTO
+                                                       : DAJILOG_UI_CMD_START_MANUAL);
+                }
                 eez::flow::replacePageHook(SCREEN_ID_DASHBOARD, 0, 0, 0);
             } else {
                 std::snprintf(s_countdown_text, sizeof(s_countdown_text), "%d",

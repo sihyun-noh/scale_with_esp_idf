@@ -6,7 +6,7 @@ idf_component_register(
          "dajilog_product_catalog.c"
     INCLUDE_DIRS "." "${CMAKE_CURRENT_BINARY_DIR}"
     PRIV_REQUIRES dajilog_product_start dajilog_system_core
-                  dajilog_calibration_catalog
+                  dajilog_calibration_catalog dajilog_flow_calculator
                   dajilog_ridge_preview
                   dajilog_setting_table dajilog_setting_storage_nvs
                   dajilog_ui_bridge dajilog_ui_msg dajilog_board_api

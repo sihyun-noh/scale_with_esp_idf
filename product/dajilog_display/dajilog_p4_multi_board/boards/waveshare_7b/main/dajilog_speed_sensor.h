@@ -7,7 +7,7 @@ extern "C" {
 #endif
 
 /**
- * @brief Register the TR07E CAN observer used by the 7B product.
+ * @brief Register the TR07E CAN observer or the explicit bench speed simulator.
  *
  * Decoded speed and online state are forwarded to System Core; the observer
  * does not update LVGL objects directly.

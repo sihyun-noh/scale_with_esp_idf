@@ -168,6 +168,13 @@ typedef struct _objects_t {
     lv_obj_t *dashboard_setting_top_label_6;
     lv_obj_t *driver_detail_backdrop;
     lv_obj_t *driver_detail_panel;
+    lv_obj_t *driver_detail_mode_card;
+    lv_obj_t *driver_detail_output_card;
+    lv_obj_t *driver_detail_mode_divider;
+    lv_obj_t *driver_detail_output_divider;
+    lv_obj_t *driver_detail_mode_card_title;
+    lv_obj_t *driver_detail_channel_card_title;
+    lv_obj_t *driver_detail_mode_help;
     lv_obj_t *driver_detail_title;
     lv_obj_t *driver_detail_selected_value;
     lv_obj_t *driver_detail_auto_mode_button;

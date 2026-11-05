@@ -199,6 +199,8 @@ typedef struct {
     float target_speed_kmh;
     uint32_t signal_age_ms;
     bool online;
+    bool reverse; /* TR07E direction bit; never infer direction from speed magnitude. */
+    bool simulated; /* Clearly distinguish bench speed from a real TR07E frame. */
 } dajilog_vehicle_snapshot_t;
 
 typedef struct {

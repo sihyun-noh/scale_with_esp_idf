@@ -11,6 +11,8 @@
 #include "dajilog_product_controller.h"
 #include "dajilog_product_settings.h"
 #include "dajilog_product_catalog.h"
+#include "dajilog_calibration_catalog.h"
+#include "dajilog_flow_calculator.h"
 #include "dajilog_driver_policy.h"
 
 #include <math.h>
@@ -99,10 +101,14 @@ static int64_t s_command_time[DAJILOG_MOTOR_CHANNEL_COUNT];
 static uint8_t s_stop_pending_mask;
 static uint8_t s_unconfirmed_output_mask;
 static int64_t s_stop_deadline;
+static bool s_auto_active;
+static int64_t s_vehicle_last_us;
+static int64_t s_auto_last_command_us;
+static dajilog_product_settings_snapshot_t s_auto_applied;
+static dajilog_ridge_profiles_snapshot_t s_auto_ridges;
 
 /** @brief [DriverDetail 모터 카드] 두 채널 설정을 검증하며 실제 출력을 바꾸지 않는다. */
 static esp_err_t validate_driver(const dajilog_driver_setting_t *driver) {
-  if (driver->mode == 1) return ESP_ERR_NOT_SUPPORTED;
   return dajilog_driver_setting_valid(driver) ? ESP_OK : ESP_ERR_INVALID_ARG;
 }
 
@@ -126,6 +132,116 @@ static esp_err_t command_voltage(const dajilog_motor_voltage_command_t *command)
     xSemaphoreGive(s_snapshot_lock);
   }
   return error;
+}
+
+
+/** @brief [AUTO 시험] Applied와 선택 두둑의 채널별 목표를 0.1V 명령으로 계산한다. */
+static esp_err_t auto_calculate_commands(
+    const dajilog_product_settings_snapshot_t *applied,
+    const dajilog_ridge_profiles_snapshot_t *ridges, float speed_kmh,
+    dajilog_motor_voltage_command_t commands[DAJILOG_MOTOR_CHANNEL_COUNT],
+    float target_kg_min[DAJILOG_MOTOR_CHANNEL_COUNT]) {
+  if (applied == NULL || ridges == NULL || commands == NULL ||
+      !isfinite(speed_kmh) || speed_kmh < 0.5f || speed_kmh > 50.0f)
+    return ESP_ERR_INVALID_STATE;
+  /* 적용 이후 다른 Bxx를 선택하거나 치수를 바꾼 경우 재확인을 요구한다. */
+  bool applied_ridge_matches = false;
+  for (uint32_t i = 0; i < ridges->count; ++i) {
+    if (ridges->profiles[i].id != ridges->selected_id) continue;
+    const dajilog_ridge_profile_input_t *input = &ridges->profiles[i].input;
+    applied_ridge_matches =
+        isfinite(applied->ridge.ridge_width_m) &&
+        fabsf(input->width_m - applied->ridge.ridge_width_m) < 0.001f &&
+        isfinite(applied->ridge.actual_length_m) &&
+        fabsf(input->whole_length_m - applied->ridge.actual_length_m) < 0.001f &&
+        input->work_width_mode == applied->ridge.work_width_mode &&
+        (input->work_width_mode != DAJILOG_WORK_WIDTH_RIDGE_AND_FURROW ||
+         fabsf(input->furrow_width_m - applied->ridge.included_furrow_width_m) < 0.001f);
+    break;
+  }
+  if (!applied_ridge_matches) return ESP_ERR_INVALID_STATE;
+  for (size_t zone = 0; zone < DAJILOG_SETTING_ZONE_COUNT; ++zone) {
+    /* 선택된 AUTO 드라이버만 계산한다. 다른 드라이버는 독립 운전이다. */
+    if (s_snapshot.drivers[zone].mode != 1) continue;
+    dajilog_zone_settings_t setting = applied->zones[zone];
+    setting.reference_speed_kmh = speed_kmh;
+    dajilog_flow_target_t flow = {0};
+    if (dajilog_flow_calculate_preview(ridges, &setting, &flow) != DAJILOG_FLOW_CALC_OK)
+      return ESP_ERR_INVALID_STATE;
+    for (size_t local = 0; local < 2U; ++local) {
+      const size_t index = zone * 2U + local;
+      const char channel = (char)('A' + index);
+      const dajilog_calibration_binding_t *binding = &applied->calibration[index];
+      dajilog_calibration_summary_t table = {0};
+      uint16_t voltage = 0;
+      uint32_t expected_g_min = 0;
+      if (binding->table_id[0] == '\0' ||
+          dajilog_calibration_catalog_find(channel, binding->table_id,
+              binding->revision, &table) != ESP_OK ||
+          !table.approved ||
+#ifndef CONFIG_DAJILOG_ALLOW_UNMEASURED_AUTO_TEST
+          !table.measured ||
+#endif
+          table.content_hash != binding->content_hash ||
+          strcmp(table.product_code, applied->selected_product_codes[zone]) != 0 ||
+          (setting.lot[0] != '\0' && strcmp(setting.lot, table.product_lot) != 0) ||
+          dajilog_calibration_catalog_preview_voltage(channel, table.table_id,
+              table.revision, flow.channel_target_g_min[local],
+              &voltage, &expected_g_min) != ESP_OK ||
+          voltage == 0U || voltage > DAJILOG_MOTOR_OUTPUT_DECIVOLT_MAX)
+        return ESP_ERR_INVALID_STATE;
+      commands[index] = (dajilog_motor_voltage_command_t){
+          .motor_index = (uint8_t)index,
+          .output_step = (uint8_t)(voltage / DAJILOG_MOTOR_DECIVOLT_PER_STEP),
+          .trim_decivolt = (int8_t)(voltage % DAJILOG_MOTOR_DECIVOLT_PER_STEP),
+          .final_decivolt = voltage,
+      };
+      if (target_kg_min != NULL)
+        target_kg_min[index] = flow.channel_target_g_min[local] / 1000.0f;
+    }
+  }
+  return ESP_OK;
+}
+
+/** @brief [AUTO 시험] 속도·방향·신호 시각을 확인하고 변한 전압만 완만히 갱신한다. */
+static esp_err_t auto_update(int64_t now_us) {
+  if (!s_auto_active) return ESP_OK;
+  if (!s_snapshot.vehicle.online || s_snapshot.vehicle.reverse ||
+      s_snapshot.vehicle.speed_kmh < 0.5f ||
+      s_snapshot.vehicle.signal_age_ms > 500U ||
+      s_vehicle_last_us == 0 || now_us - s_vehicle_last_us > 500000)
+    return ESP_ERR_INVALID_STATE;
+  if (now_us - s_auto_last_command_us < 250000) return ESP_OK;
+  dajilog_motor_voltage_command_t desired[DAJILOG_MOTOR_CHANNEL_COUNT] = {0};
+  float target_kg_min[DAJILOG_MOTOR_CHANNEL_COUNT] = {0};
+  esp_err_t error = auto_calculate_commands(&s_auto_applied, &s_auto_ridges,
+                                            s_snapshot.vehicle.speed_kmh, desired,
+                                            target_kg_min);
+  if (error != ESP_OK) return error;
+  xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
+  for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i)
+    s_snapshot.motors[i].target_kg_min = target_kg_min[i];
+  xSemaphoreGive(s_snapshot_lock);
+  for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
+    if (s_snapshot.drivers[i / 2U].mode == 0) continue;
+    if (__atomic_load_n(&s_stop_requested, __ATOMIC_SEQ_CST)) return ESP_ERR_INVALID_STATE;
+    if (!channel_ready(i)) return ESP_ERR_INVALID_STATE;
+    const uint16_t current = s_snapshot.motors[i].command_decivolt;
+    uint16_t next = desired[i].final_decivolt;
+    if (next > current + 5U) next = current + 5U;
+    else if (current > next + 5U) next = current - 5U;
+    if (next == current) continue;
+    const dajilog_motor_voltage_command_t command = {
+        .motor_index = (uint8_t)i,
+        .output_step = (uint8_t)(next / DAJILOG_MOTOR_DECIVOLT_PER_STEP),
+        .trim_decivolt = (int8_t)(next % DAJILOG_MOTOR_DECIVOLT_PER_STEP),
+        .final_decivolt = next,
+    };
+    error = command_voltage(&command);
+    if (error != ESP_OK) return error;
+  }
+  s_auto_last_command_us = now_us;
+  return ESP_OK;
 }
 
 /** @brief Initialize the board CAN driver and start the device manager. */
@@ -336,6 +452,7 @@ static void process_command(const core_message_t* message) {
 
   switch (message->topic) {
     case DAJILOG_UI_CMD_STOP:
+      s_auto_active = false;
       s_test_active = false;
       s_stop_pending_mask = s_unconfirmed_output_mask;
       for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
@@ -352,6 +469,7 @@ static void process_command(const core_message_t* message) {
         xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
         for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
           s_snapshot.motors[i].command_decivolt = 0;
+          s_snapshot.motors[i].target_kg_min = 0;
           s_snapshot.motors[i].command_pending = true;
           s_command_time[i] = esp_timer_get_time();
         }
@@ -497,8 +615,45 @@ static void process_command(const core_message_t* message) {
       }
       break;
     case DAJILOG_UI_CMD_START_AUTO:
-      error = ESP_ERR_NOT_SUPPORTED;
-      set_alarm(DAJILOG_ALARM_WARNING, 0x1001U, "Motor control is not connected");
+      if (s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active ||
+          !s_motor_backend_registered || !s_snapshot.vehicle.online ||
+          s_snapshot.vehicle.reverse || s_snapshot.vehicle.speed_kmh < 0.5f ||
+          s_snapshot.vehicle.signal_age_ms > 500U || s_vehicle_last_us == 0 ||
+          esp_timer_get_time() - s_vehicle_last_us > 500000) {
+        error = ESP_ERR_INVALID_STATE;
+        break;
+      }
+      {
+        bool selected = false;
+        for (size_t d = 0; d < 2U; ++d) {
+          if (s_snapshot.drivers[d].mode == 0) continue;
+          selected = true;
+          if (s_snapshot.drivers[d].mode != 1 || !channel_ready(d * 2U) ||
+              !channel_ready(d * 2U + 1U)) error = ESP_ERR_INVALID_STATE;
+        }
+        if (!selected || error != ESP_OK) { error = ESP_ERR_INVALID_STATE; break; }
+        error = dajilog_product_settings_get_applied(&s_auto_applied);
+        if (error == ESP_OK) error = dajilog_product_settings_get_ridge_profiles(&s_auto_ridges);
+        dajilog_motor_voltage_command_t desired[DAJILOG_MOTOR_CHANNEL_COUNT] = {0};
+        if (error == ESP_OK) error = auto_calculate_commands(&s_auto_applied,
+            &s_auto_ridges, s_snapshot.vehicle.speed_kmh, desired, NULL);
+        if (error != ESP_OK) break;
+        s_auto_active = true;
+        s_auto_last_command_us = 0;
+        xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
+        s_snapshot.work_mode = DAJILOG_WORK_MODE_AUTO;
+        xSemaphoreGive(s_snapshot_lock);
+        set_state(DAJILOG_OPERATION_RUN_AUTO);
+        error = auto_update(esp_timer_get_time());
+        if (error != ESP_OK) {
+          const core_message_t request = {.topic = DAJILOG_UI_CMD_STOP};
+          process_command(&request);
+          set_alarm(DAJILOG_ALARM_CRITICAL, 0x3202U,
+                    "AUTO output failed; verify all channels stopped");
+        } else {
+          set_alarm(DAJILOG_ALARM_NONE, 0, "");
+        }
+      }
       break;
     default: error = ESP_ERR_INVALID_ARG; break;
   }
@@ -523,10 +678,21 @@ static void system_task(void* context) {
   for (;;) {
     bool stop = __atomic_exchange_n(&s_stop_requested, false, __ATOMIC_SEQ_CST);
     if (s_test_active && esp_timer_get_time() >= s_test_deadline) stop = true;
+    bool auto_failed = false;
+    if (s_auto_active && !stop) {
+      const esp_err_t auto_error = auto_update(esp_timer_get_time());
+      if (auto_error != ESP_OK) {
+        stop = true;
+        auto_failed = true;
+        ESP_LOGW(TAG, "AUTO stopped: %s", esp_err_to_name(auto_error));
+      }
+    }
     for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
       const bool active = s_test_active ? i == s_test_command.motor_index :
-          s_snapshot.operation_state == DAJILOG_OPERATION_RUN_MANUAL &&
-          s_snapshot.drivers[i / 2].mode == 2;
+          (s_snapshot.operation_state == DAJILOG_OPERATION_RUN_MANUAL &&
+           s_snapshot.drivers[i / 2].mode == 2) ||
+          (s_snapshot.operation_state == DAJILOG_OPERATION_RUN_AUTO &&
+           s_snapshot.drivers[i / 2].mode == 1);
       if (active && !channel_ready(i)) stop = true;
       if (active && s_snapshot.motors[i].command_decivolt != 0 &&
           esp_timer_get_time() - s_command_time[i] > 3000000 &&
@@ -557,6 +723,11 @@ static void system_task(void* context) {
       __atomic_add_fetch(&s_stop_epoch, 1, __ATOMIC_SEQ_CST);
       const core_message_t request = {.topic = DAJILOG_UI_CMD_STOP};
       process_command(&request);
+      if (auto_failed && s_snapshot.operation_state != DAJILOG_OPERATION_FAULT) {
+        set_alarm(DAJILOG_ALARM_WARNING, 0x3203U,
+                  "AUTO stopped: speed, direction, table or motor feedback invalid");
+        publish_snapshot();
+      }
     }
     if (xQueueReceive(s_system_queue, &message, pdMS_TO_TICKS(50)) != pdTRUE) continue;
     switch (message.kind) {
@@ -576,7 +747,8 @@ static void system_task(void* context) {
       case CORE_MESSAGE_VEHICLE_UPDATE:
         xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
         s_snapshot.vehicle = message.data.vehicle;
-        s_snapshot.can_online = message.data.vehicle.online;
+        s_vehicle_last_us = esp_timer_get_time();
+        s_snapshot.can_online = message.data.vehicle.online && !message.data.vehicle.simulated;
         for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
           s_snapshot.can_online = s_snapshot.can_online || s_snapshot.motors[i].online;
         }
@@ -587,12 +759,14 @@ static void system_task(void* context) {
         if (message.data.motor.index < DAJILOG_MOTOR_CHANNEL_COUNT) {
           xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
           const uint16_t requested = s_snapshot.motors[message.data.motor.index].command_decivolt;
+          const float target_kg_min = s_snapshot.motors[message.data.motor.index].target_kg_min;
           s_snapshot.motors[message.data.motor.index] = message.data.motor.motor;
           s_snapshot.motors[message.data.motor.index].command_decivolt = requested;
+          s_snapshot.motors[message.data.motor.index].target_kg_min = target_kg_min;
           s_snapshot.motors[message.data.motor.index].command_pending =
               !message.data.motor.motor.command_readback_valid ||
               message.data.motor.motor.command_readback_decivolt != requested;
-          s_snapshot.can_online = s_snapshot.vehicle.online;
+          s_snapshot.can_online = s_snapshot.vehicle.online && !s_snapshot.vehicle.simulated;
           for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
             s_snapshot.can_online = s_snapshot.can_online || s_snapshot.motors[i].online;
           }
@@ -759,7 +933,7 @@ static esp_err_t product_get_snapshot(dajilog_dashboard_snapshot_t* snapshot,
 }
 
 /** @brief Queue a decoded vehicle-speed update for System Task processing. */
-static esp_err_t product_update_vehicle(float speed_kmh, bool online,
+static esp_err_t product_update_vehicle(float speed_kmh, bool online, bool reverse,
                                         uint32_t signal_age_ms,
                                         void* context) {
   (void)context;
@@ -773,6 +947,10 @@ static esp_err_t product_update_vehicle(float speed_kmh, bool online,
             .target_speed_kmh = 8.0f,
             .signal_age_ms = signal_age_ms,
             .online = online,
+            .reverse = reverse,
+#ifdef CONFIG_DAJILOG_SPEED_SIMULATION
+            .simulated = true,
+#endif
         },
     };
   return xQueueSend(s_system_queue, &message, 0) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;

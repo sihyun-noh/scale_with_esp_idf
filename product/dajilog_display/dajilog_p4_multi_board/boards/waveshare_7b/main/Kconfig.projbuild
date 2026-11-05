@@ -33,14 +33,33 @@ menu "DAJILOG Configuration"
     endmenu
 
     menu "Diagnostics"
+        config DAJILOG_SPEED_SIMULATION
+            bool "Simulate TR07E speed 1-2-3-4-3-2 km/h (bench test only)"
+            depends on DAJILOG_CAN_ENABLE
+            default n
+            help
+                Replace the TR07E observer with a periodic synthetic speed
+                update. The dashboard marks the signal as SIM. The real CAN
+                motor backend remains active; normal AUTO safety checks and
+                calibration output gates still apply.
+
         config DAJILOG_CALIBRATION_CSV_BUILTIN
             bool "Load built-in product calibration CSV for inspection"
             default y
             help
                 Compile config/calibration/PRODUCT_CALIBRATION.csv into the
                 firmware and make its full point rows visible to the 7B UI.
-                The CSV data is unverified and cannot enable automatic motor
-                voltage calculation, settings confirmation, or CAN output.
+                The CSV can be used for display and calculation. Unmeasured
+                points require an explicit AUTO test-output opt-in.
+
+        config DAJILOG_ALLOW_UNMEASURED_AUTO_TEST
+            bool "Allow AUTO CAN output with unmeasured calibration (test only)"
+            depends on DAJILOG_CAN_ENABLE && DAJILOG_CALIBRATION_CSV_BUILTIN
+            default n
+            help
+                Explicit bench-test opt-in. Allows built-in UNMEASURED points
+                to drive AUTO output after all normal prechecks. Never enable
+                this option for field operation.
 
         config DAJILOG_SETTINGS_DEBUG_LOG
             bool "Print settings values in debug logs"

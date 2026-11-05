@@ -13,7 +13,7 @@
 objects_t objects;
 
 static const char *screen_names[] = { "StartupAnimation", "Dashboard", "DriverDetail", "SettingDetail", "SettingConfirm", "SettingNumberInput", "SettingTextInput", "SettingTable", "SettingEdit", "RunCountdown", "SystemSetting", "RidgeSetup", "Preparation", "Work", "WeighingTest", "NumericInput", "RidgeNumericInput", "CalibrationSelect" };
-static const char *object_names[] = { "startup_animation", "dashboard", "driver_detail", "setting_detail", "setting_confirm", "setting_number_input", "setting_text_input", "setting_table", "setting_edit", "run_countdown", "system_setting", "ridge_setup", "preparation", "work", "weighing_test", "numeric_input", "ridge_numeric_input", "calibration_select", "startup_top_accent", "startup_brand_label", "startup_subtitle_label", "startup_hopper_backdrop", "startup_hopper_image", "startup_particle_1", "startup_particle_2", "startup_particle_3", "startup_particle_4", "startup_particle_5", "startup_particle_6", "startup_particle_7", "startup_particle_8", "startup_particle_9", "startup_percent_0", "startup_percent_25", "startup_percent_50", "startup_percent_75", "startup_percent_100", "startup_dispensed_label", "startup_progress_track", "startup_progress_fill", "startup_status_label", "startup_module_label", "startup_footer_label", "dashboard_header", "dashboard_brand", "dashboard_title", "dashboard_operation_label", "operation_state_value", "dashboard_can_label", "can_online_value", "dashboard_motor_section_hint", "driver_1_card", "driver_1_number", "driver_1_name", "driver_1_state_value", "driver_1_channel_a_label", "driver_1_channel_b_label", "driver_1_channel_a_value", "driver_1_channel_a_unit", "driver_1_channel_b_value", "driver_1_channel_b_unit", "driver_1_progress_track", "driver_1_progress_fill", "driver_1_output_state_value", "setting_1_card", "setting_1_number", "surface_setting_name", "setting_1_state_value", "surface_setting_name_label", "surface_setting_target_label", "surface_setting_summary_value", "surface_setting_name_unit", "setting_1_target_value", "surface_setting_target_unit", "setting_1_progress_track", "setting_1_progress_fill", "surface_calibration_state_value", "driver_2_card", "driver_2_number", "driver_2_name", "driver_2_state_value", "driver_2_channel_c_label", "driver_2_channel_d_label", "driver_2_channel_c_value", "driver_2_channel_c_unit", "driver_2_channel_d_value", "driver_2_channel_d_unit", "driver_2_progress_track", "driver_2_progress_fill", "driver_2_output_state_value", "setting_2_card", "setting_2_number", "subsurface_setting_name", "setting_2_state_value", "subsurface_setting_name_label", "subsurface_setting_target_label", "subsurface_setting_summary_value", "subsurface_setting_name_unit", "setting_2_target_value", "subsurface_setting_target_unit", "setting_2_progress_track", "setting_2_progress_fill", "subsurface_calibration_state_value", "vehicle_speed_card", "vehicle_speed_title", "vehicle_speed_divider", "vehicle_speed_label", "vehicle_speed_value", "vehicle_speed_unit", "vehicle_target_speed_label", "vehicle_target_speed_value", "vehicle_speed_progress_track", "vehicle_speed_progress_fill", "vehicle_speed_signal_label", "vehicle_speed_signal_value", "dashboard_run_button", "dashboard_system_title", "work_mode_label", "work_mode_value", "recipe_name_label", "recipe_name_value", "dashboard_alert_card", "dashboard_stop_button", "dashboard_setting_caption", "dashboard_setting_label", "dashboard_setting_description", "dashboard_setting_arrow", "dashboard_setting_button_1", "dashboard_setting_top_label_3", "dashboard_setting_button_2", "dashboard_setting_top_label_4", "dashboard_setting_button_3", "dashboard_setting_top_label_6", "driver_detail_backdrop", "driver_detail_panel", "driver_detail_title", "driver_detail_selected_value", "driver_detail_auto_mode_button", "driver_detail_auto_mode_label", "driver_detail_manual_mode_button", "driver_detail_manual_mode_label", "driver_detail_test_mode_button", "driver_detail_test_mode_label", "driver_detail_close_button", "driver_detail_close_label", "driver_detail_output_caption", "driver_detail_output_step_value", "driver_detail_output_step_unit", "driver_detail_output_slider", "driver_detail_range_hint", "driver_detail_target_summary", "driver_detail_voltage_summary", "driver_detail_trim_minus_button", "driver_detail_trim_minus_label", "driver_detail_trim_plus_button", "driver_detail_trim_plus_label", "driver_detail_trim_reset_button", "driver_detail_trim_reset_label", "driver_detail_trim_apply_button", "driver_detail_trim_apply_label", "driver_detail_channel_a_selector", "driver_detail_channel_a_selector_label", "driver_detail_channel_b_selector", "driver_detail_channel_b_selector_label", "driver_detail_safety_hint", "setting_detail_header", "setting_detail_back_button", "setting_detail_back_label", "setting_detail_title", "setting_detail_name", "setting_detail_state_caption", "setting_detail_state", "setting_detail_info_card", "setting_detail_info_title", "setting_detail_info_divider", "setting_detail_info_caption_1", "setting_detail_info_value_1", "setting_detail_info_caption_2", "setting_detail_info_value_2", "setting_detail_info_caption_3", "setting_detail_info_value_3", "setting_detail_info_caption_4", "setting_detail_info_value_4", "setting_detail_info_caption_5", "setting_detail_info_value_5", "setting_detail_info_caption_6", "setting_detail_info_value_6", "setting_detail_result_card", "setting_detail_result_title", "setting_detail_total_caption", "setting_detail_total_value", "setting_detail_total_unit", "setting_detail_result_divider", "setting_detail_channel_1_card", "setting_detail_channel_1_name", "setting_detail_channel_1_state", "setting_detail_channel_1_target_caption", "setting_detail_channel_1_target_value", "setting_detail_channel_1_target_unit", "setting_detail_channel_1_output_caption", "setting_detail_channel_1_output_value", "setting_detail_channel_1_voltage_caption", "setting_detail_channel_1_voltage_value", "setting_detail_channel_1_voltage_unit", "setting_detail_channel_2_card", "setting_detail_channel_2_name", "setting_detail_channel_2_state", "setting_detail_channel_2_target_caption", "setting_detail_channel_2_target_value", "setting_detail_channel_2_target_unit", "setting_detail_channel_2_output_caption", "setting_detail_channel_2_output_value", "setting_detail_channel_2_voltage_caption", "setting_detail_channel_2_voltage_value", "setting_detail_channel_2_voltage_unit", "setting_detail_table_status_caption", "setting_detail_table_status_value", "setting_detail_hint", "setting_detail_save_button", "setting_detail_save_button_label", "setting_detail_apply_button", "setting_detail_apply_button_label", "setting_detail_footer_status", "setting_detail_info_caption_7", "setting_detail_info_value_7", "setting_detail_change_state", "setting_detail_saved_at", "setting_detail_draft_notice", "setting_detail_original_total", "setting_detail_channel_1_trim", "setting_detail_channel_2_trim", "setting_detail_info_caption_8", "setting_detail_info_value_8", "setting_detail_info_caption_9", "setting_detail_info_value_9", "setting_confirm_dialog", "setting_confirm_title", "setting_confirm_message", "setting_confirm_block", "setting_confirm_cancel_button", "setting_confirm_cancel_button_label", "setting_confirm_ok_button", "setting_confirm_ok_button_label", "setting_number_input_card", "setting_number_input_title_label", "setting_number_input_editor", "setting_number_input_unit_label", "setting_number_input_keypad", "setting_number_input_cancel_button", "setting_number_input_cancel_button_label", "setting_number_input_done_button", "setting_number_input_done_button_label", "setting_number_input_help_label", "setting_text_input_card", "setting_text_input_title_label", "setting_text_input_editor", "setting_text_input_unit_label", "setting_text_input_keypad", "setting_text_input_cancel_button", "setting_text_input_cancel_button_label", "setting_text_input_done_button", "setting_text_input_done_button_label", "setting_text_input_help_label", "setting_table_header", "setting_table_back_button", "setting_table_back_button_label", "setting_table_title", "setting_table_zone", "setting_table_channel_1_card", "setting_table_channel_1_name", "setting_table_1_state_caption", "setting_table_1_state_value", "setting_table_1_table_id_caption", "setting_table_1_table_id_value", "setting_table_1_table_revision_caption", "setting_table_1_table_revision_value", "setting_table_1_lookup_caption", "setting_table_1_lookup_value", "setting_table_1_base_step_caption", "setting_table_1_base_step_value", "setting_table_1_fine_volt_caption", "setting_table_1_fine_volt_value", "setting_table_1_user_trim_volt_caption", "setting_table_1_user_trim_volt_value", "setting_table_1_final_voltage_caption", "setting_table_1_final_voltage_value", "setting_table_channel_2_card", "setting_table_channel_2_name", "setting_table_2_state_caption", "setting_table_2_state_value", "setting_table_2_table_id_caption", "setting_table_2_table_id_value", "setting_table_2_table_revision_caption", "setting_table_2_table_revision_value", "setting_table_2_lookup_caption", "setting_table_2_lookup_value", "setting_table_2_base_step_caption", "setting_table_2_base_step_value", "setting_table_2_fine_volt_caption", "setting_table_2_fine_volt_value", "setting_table_2_user_trim_volt_caption", "setting_table_2_user_trim_volt_value", "setting_table_2_final_voltage_caption", "setting_table_2_final_voltage_value", "setting_table_warning", "setting_table_open_selection_button", "setting_table_open_selection_button_label", "setting_edit_header", "setting_edit_back_button", "setting_edit_back_button_label", "setting_edit_title", "setting_edit_mode", "setting_edit_form", "setting_edit_form_title", "setting_edit_name_caption", "setting_edit_name_button", "setting_edit_name_button_label", "setting_edit_name_value", "setting_edit_product_caption", "setting_edit_product_button", "setting_edit_product_button_label", "setting_edit_product_value", "setting_edit_lot_caption", "setting_edit_lot_button", "setting_edit_lot_button_label", "setting_edit_lot_value", "setting_edit_prescription_caption", "setting_edit_prescription_button", "setting_edit_prescription_button_label", "setting_edit_prescription_value", "setting_edit_speed_caption", "setting_edit_speed_button", "setting_edit_speed_button_label", "setting_edit_speed_value", "setting_edit_distribution_caption", "setting_edit_distribution_button", "setting_edit_distribution_button_label", "setting_edit_distribution_value", "setting_edit_preview", "setting_edit_preview_title", "setting_edit_preview_hint", "setting_edit_driver_caption", "setting_edit_driver_value", "setting_edit_validation_caption", "setting_edit_validation_value", "setting_edit_save_button", "setting_edit_save_button_label", "setting_edit_table_button", "setting_edit_table_button_label", "setting_edit_review_caption_3", "setting_edit_review_value_3", "setting_edit_review_caption_4", "setting_edit_review_value_4", "setting_edit_review_caption_5", "setting_edit_review_value_5", "setting_edit_review_caption_6", "setting_edit_review_value_6", "run_countdown_backdrop", "run_countdown_panel", "run_countdown_title", "run_countdown_value", "run_countdown_description", "run_countdown_summary_panel", "run_countdown_d1_summary", "run_countdown_d2_summary", "run_countdown_stop_button", "run_countdown_stop_label", "main_status", "main_tab_ridge", "main_tab_ridge_label", "main_tab_line_ridge", "main_tab_prescription", "main_tab_prescription_label", "main_tab_line_prescription", "main_tab_preparation", "main_tab_preparation_label", "main_tab_line_preparation", "main_tab_work", "main_tab_work_label", "main_tab_weighing", "main_tab_weighing_label", "main_tab_line_weighing", "main_content", "main_nitrogen", "main_nitrogen_label", "main_direct", "main_direct_label", "main_nitrogen_amount_label", "recipe_nitrogen_rate_input", "main_nitrogen_unit", "main_upper_ratio_label", "main_upper_ratio", "main_lower_ratio_label", "main_lower_ratio", "main_upper_product_label", "main_upper_product", "main_upper_product_arrow", "main_lower_product_label", "main_lower_product", "main_lower_product_arrow", "fertilizer_temp_save", "fertilizer_temp_save_label", "fertilizer_save_settings", "fertilizer_save_settings_label", "main_stop_1", "main_stop_label_1", "ridge_divider_1", "prescription_details_title", "prescription_ratio_label", "prescription_surface_ratio_input", "prescription_ratio_unit", "prescription_surface_n_label", "prescription_surface_n_input", "prescription_surface_n_unit", "prescription_subsurface_n_label", "prescription_subsurface_n_input", "prescription_subsurface_n_unit", "prescription_direct_surface_label", "prescription_direct_surface_input", "prescription_direct_surface_unit", "prescription_direct_subsurface_label", "prescription_direct_subsurface_input", "prescription_direct_subsurface_unit", "prescription_save_scope_notice", "prescription_confirm_notice", "prescription_active_mode", "main_direct_surface_label", "main_direct_surface_input", "main_direct_subsurface_label", "main_direct_subsurface_input", "main_nitrogen_selection_outline", "main_direct_selection_outline", "ridge_status", "ridge_tab_ridge", "ridge_tab_ridge_label", "ridge_tab_line_ridge", "ridge_tab_prescription", "ridge_tab_prescription_label", "ridge_tab_line_prescription", "ridge_tab_preparation", "ridge_tab_preparation_label", "ridge_tab_line_preparation", "ridge_tab_work", "ridge_tab_work_label", "ridge_tab_line_work", "ridge_tab_weighing", "ridge_tab_weighing_label", "ridge_tab_line_weighing", "ridge_content", "ridge_add_button", "ridge_add_button_label", "ridge_left_title", "ridge_edit_button", "ridge_edit_button_label", "ridge_delete_button", "ridge_delete_button_label", "ridge_divider", "ridge_ridge_label", "ridge_ridge_value", "ridge_count_label", "ridge_recipe_ridge_count_input", "ridge_count_unit", "ridge_width_label", "ridge_recipe_ridge_width_input", "ridge_width_unit", "ridge_length_label", "ridge_recipe_actual_length_input", "ridge_length_unit", "ridge_area_only", "ridge_area_only_label", "ridge_area_furrow", "ridge_area_furrow_label", "ridge_all", "ridge_all_label", "ridge_split", "ridge_split_label", "ridge_north_label", "ridge_north_value", "ridge_south_label", "ridge_south_value", "ridge_temp_save", "ridge_temp_save_label", "ridge_save_settings", "ridge_save_settings_label", "ridge_work_width_section_title", "ridge_furrow_width_label", "ridge_furrow_width_input", "ridge_furrow_unit", "ridge_save_scope_notice", "ridge_confirm_notice", "ridge_unsaved_notice", "ridge_active_work_width_mode", "ridge_result_card", "ridge_result_title", "ridge_result_width_caption", "ridge_result_width_value", "ridge_result_width_unit", "ridge_result_area_caption", "ridge_result_area_value", "ridge_result_area_unit", "ridge_result_preparation_caption", "ridge_result_surface_preparation", "ridge_result_preparation_separator", "ridge_result_subsurface_preparation", "ridge_result_preparation_unit", "ridge_result_flow_caption", "ridge_result_surface_flow", "ridge_result_flow_separator", "ridge_result_subsurface_flow", "ridge_result_flow_unit", "ridge_result_status", "ridge_delete_confirm_panel", "ridge_delete_confirm_title", "ridge_delete_confirm_target", "ridge_delete_confirm_warning", "ridge_delete_cancel_button", "ridge_delete_cancel_label", "ridge_delete_confirm_button", "ridge_delete_confirm_label", "main_stop_2", "main_stop_label_2", "ridge_form_panel", "ridge_form_title", "ridge_form_hint", "ridge_form_id_label", "ridge_form_auto_id_value", "ridge_form_width_label", "ridge_form_width_input", "ridge_form_length_label", "ridge_form_length_input", "ridge_form_note", "ridge_form_cancel_button", "ridge_form_cancel_button_label", "ridge_form_confirm_button", "ridge_form_confirm_button_label", "prep_app_title", "prep_status", "prep_stop", "prep_stop_label", "prep_tab_ridge", "prep_tab_ridge_label", "prep_tab_line_ridge", "prep_tab_prescription", "prep_tab_prescription_label", "prep_tab_line_prescription", "prep_tab_preparation", "prep_tab_preparation_label", "prep_tab_line_preparation", "prep_tab_work", "prep_tab_work_label", "prep_tab_line_work", "prep_tab_weighing", "prep_tab_weighing_label", "prep_tab_line_weighing", "prep_content", "prep_content_title", "prep_placeholder", "prep_guide", "workpage_app_title", "workpage_status", "workpage_stop", "workpage_stop_label", "workpage_tab_ridge", "workpage_tab_ridge_label", "workpage_tab_line_ridge", "workpage_tab_prescription", "workpage_tab_prescription_label", "workpage_tab_line_prescription", "workpage_tab_preparation", "workpage_tab_preparation_label", "workpage_tab_line_preparation", "workpage_tab_work", "workpage_tab_work_label", "workpage_tab_line_work", "workpage_tab_weighing", "workpage_tab_weighing_label", "workpage_tab_line_weighing", "workpage_content", "workpage_content_title", "workpage_placeholder", "workpage_guide", "weigh_app_title", "weigh_status", "weigh_stop", "weigh_stop_label", "weigh_tab_ridge", "weigh_tab_ridge_label", "weigh_tab_line_ridge", "weigh_tab_prescription", "weigh_tab_prescription_label", "weigh_tab_line_prescription", "weigh_tab_preparation", "weigh_tab_preparation_label", "weigh_tab_line_preparation", "weigh_tab_work", "weigh_tab_work_label", "weigh_tab_line_work", "weigh_tab_weighing", "weigh_tab_weighing_label", "weigh_tab_line_weighing", "weigh_content", "weigh_content_title", "weigh_placeholder", "weigh_guide", "numeric_input_card", "numeric_input_title_label", "numeric_input_editor", "numeric_input_unit_label", "numeric_input_keypad", "numeric_input_cancel_button", "numeric_input_cancel_button_label", "numeric_input_done_button", "numeric_input_done_button_label", "numeric_input_help_label", "ridge_numeric_input_card", "ridge_numeric_input_title_label", "ridge_numeric_input_editor", "ridge_numeric_input_unit_label", "ridge_numeric_input_keypad", "ridge_numeric_input_cancel_button", "ridge_numeric_input_cancel_button_label", "ridge_numeric_input_done_button", "ridge_numeric_input_done_button_label", "ridge_numeric_input_help_label", "calibration_select_header", "calibration_select_back", "calibration_select_back_label", "calibration_select_title", "calibration_select_zone", "calibration_select_slot_1", "calibration_select_slot_1_label", "calibration_select_slot_2", "calibration_select_slot_2_label", "calibration_select_context", "calibration_draft_card", "calibration_draft_caption", "calibration_draft_summary", "calibration_saved_card", "calibration_saved_caption", "calibration_saved_summary", "calibration_applied_card", "calibration_applied_caption", "calibration_applied_summary", "calibration_candidate_list", "calibration_list_title", "calibration_list_columns", "calibration_list_state", "calibration_candidate_detail", "calibration_detail_title", "calibration_detail_id_caption", "calibration_detail_id", "calibration_detail_revision_caption", "calibration_detail_revision", "calibration_detail_approval_caption", "calibration_detail_approval", "calibration_detail_range_caption", "calibration_detail_range", "calibration_detail_points_caption", "calibration_detail_points", "calibration_result_status", "calibration_refresh_button", "calibration_refresh_button_label", "calibration_select_button", "calibration_select_button_label", "calibration_save_button", "calibration_save_button_label", "calibration_confirm_button", "calibration_confirm_button_label" };
+static const char *object_names[] = { "startup_animation", "dashboard", "driver_detail", "setting_detail", "setting_confirm", "setting_number_input", "setting_text_input", "setting_table", "setting_edit", "run_countdown", "system_setting", "ridge_setup", "preparation", "work", "weighing_test", "numeric_input", "ridge_numeric_input", "calibration_select", "startup_top_accent", "startup_brand_label", "startup_subtitle_label", "startup_hopper_backdrop", "startup_hopper_image", "startup_particle_1", "startup_particle_2", "startup_particle_3", "startup_particle_4", "startup_particle_5", "startup_particle_6", "startup_particle_7", "startup_particle_8", "startup_particle_9", "startup_percent_0", "startup_percent_25", "startup_percent_50", "startup_percent_75", "startup_percent_100", "startup_dispensed_label", "startup_progress_track", "startup_progress_fill", "startup_status_label", "startup_module_label", "startup_footer_label", "dashboard_header", "dashboard_brand", "dashboard_title", "dashboard_operation_label", "operation_state_value", "dashboard_can_label", "can_online_value", "dashboard_motor_section_hint", "driver_1_card", "driver_1_number", "driver_1_name", "driver_1_state_value", "driver_1_channel_a_label", "driver_1_channel_b_label", "driver_1_channel_a_value", "driver_1_channel_a_unit", "driver_1_channel_b_value", "driver_1_channel_b_unit", "driver_1_progress_track", "driver_1_progress_fill", "driver_1_output_state_value", "setting_1_card", "setting_1_number", "surface_setting_name", "setting_1_state_value", "surface_setting_name_label", "surface_setting_target_label", "surface_setting_summary_value", "surface_setting_name_unit", "setting_1_target_value", "surface_setting_target_unit", "setting_1_progress_track", "setting_1_progress_fill", "surface_calibration_state_value", "driver_2_card", "driver_2_number", "driver_2_name", "driver_2_state_value", "driver_2_channel_c_label", "driver_2_channel_d_label", "driver_2_channel_c_value", "driver_2_channel_c_unit", "driver_2_channel_d_value", "driver_2_channel_d_unit", "driver_2_progress_track", "driver_2_progress_fill", "driver_2_output_state_value", "setting_2_card", "setting_2_number", "subsurface_setting_name", "setting_2_state_value", "subsurface_setting_name_label", "subsurface_setting_target_label", "subsurface_setting_summary_value", "subsurface_setting_name_unit", "setting_2_target_value", "subsurface_setting_target_unit", "setting_2_progress_track", "setting_2_progress_fill", "subsurface_calibration_state_value", "vehicle_speed_card", "vehicle_speed_title", "vehicle_speed_divider", "vehicle_speed_label", "vehicle_speed_value", "vehicle_speed_unit", "vehicle_target_speed_label", "vehicle_target_speed_value", "vehicle_speed_progress_track", "vehicle_speed_progress_fill", "vehicle_speed_signal_label", "vehicle_speed_signal_value", "dashboard_run_button", "dashboard_system_title", "work_mode_label", "work_mode_value", "recipe_name_label", "recipe_name_value", "dashboard_alert_card", "dashboard_stop_button", "dashboard_setting_caption", "dashboard_setting_label", "dashboard_setting_description", "dashboard_setting_arrow", "dashboard_setting_button_1", "dashboard_setting_top_label_3", "dashboard_setting_button_2", "dashboard_setting_top_label_4", "dashboard_setting_button_3", "dashboard_setting_top_label_6", "driver_detail_backdrop", "driver_detail_panel", "driver_detail_mode_card", "driver_detail_output_card", "driver_detail_mode_divider", "driver_detail_output_divider", "driver_detail_mode_card_title", "driver_detail_channel_card_title", "driver_detail_mode_help", "driver_detail_title", "driver_detail_selected_value", "driver_detail_auto_mode_button", "driver_detail_auto_mode_label", "driver_detail_manual_mode_button", "driver_detail_manual_mode_label", "driver_detail_test_mode_button", "driver_detail_test_mode_label", "driver_detail_close_button", "driver_detail_close_label", "driver_detail_output_caption", "driver_detail_output_step_value", "driver_detail_output_step_unit", "driver_detail_output_slider", "driver_detail_range_hint", "driver_detail_target_summary", "driver_detail_voltage_summary", "driver_detail_trim_minus_button", "driver_detail_trim_minus_label", "driver_detail_trim_plus_button", "driver_detail_trim_plus_label", "driver_detail_trim_reset_button", "driver_detail_trim_reset_label", "driver_detail_trim_apply_button", "driver_detail_trim_apply_label", "driver_detail_channel_a_selector", "driver_detail_channel_a_selector_label", "driver_detail_channel_b_selector", "driver_detail_channel_b_selector_label", "driver_detail_safety_hint", "setting_detail_header", "setting_detail_back_button", "setting_detail_back_label", "setting_detail_title", "setting_detail_name", "setting_detail_state_caption", "setting_detail_state", "setting_detail_info_card", "setting_detail_info_title", "setting_detail_info_divider", "setting_detail_info_caption_1", "setting_detail_info_value_1", "setting_detail_info_caption_2", "setting_detail_info_value_2", "setting_detail_info_caption_3", "setting_detail_info_value_3", "setting_detail_info_caption_4", "setting_detail_info_value_4", "setting_detail_info_caption_5", "setting_detail_info_value_5", "setting_detail_info_caption_6", "setting_detail_info_value_6", "setting_detail_result_card", "setting_detail_result_title", "setting_detail_total_caption", "setting_detail_total_value", "setting_detail_total_unit", "setting_detail_result_divider", "setting_detail_channel_1_card", "setting_detail_channel_1_name", "setting_detail_channel_1_state", "setting_detail_channel_1_target_caption", "setting_detail_channel_1_target_value", "setting_detail_channel_1_target_unit", "setting_detail_channel_1_output_caption", "setting_detail_channel_1_output_value", "setting_detail_channel_1_voltage_caption", "setting_detail_channel_1_voltage_value", "setting_detail_channel_1_voltage_unit", "setting_detail_channel_2_card", "setting_detail_channel_2_name", "setting_detail_channel_2_state", "setting_detail_channel_2_target_caption", "setting_detail_channel_2_target_value", "setting_detail_channel_2_target_unit", "setting_detail_channel_2_output_caption", "setting_detail_channel_2_output_value", "setting_detail_channel_2_voltage_caption", "setting_detail_channel_2_voltage_value", "setting_detail_channel_2_voltage_unit", "setting_detail_table_status_caption", "setting_detail_table_status_value", "setting_detail_hint", "setting_detail_save_button", "setting_detail_save_button_label", "setting_detail_apply_button", "setting_detail_apply_button_label", "setting_detail_footer_status", "setting_detail_info_caption_7", "setting_detail_info_value_7", "setting_detail_change_state", "setting_detail_saved_at", "setting_detail_draft_notice", "setting_detail_original_total", "setting_detail_channel_1_trim", "setting_detail_channel_2_trim", "setting_detail_info_caption_8", "setting_detail_info_value_8", "setting_detail_info_caption_9", "setting_detail_info_value_9", "setting_confirm_dialog", "setting_confirm_title", "setting_confirm_message", "setting_confirm_block", "setting_confirm_cancel_button", "setting_confirm_cancel_button_label", "setting_confirm_ok_button", "setting_confirm_ok_button_label", "setting_number_input_card", "setting_number_input_title_label", "setting_number_input_editor", "setting_number_input_unit_label", "setting_number_input_keypad", "setting_number_input_cancel_button", "setting_number_input_cancel_button_label", "setting_number_input_done_button", "setting_number_input_done_button_label", "setting_number_input_help_label", "setting_text_input_card", "setting_text_input_title_label", "setting_text_input_editor", "setting_text_input_unit_label", "setting_text_input_keypad", "setting_text_input_cancel_button", "setting_text_input_cancel_button_label", "setting_text_input_done_button", "setting_text_input_done_button_label", "setting_text_input_help_label", "setting_table_header", "setting_table_back_button", "setting_table_back_button_label", "setting_table_title", "setting_table_zone", "setting_table_channel_1_card", "setting_table_channel_1_name", "setting_table_1_state_caption", "setting_table_1_state_value", "setting_table_1_table_id_caption", "setting_table_1_table_id_value", "setting_table_1_table_revision_caption", "setting_table_1_table_revision_value", "setting_table_1_lookup_caption", "setting_table_1_lookup_value", "setting_table_1_base_step_caption", "setting_table_1_base_step_value", "setting_table_1_fine_volt_caption", "setting_table_1_fine_volt_value", "setting_table_1_user_trim_volt_caption", "setting_table_1_user_trim_volt_value", "setting_table_1_final_voltage_caption", "setting_table_1_final_voltage_value", "setting_table_channel_2_card", "setting_table_channel_2_name", "setting_table_2_state_caption", "setting_table_2_state_value", "setting_table_2_table_id_caption", "setting_table_2_table_id_value", "setting_table_2_table_revision_caption", "setting_table_2_table_revision_value", "setting_table_2_lookup_caption", "setting_table_2_lookup_value", "setting_table_2_base_step_caption", "setting_table_2_base_step_value", "setting_table_2_fine_volt_caption", "setting_table_2_fine_volt_value", "setting_table_2_user_trim_volt_caption", "setting_table_2_user_trim_volt_value", "setting_table_2_final_voltage_caption", "setting_table_2_final_voltage_value", "setting_table_warning", "setting_table_open_selection_button", "setting_table_open_selection_button_label", "setting_edit_header", "setting_edit_back_button", "setting_edit_back_button_label", "setting_edit_title", "setting_edit_mode", "setting_edit_form", "setting_edit_form_title", "setting_edit_name_caption", "setting_edit_name_button", "setting_edit_name_button_label", "setting_edit_name_value", "setting_edit_product_caption", "setting_edit_product_button", "setting_edit_product_button_label", "setting_edit_product_value", "setting_edit_lot_caption", "setting_edit_lot_button", "setting_edit_lot_button_label", "setting_edit_lot_value", "setting_edit_prescription_caption", "setting_edit_prescription_button", "setting_edit_prescription_button_label", "setting_edit_prescription_value", "setting_edit_speed_caption", "setting_edit_speed_button", "setting_edit_speed_button_label", "setting_edit_speed_value", "setting_edit_distribution_caption", "setting_edit_distribution_button", "setting_edit_distribution_button_label", "setting_edit_distribution_value", "setting_edit_preview", "setting_edit_preview_title", "setting_edit_preview_hint", "setting_edit_driver_caption", "setting_edit_driver_value", "setting_edit_validation_caption", "setting_edit_validation_value", "setting_edit_save_button", "setting_edit_save_button_label", "setting_edit_table_button", "setting_edit_table_button_label", "setting_edit_review_caption_3", "setting_edit_review_value_3", "setting_edit_review_caption_4", "setting_edit_review_value_4", "setting_edit_review_caption_5", "setting_edit_review_value_5", "setting_edit_review_caption_6", "setting_edit_review_value_6", "run_countdown_backdrop", "run_countdown_panel", "run_countdown_title", "run_countdown_value", "run_countdown_description", "run_countdown_summary_panel", "run_countdown_d1_summary", "run_countdown_d2_summary", "run_countdown_stop_button", "run_countdown_stop_label", "main_status", "main_tab_ridge", "main_tab_ridge_label", "main_tab_line_ridge", "main_tab_prescription", "main_tab_prescription_label", "main_tab_line_prescription", "main_tab_preparation", "main_tab_preparation_label", "main_tab_line_preparation", "main_tab_work", "main_tab_work_label", "main_tab_weighing", "main_tab_weighing_label", "main_tab_line_weighing", "main_content", "main_nitrogen", "main_nitrogen_label", "main_direct", "main_direct_label", "main_nitrogen_amount_label", "recipe_nitrogen_rate_input", "main_nitrogen_unit", "main_upper_ratio_label", "main_upper_ratio", "main_lower_ratio_label", "main_lower_ratio", "main_upper_product_label", "main_upper_product", "main_upper_product_arrow", "main_lower_product_label", "main_lower_product", "main_lower_product_arrow", "fertilizer_temp_save", "fertilizer_temp_save_label", "fertilizer_save_settings", "fertilizer_save_settings_label", "main_stop_1", "main_stop_label_1", "ridge_divider_1", "prescription_details_title", "prescription_ratio_label", "prescription_surface_ratio_input", "prescription_ratio_unit", "prescription_surface_n_label", "prescription_surface_n_input", "prescription_surface_n_unit", "prescription_subsurface_n_label", "prescription_subsurface_n_input", "prescription_subsurface_n_unit", "prescription_direct_surface_label", "prescription_direct_surface_input", "prescription_direct_surface_unit", "prescription_direct_subsurface_label", "prescription_direct_subsurface_input", "prescription_direct_subsurface_unit", "prescription_save_scope_notice", "prescription_confirm_notice", "prescription_active_mode", "main_direct_surface_label", "main_direct_surface_input", "main_direct_subsurface_label", "main_direct_subsurface_input", "main_nitrogen_selection_outline", "main_direct_selection_outline", "ridge_status", "ridge_tab_ridge", "ridge_tab_ridge_label", "ridge_tab_line_ridge", "ridge_tab_prescription", "ridge_tab_prescription_label", "ridge_tab_line_prescription", "ridge_tab_preparation", "ridge_tab_preparation_label", "ridge_tab_line_preparation", "ridge_tab_work", "ridge_tab_work_label", "ridge_tab_line_work", "ridge_tab_weighing", "ridge_tab_weighing_label", "ridge_tab_line_weighing", "ridge_content", "ridge_add_button", "ridge_add_button_label", "ridge_left_title", "ridge_edit_button", "ridge_edit_button_label", "ridge_delete_button", "ridge_delete_button_label", "ridge_divider", "ridge_ridge_label", "ridge_ridge_value", "ridge_count_label", "ridge_recipe_ridge_count_input", "ridge_count_unit", "ridge_width_label", "ridge_recipe_ridge_width_input", "ridge_width_unit", "ridge_length_label", "ridge_recipe_actual_length_input", "ridge_length_unit", "ridge_area_only", "ridge_area_only_label", "ridge_area_furrow", "ridge_area_furrow_label", "ridge_all", "ridge_all_label", "ridge_split", "ridge_split_label", "ridge_north_label", "ridge_north_value", "ridge_south_label", "ridge_south_value", "ridge_temp_save", "ridge_temp_save_label", "ridge_save_settings", "ridge_save_settings_label", "ridge_work_width_section_title", "ridge_furrow_width_label", "ridge_furrow_width_input", "ridge_furrow_unit", "ridge_save_scope_notice", "ridge_confirm_notice", "ridge_unsaved_notice", "ridge_active_work_width_mode", "ridge_result_card", "ridge_result_title", "ridge_result_width_caption", "ridge_result_width_value", "ridge_result_width_unit", "ridge_result_area_caption", "ridge_result_area_value", "ridge_result_area_unit", "ridge_result_preparation_caption", "ridge_result_surface_preparation", "ridge_result_preparation_separator", "ridge_result_subsurface_preparation", "ridge_result_preparation_unit", "ridge_result_flow_caption", "ridge_result_surface_flow", "ridge_result_flow_separator", "ridge_result_subsurface_flow", "ridge_result_flow_unit", "ridge_result_status", "ridge_delete_confirm_panel", "ridge_delete_confirm_title", "ridge_delete_confirm_target", "ridge_delete_confirm_warning", "ridge_delete_cancel_button", "ridge_delete_cancel_label", "ridge_delete_confirm_button", "ridge_delete_confirm_label", "main_stop_2", "main_stop_label_2", "ridge_form_panel", "ridge_form_title", "ridge_form_hint", "ridge_form_id_label", "ridge_form_auto_id_value", "ridge_form_width_label", "ridge_form_width_input", "ridge_form_length_label", "ridge_form_length_input", "ridge_form_note", "ridge_form_cancel_button", "ridge_form_cancel_button_label", "ridge_form_confirm_button", "ridge_form_confirm_button_label", "prep_app_title", "prep_status", "prep_stop", "prep_stop_label", "prep_tab_ridge", "prep_tab_ridge_label", "prep_tab_line_ridge", "prep_tab_prescription", "prep_tab_prescription_label", "prep_tab_line_prescription", "prep_tab_preparation", "prep_tab_preparation_label", "prep_tab_line_preparation", "prep_tab_work", "prep_tab_work_label", "prep_tab_line_work", "prep_tab_weighing", "prep_tab_weighing_label", "prep_tab_line_weighing", "prep_content", "prep_content_title", "prep_placeholder", "prep_guide", "workpage_app_title", "workpage_status", "workpage_stop", "workpage_stop_label", "workpage_tab_ridge", "workpage_tab_ridge_label", "workpage_tab_line_ridge", "workpage_tab_prescription", "workpage_tab_prescription_label", "workpage_tab_line_prescription", "workpage_tab_preparation", "workpage_tab_preparation_label", "workpage_tab_line_preparation", "workpage_tab_work", "workpage_tab_work_label", "workpage_tab_line_work", "workpage_tab_weighing", "workpage_tab_weighing_label", "workpage_tab_line_weighing", "workpage_content", "workpage_content_title", "workpage_placeholder", "workpage_guide", "weigh_app_title", "weigh_status", "weigh_stop", "weigh_stop_label", "weigh_tab_ridge", "weigh_tab_ridge_label", "weigh_tab_line_ridge", "weigh_tab_prescription", "weigh_tab_prescription_label", "weigh_tab_line_prescription", "weigh_tab_preparation", "weigh_tab_preparation_label", "weigh_tab_line_preparation", "weigh_tab_work", "weigh_tab_work_label", "weigh_tab_line_work", "weigh_tab_weighing", "weigh_tab_weighing_label", "weigh_tab_line_weighing", "weigh_content", "weigh_content_title", "weigh_placeholder", "weigh_guide", "numeric_input_card", "numeric_input_title_label", "numeric_input_editor", "numeric_input_unit_label", "numeric_input_keypad", "numeric_input_cancel_button", "numeric_input_cancel_button_label", "numeric_input_done_button", "numeric_input_done_button_label", "numeric_input_help_label", "ridge_numeric_input_card", "ridge_numeric_input_title_label", "ridge_numeric_input_editor", "ridge_numeric_input_unit_label", "ridge_numeric_input_keypad", "ridge_numeric_input_cancel_button", "ridge_numeric_input_cancel_button_label", "ridge_numeric_input_done_button", "ridge_numeric_input_done_button_label", "ridge_numeric_input_help_label", "calibration_select_header", "calibration_select_back", "calibration_select_back_label", "calibration_select_title", "calibration_select_zone", "calibration_select_slot_1", "calibration_select_slot_1_label", "calibration_select_slot_2", "calibration_select_slot_2_label", "calibration_select_context", "calibration_draft_card", "calibration_draft_caption", "calibration_draft_summary", "calibration_saved_card", "calibration_saved_caption", "calibration_saved_summary", "calibration_applied_card", "calibration_applied_caption", "calibration_applied_summary", "calibration_candidate_list", "calibration_list_title", "calibration_list_columns", "calibration_list_state", "calibration_candidate_detail", "calibration_detail_title", "calibration_detail_id_caption", "calibration_detail_id", "calibration_detail_revision_caption", "calibration_detail_revision", "calibration_detail_approval_caption", "calibration_detail_approval", "calibration_detail_range_caption", "calibration_detail_range", "calibration_detail_points_caption", "calibration_detail_points", "calibration_result_status", "calibration_refresh_button", "calibration_refresh_button_label", "calibration_select_button", "calibration_select_button_label", "calibration_save_button", "calibration_save_button_label", "calibration_confirm_button", "calibration_confirm_button_label" };
 
 //
 // Event handlers
@@ -25,7 +25,7 @@ static void event_handler_cb_dashboard_driver_1_card(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 9, 0, e);
@@ -36,7 +36,7 @@ static void event_handler_cb_dashboard_setting_1_card(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 22, 0, e);
@@ -47,7 +47,7 @@ static void event_handler_cb_dashboard_driver_2_card(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 35, 0, e);
@@ -58,7 +58,7 @@ static void event_handler_cb_dashboard_setting_2_card(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 48, 0, e);
@@ -69,7 +69,7 @@ static void event_handler_cb_dashboard_dashboard_run_button(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 73, 0, e);
@@ -80,7 +80,7 @@ static void event_handler_cb_dashboard_dashboard_setting_button_1(lv_event_t *e)
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 85, 0, e);
@@ -91,7 +91,7 @@ static void event_handler_cb_dashboard_dashboard_setting_button_2(lv_event_t *e)
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 87, 0, e);
@@ -107,12 +107,12 @@ static void event_handler_cb_driver_detail_driver_detail_auto_mode_button(lv_eve
         lv_obj_t *ta = lv_event_get_target_obj(e);
         if (tick_value_change_obj != ta) {
             bool value = lv_obj_has_state(ta, LV_STATE_CHECKED);
-            assignBooleanProperty(flowState, 5, 3, value, "Failed to assign Checked state");
+            assignBooleanProperty(flowState, 12, 3, value, "Failed to assign Checked state");
         }
     }
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
-        flowPropagateValueLVGLEvent(flowState, 5, 0, e);
+        flowPropagateValueLVGLEvent(flowState, 12, 0, e);
     }
 }
 
@@ -125,12 +125,12 @@ static void event_handler_cb_driver_detail_driver_detail_manual_mode_button(lv_e
         lv_obj_t *ta = lv_event_get_target_obj(e);
         if (tick_value_change_obj != ta) {
             bool value = lv_obj_has_state(ta, LV_STATE_CHECKED);
-            assignBooleanProperty(flowState, 7, 3, value, "Failed to assign Checked state");
+            assignBooleanProperty(flowState, 14, 3, value, "Failed to assign Checked state");
         }
     }
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
-        flowPropagateValueLVGLEvent(flowState, 7, 0, e);
+        flowPropagateValueLVGLEvent(flowState, 14, 0, e);
     }
 }
 
@@ -143,12 +143,12 @@ static void event_handler_cb_driver_detail_driver_detail_test_mode_button(lv_eve
         lv_obj_t *ta = lv_event_get_target_obj(e);
         if (tick_value_change_obj != ta) {
             bool value = lv_obj_has_state(ta, LV_STATE_CHECKED);
-            assignBooleanProperty(flowState, 9, 3, value, "Failed to assign Checked state");
+            assignBooleanProperty(flowState, 16, 3, value, "Failed to assign Checked state");
         }
     }
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
-        flowPropagateValueLVGLEvent(flowState, 9, 0, e);
+        flowPropagateValueLVGLEvent(flowState, 16, 0, e);
     }
 }
 
@@ -156,10 +156,10 @@ static void event_handler_cb_driver_detail_driver_detail_close_button(lv_event_t
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
-        flowPropagateValueLVGLEvent(flowState, 11, 0, e);
+        flowPropagateValueLVGLEvent(flowState, 18, 0, e);
     }
 }
 
@@ -172,12 +172,12 @@ static void event_handler_cb_driver_detail_driver_detail_output_slider(lv_event_
         lv_obj_t *ta = lv_event_get_target_obj(e);
         if (tick_value_change_obj != ta) {
             int32_t value = lv_slider_get_value(ta);
-            assignIntegerProperty(flowState, 16, 3, value, "Failed to assign Value in Slider widget");
+            assignIntegerProperty(flowState, 23, 3, value, "Failed to assign Value in Slider widget");
         }
     }
     if (event == LV_EVENT_VALUE_CHANGED) {
         e->user_data = (void *)0;
-        flowPropagateValueLVGLEvent(flowState, 16, 0, e);
+        flowPropagateValueLVGLEvent(flowState, 23, 0, e);
     }
 }
 
@@ -185,10 +185,10 @@ static void event_handler_cb_driver_detail_driver_detail_trim_minus_button(lv_ev
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
-        flowPropagateValueLVGLEvent(flowState, 20, 0, e);
+        flowPropagateValueLVGLEvent(flowState, 27, 0, e);
     }
 }
 
@@ -196,10 +196,10 @@ static void event_handler_cb_driver_detail_driver_detail_trim_plus_button(lv_eve
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
-        flowPropagateValueLVGLEvent(flowState, 22, 0, e);
+        flowPropagateValueLVGLEvent(flowState, 29, 0, e);
     }
 }
 
@@ -207,10 +207,10 @@ static void event_handler_cb_driver_detail_driver_detail_trim_reset_button(lv_ev
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
-        flowPropagateValueLVGLEvent(flowState, 24, 0, e);
+        flowPropagateValueLVGLEvent(flowState, 31, 0, e);
     }
 }
 
@@ -218,10 +218,10 @@ static void event_handler_cb_driver_detail_driver_detail_trim_apply_button(lv_ev
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
-        flowPropagateValueLVGLEvent(flowState, 26, 0, e);
+        flowPropagateValueLVGLEvent(flowState, 33, 0, e);
     }
 }
 
@@ -234,12 +234,12 @@ static void event_handler_cb_driver_detail_driver_detail_channel_a_selector(lv_e
         lv_obj_t *ta = lv_event_get_target_obj(e);
         if (tick_value_change_obj != ta) {
             bool value = lv_obj_has_state(ta, LV_STATE_CHECKED);
-            assignBooleanProperty(flowState, 28, 3, value, "Failed to assign Checked state");
+            assignBooleanProperty(flowState, 35, 3, value, "Failed to assign Checked state");
         }
     }
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
-        flowPropagateValueLVGLEvent(flowState, 28, 0, e);
+        flowPropagateValueLVGLEvent(flowState, 35, 0, e);
     }
 }
 
@@ -252,12 +252,12 @@ static void event_handler_cb_driver_detail_driver_detail_channel_b_selector(lv_e
         lv_obj_t *ta = lv_event_get_target_obj(e);
         if (tick_value_change_obj != ta) {
             bool value = lv_obj_has_state(ta, LV_STATE_CHECKED);
-            assignBooleanProperty(flowState, 30, 3, value, "Failed to assign Checked state");
+            assignBooleanProperty(flowState, 37, 3, value, "Failed to assign Checked state");
         }
     }
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
-        flowPropagateValueLVGLEvent(flowState, 30, 0, e);
+        flowPropagateValueLVGLEvent(flowState, 37, 0, e);
     }
 }
 
@@ -265,7 +265,7 @@ static void event_handler_cb_setting_detail_setting_detail_back_button(lv_event_
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 2, 0, e);
@@ -276,7 +276,7 @@ static void event_handler_cb_setting_detail_setting_detail_info_card(lv_event_t 
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 8, 0, e);
@@ -287,7 +287,7 @@ static void event_handler_cb_setting_detail_setting_detail_save_button(lv_event_
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 54, 0, e);
@@ -298,7 +298,7 @@ static void event_handler_cb_setting_detail_setting_detail_apply_button(lv_event
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 56, 0, e);
@@ -309,7 +309,7 @@ static void event_handler_cb_setting_confirm_setting_confirm_cancel_button(lv_ev
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 5, 0, e);
@@ -320,7 +320,7 @@ static void event_handler_cb_setting_confirm_setting_confirm_ok_button(lv_event_
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 7, 0, e);
@@ -345,7 +345,7 @@ static void event_handler_cb_setting_number_input_setting_number_input_cancel_bu
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 6, 0, e);
@@ -356,7 +356,7 @@ static void event_handler_cb_setting_number_input_setting_number_input_done_butt
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 8, 0, e);
@@ -381,7 +381,7 @@ static void event_handler_cb_setting_text_input_setting_text_input_cancel_button
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 6, 0, e);
@@ -392,7 +392,7 @@ static void event_handler_cb_setting_text_input_setting_text_input_done_button(l
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 8, 0, e);
@@ -403,7 +403,7 @@ static void event_handler_cb_setting_table_setting_table_back_button(lv_event_t 
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 2, 0, e);
@@ -414,7 +414,7 @@ static void event_handler_cb_setting_table_setting_table_open_selection_button(l
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)2;
         flowPropagateValueLVGLEvent(flowState, 43, 0, e);
@@ -425,7 +425,7 @@ static void event_handler_cb_setting_edit_setting_edit_back_button(lv_event_t *e
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 2, 0, e);
@@ -436,7 +436,7 @@ static void event_handler_cb_setting_edit_setting_edit_name_button(lv_event_t *e
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 9, 0, e);
@@ -447,7 +447,7 @@ static void event_handler_cb_setting_edit_setting_edit_product_button(lv_event_t
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 13, 0, e);
@@ -458,7 +458,7 @@ static void event_handler_cb_setting_edit_setting_edit_lot_button(lv_event_t *e)
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 17, 0, e);
@@ -469,7 +469,7 @@ static void event_handler_cb_setting_edit_setting_edit_prescription_button(lv_ev
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 21, 0, e);
@@ -480,7 +480,7 @@ static void event_handler_cb_setting_edit_setting_edit_speed_button(lv_event_t *
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 25, 0, e);
@@ -491,7 +491,7 @@ static void event_handler_cb_setting_edit_setting_edit_distribution_button(lv_ev
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 29, 0, e);
@@ -502,7 +502,7 @@ static void event_handler_cb_setting_edit_setting_edit_save_button(lv_event_t *e
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 39, 0, e);
@@ -513,7 +513,7 @@ static void event_handler_cb_setting_edit_setting_edit_table_button(lv_event_t *
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 41, 0, e);
@@ -524,7 +524,7 @@ static void event_handler_cb_run_countdown_run_countdown_stop_button(lv_event_t 
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 9, 0, e);
@@ -535,7 +535,7 @@ static void event_handler_cb_system_setting_main_tab_ridge(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 2, 0, e);
@@ -546,7 +546,7 @@ static void event_handler_cb_system_setting_main_tab_prescription(lv_event_t *e)
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 5, 0, e);
@@ -557,7 +557,7 @@ static void event_handler_cb_system_setting_main_tab_preparation(lv_event_t *e) 
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 8, 0, e);
@@ -568,7 +568,7 @@ static void event_handler_cb_system_setting_main_tab_work(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 11, 0, e);
@@ -579,7 +579,7 @@ static void event_handler_cb_system_setting_main_tab_weighing(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 13, 0, e);
@@ -644,7 +644,7 @@ static void event_handler_cb_system_setting_main_upper_ratio(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)11;
         flowPropagateValueLVGLEvent(flowState, 25, 0, e);
@@ -655,7 +655,7 @@ static void event_handler_cb_system_setting_main_lower_ratio(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)21;
         flowPropagateValueLVGLEvent(flowState, 27, 0, e);
@@ -694,7 +694,7 @@ static void event_handler_cb_system_setting_main_stop_1(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 38, 0, e);
@@ -795,7 +795,7 @@ static void event_handler_cb_system_setting_main_direct_surface_input(lv_event_t
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)22;
         flowPropagateValueLVGLEvent(flowState, 61, 0, e);
@@ -806,7 +806,7 @@ static void event_handler_cb_system_setting_main_direct_subsurface_input(lv_even
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)23;
         flowPropagateValueLVGLEvent(flowState, 63, 0, e);
@@ -817,7 +817,7 @@ static void event_handler_cb_ridge_setup_ridge_tab_ridge(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 2, 0, e);
@@ -828,7 +828,7 @@ static void event_handler_cb_ridge_setup_ridge_tab_prescription(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 5, 0, e);
@@ -839,7 +839,7 @@ static void event_handler_cb_ridge_setup_ridge_tab_preparation(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 8, 0, e);
@@ -850,7 +850,7 @@ static void event_handler_cb_ridge_setup_ridge_tab_work(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 11, 0, e);
@@ -861,7 +861,7 @@ static void event_handler_cb_ridge_setup_ridge_tab_weighing(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 14, 0, e);
@@ -872,7 +872,7 @@ static void event_handler_cb_ridge_setup_ridge_add_button(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 18, 0, e);
@@ -883,7 +883,7 @@ static void event_handler_cb_ridge_setup_ridge_edit_button(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 21, 0, e);
@@ -894,7 +894,7 @@ static void event_handler_cb_ridge_setup_ridge_delete_button(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 23, 0, e);
@@ -905,7 +905,7 @@ static void event_handler_cb_ridge_setup_ridge_ridge_value(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 27, 0, e);
@@ -1042,7 +1042,7 @@ static void event_handler_cb_ridge_setup_ridge_north_value(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 46, 0, e);
@@ -1053,7 +1053,7 @@ static void event_handler_cb_ridge_setup_ridge_south_value(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 48, 0, e);
@@ -1082,7 +1082,7 @@ static void event_handler_cb_ridge_setup_ridge_delete_cancel_button(lv_event_t *
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 84, 0, e);
@@ -1093,7 +1093,7 @@ static void event_handler_cb_ridge_setup_ridge_delete_confirm_button(lv_event_t 
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 86, 0, e);
@@ -1104,7 +1104,7 @@ static void event_handler_cb_ridge_setup_main_stop_2(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 88, 0, e);
@@ -1151,7 +1151,7 @@ static void event_handler_cb_ridge_setup_ridge_form_cancel_button(lv_event_t *e)
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 100, 0, e);
@@ -1162,7 +1162,7 @@ static void event_handler_cb_ridge_setup_ridge_form_confirm_button(lv_event_t *e
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 102, 0, e);
@@ -1173,7 +1173,7 @@ static void event_handler_cb_preparation_prep_tab_ridge(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 5, 0, e);
@@ -1184,7 +1184,7 @@ static void event_handler_cb_preparation_prep_tab_prescription(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 8, 0, e);
@@ -1195,7 +1195,7 @@ static void event_handler_cb_preparation_prep_tab_preparation(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 11, 0, e);
@@ -1206,7 +1206,7 @@ static void event_handler_cb_preparation_prep_tab_work(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 14, 0, e);
@@ -1217,7 +1217,7 @@ static void event_handler_cb_preparation_prep_tab_weighing(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 17, 0, e);
@@ -1228,7 +1228,7 @@ static void event_handler_cb_work_workpage_tab_ridge(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 5, 0, e);
@@ -1239,7 +1239,7 @@ static void event_handler_cb_work_workpage_tab_prescription(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 8, 0, e);
@@ -1250,7 +1250,7 @@ static void event_handler_cb_work_workpage_tab_preparation(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 11, 0, e);
@@ -1261,7 +1261,7 @@ static void event_handler_cb_work_workpage_tab_work(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 14, 0, e);
@@ -1272,7 +1272,7 @@ static void event_handler_cb_work_workpage_tab_weighing(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 17, 0, e);
@@ -1283,7 +1283,7 @@ static void event_handler_cb_weighing_test_weigh_tab_ridge(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 5, 0, e);
@@ -1294,7 +1294,7 @@ static void event_handler_cb_weighing_test_weigh_tab_prescription(lv_event_t *e)
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 8, 0, e);
@@ -1305,7 +1305,7 @@ static void event_handler_cb_weighing_test_weigh_tab_preparation(lv_event_t *e) 
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 11, 0, e);
@@ -1316,7 +1316,7 @@ static void event_handler_cb_weighing_test_weigh_tab_work(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 14, 0, e);
@@ -1327,7 +1327,7 @@ static void event_handler_cb_weighing_test_weigh_tab_weighing(lv_event_t *e) {
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 17, 0, e);
@@ -1352,7 +1352,7 @@ static void event_handler_cb_numeric_input_numeric_input_cancel_button(lv_event_
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 6, 0, e);
@@ -1363,7 +1363,7 @@ static void event_handler_cb_numeric_input_numeric_input_done_button(lv_event_t 
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 8, 0, e);
@@ -1388,7 +1388,7 @@ static void event_handler_cb_ridge_numeric_input_ridge_numeric_input_cancel_butt
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 6, 0, e);
@@ -1399,7 +1399,7 @@ static void event_handler_cb_ridge_numeric_input_ridge_numeric_input_done_button
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)0;
         flowPropagateValueLVGLEvent(flowState, 8, 0, e);
@@ -1410,7 +1410,7 @@ static void event_handler_cb_calibration_select_calibration_select_back(lv_event
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)1;
         flowPropagateValueLVGLEvent(flowState, 2, 0, e);
@@ -1457,7 +1457,7 @@ static void event_handler_cb_calibration_select_calibration_confirm_button(lv_ev
     lv_event_code_t event = lv_event_get_code(e);
     void *flowState = lv_event_get_user_data(e);
     (void)flowState;
-
+    
     if (event == LV_EVENT_PRESSED) {
         e->user_data = (void *)4;
         flowPropagateValueLVGLEvent(flowState, 43, 0, e);
@@ -2040,10 +2040,10 @@ void create_screen_dashboard() {
             // driver_1_state_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_1_state_value = obj;
-            lv_obj_set_pos(obj, 288, 88);
-            lv_obj_set_size(obj, 86, 25);
+            lv_obj_set_pos(obj, 245, 88);
+            lv_obj_set_size(obj, 129, 25);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
-            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x33d17a), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2255,10 +2255,10 @@ void create_screen_dashboard() {
             // setting_1_state_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.setting_1_state_value = obj;
-            lv_obj_set_pos(obj, 662, 88);
-            lv_obj_set_size(obj, 80, 30);
+            lv_obj_set_pos(obj, 631, 88);
+            lv_obj_set_size(obj, 111, 30);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
-            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x318ff5), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2471,10 +2471,10 @@ void create_screen_dashboard() {
             // driver_2_state_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_2_state_value = obj;
-            lv_obj_set_pos(obj, 288, 268);
-            lv_obj_set_size(obj, 86, 25);
+            lv_obj_set_pos(obj, 245, 268);
+            lv_obj_set_size(obj, 129, 25);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
-            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x33d17a), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -2686,10 +2686,10 @@ void create_screen_dashboard() {
             // setting_2_state_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.setting_2_state_value = obj;
-            lv_obj_set_pos(obj, 662, 268);
-            lv_obj_set_size(obj, 80, 30);
+            lv_obj_set_pos(obj, 631, 268);
+            lv_obj_set_size(obj, 111, 30);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
-            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xf04444), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3586,8 +3586,8 @@ void create_screen_driver_detail() {
             lv_obj_set_pos(obj, 0, 0);
             lv_obj_set_size(obj, 1024, 600);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
-            lv_obj_set_style_bg_color(obj, lv_color_hex(0x05090e), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_bg_opa(obj, 235, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_bg_color(obj, lv_color_hex(0x071018), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3598,41 +3598,157 @@ void create_screen_driver_detail() {
             // driver_detail_panel
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.driver_detail_panel = obj;
-            lv_obj_set_pos(obj, 172, 20);
-            lv_obj_set_size(obj, 680, 560);
+            lv_obj_set_pos(obj, 0, 0);
+            lv_obj_set_size(obj, 1024, 64);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
-            lv_obj_set_style_bg_color(obj, lv_color_hex(0x111922), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_bg_color(obj, lv_color_hex(0x0c1823), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_radius(obj, 18, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_border_color(obj, lv_color_hex(0x344453), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_border_width(obj, 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_radius(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_color(obj, lv_color_hex(0x293540), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_shadow_color(obj, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_shadow_opa(obj, 180, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_shadow_width(obj, 24, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_shadow_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_shadow_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
         }
         {
+            // driver_detail_mode_card
+            lv_obj_t *obj = lv_obj_create(parent_obj);
+            objects.driver_detail_mode_card = obj;
+            lv_obj_set_pos(obj, 24, 79);
+            lv_obj_set_size(obj, 350, 431);
+            lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
+            lv_obj_set_style_bg_color(obj, lv_color_hex(0x111922), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_radius(obj, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_color(obj, lv_color_hex(0x293540), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_width(obj, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        {
+            // driver_detail_output_card
+            lv_obj_t *obj = lv_obj_create(parent_obj);
+            objects.driver_detail_output_card = obj;
+            lv_obj_set_pos(obj, 390, 79);
+            lv_obj_set_size(obj, 610, 431);
+            lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
+            lv_obj_set_style_bg_color(obj, lv_color_hex(0x111922), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_radius(obj, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_color(obj, lv_color_hex(0x293540), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_width(obj, 1, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        {
+            // driver_detail_mode_divider
+            lv_obj_t *obj = lv_obj_create(parent_obj);
+            objects.driver_detail_mode_divider = obj;
+            lv_obj_set_pos(obj, 44, 134);
+            lv_obj_set_size(obj, 310, 1);
+            lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
+            lv_obj_set_style_bg_color(obj, lv_color_hex(0x293540), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_radius(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_color(obj, lv_color_hex(0x293540), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        {
+            // driver_detail_output_divider
+            lv_obj_t *obj = lv_obj_create(parent_obj);
+            objects.driver_detail_output_divider = obj;
+            lv_obj_set_pos(obj, 410, 141);
+            lv_obj_set_size(obj, 570, 1);
+            lv_obj_remove_flag(obj, LV_OBJ_FLAG_CLICKABLE|LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
+            lv_obj_set_style_bg_color(obj, lv_color_hex(0x293540), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_radius(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_color(obj, lv_color_hex(0x293540), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+        }
+        {
+            // driver_detail_mode_card_title
+            lv_obj_t *obj = lv_label_create(parent_obj);
+            objects.driver_detail_mode_card_title = obj;
+            lv_obj_set_pos(obj, 44, 95);
+            lv_obj_set_size(obj, 300, 32);
+            lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
+            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text_static(obj, "운전 모드");
+        }
+        {
+            // driver_detail_channel_card_title
+            lv_obj_t *obj = lv_label_create(parent_obj);
+            objects.driver_detail_channel_card_title = obj;
+            lv_obj_set_pos(obj, 44, 231);
+            lv_obj_set_size(obj, 300, 32);
+            lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
+            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(obj, lv_color_hex(0xeef5fa), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text_static(obj, "모터 채널");
+        }
+        {
+            // driver_detail_mode_help
+            lv_obj_t *obj = lv_label_create(parent_obj);
+            objects.driver_detail_mode_help = obj;
+            lv_obj_set_pos(obj, 44, 342);
+            lv_obj_set_size(obj, 308, 68);
+            lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
+            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_color(obj, lv_color_hex(0x91a1af), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_top(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_pad_bottom(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_label_set_text_static(obj, "선택한 모터의 출력값을 오른쪽에서 확인합니다.");
+        }
+        {
             // driver_detail_title
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_detail_title = obj;
-            lv_obj_set_pos(obj, 212, 38);
-            lv_obj_set_size(obj, 180, 38);
+            lv_obj_set_pos(obj, 122, 18);
+            lv_obj_set_size(obj, 245, 29);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xf5f7fa), LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr28, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_LEFT, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "드라이버 설정");
+            lv_label_set_text_static(obj, "드라이버 상세");
         }
         {
             // driver_detail_selected_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_detail_selected_value = obj;
-            lv_obj_set_pos(obj, 392, 41);
-            lv_obj_set_size(obj, 360, 30);
+            lv_obj_set_pos(obj, 390, 15);
+            lv_obj_set_size(obj, 350, 34);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xf9b938), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3643,8 +3759,8 @@ void create_screen_driver_detail() {
             // driver_detail_auto_mode_button
             lv_obj_t *obj = lv_button_create(parent_obj);
             objects.driver_detail_auto_mode_button = obj;
-            lv_obj_set_pos(obj, 212, 94);
-            lv_obj_set_size(obj, 180, 44);
+            lv_obj_set_pos(obj, 55, 152);
+            lv_obj_set_size(obj, 98, 46);
             lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_auto_mode_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x263442), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3661,8 +3777,8 @@ void create_screen_driver_detail() {
                     // driver_detail_auto_mode_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
                     objects.driver_detail_auto_mode_label = obj;
-                    lv_obj_set_pos(obj, 46, -4);
-                    lv_obj_set_size(obj, 47, 28);
+                    lv_obj_set_pos(obj, -5, -1);
+                    lv_obj_set_size(obj, 67, 25);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
                     lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3676,8 +3792,8 @@ void create_screen_driver_detail() {
             // driver_detail_manual_mode_button
             lv_obj_t *obj = lv_button_create(parent_obj);
             objects.driver_detail_manual_mode_button = obj;
-            lv_obj_set_pos(obj, 422, 94);
-            lv_obj_set_size(obj, 180, 44);
+            lv_obj_set_pos(obj, 161, 152);
+            lv_obj_set_size(obj, 98, 46);
             lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_manual_mode_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x263442), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3694,8 +3810,8 @@ void create_screen_driver_detail() {
                     // driver_detail_manual_mode_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
                     objects.driver_detail_manual_mode_label = obj;
-                    lv_obj_set_pos(obj, 45, -4);
-                    lv_obj_set_size(obj, 48, 28);
+                    lv_obj_set_pos(obj, -5, -1);
+                    lv_obj_set_size(obj, 67, 25);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
                     lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3709,8 +3825,8 @@ void create_screen_driver_detail() {
             // driver_detail_test_mode_button
             lv_obj_t *obj = lv_button_create(parent_obj);
             objects.driver_detail_test_mode_button = obj;
-            lv_obj_set_pos(obj, 632, 94);
-            lv_obj_set_size(obj, 180, 44);
+            lv_obj_set_pos(obj, 267, 152);
+            lv_obj_set_size(obj, 98, 46);
             lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_test_mode_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x263442), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3727,8 +3843,8 @@ void create_screen_driver_detail() {
                     // driver_detail_test_mode_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
                     objects.driver_detail_test_mode_label = obj;
-                    lv_obj_set_pos(obj, 23, -4);
-                    lv_obj_set_size(obj, 92, 28);
+                    lv_obj_set_pos(obj, -21, -1);
+                    lv_obj_set_size(obj, 98, 25);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
                     lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3742,13 +3858,13 @@ void create_screen_driver_detail() {
             // driver_detail_close_button
             lv_obj_t *obj = lv_button_create(parent_obj);
             objects.driver_detail_close_button = obj;
-            lv_obj_set_pos(obj, 770, 30);
-            lv_obj_set_size(obj, 54, 54);
+            lv_obj_set_pos(obj, 20, 10);
+            lv_obj_set_size(obj, 82, 44);
             lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_close_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x1c2833), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 255, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_obj_set_style_radius(obj, 10, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_radius(obj, 8, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_border_width(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_left(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_pad_right(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3761,14 +3877,14 @@ void create_screen_driver_detail() {
                     // driver_detail_close_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
                     objects.driver_detail_close_label = obj;
-                    lv_obj_set_pos(obj, 0, 9);
-                    lv_obj_set_size(obj, 54, 32);
+                    lv_obj_set_pos(obj, 0, 7);
+                    lv_obj_set_size(obj, 82, 30);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
                     lv_obj_set_style_text_color(obj, lv_color_hex(0xd9e0e6), LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr28, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_align(obj, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-                    lv_label_set_text_static(obj, "X");
+                    lv_label_set_text_static(obj, "뒤로");
                 }
             }
         }
@@ -3776,20 +3892,20 @@ void create_screen_driver_detail() {
             // driver_detail_output_caption
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_detail_output_caption = obj;
-            lv_obj_set_pos(obj, 522, 158);
-            lv_obj_set_size(obj, 280, 47);
+            lv_obj_set_pos(obj, 410, 96);
+            lv_obj_set_size(obj, 570, 36);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8fa0ae), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_bg_opa(obj, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
-            lv_label_set_text_static(obj, "선택 채널: A 모터 · 기본 출력 단계");
+            lv_label_set_text_static(obj, "선택 채널 · 기본 출력 단계");
         }
         {
             // driver_detail_output_step_value
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_detail_output_step_value = obj;
-            lv_obj_set_pos(obj, 212, 213);
-            lv_obj_set_size(obj, 240, 64);
+            lv_obj_set_pos(obj, 410, 148);
+            lv_obj_set_size(obj, 200, 66);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xf5f7fa), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_num36, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3801,8 +3917,8 @@ void create_screen_driver_detail() {
             // driver_detail_output_step_unit
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_detail_output_step_unit = obj;
-            lv_obj_set_pos(obj, 469, 232);
-            lv_obj_set_size(obj, 80, 28);
+            lv_obj_set_pos(obj, 618, 169);
+            lv_obj_set_size(obj, 100, 32);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8fa0ae), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3813,8 +3929,8 @@ void create_screen_driver_detail() {
             // driver_detail_output_slider
             lv_obj_t *obj = lv_slider_create(parent_obj);
             objects.driver_detail_output_slider = obj;
-            lv_obj_set_pos(obj, 222, 282);
-            lv_obj_set_size(obj, 580, 34);
+            lv_obj_set_pos(obj, 423, 231);
+            lv_obj_set_size(obj, 557, 34);
             lv_slider_set_range(obj, 0, 24);
             lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_output_slider, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
@@ -3836,8 +3952,8 @@ void create_screen_driver_detail() {
             // driver_detail_range_hint
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_detail_range_hint = obj;
-            lv_obj_set_pos(obj, 222, 320);
-            lv_obj_set_size(obj, 580, 26);
+            lv_obj_set_pos(obj, 410, 275);
+            lv_obj_set_size(obj, 570, 32);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x657786), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3849,8 +3965,8 @@ void create_screen_driver_detail() {
             // driver_detail_target_summary
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_detail_target_summary = obj;
-            lv_obj_set_pos(obj, 212, 350);
-            lv_obj_set_size(obj, 240, 28);
+            lv_obj_set_pos(obj, 410, 322);
+            lv_obj_set_size(obj, 260, 34);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8fa0ae), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3862,8 +3978,8 @@ void create_screen_driver_detail() {
             // driver_detail_voltage_summary
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_detail_voltage_summary = obj;
-            lv_obj_set_pos(obj, 469, 350);
-            lv_obj_set_size(obj, 355, 28);
+            lv_obj_set_pos(obj, 680, 322);
+            lv_obj_set_size(obj, 300, 34);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0xf5f7fa), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3875,8 +3991,8 @@ void create_screen_driver_detail() {
             // driver_detail_trim_minus_button
             lv_obj_t *obj = lv_button_create(parent_obj);
             objects.driver_detail_trim_minus_button = obj;
-            lv_obj_set_pos(obj, 212, 392);
-            lv_obj_set_size(obj, 135, 76);
+            lv_obj_set_pos(obj, 410, 407);
+            lv_obj_set_size(obj, 130, 58);
             lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_trim_minus_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x2677d4), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3894,8 +4010,8 @@ void create_screen_driver_detail() {
                     // driver_detail_trim_minus_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
                     objects.driver_detail_trim_minus_label = obj;
-                    lv_obj_set_pos(obj, 0, 25);
-                    lv_obj_set_size(obj, 135, 32);
+                    lv_obj_set_pos(obj, 33, 18);
+                    lv_obj_set_size(obj, 65, 22);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
                     lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3909,8 +4025,8 @@ void create_screen_driver_detail() {
             // driver_detail_trim_plus_button
             lv_obj_t *obj = lv_button_create(parent_obj);
             objects.driver_detail_trim_plus_button = obj;
-            lv_obj_set_pos(obj, 367, 392);
-            lv_obj_set_size(obj, 135, 76);
+            lv_obj_set_pos(obj, 555, 407);
+            lv_obj_set_size(obj, 130, 58);
             lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_trim_plus_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0xd17a22), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3928,8 +4044,8 @@ void create_screen_driver_detail() {
                     // driver_detail_trim_plus_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
                     objects.driver_detail_trim_plus_label = obj;
-                    lv_obj_set_pos(obj, 0, 25);
-                    lv_obj_set_size(obj, 135, 32);
+                    lv_obj_set_pos(obj, 34, 19);
+                    lv_obj_set_size(obj, 63, 21);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
                     lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3943,8 +4059,8 @@ void create_screen_driver_detail() {
             // driver_detail_trim_reset_button
             lv_obj_t *obj = lv_button_create(parent_obj);
             objects.driver_detail_trim_reset_button = obj;
-            lv_obj_set_pos(obj, 522, 392);
-            lv_obj_set_size(obj, 135, 76);
+            lv_obj_set_pos(obj, 700, 407);
+            lv_obj_set_size(obj, 130, 58);
             lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_trim_reset_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x16a34a), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3962,8 +4078,8 @@ void create_screen_driver_detail() {
                     // driver_detail_trim_reset_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
                     objects.driver_detail_trim_reset_label = obj;
-                    lv_obj_set_pos(obj, 0, 25);
-                    lv_obj_set_size(obj, 135, 32);
+                    lv_obj_set_pos(obj, 0, 13);
+                    lv_obj_set_size(obj, 130, 32);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
                     lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3977,8 +4093,8 @@ void create_screen_driver_detail() {
             // driver_detail_trim_apply_button
             lv_obj_t *obj = lv_button_create(parent_obj);
             objects.driver_detail_trim_apply_button = obj;
-            lv_obj_set_pos(obj, 677, 392);
-            lv_obj_set_size(obj, 135, 76);
+            lv_obj_set_pos(obj, 845, 407);
+            lv_obj_set_size(obj, 130, 58);
             lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_trim_apply_button, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_ON_FOCUS|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0xe33d42), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -3996,8 +4112,8 @@ void create_screen_driver_detail() {
                     // driver_detail_trim_apply_label
                     lv_obj_t *obj = lv_label_create(parent_obj);
                     objects.driver_detail_trim_apply_label = obj;
-                    lv_obj_set_pos(obj, 0, 25);
-                    lv_obj_set_size(obj, 135, 32);
+                    lv_obj_set_pos(obj, 0, 13);
+                    lv_obj_set_size(obj, 130, 32);
                     lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
                     lv_obj_set_style_text_color(obj, lv_color_hex(0xffffff), LV_PART_MAIN | LV_STATE_DEFAULT);
                     lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr20, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -4011,8 +4127,8 @@ void create_screen_driver_detail() {
             // driver_detail_channel_a_selector
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.driver_detail_channel_a_selector = obj;
-            lv_obj_set_pos(obj, 212, 158);
-            lv_obj_set_size(obj, 135, 36);
+            lv_obj_set_pos(obj, 44, 280);
+            lv_obj_set_size(obj, 145, 46);
             lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_channel_a_selector, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x263442), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -4030,8 +4146,8 @@ void create_screen_driver_detail() {
             // driver_detail_channel_a_selector_label
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_detail_channel_a_selector_label = obj;
-            lv_obj_set_pos(obj, 254, 163);
-            lv_obj_set_size(obj, 51, 26);
+            lv_obj_set_pos(obj, 73, 294);
+            lv_obj_set_size(obj, 87, 19);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8fa0ae), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -4043,8 +4159,8 @@ void create_screen_driver_detail() {
             // driver_detail_channel_b_selector
             lv_obj_t *obj = lv_obj_create(parent_obj);
             objects.driver_detail_channel_b_selector = obj;
-            lv_obj_set_pos(obj, 367, 158);
-            lv_obj_set_size(obj, 135, 36);
+            lv_obj_set_pos(obj, 209, 280);
+            lv_obj_set_size(obj, 145, 46);
             lv_obj_add_event_cb(obj, event_handler_cb_driver_detail_driver_detail_channel_b_selector, LV_EVENT_ALL, flowState);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_bg_color(obj, lv_color_hex(0x263442), LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -4062,8 +4178,8 @@ void create_screen_driver_detail() {
             // driver_detail_channel_b_selector_label
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_detail_channel_b_selector_label = obj;
-            lv_obj_set_pos(obj, 407, 163);
-            lv_obj_set_size(obj, 55, 26);
+            lv_obj_set_pos(obj, 228, 294);
+            lv_obj_set_size(obj, 107, 19);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x8fa0ae), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -4075,8 +4191,8 @@ void create_screen_driver_detail() {
             // driver_detail_safety_hint
             lv_obj_t *obj = lv_label_create(parent_obj);
             objects.driver_detail_safety_hint = obj;
-            lv_obj_set_pos(obj, 212, 502);
-            lv_obj_set_size(obj, 600, 28);
+            lv_obj_set_pos(obj, 410, 478);
+            lv_obj_set_size(obj, 565, 32);
             lv_obj_remove_flag(obj, LV_OBJ_FLAG_SCROLLABLE|LV_OBJ_FLAG_SCROLL_CHAIN_HOR|LV_OBJ_FLAG_SCROLL_CHAIN_VER|LV_OBJ_FLAG_SCROLL_ELASTIC|LV_OBJ_FLAG_SCROLL_MOMENTUM|LV_OBJ_FLAG_SCROLL_WITH_ARROW);
             lv_obj_set_style_text_color(obj, lv_color_hex(0x657786), LV_PART_MAIN | LV_STATE_DEFAULT);
             lv_obj_set_style_text_font(obj, &ui_font_maru_buri_regular_kr16, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -4093,7 +4209,7 @@ void tick_screen_driver_detail() {
     void *flowState = getFlowState(0, 2);
     (void)flowState;
     {
-        const char *new_val = evalTextProperty(flowState, 4, 3, "Failed to evaluate Text in Label widget");
+        const char *new_val = evalTextProperty(flowState, 11, 3, "Failed to evaluate Text in Label widget");
         const char *cur_val = lv_label_get_text(objects.driver_detail_selected_value);
         if (strcmp(new_val, cur_val) != 0) {
             tick_value_change_obj = objects.driver_detail_selected_value;
@@ -4102,7 +4218,7 @@ void tick_screen_driver_detail() {
         }
     }
     {
-        bool new_val = evalBooleanProperty(flowState, 5, 3, "Failed to evaluate Checked state");
+        bool new_val = evalBooleanProperty(flowState, 12, 3, "Failed to evaluate Checked state");
         bool cur_val = lv_obj_has_state(objects.driver_detail_auto_mode_button, LV_STATE_CHECKED);
         if (new_val != cur_val) {
             tick_value_change_obj = objects.driver_detail_auto_mode_button;
@@ -4115,7 +4231,7 @@ void tick_screen_driver_detail() {
         }
     }
     {
-        bool new_val = evalBooleanProperty(flowState, 7, 3, "Failed to evaluate Checked state");
+        bool new_val = evalBooleanProperty(flowState, 14, 3, "Failed to evaluate Checked state");
         bool cur_val = lv_obj_has_state(objects.driver_detail_manual_mode_button, LV_STATE_CHECKED);
         if (new_val != cur_val) {
             tick_value_change_obj = objects.driver_detail_manual_mode_button;
@@ -4128,7 +4244,7 @@ void tick_screen_driver_detail() {
         }
     }
     {
-        bool new_val = evalBooleanProperty(flowState, 9, 3, "Failed to evaluate Checked state");
+        bool new_val = evalBooleanProperty(flowState, 16, 3, "Failed to evaluate Checked state");
         bool cur_val = lv_obj_has_state(objects.driver_detail_test_mode_button, LV_STATE_CHECKED);
         if (new_val != cur_val) {
             tick_value_change_obj = objects.driver_detail_test_mode_button;
@@ -4141,7 +4257,7 @@ void tick_screen_driver_detail() {
         }
     }
     {
-        const char *new_val = evalTextProperty(flowState, 14, 3, "Failed to evaluate Text in Label widget");
+        const char *new_val = evalTextProperty(flowState, 21, 3, "Failed to evaluate Text in Label widget");
         const char *cur_val = lv_label_get_text(objects.driver_detail_output_step_value);
         if (strcmp(new_val, cur_val) != 0) {
             tick_value_change_obj = objects.driver_detail_output_step_value;
@@ -4150,7 +4266,7 @@ void tick_screen_driver_detail() {
         }
     }
     {
-        int32_t new_val = evalIntegerProperty(flowState, 16, 3, "Failed to evaluate Value in Slider widget");
+        int32_t new_val = evalIntegerProperty(flowState, 23, 3, "Failed to evaluate Value in Slider widget");
         int32_t cur_val = lv_slider_get_value(objects.driver_detail_output_slider);
         if (new_val != cur_val) {
             tick_value_change_obj = objects.driver_detail_output_slider;
@@ -4159,7 +4275,7 @@ void tick_screen_driver_detail() {
         }
     }
     {
-        const char *new_val = evalTextProperty(flowState, 18, 3, "Failed to evaluate Text in Label widget");
+        const char *new_val = evalTextProperty(flowState, 25, 3, "Failed to evaluate Text in Label widget");
         const char *cur_val = lv_label_get_text(objects.driver_detail_target_summary);
         if (strcmp(new_val, cur_val) != 0) {
             tick_value_change_obj = objects.driver_detail_target_summary;
@@ -4168,7 +4284,7 @@ void tick_screen_driver_detail() {
         }
     }
     {
-        const char *new_val = evalTextProperty(flowState, 19, 3, "Failed to evaluate Text in Label widget");
+        const char *new_val = evalTextProperty(flowState, 26, 3, "Failed to evaluate Text in Label widget");
         const char *cur_val = lv_label_get_text(objects.driver_detail_voltage_summary);
         if (strcmp(new_val, cur_val) != 0) {
             tick_value_change_obj = objects.driver_detail_voltage_summary;
@@ -4177,7 +4293,7 @@ void tick_screen_driver_detail() {
         }
     }
     {
-        bool new_val = evalBooleanProperty(flowState, 28, 3, "Failed to evaluate Checked state");
+        bool new_val = evalBooleanProperty(flowState, 35, 3, "Failed to evaluate Checked state");
         bool cur_val = lv_obj_has_state(objects.driver_detail_channel_a_selector, LV_STATE_CHECKED);
         if (new_val != cur_val) {
             tick_value_change_obj = objects.driver_detail_channel_a_selector;
@@ -4190,7 +4306,7 @@ void tick_screen_driver_detail() {
         }
     }
     {
-        bool new_val = evalBooleanProperty(flowState, 30, 3, "Failed to evaluate Checked state");
+        bool new_val = evalBooleanProperty(flowState, 37, 3, "Failed to evaluate Checked state");
         bool cur_val = lv_obj_has_state(objects.driver_detail_channel_b_selector, LV_STATE_CHECKED);
         if (new_val != cur_val) {
             tick_value_change_obj = objects.driver_detail_channel_b_selector;

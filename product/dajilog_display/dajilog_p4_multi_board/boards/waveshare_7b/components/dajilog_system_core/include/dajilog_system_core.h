@@ -25,7 +25,7 @@ typedef struct {
     bool (*is_started)(void *context);
     esp_err_t (*get_snapshot)(dajilog_dashboard_snapshot_t *snapshot,
                               void *context);
-    esp_err_t (*update_vehicle)(float speed_kmh, bool online,
+    esp_err_t (*update_vehicle)(float speed_kmh, bool online, bool reverse,
                                 uint32_t signal_age_ms, void *context);
     esp_err_t (*update_motor)(size_t index,
                               const dajilog_motor_snapshot_t *motor,
@@ -74,7 +74,7 @@ bool dajilog_system_core_is_started(void);
 /** @brief Copy the product-owned dashboard snapshot. */
 esp_err_t dajilog_system_core_get_snapshot(dajilog_dashboard_snapshot_t *snapshot);
 /** @brief Forward decoded vehicle speed state to the product implementation. */
-esp_err_t dajilog_system_core_update_vehicle(float speed_kmh, bool online,
+esp_err_t dajilog_system_core_update_vehicle(float speed_kmh, bool online, bool reverse,
                                              uint32_t signal_age_ms);
 /** @brief Forward one decoded motor state to the product implementation. */
 esp_err_t dajilog_system_core_update_motor(size_t index,

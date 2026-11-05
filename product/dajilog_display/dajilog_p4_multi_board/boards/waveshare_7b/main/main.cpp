@@ -1,4 +1,5 @@
 #include "dajilog_product_start.h"
+#include "dajilog_system_core.h"
 #include "dajilog_product_controller.h"
 #include "dajilog_motor_control.h"
 #include "dajilog_speed_sensor.h"
@@ -20,5 +21,5 @@ extern "C" void app_main(void)
     ESP_ERROR_CHECK(dajilog_product_controller_register());
     ESP_ERROR_CHECK(dajilog_motor_control_register());
     ESP_ERROR_CHECK(dajilog_speed_sensor_register());
-    dajilog_product_start();
+    dajilog_product_start(dajilog_system_core_start);
 }

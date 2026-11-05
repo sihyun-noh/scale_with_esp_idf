@@ -2,5 +2,5 @@
 
 extern "C" void app_main(void)
 {
-    dajilog_product_start();
+    dajilog_product_start(nullptr);
 }
