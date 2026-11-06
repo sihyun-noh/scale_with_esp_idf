@@ -285,3 +285,35 @@ esp_err_t dajilog_calibration_catalog_preview_voltage(
     }
     return ESP_ERR_INVALID_ARG;
 }
+
+/** @brief [D-003] 선택 표의 인접 전압 두 점으로 추정 분당 시비량을 선형 보간한다. */
+esp_err_t dajilog_calibration_catalog_estimate_rate(
+    char channel, const char *table_id, uint32_t revision,
+    uint16_t measured_decivolt, float *out_g_min)
+{
+    if (out_g_min == NULL) return ESP_ERR_INVALID_ARG;
+    dajilog_calibration_point_t points[DAJILOG_CALIBRATION_MAX_POINTS];
+    size_t count = 0;
+    esp_err_t err = dajilog_calibration_catalog_get_points(
+        channel, table_id, revision, points, DAJILOG_CALIBRATION_MAX_POINTS, &count);
+    if (err != ESP_OK) return err;
+    if (count < 2U) return ESP_ERR_INVALID_STATE;
+    if (measured_decivolt == 0U) {
+        *out_g_min = 0.0f;
+        return ESP_OK;
+    }
+    if (measured_decivolt < points[0].command_decivolt ||
+        measured_decivolt > points[count - 1U].command_decivolt)
+        return ESP_ERR_INVALID_ARG;
+    for (size_t i = 1U; i < count; ++i) {
+        if (measured_decivolt > points[i].command_decivolt) continue;
+        const uint16_t low_v = points[i - 1U].command_decivolt;
+        const uint16_t high_v = points[i].command_decivolt;
+        if (high_v <= low_v) return ESP_ERR_INVALID_STATE;
+        const float fraction = (float)(measured_decivolt - low_v) / (float)(high_v - low_v);
+        *out_g_min = (float)points[i - 1U].discharge_g_min + fraction *
+            (float)(points[i].discharge_g_min - points[i - 1U].discharge_g_min);
+        return ESP_OK;
+    }
+    return ESP_ERR_INVALID_ARG;
+}

@@ -174,3 +174,12 @@ esp_err_t dajilog_system_core_get_ridge_profiles(
                      profiles, s_implementation.context)
                : ESP_ERR_NOT_SUPPORTED;
 }
+
+esp_err_t dajilog_system_core_get_run_readiness(dajilog_run_readiness_t *readiness)
+{
+    if (readiness == NULL) return ESP_ERR_INVALID_ARG;
+    return s_registered && s_implementation.get_run_readiness != NULL
+               ? s_implementation.get_run_readiness(readiness,
+                                                    s_implementation.context)
+               : ESP_ERR_INVALID_STATE;
+}

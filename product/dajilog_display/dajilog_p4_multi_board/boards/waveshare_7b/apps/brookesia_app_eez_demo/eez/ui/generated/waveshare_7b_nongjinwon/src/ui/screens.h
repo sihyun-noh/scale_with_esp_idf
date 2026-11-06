@@ -29,7 +29,8 @@ enum ScreensEnum {
     SCREEN_ID_NUMERIC_INPUT = 16,
     SCREEN_ID_RIDGE_NUMERIC_INPUT = 17,
     SCREEN_ID_CALIBRATION_SELECT = 18,
-    _SCREEN_ID_LAST = 18
+    SCREEN_ID_RUN_READINESS = 19,
+    _SCREEN_ID_LAST = 19
 };
 
 typedef struct _objects_t {
@@ -51,6 +52,7 @@ typedef struct _objects_t {
     lv_obj_t *numeric_input;
     lv_obj_t *ridge_numeric_input;
     lv_obj_t *calibration_select;
+    lv_obj_t *run_readiness;
     lv_obj_t *startup_top_accent;
     lv_obj_t *startup_brand_label;
     lv_obj_t *startup_subtitle_label;
@@ -166,6 +168,35 @@ typedef struct _objects_t {
     lv_obj_t *dashboard_setting_top_label_4;
     lv_obj_t *dashboard_setting_button_3;
     lv_obj_t *dashboard_setting_top_label_6;
+    lv_obj_t *setting_1_preparation_caption;
+    lv_obj_t *setting_1_preparation_value;
+    lv_obj_t *setting_1_preparation_unit;
+    lv_obj_t *setting_1_estimated_accum_caption;
+    lv_obj_t *setting_1_estimated_accum_value;
+    lv_obj_t *setting_1_estimated_accum_unit;
+    lv_obj_t *setting_1_progress_caption;
+    lv_obj_t *setting_1_progress_value;
+    lv_obj_t *setting_1_progress_unit;
+    lv_obj_t *setting_2_preparation_caption;
+    lv_obj_t *setting_2_preparation_value;
+    lv_obj_t *setting_2_preparation_unit;
+    lv_obj_t *setting_2_estimated_accum_caption;
+    lv_obj_t *setting_2_estimated_accum_value;
+    lv_obj_t *setting_2_estimated_accum_unit;
+    lv_obj_t *setting_2_progress_caption;
+    lv_obj_t *setting_2_progress_value;
+    lv_obj_t *setting_2_progress_unit;
+    lv_obj_t *auto_stop_notice_overlay;
+    lv_obj_t *auto_stop_notice_panel;
+    lv_obj_t *auto_stop_notice_title;
+    lv_obj_t *auto_stop_notice_fault_title;
+    lv_obj_t *auto_stop_notice_reason;
+    lv_obj_t *auto_stop_notice_detail;
+    lv_obj_t *auto_stop_notice_zero_status_card;
+    lv_obj_t *auto_stop_notice_zero_status;
+    lv_obj_t *auto_stop_notice_ack_hint;
+    lv_obj_t *auto_stop_notice_ack_button;
+    lv_obj_t *auto_stop_notice_ack_button_label;
     lv_obj_t *driver_detail_backdrop;
     lv_obj_t *driver_detail_panel;
     lv_obj_t *driver_detail_mode_card;
@@ -275,6 +306,12 @@ typedef struct _objects_t {
     lv_obj_t *setting_detail_info_value_8;
     lv_obj_t *setting_detail_info_caption_9;
     lv_obj_t *setting_detail_info_value_9;
+    lv_obj_t *setting_detail_estimated_accum_caption;
+    lv_obj_t *setting_detail_estimated_accum_value;
+    lv_obj_t *setting_detail_progress_caption;
+    lv_obj_t *setting_detail_progress_value;
+    lv_obj_t *setting_detail_estimated_rate_unit;
+    lv_obj_t *setting_detail_estimate_state;
     lv_obj_t *setting_confirm_dialog;
     lv_obj_t *setting_confirm_title;
     lv_obj_t *setting_confirm_message;
@@ -708,6 +745,96 @@ typedef struct _objects_t {
     lv_obj_t *calibration_save_button_label;
     lv_obj_t *calibration_confirm_button;
     lv_obj_t *calibration_confirm_button_label;
+    lv_obj_t *run_readiness_header;
+    lv_obj_t *run_readiness_title;
+    lv_obj_t *run_readiness_checked_at;
+    lv_obj_t *run_readiness_block_title;
+    lv_obj_t *run_readiness_ready_title;
+    lv_obj_t *run_readiness_summary;
+    lv_obj_t *run_readiness_check_list;
+    lv_obj_t *run_readiness_operation_row;
+    lv_obj_t *run_readiness_operation_caption;
+    lv_obj_t *run_readiness_operation_reason;
+    lv_obj_t *run_readiness_operation_status_pass;
+    lv_obj_t *run_readiness_operation_status_fail;
+    lv_obj_t *run_readiness_operation_status_other;
+    lv_obj_t *run_readiness_motor_a_row;
+    lv_obj_t *run_readiness_motor_a_caption;
+    lv_obj_t *run_readiness_motor_a_reason;
+    lv_obj_t *run_readiness_motor_a_status_pass;
+    lv_obj_t *run_readiness_motor_a_status_fail;
+    lv_obj_t *run_readiness_motor_a_status_other;
+    lv_obj_t *run_readiness_motor_b_row;
+    lv_obj_t *run_readiness_motor_b_caption;
+    lv_obj_t *run_readiness_motor_b_reason;
+    lv_obj_t *run_readiness_motor_b_status_pass;
+    lv_obj_t *run_readiness_motor_b_status_fail;
+    lv_obj_t *run_readiness_motor_b_status_other;
+    lv_obj_t *run_readiness_motor_c_row;
+    lv_obj_t *run_readiness_motor_c_caption;
+    lv_obj_t *run_readiness_motor_c_reason;
+    lv_obj_t *run_readiness_motor_c_status_pass;
+    lv_obj_t *run_readiness_motor_c_status_fail;
+    lv_obj_t *run_readiness_motor_c_status_other;
+    lv_obj_t *run_readiness_motor_d_row;
+    lv_obj_t *run_readiness_motor_d_caption;
+    lv_obj_t *run_readiness_motor_d_reason;
+    lv_obj_t *run_readiness_motor_d_status_pass;
+    lv_obj_t *run_readiness_motor_d_status_fail;
+    lv_obj_t *run_readiness_motor_d_status_other;
+    lv_obj_t *run_readiness_speed_row;
+    lv_obj_t *run_readiness_speed_caption;
+    lv_obj_t *run_readiness_speed_reason;
+    lv_obj_t *run_readiness_speed_status_pass;
+    lv_obj_t *run_readiness_speed_status_fail;
+    lv_obj_t *run_readiness_speed_status_other;
+    lv_obj_t *run_readiness_applied_row;
+    lv_obj_t *run_readiness_applied_caption;
+    lv_obj_t *run_readiness_applied_reason;
+    lv_obj_t *run_readiness_applied_status_pass;
+    lv_obj_t *run_readiness_applied_status_fail;
+    lv_obj_t *run_readiness_applied_status_other;
+    lv_obj_t *run_readiness_product_row;
+    lv_obj_t *run_readiness_product_caption;
+    lv_obj_t *run_readiness_product_reason;
+    lv_obj_t *run_readiness_product_status_pass;
+    lv_obj_t *run_readiness_product_status_fail;
+    lv_obj_t *run_readiness_product_status_other;
+    lv_obj_t *run_readiness_table_a_row;
+    lv_obj_t *run_readiness_table_a_caption;
+    lv_obj_t *run_readiness_table_a_reason;
+    lv_obj_t *run_readiness_table_a_status_pass;
+    lv_obj_t *run_readiness_table_a_status_fail;
+    lv_obj_t *run_readiness_table_a_status_other;
+    lv_obj_t *run_readiness_table_b_row;
+    lv_obj_t *run_readiness_table_b_caption;
+    lv_obj_t *run_readiness_table_b_reason;
+    lv_obj_t *run_readiness_table_b_status_pass;
+    lv_obj_t *run_readiness_table_b_status_fail;
+    lv_obj_t *run_readiness_table_b_status_other;
+    lv_obj_t *run_readiness_table_c_row;
+    lv_obj_t *run_readiness_table_c_caption;
+    lv_obj_t *run_readiness_table_c_reason;
+    lv_obj_t *run_readiness_table_c_status_pass;
+    lv_obj_t *run_readiness_table_c_status_fail;
+    lv_obj_t *run_readiness_table_c_status_other;
+    lv_obj_t *run_readiness_table_d_row;
+    lv_obj_t *run_readiness_table_d_caption;
+    lv_obj_t *run_readiness_table_d_reason;
+    lv_obj_t *run_readiness_table_d_status_pass;
+    lv_obj_t *run_readiness_table_d_status_fail;
+    lv_obj_t *run_readiness_table_d_status_other;
+    lv_obj_t *run_readiness_fault_row;
+    lv_obj_t *run_readiness_fault_caption;
+    lv_obj_t *run_readiness_fault_reason;
+    lv_obj_t *run_readiness_fault_status_pass;
+    lv_obj_t *run_readiness_fault_status_fail;
+    lv_obj_t *run_readiness_fault_status_other;
+    lv_obj_t *run_readiness_no_start_hint;
+    lv_obj_t *run_readiness_close_button;
+    lv_obj_t *run_readiness_close_button_label;
+    lv_obj_t *run_readiness_refresh_button;
+    lv_obj_t *run_readiness_refresh_button_label;
 } objects_t;
 
 extern objects_t objects;
@@ -765,6 +892,9 @@ void tick_screen_ridge_numeric_input();
 
 void create_screen_calibration_select();
 void tick_screen_calibration_select();
+
+void create_screen_run_readiness();
+void tick_screen_run_readiness();
 
 void tick_screen_by_id(enum ScreensEnum screenId);
 void tick_screen(int screen_index);

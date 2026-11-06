@@ -58,6 +58,8 @@ typedef struct {
         dajilog_product_settings_snapshot_t *settings, void *context);
     esp_err_t (*get_ridge_profiles)(
         dajilog_ridge_profiles_snapshot_t *profiles, void *context);
+    esp_err_t (*get_run_readiness)(dajilog_run_readiness_t *readiness,
+                                   void *context);
     void *context;
 } dajilog_system_core_implementation_t;
 
@@ -113,6 +115,8 @@ esp_err_t dajilog_system_core_get_settings_applied(
 /** @brief Copy the 7B product-owned independent ridge registry. */
 esp_err_t dajilog_system_core_get_ridge_profiles(
     dajilog_ridge_profiles_snapshot_t *profiles);
+/** @brief Read every current RUN guard without sending a motor command. */
+esp_err_t dajilog_system_core_get_run_readiness(dajilog_run_readiness_t *readiness);
 
 #ifdef __cplusplus
 }

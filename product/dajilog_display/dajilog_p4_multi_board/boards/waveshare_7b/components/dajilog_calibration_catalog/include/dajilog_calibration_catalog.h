@@ -71,6 +71,11 @@ esp_err_t dajilog_calibration_catalog_preview_voltage(
     char channel, const char *table_id, uint32_t revision, uint32_t target_g_min,
     uint16_t *out_decivolt, uint32_t *out_expected_g_min);
 
+/** @brief Interpolate estimated fertilizer application rate from a confirmed output voltage. */
+esp_err_t dajilog_calibration_catalog_estimate_rate(
+    char channel, const char *table_id, uint32_t revision,
+    uint16_t measured_decivolt, float *out_g_min);
+
 #ifdef __cplusplus
 }
 #endif

@@ -4,9 +4,11 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdatomic.h>
 #include <string.h>
 
 #include "dajilog_can_device_manager.h"
+#include "dajilog_can.h"
 #include "dajilog_can_moonwalker.h"
 #include "dajilog_system_core.h"
 #include "esp_log.h"
@@ -22,6 +24,9 @@ static size_t s_driver_indexes[DRIVER_COUNT] = {SIZE_MAX, SIZE_MAX};
 static TaskHandle_t s_poll_task;
 static bool s_running;
 static uint16_t s_commanded_decivolt[DAJILOG_MOTOR_CHANNEL_COUNT];
+static atomic_bool s_zero_retry_required;
+static atomic_uchar s_zero_readback_mask;
+static atomic_llong s_zero_retry_last_us;
 
 /** @brief Refresh aggregate running state from all four commanded outputs. */
 static void refresh_running_state(void)
@@ -95,6 +100,10 @@ static esp_err_t write_channel_voltage(size_t motor_index,
 static esp_err_t stop_motor(void *context)
 {
     (void)context;
+    /* 버스가 끊겨 STOP 송신에 실패해도 복구 후 0V를 다시 요청한다. */
+    atomic_store(&s_zero_readback_mask, 0U);
+    atomic_store(&s_zero_retry_required, true);
+    atomic_store(&s_zero_retry_last_us, esp_timer_get_time());
     esp_err_t first_error = ESP_OK;
     for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
         const esp_err_t error = write_channel_voltage(i, 0U);
@@ -142,6 +151,10 @@ static esp_err_t motor_command(const dajilog_motor_voltage_command_t *command,
     error = write_channel_voltage(command->motor_index,
                                   command->final_decivolt);
     if (error == ESP_OK) {
+        if (command->final_decivolt != 0U) {
+            atomic_store(&s_zero_retry_required, false);
+            atomic_store(&s_zero_readback_mask, 0U);
+        }
         s_commanded_decivolt[command->motor_index] = command->final_decivolt;
         refresh_running_state();
     }
@@ -198,6 +211,16 @@ static void update_motor_from_response(size_t slot,
         motor.command_readback_valid = true;
         motor.readback_timestamp_us = esp_timer_get_time();
         motor.command_pending = value != motor.command_decivolt;
+        if (atomic_load(&s_zero_retry_required)) {
+            const uint8_t bit = (uint8_t)(1U << motor_index);
+            if (value == 0U) {
+                const uint8_t seen = atomic_fetch_or(&s_zero_readback_mask, bit) | bit;
+                if (seen == (uint8_t)((1U << DAJILOG_MOTOR_CHANNEL_COUNT) - 1U))
+                    atomic_store(&s_zero_retry_required, false);
+            } else {
+                atomic_fetch_and(&s_zero_readback_mask, (uint8_t)~bit);
+            }
+        }
         break;
     }
     case DAJILOG_MOONWALKER_INDEX_STATUS:
@@ -270,6 +293,8 @@ static void motor_observer(size_t index,
 static void motor_poll(void *context)
 {
     (void)context;
+    int64_t last_recovery_attempt_us = 0;
+    bool recovery_requested = false;
     static const struct {
         uint16_t index;
         dajilog_moonwalker_value_type_t type;
@@ -279,6 +304,61 @@ static void motor_poll(void *context)
     };
 
     for (;;) {
+        dajilog_can_status_t bus = {0};
+        if (dajilog_can_get_status(&bus) == ESP_OK &&
+            bus.state == DAJILOG_CAN_BUS_OFF) {
+            const int64_t now = esp_timer_get_time();
+            if (last_recovery_attempt_us == 0 ||
+                now - last_recovery_attempt_us >= 2000000) {
+                last_recovery_attempt_us = now;
+                ESP_LOGW(TAG,
+                         "CAN bus-off: recovery requested (tx_failed=%lu rx_missed=%lu errors=%lu)",
+                         (unsigned long)bus.tx_failed,
+                         (unsigned long)bus.rx_missed,
+                         (unsigned long)bus.bus_errors);
+                const esp_err_t recovery = dajilog_can_recover();
+                if (recovery == ESP_OK)
+                    recovery_requested = true;
+                else
+                    ESP_LOGW(TAG, "CAN recovery request failed: %s",
+                             esp_err_to_name(recovery));
+            }
+            vTaskDelay(pdMS_TO_TICKS(100));
+            continue;
+        }
+        if (bus.state == DAJILOG_CAN_RECOVERING) {
+            vTaskDelay(pdMS_TO_TICKS(100));
+            continue;
+        }
+        if (bus.state == DAJILOG_CAN_STOPPED) {
+            if (recovery_requested) {
+                const esp_err_t restart = dajilog_can_start();
+                if (restart == ESP_OK) {
+                    recovery_requested = false;
+                    ESP_LOGW(TAG, "CAN bus recovery complete; TWAI restarted; AUTO remains stopped");
+                } else {
+                    ESP_LOGW(TAG, "CAN restart after recovery failed: %s",
+                             esp_err_to_name(restart));
+                }
+            }
+            vTaskDelay(pdMS_TO_TICKS(100));
+            continue;
+        }
+        if (bus.state != DAJILOG_CAN_RUNNING) {
+            vTaskDelay(pdMS_TO_TICKS(100));
+            continue;
+        }
+        if (bus.state == DAJILOG_CAN_RUNNING &&
+            atomic_load(&s_zero_retry_required)) {
+            const int64_t now = esp_timer_get_time();
+            const int64_t last = atomic_load(&s_zero_retry_last_us);
+            if (now - last >= 1000000) {
+                atomic_store(&s_zero_retry_last_us, now);
+                ESP_LOGW(TAG, "STOP 0V readback pending; retrying zero request");
+                for (size_t channel = 0; channel < DAJILOG_MOTOR_CHANNEL_COUNT; ++channel)
+                    (void)write_channel_voltage(channel, 0U);
+            }
+        }
         for (size_t slot = 0; slot < DRIVER_COUNT; ++slot) {
             for (uint8_t sub = 1U; sub <= CHANNELS_PER_DRIVER; ++sub) {
                 for (size_t i = 0; i < sizeof(queries) / sizeof(queries[0]); ++i) {

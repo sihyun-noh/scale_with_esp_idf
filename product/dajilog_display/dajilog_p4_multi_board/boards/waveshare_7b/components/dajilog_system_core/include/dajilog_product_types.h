@@ -18,6 +18,43 @@ extern "C" {
 #define DAJILOG_PRODUCT_CATALOG_LIMIT 8U
 #define DAJILOG_PRODUCT_NAME_CAPACITY 64U
 
+/** @brief RUN 사전 점검의 고정 표시 순서. */
+typedef enum {
+    DAJILOG_RUN_CHECK_OPERATION = 0,
+    DAJILOG_RUN_CHECK_MOTOR_A,
+    DAJILOG_RUN_CHECK_MOTOR_B,
+    DAJILOG_RUN_CHECK_MOTOR_C,
+    DAJILOG_RUN_CHECK_MOTOR_D,
+    DAJILOG_RUN_CHECK_SPEED,
+    DAJILOG_RUN_CHECK_APPLIED,
+    DAJILOG_RUN_CHECK_PRODUCT,
+    DAJILOG_RUN_CHECK_TABLE_A,
+    DAJILOG_RUN_CHECK_TABLE_B,
+    DAJILOG_RUN_CHECK_TABLE_C,
+    DAJILOG_RUN_CHECK_TABLE_D,
+    DAJILOG_RUN_CHECK_FAULT,
+    DAJILOG_RUN_CHECK_COUNT,
+} dajilog_run_check_id_t;
+
+typedef enum {
+    DAJILOG_RUN_CHECK_PENDING = 0,
+    DAJILOG_RUN_CHECK_PASS = 1,
+    DAJILOG_RUN_CHECK_FAIL = 2,
+    DAJILOG_RUN_CHECK_NOT_APPLICABLE = 3,
+} dajilog_run_check_state_t;
+
+typedef struct {
+    dajilog_run_check_state_t state;
+    char reason[64];
+} dajilog_run_check_item_t;
+
+typedef struct {
+    bool all_ready;
+    bool auto_mode;
+    int64_t checked_at_us;
+    dajilog_run_check_item_t items[DAJILOG_RUN_CHECK_COUNT];
+} dajilog_run_readiness_t;
+
 typedef struct {
     char code[DAJILOG_PRODUCT_ID_CAPACITY];
     char name[DAJILOG_PRODUCT_NAME_CAPACITY];
@@ -258,11 +295,19 @@ typedef struct {
     bool can_online;
     dajilog_vehicle_snapshot_t vehicle;
     dajilog_motor_snapshot_t motors[DAJILOG_MOTOR_CHANNEL_COUNT];
+    float estimated_kg_min[2]; /* S1/S2: selected table + fresh 0x7A, not measured mass. */
+    float estimated_accum_kg[2]; /* RAM value preserved across STOP/RUN until reset. */
+    bool estimate_valid[2];
+    bool estimate_has_value[2];
     dajilog_driver_setting_t drivers[2];
     dajilog_alarm_severity_t alarm_severity;
     uint32_t alarm_code;
     char recipe_name[DAJILOG_RECIPE_NAME_CAPACITY];
     char alarm_text[DAJILOG_ALARM_TEXT_CAPACITY];
+    uint32_t auto_stop_notice_sequence;
+    uint32_t auto_stop_reason_code;
+    bool auto_stop_zero_confirmed;
+    char auto_stop_reason_text[DAJILOG_ALARM_TEXT_CAPACITY];
 } dajilog_dashboard_snapshot_t;
 
 typedef enum {
@@ -283,6 +328,7 @@ typedef enum {
     DAJILOG_UI_CMD_RIDGE_DELETE = 0x0702000FU,
     DAJILOG_UI_CMD_RIDGE_EDIT = 0x07020010U,
     DAJILOG_UI_CMD_RIDGE_SAVE = 0x07020011U,
+    DAJILOG_UI_CMD_ESTIMATE_RESET = 0x07020012U,
 } dajilog_ui_command_topic_t;
 
 typedef enum {
