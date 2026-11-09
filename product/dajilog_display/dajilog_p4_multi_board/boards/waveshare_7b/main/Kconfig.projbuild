@@ -47,7 +47,7 @@ menu "DAJILOG Configuration"
             bool "Load built-in product calibration CSV for inspection"
             default y
             help
-                Compile config/calibration/PRODUCT_CALIBRATION.csv into the
+                Compile config/data/PRODUCT_CALIBRATION.csv into the
                 firmware and make its full point rows visible to the 7B UI.
                 The CSV can be used for display and calculation. Unmeasured
                 points require an explicit AUTO test-output opt-in.

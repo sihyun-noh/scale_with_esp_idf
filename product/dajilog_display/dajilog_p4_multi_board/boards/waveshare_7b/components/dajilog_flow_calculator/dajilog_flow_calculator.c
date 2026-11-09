@@ -1,5 +1,6 @@
 /** @file 선택 Bxx·처방 제품량·기준속도·채널 배분의 미리보기 계산. */
 #include "dajilog_flow_calculator.h"
+#include "dajilog_calculation_policy.h"
 
 #include <math.h>
 #include <stddef.h>
@@ -53,11 +54,11 @@ dajilog_flow_calc_status_t dajilog_flow_calculate_preview(
     const dajilog_flow_calc_status_t width_status =
         selected_work_width(ridges, &width);
     if (width_status != DAJILOG_FLOW_CALC_OK) return width_status;
-    const double total = (double)zone->rate_kg_per_10a * width *
-                         zone->reference_speed_kmh / 60.0;
+    const double total = dajilog_calc_target_kg_min(
+        zone->rate_kg_per_10a, width, zone->reference_speed_kmh);
     if (!isfinite(total) || total <= 0.0 || total > 1000.0)
         return DAJILOG_FLOW_CALC_OUT_OF_RANGE;
-    const uint32_t total_g_min = (uint32_t)llround(total * 1000.0);
+    const uint32_t total_g_min = (uint32_t)llround(total * DAJILOG_CALC_GRAMS_PER_KG);
     const uint32_t first = (uint32_t)(
         ((uint64_t)total_g_min * zone->first_channel_permille + 500U) / 1000U);
     output->work_width_m = width;

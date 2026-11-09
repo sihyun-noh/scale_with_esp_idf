@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "dajilog_product_catalog.h"
+#include "dajilog_calculation_policy.h"
 
 /** @brief 입력 모드별 필수 필드가 있는지 확인한다. */
 static bool has_required_fields(const dajilog_prescription_settings_t *value)
@@ -57,9 +58,10 @@ dajilog_prescription_calc_status_t dajilog_prescription_calculate_product_rates(
             !isfinite(subsurface_pct) || subsurface_pct <= 0.0f || subsurface_pct > 100.0f)
             return DAJILOG_PRESCRIPTION_CALC_INVALID_VALUE;
 
-        surface = nitrogen * (ratio / 100.0f) / (surface_pct / 100.0f);
-        subsurface = nitrogen * ((100.0f - ratio) / 100.0f) /
-                     (subsurface_pct / 100.0f);
+        const double surface_n = nitrogen * (ratio / DAJILOG_CALC_PERCENT_BASE);
+        const double subsurface_n = nitrogen - surface_n;
+        surface = (float)dajilog_calc_product_rate(surface_n, surface_pct);
+        subsurface = (float)dajilog_calc_product_rate(subsurface_n, subsurface_pct);
     } else {
         surface = prescription->surface_product_rate_kg_per_10a;
         subsurface = prescription->subsurface_product_rate_kg_per_10a;

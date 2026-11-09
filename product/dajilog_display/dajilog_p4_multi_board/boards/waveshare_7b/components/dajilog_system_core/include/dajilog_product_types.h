@@ -145,11 +145,10 @@ typedef struct {
     uint8_t reserved[2];
 } dajilog_ridge_profile_input_t;
 
-/** @brief Change only the dimensions of one registered Bxx draft. */
+/** @brief Change only the width of one registered Bxx draft. */
 typedef struct {
     uint32_t id;
     float width_m;
-    float length_m;
 } dajilog_ridge_profile_edit_t;
 
 typedef struct {

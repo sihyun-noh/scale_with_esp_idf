@@ -13,6 +13,7 @@ idf_component_register(
         "."
         "eez/ui"
         "eez/ui/compat"
+        "${CMAKE_CURRENT_LIST_DIR}/../../config/calculation"
     REQUIRES
         dajilog_ui_adaptor
         dajilog_ui_bridge

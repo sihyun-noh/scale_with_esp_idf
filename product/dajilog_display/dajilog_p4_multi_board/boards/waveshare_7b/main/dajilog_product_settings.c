@@ -435,7 +435,8 @@ static bool ridge_profile_valid(const dajilog_ridge_profile_input_t *input)
                input->north_length_m <= 100000.0f &&
                input->south_length_m <= 100000.0f;
     }
-    return isfinite(input->whole_length_m) && input->whole_length_m > 0.0f &&
+    /* A newly registered Bxx may have no length until RidgeSetup saves it. */
+    return isfinite(input->whole_length_m) && input->whole_length_m >= 0.0f &&
            input->whole_length_m <= 100000.0f;
 }
 
@@ -803,7 +804,7 @@ esp_err_t dajilog_product_settings_save_ridge_profiles(void)
         &profiles, sizeof(profiles));
 }
 
-/** @brief [두둑 카드·새 두둑 추가] 빈 B번호에 폭·길이 Profile을 RAM에 등록한다. */
+/** @brief [두둑 카드·새 두둑 추가] 빈 B번호에 폭만 등록하고 길이는 이후 설정한다. */
 esp_err_t dajilog_product_settings_add_ridge_profile(
     const dajilog_ridge_profile_input_t *input)
 {
@@ -841,25 +842,18 @@ esp_err_t dajilog_product_settings_add_ridge_profile(
     return ESP_OK;
 }
 
-/** @brief [두둑 카드·두둑 변경] 선택 Bxx의 폭·실제 길이만 RAM에서 수정한다. */
+/** @brief [두둑 카드·두둑 변경] 선택 Bxx의 폭만 수정하고 구간 길이는 유지한다. */
 esp_err_t dajilog_product_settings_edit_ridge_profile(
     const dajilog_ridge_profile_edit_t *edit)
 {
     if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
     if (edit == NULL || edit->id == 0U || !isfinite(edit->width_m) ||
-        edit->width_m <= 0.0f || edit->width_m > 100.0f ||
-        !isfinite(edit->length_m) || edit->length_m <= 0.0f ||
-        edit->length_m > 100000.0f) return ESP_ERR_INVALID_ARG;
+        edit->width_m <= 0.0f || edit->width_m > 100.0f) return ESP_ERR_INVALID_ARG;
     xSemaphoreTake(s_lock, portMAX_DELAY);
     for (uint32_t i = 0; i < s_ridge_profiles.count; ++i) {
         if (s_ridge_profiles.profiles[i].id != edit->id) continue;
         dajilog_ridge_profile_input_t *input = &s_ridge_profiles.profiles[i].input;
-        if (input->split_section != 0U) {
-            xSemaphoreGive(s_lock);
-            return ESP_ERR_NOT_SUPPORTED;
-        }
         input->width_m = edit->width_m;
-        input->whole_length_m = edit->length_m;
         s_dirty = true;
         ++s_draft_generation;
         xSemaphoreGive(s_lock);

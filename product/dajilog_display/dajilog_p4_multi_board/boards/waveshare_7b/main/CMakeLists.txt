@@ -4,7 +4,7 @@ idf_component_register(
          "dajilog_prescription_calculator.c"
          "dajilog_motor_control.c" "dajilog_speed_sensor.c"
          "dajilog_product_catalog.c"
-    INCLUDE_DIRS "." "${CMAKE_CURRENT_BINARY_DIR}"
+    INCLUDE_DIRS "." "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_LIST_DIR}/../config/calculation"
     PRIV_REQUIRES dajilog_product_start dajilog_system_core
                   dajilog_calibration_catalog dajilog_flow_calculator
                   dajilog_ridge_preview
@@ -16,7 +16,7 @@ idf_component_register(
 
 # Compile the checked-in CSV into a read-only catalog. Import from USB is a
 # separate future feature; CSV edits currently require a rebuild.
-set(PRODUCT_CSV "${CMAKE_CURRENT_LIST_DIR}/../config/examples/PRODUCT_CATALOG_TEMPLATE.csv")
+set(PRODUCT_CSV "${CMAKE_CURRENT_LIST_DIR}/../config/data/PRODUCT_CATALOG.csv")
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${PRODUCT_CSV}")
 file(STRINGS "${PRODUCT_CSV}" PRODUCT_CSV_LINES ENCODING UTF-8)
 list(POP_FRONT PRODUCT_CSV_LINES PRODUCT_CSV_HEADER)

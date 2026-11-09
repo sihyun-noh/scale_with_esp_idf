@@ -21,6 +21,7 @@
 #include "dajilog_calibration_catalog.h"
 #include "dajilog_ridge_preview.h"
 #include "dajilog_flow_calculator.h"
+#include "dajilog_calculation_policy.h"
 #include "dajilog_ui_adaptor.h"
 #include "dajilog_ui_msg.h"
 #include "esp_log.h"
@@ -89,10 +90,15 @@ int64_t s_run_deadline = 0;
 uint32_t s_run_request_sequence = 0U;
 char s_draft_mode_text[24] = {};
 char s_countdown_text[16] = {};
-char s_setting_text[FLOW_GLOBAL_VARIABLE_RUN_READINESS_FAULT_REASON_TEXT + 1U][96] = {};
+char s_setting_text[FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_PRODUCT_RATE_STATUS_TEXT + 1U][96] = {};
 char s_calibration_list_text[2048] = {};
 dajilog_product_catalog_t s_product_catalog = {};
 int s_last_product_index[DAJILOG_SETTING_ZONE_COUNT] = {-1, -1};
+char s_product_rate_preview_inputs[192] = {};
+char s_direct_surface_product_rate[32] = {};
+char s_direct_subsurface_product_rate[32] = {};
+bool s_product_rate_preview_direct = false;
+
 bool s_ridge_screen_was_active = false;
 bool s_ridge_form_was_visible = false;
 char s_ridge_preview_inputs[256] = {};
@@ -123,6 +129,7 @@ void render_setting_views(bool include_detail = true);
 void render_calibration_selection(void);
 void render_ridge_profiles(bool load_fields);
 void render_ridge_preview();
+void refresh_recipe_product_rate_preview();
 bool render_run_readiness();
 void set_string(uint32_t variable, char *storage, size_t storage_size,
                 uint32_t string_id, const char *value);
@@ -188,7 +195,7 @@ void render_application_estimate(const dajilog_dashboard_snapshot_t &snapshot)
             width > 0.0 && length > 0.0 &&
             std::isfinite(settings.rate_kg_per_10a) && settings.rate_kg_per_10a > 0.0f;
         const double preparation = plan_valid
-            ? settings.rate_kg_per_10a * width * length / 1000.0 : 0.0;
+            ? dajilog_calc_preparation_kg(settings.rate_kg_per_10a, width, length) : 0.0;
         char value[32];
         if (plan_valid) std::snprintf(value, sizeof(value), "%.2f", preparation);
         setting_text(preparation_vars[zone], plan_valid ? value : "--");
@@ -695,7 +702,7 @@ void render_setting_views(bool include_detail)
                 zone.configured && std::isfinite(zone.rate_kg_per_10a) &&
                 zone.rate_kg_per_10a > 0.0f) {
                 const double preparation =
-                    static_cast<double>(zone.rate_kg_per_10a) * width * length / 1000.0;
+                    dajilog_calc_preparation_kg(zone.rate_kg_per_10a, width, length);
                 std::snprintf(value, sizeof(value), "%.2f", preparation);
                 setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_PREPARATION_KG_TEXT, value);
             }
@@ -1556,15 +1563,38 @@ void render_ridge_preview()
     } else {
         setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_RESULT_TOTAL_AREA_TEXT, "--");
     }
-    setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_RESULT_SURFACE_PREPARATION_TEXT, "--");
-    setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_RESULT_SUBSURFACE_PREPARATION_TEXT, "--");
-    setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_RESULT_SURFACE_FLOW_TEXT, "--");
-    setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_RESULT_SUBSURFACE_FLOW_TEXT, "--");
+    /* D-008: Only a saved prescription and product selection may supply rates.
+     * The edited ridge area is a Draft preview; this path never applies settings. */
+    dajilog_product_settings_snapshot_t saved = {};
+    const bool saved_ok = dajilog_system_core_get_settings_saved(&saved) == ESP_OK &&
+                          saved.saved_revision != 0U;
+    const uint32_t preparation_vars[DAJILOG_SETTING_ZONE_COUNT] = {
+        FLOW_GLOBAL_VARIABLE_RIDGE_RESULT_SURFACE_PREPARATION_TEXT,
+        FLOW_GLOBAL_VARIABLE_RIDGE_RESULT_SUBSURFACE_PREPARATION_TEXT,
+    };
+    bool rates_valid = saved_ok;
+    for (size_t zone = 0; zone < DAJILOG_SETTING_ZONE_COUNT; ++zone) {
+        const auto &entry = saved.zones[zone];
+        const bool zone_valid = saved_ok && entry.configured &&
+            saved.selected_product_codes[zone][0] != '\0' &&
+            std::isfinite(entry.rate_kg_per_10a) && entry.rate_kg_per_10a > 0.0f;
+        rates_valid = rates_valid && zone_valid;
+        if (result.area_valid && zone_valid) {
+            const double kg = dajilog_calc_preparation_kg(
+                entry.rate_kg_per_10a, result.effective_width_m,
+                result.total_area_m2 / result.effective_width_m);
+            std::snprintf(value, sizeof(value), "%.2f", kg);
+            setting_text(preparation_vars[zone], value);
+        } else {
+            setting_text(preparation_vars[zone], "--");
+        }
+    }
     setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_RESULT_STATUS_TEXT,
                  error != ESP_OK ? "입력 형식 확인 필요"
                  : !result.width_valid ? "두둑 폭/고랑 폭 입력 필요"
                  : !result.area_valid ? (split ? "북·남 길이 입력 필요" : "전체 길이 입력 필요")
-                 : "선택 두둑 면적 미리보기");
+                 : !rates_valid ? "설정값 없음 · 처방과 비료를 저장하세요"
+                 : "저장된 처방 기준 준비량 · 두둑 Draft 미리보기");
 }
 
 /** @brief [RidgeSetup 두둑 선택] 선택 Bxx의 폭·길이·고랑·구간 설정을 화면에 복원한다. */
@@ -1600,7 +1630,7 @@ void render_ridge_profiles(bool load_fields)
                  input.work_width_mode == DAJILOG_WORK_WIDTH_RIDGE_AND_FURROW ? value : "");
     std::snprintf(value, sizeof(value), "%.2f", static_cast<double>(input.whole_length_m));
     setting_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_ACTUAL_LENGTH_M_TEXT,
-                 input.split_section ? "" : value);
+                 input.split_section || input.whole_length_m <= 0.0f ? "" : value);
     std::snprintf(value, sizeof(value), "%.2f", static_cast<double>(input.north_length_m));
     setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_NORTH_LENGTH_M_TEXT,
                  input.split_section ? value : "");
@@ -1621,7 +1651,7 @@ void render_ridge_profiles(bool load_fields)
     render_ridge_preview();
 }
 
-/** @brief [RidgeSetup 추가·변경 팝업] 자동 Bxx 번호와 현재 폭·길이를 입력칸에 채운다. */
+/** @brief [RidgeSetup 추가·변경 팝업] 자동 Bxx 번호와 현재 폭을 입력칸에 채운다. */
 void prepare_ridge_form()
 {
     const bool visible = eez::flow::getGlobalVariable(
@@ -1648,17 +1678,12 @@ void prepare_ridge_form()
     if (selected != nullptr) {
         std::snprintf(value, sizeof(value), "%.2f", static_cast<double>(selected->width_m));
         lv_textarea_set_text(objects.ridge_form_width_input, value);
-        const float length = selected->split_section
-            ? selected->north_length_m + selected->south_length_m : selected->whole_length_m;
-        std::snprintf(value, sizeof(value), "%.2f", static_cast<double>(length));
-        lv_textarea_set_text(objects.ridge_form_length_input, value);
     } else {
         lv_textarea_set_text(objects.ridge_form_width_input, "");
-        lv_textarea_set_text(objects.ridge_form_length_input, "");
     }
 }
 
-/** @brief [RidgeSetup 새 두둑 추가] 폭·실제 길이만 보내 RAM 목록에 새 Bxx를 만든다. */
+/** @brief [RidgeSetup 새 두둑 추가] 폭만 등록하고 길이는 본 화면에서 설정한다. */
 void ridge_add_request()
 {
     if (s_ridge_request_sequence != 0U) {
@@ -1682,12 +1707,10 @@ void ridge_add_request()
     }
     input.work_width_mode = DAJILOG_WORK_WIDTH_RIDGE_ONLY;
     const bool valid = parse_float(lv_textarea_get_text(objects.ridge_form_width_input),
-                                   &input.width_m) &&
-                       parse_float(lv_textarea_get_text(objects.ridge_form_length_input),
-                                   &input.whole_length_m);
+                                   &input.width_m);
     if (!valid) {
         setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
-                     "폭·길이 숫자를 확인하세요");
+                     "두둑 폭 숫자를 확인하세요");
         return;
     }
     dajilog_ui_msg_t command;
@@ -1709,7 +1732,7 @@ void ridge_add_request()
     }
 }
 
-/** @brief [RidgeSetup 두둑 변경] 선택 Bxx의 폭·실제 길이 변경을 요청한다. */
+/** @brief [RidgeSetup 두둑 변경] 선택 Bxx의 폭만 수정하고 길이는 유지한다. */
 void ridge_edit_request()
 {
     if (s_ridge_request_sequence != 0U) return;
@@ -1721,14 +1744,6 @@ void ridge_edit_request()
     }
     dajilog_ridge_profile_edit_t edit = {};
     edit.id = profiles.selected_id;
-    for (uint32_t i = 0; i < profiles.count; ++i) {
-        if (profiles.profiles[i].id == edit.id &&
-            profiles.profiles[i].input.split_section != 0U) {
-            setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
-                         "북·남 분할 두둑은 이 화면에서 변경할 수 없습니다");
-            return;
-        }
-    }
     char expected_id[24];
     std::snprintf(expected_id, sizeof(expected_id), "B%02lu",
                   static_cast<unsigned long>(edit.id));
@@ -1737,9 +1752,8 @@ void ridge_edit_request()
                      "두둑 ID는 변경할 수 없습니다");
         return;
     }
-    if (!parse_float(lv_textarea_get_text(objects.ridge_form_width_input), &edit.width_m) ||
-        !parse_float(lv_textarea_get_text(objects.ridge_form_length_input), &edit.length_m)) {
-        setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT, "폭·길이 숫자를 확인하세요");
+    if (!parse_float(lv_textarea_get_text(objects.ridge_form_width_input), &edit.width_m)) {
+        setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT, "두둑 폭 숫자를 확인하세요");
         return;
     }
     dajilog_ui_msg_t command;
@@ -1912,6 +1926,110 @@ esp_err_t stage_fertilizer_from_ui()
         ESP_LOGW(TAG, "fertilizer value is outside its schema range");
     }
     return error;
+}
+
+/** @brief [D-006 처방 카드] 질소 처방 Draft의 전층·지중 제품량을 즉시 표시한다. */
+void refresh_recipe_product_rate_preview()
+{
+    if (lv_screen_active() != objects.system_setting) return;
+    constexpr uint32_t surface_var =
+        FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SURFACE_PRODUCT_RATE_KG_PER_10A_TEXT;
+    constexpr uint32_t subsurface_var =
+        FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SUBSURFACE_PRODUCT_RATE_KG_PER_10A_TEXT;
+    constexpr uint32_t status_var = FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_PRODUCT_RATE_STATUS_TEXT;
+    const char *mode = get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_INPUT_MODE);
+    const bool direct = std::strcmp(mode, "DIRECT_PRODUCT") == 0;
+    if (direct) {
+        if (!s_product_rate_preview_direct) {
+            setting_text(surface_var, s_direct_surface_product_rate);
+            setting_text(subsurface_var, s_direct_subsurface_product_rate);
+        }
+        s_product_rate_preview_direct = true;
+        std::snprintf(s_direct_surface_product_rate, sizeof(s_direct_surface_product_rate),
+                      "%s", get_text(surface_var));
+        std::snprintf(s_direct_subsurface_product_rate, sizeof(s_direct_subsurface_product_rate),
+                      "%s", get_text(subsurface_var));
+        setting_text(status_var, "제품량 직접 입력 · 저장 전 Draft");
+        return;
+    }
+    if (s_product_rate_preview_direct) {
+        std::snprintf(s_direct_surface_product_rate, sizeof(s_direct_surface_product_rate),
+                      "%s", get_text(surface_var));
+        std::snprintf(s_direct_subsurface_product_rate, sizeof(s_direct_subsurface_product_rate),
+                      "%s", get_text(subsurface_var));
+    }
+    s_product_rate_preview_direct = false;
+    const char *nitrogen_text = get_text(
+        FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_NITROGEN_RATE_KG_N_PER_10A_TEXT);
+    const char *ratio_text = get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SURFACE_RATIO_PCT_TEXT);
+    const int surface_index = eez::flow::getGlobalVariable(
+        FLOW_GLOBAL_VARIABLE_SURFACE_PRODUCT_SELECTED_INDEX).getInt();
+    const int subsurface_index = eez::flow::getGlobalVariable(
+        FLOW_GLOBAL_VARIABLE_SUBSURFACE_PRODUCT_SELECTED_INDEX).getInt();
+    char inputs[sizeof(s_product_rate_preview_inputs)];
+    std::snprintf(inputs, sizeof(inputs), "%s|%s|%d|%d|%s",
+                  nitrogen_text, ratio_text, surface_index, subsurface_index, mode);
+    if (std::strcmp(inputs, s_product_rate_preview_inputs) == 0) return;
+    std::snprintf(s_product_rate_preview_inputs, sizeof(s_product_rate_preview_inputs),
+                  "%s", inputs);
+
+    const char *reason = nullptr;
+    float nitrogen = 0.0f;
+    float ratio = 0.0f;
+    if (std::strcmp(mode, "BY_NITROGEN") != 0) {
+        reason = "처방 입력 방식을 확인하세요";
+    } else if (nitrogen_text[0] == '\0') {
+        reason = "이번 작업 질소량을 입력하세요";
+    } else if (!parse_float(nitrogen_text, &nitrogen) ||
+               nitrogen < 0.0f || nitrogen > 1000.0f) {
+        reason = "질소량 범위를 확인하세요";
+    } else if (ratio_text[0] == '\0') {
+        reason = "전층 배분율을 입력하세요";
+    } else if (!parse_float(ratio_text, &ratio) || ratio < 0.0f || ratio > 100.0f) {
+        reason = "전층 배분율을 확인하세요";
+    } else if (surface_index <= 0 ||
+               surface_index > static_cast<int>(s_product_catalog.count)) {
+        reason = "전층 제품을 선택하세요";
+    } else if (subsurface_index <= 0 ||
+               subsurface_index > static_cast<int>(s_product_catalog.count)) {
+        reason = "지중 제품을 선택하세요";
+    } else if (s_product_catalog.products[surface_index - 1].nitrogen_percent <= 0.0f ||
+               s_product_catalog.products[subsurface_index - 1].nitrogen_percent <= 0.0f) {
+        reason = "제품 질소 함량을 확인하세요";
+    }
+    if (reason != nullptr) {
+        setting_text(surface_var, "");
+        setting_text(subsurface_var, "");
+        setting_text(status_var, reason);
+        return;
+    }
+
+    /* Product Settings Service가 같은 계산기로 구역 Draft를 도출한다. NVS는 쓰지 않는다. */
+    const esp_err_t stage_error = stage_fertilizer_from_ui();
+    dajilog_product_settings_snapshot_t draft = {};
+    if (stage_error != ESP_OK ||
+        dajilog_system_core_get_settings_draft(&draft) != ESP_OK) {
+        setting_text(surface_var, "");
+        setting_text(subsurface_var, "");
+        setting_text(status_var, "제품량 계산 실패 · 입력을 확인하세요");
+        return;
+    }
+    if (nitrogen > 0.0f &&
+        draft.zones[DAJILOG_SETTING_ZONE_SURFACE].rate_kg_per_10a == 0.0f &&
+        draft.zones[DAJILOG_SETTING_ZONE_SUBSURFACE].rate_kg_per_10a == 0.0f) {
+        setting_text(surface_var, "");
+        setting_text(subsurface_var, "");
+        setting_text(status_var, "제품량 계산 범위를 확인하세요");
+        return;
+    }
+    char value[32];
+    std::snprintf(value, sizeof(value), "%.2f",
+                  static_cast<double>(draft.zones[DAJILOG_SETTING_ZONE_SURFACE].rate_kg_per_10a));
+    setting_text(surface_var, value);
+    std::snprintf(value, sizeof(value), "%.2f",
+                  static_cast<double>(draft.zones[DAJILOG_SETTING_ZONE_SUBSURFACE].rate_kg_per_10a));
+    setting_text(subsurface_var, value);
+    setting_text(status_var, "자동 계산 · 저장 전 Draft");
 }
 
 /** @brief [SettingEdit 설정 카드] 선택 S1/S2 구역의 Draft를 편집 필드에 불러온다. */
@@ -2395,12 +2513,14 @@ esp_err_t render_current_recipe()
     RENDER_RECIPE_FLOAT(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SUBSURFACE_NITROGEN_PCT_TEXT,
                         DAJILOG_PRESCRIPTION_PRESENT_SUBSURFACE_N_PCT,
                         subsurface_fertilizer_nitrogen_pct);
+    if (settings.prescription.input_mode == DAJILOG_PRESCRIPTION_BY_PRODUCT_AMOUNT) {
     RENDER_RECIPE_FLOAT(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SURFACE_PRODUCT_RATE_KG_PER_10A_TEXT,
                         DAJILOG_PRESCRIPTION_PRESENT_SURFACE_PRODUCT,
                         surface_product_rate_kg_per_10a);
     RENDER_RECIPE_FLOAT(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SUBSURFACE_PRODUCT_RATE_KG_PER_10A_TEXT,
                         DAJILOG_PRESCRIPTION_PRESENT_SUBSURFACE_PRODUCT,
                         subsurface_product_rate_kg_per_10a);
+    }
 #undef RENDER_RECIPE_FLOAT
     if (settings.ridge.presence_mask & DAJILOG_RIDGE_PRESENT_FURROW_WIDTH) {
         std::snprintf(value, sizeof(value), "%g",
@@ -2425,6 +2545,12 @@ esp_err_t render_current_recipe()
                                  eez::BooleanValue(!direct));
     eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_DIRECT_SELECTED,
                                  eez::BooleanValue(direct));
+    s_product_rate_preview_inputs[0] = '\0';
+    s_product_rate_preview_direct = direct;
+    std::snprintf(s_direct_surface_product_rate, sizeof(s_direct_surface_product_rate),
+                  "%s", direct ? get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SURFACE_PRODUCT_RATE_KG_PER_10A_TEXT) : "");
+    std::snprintf(s_direct_subsurface_product_rate, sizeof(s_direct_subsurface_product_rate),
+                  "%s", direct ? get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_SUBSURFACE_PRODUCT_RATE_KG_PER_10A_TEXT) : "");
     render_ridge_profiles(true);
     return ESP_OK;
 }
@@ -2775,6 +2901,7 @@ extern "C" void eez_ui_binding_process(void)
         }
         refresh_ridge_preview_if_needed();
         refresh_selected_products();
+        refresh_recipe_product_rate_preview();
         if (s_ridge_request_sequence != 0U &&
             esp_timer_get_time() > s_ridge_request_deadline) {
             s_ridge_request_sequence = 0U;
