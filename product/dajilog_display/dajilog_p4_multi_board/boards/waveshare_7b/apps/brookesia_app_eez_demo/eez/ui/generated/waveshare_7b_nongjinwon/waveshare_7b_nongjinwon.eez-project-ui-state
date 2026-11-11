@@ -1,6 +1,6 @@
 {
   "navigation": {
-    "selectedUserPageObject": "[waveshare_7b_nongjinwon.eez-project]:/userPages/0",
+    "selectedUserPageObject": "[waveshare_7b_nongjinwon.eez-project]:/userPages/8",
     "selectedGlobalVariableObject": "[waveshare_7b_nongjinwon.eez-project]:/variables/globalVariables/217",
     "selectedFontObject": "[waveshare_7b_nongjinwon.eez-project]:/fonts/0",
     "selectedBitmapObject": "[waveshare_7b_nongjinwon.eez-project]:/bitmaps/1",
@@ -201,17 +201,16 @@
               "type": "tabset",
               "id": "EDITORS",
               "weight": 65,
-              "selected": 3,
               "enableDeleteWhenEmpty": false,
               "enableClose": false,
               "children": [
                 {
                   "type": "tab",
                   "id": "#ec474f71-6ba5-493b-963c-fc8673881fb0",
-                  "name": "RidgeSetup",
+                  "name": "SettingEdit",
                   "component": "editor",
                   "config": {
-                    "objectPath": "[waveshare_7b_nongjinwon.eez-project]:/userPages/11",
+                    "objectPath": "[waveshare_7b_nongjinwon.eez-project]:/userPages/8",
                     "permanent": false
                   },
                   "icon": "svg:page"
@@ -1127,10 +1126,10 @@
       "selectionBack": {},
       "transform": {
         "translate": {
-          "x": -936.9508602953715,
-          "y": -361.1077970057926
+          "x": -303.6039364672465,
+          "y": -316.4903043300113
         },
-        "scale": 1.1
+        "scale": 2
       },
       "timeline": {
         "isEditorActive": false,
@@ -1148,7 +1147,9 @@
           "14": {},
           "16": {},
           "17": {},
-          "23": {},
+          "23": {
+            "$selected": true
+          },
           "36": {},
           "37": {},
           "50": {},
@@ -1167,7 +1168,7 @@
           "x": -978.8780908827803,
           "y": -476.5481910322883
         },
-        "scale": 1.75
+        "scale": 1.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1203,7 +1204,7 @@
           "x": -319.99549808309564,
           "y": -289.82697164583317
         },
-        "scale": 1.1
+        "scale": 2
       },
       "timeline": {
         "isEditorActive": false,
@@ -1235,7 +1236,7 @@
           "x": -448.7241192041859,
           "y": -228.44965077481237
         },
-        "scale": 1.75
+        "scale": 1.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1256,7 +1257,7 @@
           "x": -579.5145835658482,
           "y": -239.34959499521463
         },
-        "scale": 1.1
+        "scale": 2
       },
       "timeline": {
         "isEditorActive": false,
@@ -1275,7 +1276,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1.75
+        "scale": 1.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1292,7 +1293,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1.1
+        "scale": 1.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1314,7 +1315,7 @@
           "x": -561.7871163856759,
           "y": -408.8559973423445
         },
-        "scale": 1.1
+        "scale": 1.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1336,10 +1337,10 @@
       },
       "transform": {
         "translate": {
-          "x": -447.15699795644036,
-          "y": -450.84872329472137
+          "x": -1072.8512372943399,
+          "y": -713.2946645922009
         },
-        "scale": 1.75
+        "scale": 2
       },
       "timeline": {
         "isEditorActive": false,
@@ -1358,7 +1359,7 @@
           "x": -392.6,
           "y": -355.4935064935065
         },
-        "scale": 1.75
+        "scale": 1.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1401,7 +1402,7 @@
           "x": -372.9367686631943,
           "y": -467.7817645703178
         },
-        "scale": 1.25
+        "scale": 1.5
       },
       "timeline": {
         "isEditorActive": false,
@@ -1418,7 +1419,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1
+        "scale": 1.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1435,7 +1436,7 @@
           "x": -512,
           "y": -300
         },
-        "scale": 1
+        "scale": 1.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1456,7 +1457,7 @@
           "x": -330.79046630859375,
           "y": -291.6412353515625
         },
-        "scale": 1.1
+        "scale": 1.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1480,7 +1481,7 @@
           "x": -519.2382065575932,
           "y": -425.93545707968804
         },
-        "scale": 1.1
+        "scale": 1.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1499,19 +1500,21 @@
             "19": {},
             "24": {
               "0": {}
-            }
+            },
+            "25": {}
           },
           "6": {},
+          "8": {},
           "10": {}
         },
         "9": {}
       },
       "transform": {
         "translate": {
-          "x": -708.5535678124705,
-          "y": -530.9187921655263
+          "x": -773.7517158084286,
+          "y": -892.3967534556472
         },
-        "scale": 1.1
+        "scale": 1.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1536,7 +1539,7 @@
           "x": -134.86379124214147,
           "y": -419.91897425796054
         },
-        "scale": 1.1
+        "scale": 1.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1563,7 +1566,7 @@
           "x": -591.2919637044267,
           "y": -259.5140876508124
         },
-        "scale": 1.1
+        "scale": 1.75
       },
       "timeline": {
         "isEditorActive": false,
@@ -1596,6 +1599,6 @@
   ],
   "showInactiveFlowsInDebugger": true,
   "globalFlowZoom": true,
-  "flowZoom": 1.1,
+  "flowZoom": 2,
   "implementationLanguage": "C"
 }

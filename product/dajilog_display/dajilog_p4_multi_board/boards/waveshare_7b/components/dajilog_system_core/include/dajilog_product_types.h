@@ -58,6 +58,7 @@ typedef struct {
 typedef struct {
     char code[DAJILOG_PRODUCT_ID_CAPACITY];
     char name[DAJILOG_PRODUCT_NAME_CAPACITY];
+    char lot[DAJILOG_LOT_ID_CAPACITY];
     float nitrogen_percent;
     bool enabled;
 } dajilog_product_entry_t;
@@ -206,6 +207,7 @@ typedef enum {
     DAJILOG_OPERATION_RUN_MANUAL,
     DAJILOG_OPERATION_STOPPING,
     DAJILOG_OPERATION_FAULT,
+    DAJILOG_OPERATION_WAIT_AUTO,
 } dajilog_operation_state_t;
 
 typedef enum {

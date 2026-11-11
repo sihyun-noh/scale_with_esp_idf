@@ -29,6 +29,7 @@
 
 #include "generated/waveshare_7b_nongjinwon/src/ui/eez-flow.h"
 #include "generated/waveshare_7b_nongjinwon/src/ui/screens.h"
+#include "generated/waveshare_7b_nongjinwon/src/ui/fonts.h"
 #include "generated/waveshare_7b_nongjinwon/src/ui/vars.h"
 
 namespace {
@@ -119,6 +120,29 @@ uint32_t s_setting_request_topic = 0U;
 uint32_t s_setting_pending_topic = 0U;
 int64_t s_setting_request_deadline = 0;
 char s_setting_status[96] = {};
+// D-010: SettingConfirm 뒤 SettingDetail에서 보여주는 비동기 처리 결과.
+enum class SettingResultPhase { Hidden, Pending, Success, Failure, Unknown };
+SettingResultPhase s_setting_result_phase = SettingResultPhase::Hidden;
+bool s_setting_result_active = false;
+lv_obj_t *s_setting_result_overlay = nullptr;
+lv_obj_t *s_setting_result_title = nullptr;
+lv_obj_t *s_setting_result_message = nullptr;
+lv_obj_t *s_setting_result_action = nullptr;
+lv_obj_t *s_setting_result_action_label = nullptr;
+lv_obj_t *s_setting_result_close = nullptr;
+int64_t s_setting_result_close_at = 0;
+uint32_t s_setting_retry_topic = 0U;
+uint32_t s_setting_saved_before = 0U;
+uint32_t s_setting_applied_before = 0U;
+bool s_recipe_save_notice_pending = false;
+char s_ridge_save_notice_detail[384] = {};
+char s_recipe_save_notice_detail[384] = {};
+char s_driver_apply_notice_detail[384] = {};
+dajilog_driver_setting_t s_driver_apply_submitted = {};
+char s_action_result_state[16] = {};
+char s_action_result_title[80] = {};
+char s_action_result_message[192] = {};
+char s_action_result_detail[512] = {};
 void end_test();
 void select_driver(size_t driver);
 void detail_close_event(lv_event_t *event);
@@ -130,6 +154,9 @@ void render_calibration_selection(void);
 void render_ridge_profiles(bool load_fields);
 void render_ridge_preview();
 void refresh_recipe_product_rate_preview();
+esp_err_t submit_setting_command(uint32_t topic);
+void show_setting_result(SettingResultPhase phase, const char *title,
+                         const char *message);
 bool render_run_readiness();
 void set_string(uint32_t variable, char *storage, size_t storage_size,
                 uint32_t string_id, const char *value);
@@ -211,6 +238,7 @@ void render_application_estimate(const dajilog_dashboard_snapshot_t &snapshot)
         } else setting_text(progress_vars[zone], "--");
         const char *state = snapshot.operation_state == DAJILOG_OPERATION_RUN_AUTO
             ? snapshot.estimate_valid[zone] ? "표 기준 추정" : "산출 불가"
+            : snapshot.operation_state == DAJILOG_OPERATION_WAIT_AUTO ? "출발 대기 · 0V"
             : snapshot.estimate_has_value[zone] ? "정지" : "대기";
         setting_text(state_vars[zone], state);
         if (zone != static_cast<size_t>(s_selected_zone)) continue;
@@ -278,6 +306,7 @@ const char *operation_text(dajilog_operation_state_t state)
     case DAJILOG_OPERATION_RUN_MANUAL: return "수동 운전";
     case DAJILOG_OPERATION_STOPPING: return "정지 중";
     case DAJILOG_OPERATION_FAULT: return "오류";
+    case DAJILOG_OPERATION_WAIT_AUTO: return "출발 대기";
     default: return "부팅";
     }
 }
@@ -488,7 +517,9 @@ void render_dashboard(const dajilog_dashboard_snapshot_t &snapshot)
                    !a.online || !b.online ? "통신 오류" :
                    a.error_code || b.error_code ? "출력 오류" :
                    !a.measured_voltage_valid || !b.measured_voltage_valid ? "피드백 없음" :
-                   snapshot.operation_state == DAJILOG_OPERATION_READY ? "정지" : "출력 중");
+                   snapshot.operation_state == DAJILOG_OPERATION_READY ? "정지" :
+                   snapshot.operation_state == DAJILOG_OPERATION_WAIT_AUTO ? "출발 대기 · 0V" :
+                   "출력 중");
     }
     render_application_estimate(snapshot);
     render_detail_voltage();
@@ -512,11 +543,13 @@ CalibrationPreview calculate_calibration_preview(
     if (zone_index >= DAJILOG_SETTING_ZONE_COUNT ||
         dajilog_system_core_get_ridge_profiles(&ridges) != ESP_OK) return preview;
     dajilog_flow_target_t flow = {};
-    if (dajilog_flow_calculate_preview(&ridges, &settings.zones[zone_index], &flow) !=
-        DAJILOG_FLOW_CALC_OK) return preview;
-    preview.total_kg_min = flow.total_kg_min;
-    preview.target_g_min[0] = flow.channel_target_g_min[0];
-    preview.target_g_min[1] = flow.channel_target_g_min[1];
+    const bool flow_valid = dajilog_flow_calculate_preview(
+        &ridges, &settings.zones[zone_index], &flow) == DAJILOG_FLOW_CALC_OK;
+    if (flow_valid) {
+        preview.total_kg_min = flow.total_kg_min;
+        preview.target_g_min[0] = flow.channel_target_g_min[0];
+        preview.target_g_min[1] = flow.channel_target_g_min[1];
+    }
     const char *product = settings.selected_product_codes[zone_index];
     if (product[0] == '\0') return preview;
     for (size_t i = 0; i < 2U; ++i) {
@@ -533,7 +566,7 @@ CalibrationPreview calculate_calibration_preview(
                        channel, product, "", &table, 1U) == 0U ||
                    !table.approved) continue;
         preview.table_found[i] = true;
-        preview.in_range[i] = dajilog_calibration_catalog_preview_voltage(
+        preview.in_range[i] = flow_valid && dajilog_calibration_catalog_preview_voltage(
             channel, table.table_id, table.revision, preview.target_g_min[i],
             &preview.voltage_decivolt[i], &preview.expected_g_min[i]) == ESP_OK;
     }
@@ -550,6 +583,9 @@ void render_setting_views(bool include_detail)
         dajilog_system_core_get_settings_applied(&applied) == ESP_OK;
     dajilog_dashboard_snapshot_t live = {};
     const bool has_live = dajilog_system_core_get_snapshot(&live) == ESP_OK;
+    const bool stopped_at_zero = has_live && live.vehicle.online &&
+        !live.vehicle.reverse && live.vehicle.speed_kmh >= 0.0f &&
+        live.vehicle.speed_kmh < 0.5f;
     const uint32_t name_vars[2] = {
         FLOW_GLOBAL_VARIABLE_SURFACE_SETTING_NAME_TEXT,
         FLOW_GLOBAL_VARIABLE_SUBSURFACE_SETTING_NAME_TEXT,
@@ -599,8 +635,13 @@ void render_setting_views(bool include_detail)
                                     live.motors[i * 2U + 1U].target_kg_min));
             setting_text(target_vars[i], label);
         }
+        if (stopped_at_zero && active && live.drivers[i].mode == 1) {
+            std::snprintf(label, sizeof(label), "0.000");
+            setting_text(target_vars[i], label);
+        }
         setting_text(table_vars[i], preview.table_found[0] && preview.table_found[1]
-                                       ? "계산용 표 연결" : "배출량표 없음");
+                                       ? (stopped_at_zero ? "정차 · 표 연결" : "계산용 표 연결")
+                                       : "배출량표 없음");
         setting_text(i == 0 ? FLOW_GLOBAL_VARIABLE_SETTING_1_STATE_TEXT :
                               FLOW_GLOBAL_VARIABLE_SETTING_2_STATE_TEXT, state);
         setting_text(i == 0 ? FLOW_GLOBAL_VARIABLE_SETTING_1_NAME_TEXT :
@@ -609,15 +650,21 @@ void render_setting_views(bool include_detail)
         setting_text(i == 0 ? FLOW_GLOBAL_VARIABLE_SETTING_1_TARGET_KG_MIN_TEXT :
                               FLOW_GLOBAL_VARIABLE_SETTING_2_TARGET_KG_MIN_TEXT,
                      (has_live && live.operation_state == DAJILOG_OPERATION_RUN_AUTO &&
-                      live.drivers[i].mode == 1) || preview.total_kg_min > 0.0
+                      live.drivers[i].mode == 1) ||
+                     (stopped_at_zero && active && live.drivers[i].mode == 1) ||
+                     preview.total_kg_min > 0.0
                          ? label : "--");
     }
 
     if (!include_detail) return;
 
     const size_t selected = static_cast<size_t>(s_selected_zone);
-    const auto &zone = has_applied && applied.zones[selected].configured
-                           ? applied.zones[selected] : draft.zones[selected];
+    /* 작업 전 확인은 다음 운전을 위해 편집·저장 중인 설정의 미리보기다.
+     * Dashboard와 실제 AUTO 출력은 별도의 Applied Snapshot을 계속 사용한다. */
+    const auto &zone = draft.zones[selected];
+    const bool detail_is_applied = has_applied && !draft.dirty &&
+        draft.saved_revision != 0U &&
+        draft.saved_revision == draft.applied_revision;
     char value[96];
     const bool editable = [&] {
         dajilog_dashboard_snapshot_t snapshot = {};
@@ -637,16 +684,25 @@ void render_setting_views(bool include_detail)
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_NAME_TEXT,
                  zone.name[0] ? zone.name : "미설정");
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_APPLY_STATE_TEXT,
-                 has_applied && applied.zones[selected].configured ? "적용됨" :
+                 detail_is_applied ? "적용됨" :
                  zone.configured && zone.rate_kg_per_10a <= 0.0f ? "처방 계산 대기" :
+                 zone.configured && draft.dirty ? "편집 중 · 미적용" :
+                 zone.configured && draft.saved_revision != 0U ? "저장됨 · 미적용" :
                  zone.configured ? "저장/적용 대기" :
                  zone.name[0] ? "입력 미완료" : "미설정");
-    setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_PRODUCT_TEXT,
-                 zone.product[0] ? zone.product : "미설정");
+    // 설정 상세는 제품 코드를 보관하되 화면에는 카탈로그의 실제 제품명을 표시한다.
+    const char *product_name = zone.product[0] ? zone.product : "미설정";
+    const char *product_code = draft.selected_product_codes[selected];
+    for (uint32_t i = 0; i < s_product_catalog.count; ++i) {
+        if (std::strcmp(s_product_catalog.products[i].code, product_code) == 0) {
+            product_name = s_product_catalog.products[i].name;
+            break;
+        }
+    }
+    setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_PRODUCT_TEXT, product_name);
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_LOT_TEXT,
                  zone.lot[0] ? zone.lot : "--");
-    std::snprintf(value, sizeof(value), "%s%s%s",
-                  zone.product[0] ? zone.product : "미설정",
+    std::snprintf(value, sizeof(value), "%s%s%s", product_name,
                   zone.lot[0] ? " / " : "", zone.lot);
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_PRODUCT_LOT_TEXT, value);
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_DRIVER_TEXT,
@@ -661,7 +717,8 @@ void render_setting_views(bool include_detail)
     std::snprintf(value, sizeof(value), "%.1f kg/10a",
                   static_cast<double>(zone.rate_kg_per_10a));
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_PRESCRIPTION_TEXT,
-                 zone.configured && zone.rate_kg_per_10a > 0.0f ? value : "--");
+                 std::isfinite(zone.rate_kg_per_10a) &&
+                 zone.rate_kg_per_10a > 0.0f ? value : "--");
     std::snprintf(value, sizeof(value), "%.1f km/h",
                   static_cast<double>(zone.reference_speed_kmh));
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_DETAIL_SPEED_TEXT,
@@ -699,7 +756,7 @@ void render_setting_views(bool include_detail)
             }
             if (std::isfinite(width) && width > 0.0 &&
                 std::isfinite(length) && length > 0.0 &&
-                zone.configured && std::isfinite(zone.rate_kg_per_10a) &&
+                std::isfinite(zone.rate_kg_per_10a) &&
                 zone.rate_kg_per_10a > 0.0f) {
                 const double preparation =
                     dajilog_calc_preparation_kg(zone.rate_kg_per_10a, width, length);
@@ -904,8 +961,12 @@ void render_setting_views(bool include_detail)
         objects.setting_edit_save_button,
     };
     for (lv_obj_t *control : edit_controls) {
-        if (control && lv_obj_has_state(control, LV_STATE_DISABLED) == editable)
-            (editable ? lv_obj_remove_state : lv_obj_add_state)(
+        const bool read_only_catalog_field =
+            control == objects.setting_edit_product_button ||
+            control == objects.setting_edit_lot_button;
+        const bool enable = editable && !read_only_catalog_field;
+        if (control && lv_obj_has_state(control, LV_STATE_DISABLED) == enable)
+            (enable ? lv_obj_remove_state : lv_obj_add_state)(
                 control, LV_STATE_DISABLED);
     }
     if (objects.setting_edit_prescription_button)
@@ -920,6 +981,216 @@ void render_latest_dashboard()
     dajilog_dashboard_snapshot_t snapshot = {};
     if (dajilog_system_core_get_snapshot(&snapshot) == ESP_OK) {
         render_dashboard(snapshot);
+    }
+}
+
+/** @brief Display the acknowledged outcome; a submit or timeout never implies success. */
+void show_action_result(const char *state, const char *title,
+                        const char *message, const char *detail)
+{
+    set_string(FLOW_GLOBAL_VARIABLE_ACTION_RESULT_STATE, s_action_result_state,
+               sizeof(s_action_result_state), 0x0701a001U, state);
+    set_string(FLOW_GLOBAL_VARIABLE_ACTION_RESULT_TITLE_TEXT, s_action_result_title,
+               sizeof(s_action_result_title), 0x0701a002U, title);
+    set_string(FLOW_GLOBAL_VARIABLE_ACTION_RESULT_MESSAGE_TEXT, s_action_result_message,
+               sizeof(s_action_result_message), 0x0701a003U, message);
+    set_string(FLOW_GLOBAL_VARIABLE_ACTION_RESULT_DETAIL_TEXT, s_action_result_detail,
+               sizeof(s_action_result_detail), 0x0701a004U, detail ? detail : "");
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_ACTION_RESULT_VISIBLE,
+                                 eez::BooleanValue(true));
+}
+
+/** @brief [D-010 설정 카드] 실제 저장/적용 결과를 상세 화면에 표시한다. */
+void show_setting_result(SettingResultPhase phase, const char *title,
+                         const char *message)
+{
+    if (!s_setting_result_active && phase != SettingResultPhase::Hidden) return;
+    s_setting_result_phase = phase;
+    s_setting_result_close_at = phase == SettingResultPhase::Success
+        ? esp_timer_get_time() + 3000000 : 0;
+    if (!s_setting_result_overlay) return;
+    if (phase == SettingResultPhase::Hidden) {
+        lv_obj_add_flag(s_setting_result_overlay, LV_OBJ_FLAG_HIDDEN);
+        return;
+    }
+    lv_label_set_text(s_setting_result_title, title);
+    lv_label_set_text(s_setting_result_message, message);
+    lv_obj_set_style_text_color(s_setting_result_title,
+        lv_color_hex(phase == SettingResultPhase::Success ? 0x3fc88b :
+                     phase == SettingResultPhase::Pending ? 0xf4bb45 : 0xef7777), 0);
+    if (phase == SettingResultPhase::Failure || phase == SettingResultPhase::Unknown) {
+        lv_obj_remove_flag(s_setting_result_action, LV_OBJ_FLAG_HIDDEN);
+        lv_label_set_text(s_setting_result_action_label,
+            phase == SettingResultPhase::Failure ? "다시 시도" : "상태 확인");
+    } else lv_obj_add_flag(s_setting_result_action, LV_OBJ_FLAG_HIDDEN);
+    if (phase == SettingResultPhase::Pending)
+        lv_obj_add_flag(s_setting_result_close, LV_OBJ_FLAG_HIDDEN);
+    else lv_obj_remove_flag(s_setting_result_close, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_remove_flag(s_setting_result_overlay, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_move_foreground(s_setting_result_overlay);
+}
+
+void setting_result_close_event(lv_event_t *event)
+{
+    if (lv_event_get_code(event) == LV_EVENT_PRESSED &&
+        s_setting_result_phase != SettingResultPhase::Pending)
+    {
+        show_setting_result(SettingResultPhase::Hidden, "", "");
+        s_setting_result_active = false;
+    }
+}
+
+void setting_result_action_event(lv_event_t *event)
+{
+    if (lv_event_get_code(event) != LV_EVENT_PRESSED) return;
+    if (s_setting_result_phase == SettingResultPhase::Failure &&
+        s_setting_request_sequence == 0U && s_setting_retry_topic != 0U) {
+        const bool apply = s_setting_retry_topic == DAJILOG_UI_CMD_SETTINGS_CONFIRM;
+        if (submit_setting_command(s_setting_retry_topic) == ESP_OK)
+            show_setting_result(SettingResultPhase::Pending,
+                apply ? "운전 설정 적용 중" : "설정 저장 중",
+                "처리 결과를 확인하고 있습니다.");
+        else show_setting_result(SettingResultPhase::Failure, "요청 전달 실패",
+                                 "요청을 보내지 못했습니다. 다시 시도하세요.");
+    } else if (s_setting_result_phase == SettingResultPhase::Unknown) {
+        dajilog_product_settings_snapshot_t draft = {};
+        const bool read_ok = dajilog_system_core_get_settings_draft(&draft) == ESP_OK;
+        const bool apply = s_setting_retry_topic == DAJILOG_UI_CMD_SETTINGS_CONFIRM;
+        const bool advanced = read_ok && (apply
+            ? draft.applied_revision > s_setting_applied_before
+            : draft.saved_revision > s_setting_saved_before);
+        if (advanced)
+            show_setting_result(SettingResultPhase::Success,
+                apply ? "운전 적용 확인" : "설정 저장 확인",
+                apply ? "적용 상태가 갱신됐습니다." : "저장 상태가 갱신됐습니다.");
+        else show_setting_result(SettingResultPhase::Unknown, "결과 확인 필요",
+            "상태가 갱신되지 않았거나 조회할 수 없습니다.\n설정 상태를 다시 확인하세요.");
+    }
+}
+
+/** @brief [D-010 설정 카드] EEZ 확인 화면 뒤에 보일 상세 결과 레이어 생성. */
+void create_setting_result_overlay()
+{
+    if (s_setting_result_overlay) return;
+    lv_obj_t *overlay = lv_obj_create(objects.setting_detail);
+    s_setting_result_overlay = overlay;
+    lv_obj_set_size(overlay, LV_PCT(100), LV_PCT(100));
+    lv_obj_align(overlay, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_bg_color(overlay, lv_color_hex(0x03090f), 0);
+    lv_obj_set_style_bg_opa(overlay, LV_OPA_80, 0);
+    lv_obj_set_style_border_width(overlay, 0, 0);
+    lv_obj_add_flag(overlay, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_t *panel = lv_obj_create(overlay);
+    lv_obj_set_size(panel, 620, 330);
+    lv_obj_align(panel, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_bg_color(panel, lv_color_hex(0x111c27), 0);
+    lv_obj_set_style_border_color(panel, lv_color_hex(0x34495c), 0);
+    s_setting_result_title = lv_label_create(panel);
+    lv_obj_set_width(s_setting_result_title, 560);
+    lv_obj_align(s_setting_result_title, LV_ALIGN_TOP_MID, 0, 24);
+    lv_obj_set_style_text_font(s_setting_result_title, &ui_font_maru_buri_regular_kr28, 0);
+    lv_obj_set_style_text_align(s_setting_result_title, LV_TEXT_ALIGN_CENTER, 0);
+    s_setting_result_message = lv_label_create(panel);
+    lv_obj_set_width(s_setting_result_message, 550);
+    lv_obj_align(s_setting_result_message, LV_ALIGN_TOP_MID, 0, 100);
+    lv_obj_set_style_text_font(s_setting_result_message, &ui_font_maru_buri_regular_kr20, 0);
+    lv_obj_set_style_text_color(s_setting_result_message, lv_color_hex(0xe5edf2), 0);
+    lv_obj_set_style_text_align(s_setting_result_message, LV_TEXT_ALIGN_CENTER, 0);
+    lv_label_set_long_mode(s_setting_result_message, LV_LABEL_LONG_WRAP);
+    s_setting_result_action = lv_button_create(panel);
+    lv_obj_set_size(s_setting_result_action, 165, 55);
+    lv_obj_align(s_setting_result_action, LV_ALIGN_BOTTOM_MID, -95, -22);
+    s_setting_result_action_label = lv_label_create(s_setting_result_action);
+    lv_obj_set_style_text_font(s_setting_result_action_label, &ui_font_maru_buri_regular_kr20, 0);
+    lv_obj_center(s_setting_result_action_label);
+    lv_obj_add_event_cb(s_setting_result_action, setting_result_action_event, LV_EVENT_PRESSED, nullptr);
+    s_setting_result_close = lv_button_create(panel);
+    lv_obj_set_size(s_setting_result_close, 165, 55);
+    lv_obj_align(s_setting_result_close, LV_ALIGN_BOTTOM_MID, 95, -22);
+    lv_obj_t *close_label = lv_label_create(s_setting_result_close);
+    lv_label_set_text(close_label, "닫기");
+    lv_obj_set_style_text_font(close_label, &ui_font_maru_buri_regular_kr20, 0);
+    lv_obj_center(close_label);
+    lv_obj_add_event_cb(s_setting_result_close, setting_result_close_event, LV_EVENT_PRESSED, nullptr);
+}
+
+void capture_ridge_save_notice()
+{
+    dajilog_ridge_profiles_snapshot_t profiles = {};
+    (void)dajilog_system_core_get_ridge_profiles(&profiles);
+    const bool split = eez::flow::getGlobalVariable(
+        FLOW_GLOBAL_VARIABLE_RIDGE_SECTION_SPLIT_SELECTED).getBoolean();
+    char length[128];
+    if (split) std::snprintf(length, sizeof(length), "북측 %s m / 남측 %s m",
+        get_text(FLOW_GLOBAL_VARIABLE_RIDGE_NORTH_LENGTH_M_TEXT),
+        get_text(FLOW_GLOBAL_VARIABLE_RIDGE_SOUTH_LENGTH_M_TEXT));
+    else std::snprintf(length, sizeof(length), "전체 길이 %s m",
+        get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_ACTUAL_LENGTH_M_TEXT));
+    const bool furrow = std::strcmp(get_text(
+        FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_WORK_WIDTH_MODE), "RIDGE_PLUS_FURROW") == 0;
+    std::snprintf(s_ridge_save_notice_detail, sizeof(s_ridge_save_notice_detail),
+        "저장 요청 내용\nB%02lu · 두둑 폭 %s m\n작업폭 방식: %s\n고랑 배정폭 %s m%s\n구간: %s",
+        static_cast<unsigned long>(profiles.selected_id),
+        get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_RIDGE_WIDTH_M_TEXT),
+        furrow ? "두둑+고랑" : "두둑 면적만",
+        get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_INCLUDED_FURROW_WIDTH_M_TEXT)[0]
+            ? get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_INCLUDED_FURROW_WIDTH_M_TEXT) : "--",
+        furrow ? "" : " (계산 제외)", length);
+}
+
+void capture_recipe_save_notice(bool persisted = false)
+{
+    dajilog_product_settings_snapshot_t draft = {};
+    const esp_err_t snapshot_error = persisted
+        ? dajilog_system_core_get_settings_saved(&draft)
+        : dajilog_system_core_get_settings_draft(&draft);
+    if (snapshot_error != ESP_OK) {
+        if (persisted) return;
+        std::snprintf(s_recipe_save_notice_detail, sizeof(s_recipe_save_notice_detail),
+                      "처방 설정 저장 요청");
+        return;
+    }
+    const char *names[2] = {"--", "--"};
+    for (size_t z = 0; z < 2; ++z)
+        for (uint32_t i = 0; i < s_product_catalog.count; ++i)
+            if (std::strcmp(draft.selected_product_codes[z],
+                            s_product_catalog.products[i].code) == 0)
+                names[z] = s_product_catalog.products[i].name;
+    char rates[2][32] = {};
+    for (size_t z = 0; z < 2; ++z) {
+        if (draft.zones[z].configured && draft.selected_product_codes[z][0] &&
+            std::isfinite(draft.zones[z].rate_kg_per_10a))
+            std::snprintf(rates[z], sizeof(rates[z]), "%.2f",
+                          static_cast<double>(draft.zones[z].rate_kg_per_10a));
+        else std::snprintf(rates[z], sizeof(rates[z]), "--");
+    }
+    std::snprintf(s_recipe_save_notice_detail, sizeof(s_recipe_save_notice_detail),
+        "%s\n전층 제품: %s\n전층 제품량: %s kg/10a\n지중 제품: %s\n지중 제품량: %s kg/10a",
+        persisted ? "저장된 처방 제품량" :
+        std::strcmp(get_text(FLOW_GLOBAL_VARIABLE_RECIPE_DRAFT_INPUT_MODE),
+                    "BY_NITROGEN") == 0 ? "질소 처방" : "제품량 직접 입력",
+        names[0], rates[0], names[1], rates[1]);
+}
+
+void capture_driver_apply_notice()
+{
+    s_driver_apply_submitted = s_driver_draft;
+    const auto &driver = s_driver_apply_submitted;
+    const char first = static_cast<char>('A' + driver.driver_index * 2U);
+    if (driver.mode == 1) {
+        std::snprintf(s_driver_apply_notice_detail, sizeof(s_driver_apply_notice_detail),
+            "D%u · %s\n운전 모드: 자동\n%c/%c 채널은 적용된 S%u 설정의 계산값을 사용합니다.\n다음 RUN부터 사용 · 현재 출력은 시작하지 않습니다.",
+            driver.driver_index + 1U, driver.driver_index == 0 ? "전층" : "지중",
+            first, first + 1, driver.driver_index + 1U);
+    } else {
+        std::snprintf(s_driver_apply_notice_detail, sizeof(s_driver_apply_notice_detail),
+            "D%u · %s\n운전 모드: %s\n%c 채널: %u단계 / %.1f V\n%c 채널: %u단계 / %.1f V\n다음 RUN부터 사용 · 재부팅 시 초기화",
+            driver.driver_index + 1U, driver.driver_index == 0 ? "전층" : "지중",
+            driver.mode == 2 ? "수동" : "사용 안 함",
+            first, static_cast<unsigned>(driver.step[0]),
+            (driver.step[0] * 5.0 + driver.fine_decivolt[0]) / 10.0,
+            first + 1, static_cast<unsigned>(driver.step[1]),
+            (driver.step[1] * 5.0 + driver.fine_decivolt[1]) / 10.0);
     }
 }
 
@@ -965,6 +1236,13 @@ void render_message(const dajilog_ui_msg_t *message, void *)
                              ? "두둑 삭제 실패 · 기존 목록 유지" :
                                "두둑 등록/선택 실패 · 입력 또는 저장소 확인");
         }
+        if (s_ridge_pending_topic == DAJILOG_UI_CMD_RIDGE_SAVE)
+            show_action_result(message->result == DAJILOG_UI_RESULT_OK ? "SUCCESS" : "FAILURE",
+                message->result == DAJILOG_UI_RESULT_OK ? "두둑 설정 저장 완료" : "두둑 설정 저장 실패",
+                message->result == DAJILOG_UI_RESULT_OK
+                    ? "두둑 설정을 NVS에 저장했습니다.\n현재 운전 적용값은 변경되지 않습니다."
+                    : "저장하지 못했습니다. 입력과 저장소 상태를 확인하세요.",
+                s_ridge_save_notice_detail);
         s_ridge_pending_topic = 0U;
     } else if (message->topic == DAJILOG_UI_STATE_COMMAND_RESULT &&
                s_run_request_sequence != 0U &&
@@ -978,6 +1256,9 @@ void render_message(const dajilog_ui_msg_t *message, void *)
                message->sequence == s_ridge_request_sequence &&
                s_ridge_request_sequence != 0U) {
         s_ridge_request_sequence = 0U;
+        if (s_ridge_pending_topic == DAJILOG_UI_CMD_RIDGE_SAVE)
+            show_action_result("FAILURE", "두둑 저장 요청 거부",
+                "정지 상태와 서비스 시험 상태를 확인하세요.", s_ridge_save_notice_detail);
         s_ridge_pending_topic = 0U;
         setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
                      "두둑 명령 거부 · 운전/시험 상태 확인");
@@ -985,6 +1266,13 @@ void render_message(const dajilog_ui_msg_t *message, void *)
                s_setting_request_sequence != 0U &&
                message->sequence == s_setting_request_sequence) {
         s_setting_request_sequence = 0U;
+        show_setting_result(SettingResultPhase::Failure, "설정 요청 거부",
+            "운전 또는 서비스 시험 상태를 확인한 뒤 다시 시도하세요.");
+        if (s_recipe_save_notice_pending) {
+            s_recipe_save_notice_pending = false;
+            show_action_result("FAILURE", "처방 저장 요청 거부",
+                "정지 상태와 서비스 시험 상태를 확인하세요.", s_recipe_save_notice_detail);
+        }
         std::snprintf(s_setting_status, sizeof(s_setting_status),
                       "설정 명령 거부 · 운전/시험 상태를 확인하세요");
         render_setting_views();
@@ -992,11 +1280,18 @@ void render_message(const dajilog_ui_msg_t *message, void *)
         if (message->sequence == s_apply_sequence && s_apply_sequence != 0) {
             s_apply_sequence = 0;
             if (message->result == DAJILOG_UI_RESULT_OK) {
-                select_driver(s_detail_motor_index / 2U);
+                if (s_detail_motor_index / 2U == s_driver_apply_submitted.driver_index)
+                    select_driver(s_driver_apply_submitted.driver_index);
                 lv_label_set_text(objects.driver_detail_safety_hint, "적용 완료 · 다음 RUN부터 사용 · 재부팅 시 초기화");
             } else {
                 lv_label_set_text(objects.driver_detail_safety_hint, "적용 거부 · 정지 / CAN / Fault / 전압 범위를 확인하세요");
             }
+            show_action_result(message->result == DAJILOG_UI_RESULT_OK ? "SUCCESS" : "FAILURE",
+                message->result == DAJILOG_UI_RESULT_OK ? "드라이버 적용 완료" : "드라이버 적용 실패",
+                message->result == DAJILOG_UI_RESULT_OK
+                    ? "선택한 운전 모드와 설정을 반영했습니다.\n모터는 RUN을 눌러 시작합니다."
+                    : "적용이 거부되었습니다. 정지·CAN·Fault·전압 범위를 확인하세요.",
+                s_driver_apply_notice_detail);
         }
         if (message->result != DAJILOG_UI_RESULT_OK) {
             end_test();
@@ -1009,6 +1304,26 @@ void render_message(const dajilog_ui_msg_t *message, void *)
                message->sequence == s_setting_request_sequence) {
         s_setting_request_sequence = 0U;
         const bool confirmed = s_setting_request_topic == DAJILOG_UI_CMD_SETTINGS_CONFIRM;
+        show_setting_result(message->result == DAJILOG_UI_RESULT_OK
+                ? SettingResultPhase::Success : SettingResultPhase::Failure,
+            message->result == DAJILOG_UI_RESULT_OK
+                ? confirmed ? "운전 설정을 적용했습니다" : "설정을 저장했습니다"
+                : confirmed ? "운전 적용 실패" : "설정 저장 실패",
+            message->result == DAJILOG_UI_RESULT_OK
+                ? confirmed ? "현재 운전 설정이 갱신됐습니다."
+                            : "NVS에 저장됐습니다.\n운전에는 아직 적용되지 않았습니다."
+                : confirmed ? "제품·Lot·A~D 표와 운전 상태를 확인하세요."
+                            : "입력값과 저장소 상태를 확인한 뒤 다시 시도하세요.");
+        if (s_recipe_save_notice_pending) {
+            s_recipe_save_notice_pending = false;
+            if (message->result == DAJILOG_UI_RESULT_OK) capture_recipe_save_notice(true);
+            show_action_result(message->result == DAJILOG_UI_RESULT_OK ? "SUCCESS" : "FAILURE",
+                message->result == DAJILOG_UI_RESULT_OK ? "처방 설정 저장 완료" : "처방 설정 저장 실패",
+                message->result == DAJILOG_UI_RESULT_OK
+                    ? "처방을 포함한 작업 설정을 NVS에 저장했습니다.\n운전에는 아직 적용되지 않았습니다."
+                    : "저장하지 못했습니다. 입력과 저장소 상태를 확인하세요.",
+                s_recipe_save_notice_detail);
+        }
         s_setting_request_topic = 0U;
         std::snprintf(s_setting_status, sizeof(s_setting_status), "%s",
                       message->result == DAJILOG_UI_RESULT_OK
@@ -1042,10 +1357,17 @@ esp_err_t submit_command(uint32_t topic)
 /** @brief [설정 카드 공통] Save/Confirm 요청을 Queue에 넣고 비동기 결과 번호를 기억한다. */
 esp_err_t submit_setting_command(uint32_t topic)
 {
+    if (s_setting_request_sequence != 0U) return ESP_ERR_INVALID_STATE;
+    dajilog_product_settings_snapshot_t baseline = {};
+    if (dajilog_system_core_get_settings_draft(&baseline) == ESP_OK) {
+        s_setting_saved_before = baseline.saved_revision;
+        s_setting_applied_before = baseline.applied_revision;
+    }
     dajilog_ui_msg_t command;
     dajilog_ui_msg_init(&command, DAJILOG_UI_MSG_COMMAND, topic);
     const esp_err_t error = dajilog_ui_adaptor_submit(&command);
     if (error == ESP_OK) {
+        s_setting_retry_topic = topic;
         s_setting_request_sequence = command.sequence;
         s_setting_request_topic = topic;
         s_setting_request_deadline = esp_timer_get_time() + 5000000;
@@ -1270,9 +1592,13 @@ void detail_apply_event(lv_event_t *event)
     message.payload.type = DAJILOG_UI_VALUE_BYTES;
     message.payload.value.bytes.size = sizeof(s_driver_draft);
     std::memcpy(message.payload.value.bytes.data, &s_driver_draft, sizeof(s_driver_draft));
+    capture_driver_apply_notice();
     if (dajilog_ui_adaptor_submit(&message) == ESP_OK) {
         s_apply_sequence = message.sequence;
         s_apply_deadline = esp_timer_get_time() + 2000000;
+    } else {
+        show_action_result("FAILURE", "드라이버 적용 요청 실패",
+            "요청을 전달하지 못했습니다. 다시 시도하세요.", s_driver_apply_notice_detail);
     }
 }
 
@@ -1328,7 +1654,11 @@ bool render_run_readiness()
                   static_cast<unsigned long long>(result.checked_at_us / 1000000));
     setting_text(FLOW_GLOBAL_VARIABLE_RUN_READINESS_CHECKED_AT_TEXT, checked_at);
     setting_text(FLOW_GLOBAL_VARIABLE_RUN_READINESS_SUMMARY_TEXT,
-                 result.all_ready ? "모든 조건이 확인됐습니다. Dashboard에서 RUN을 다시 누르세요." :
+                 result.all_ready ? (result.auto_mode && result.items[DAJILOG_RUN_CHECK_SPEED].state ==
+                     DAJILOG_RUN_CHECK_PASS &&
+                     std::strstr(result.items[DAJILOG_RUN_CHECK_SPEED].reason, "정차") != nullptr ?
+                     "정차 확인 · RUN 후 0V 출발 대기합니다." :
+                     "모든 조건이 확인됐습니다. Dashboard에서 RUN을 다시 누르세요.") :
                  "미확인 조건을 수정한 뒤 다시 확인하세요. RUN은 Dashboard에서 시작합니다.");
     const uint32_t state_vars[DAJILOG_RUN_CHECK_COUNT] = {
         FLOW_GLOBAL_VARIABLE_RUN_READINESS_OPERATION_STATE,
@@ -2040,8 +2370,18 @@ void load_setting_editor()
     const auto &zone = settings.zones[s_selected_zone];
     char value[48];
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_NAME_TEXT, zone.name);
-    setting_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_PRODUCT_TEXT, zone.product);
-    setting_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_LOT_TEXT, zone.lot);
+    const dajilog_product_entry_t *product = nullptr;
+    for (uint32_t i = 0; i < s_product_catalog.count; ++i) {
+        if (std::strcmp(s_product_catalog.products[i].code,
+                        settings.selected_product_codes[s_selected_zone]) == 0) {
+            product = &s_product_catalog.products[i];
+            break;
+        }
+    }
+    setting_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_PRODUCT_TEXT,
+                 product ? product->name : "미선택");
+    setting_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_LOT_TEXT,
+                 product && product->lot[0] ? product->lot : "미등록");
     std::snprintf(value, sizeof(value), "%.1f",
                   static_cast<double>(zone.rate_kg_per_10a));
     setting_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_PRESCRIPTION_TEXT,
@@ -2060,8 +2400,17 @@ void load_setting_editor()
 esp_err_t stage_setting_editor()
 {
     const char *name = get_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_NAME_TEXT);
-    const char *product = get_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_PRODUCT_TEXT);
-    const char *lot = get_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_LOT_TEXT);
+    dajilog_product_settings_snapshot_t draft = {};
+    if (dajilog_system_core_get_settings_draft(&draft) != ESP_OK)
+        return ESP_ERR_INVALID_STATE;
+    const char *product = draft.selected_product_codes[s_selected_zone];
+    const char *lot = "";
+    for (uint32_t i = 0; i < s_product_catalog.count; ++i) {
+        if (std::strcmp(s_product_catalog.products[i].code, product) == 0) {
+            lot = s_product_catalog.products[i].lot;
+            break;
+        }
+    }
     const char *speed_text = get_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_SPEED_TEXT);
     const char *distribution_text = get_text(FLOW_GLOBAL_VARIABLE_SETTING_EDIT_DISTRIBUTION_TEXT);
     const bool has_speed = speed_text[0] != '\0';
@@ -2402,8 +2751,18 @@ void setting_confirm_event(lv_event_t *event)
         s_setting_pending_topic == 0U) return;
     const uint32_t topic = s_setting_pending_topic;
     s_setting_pending_topic = 0U;
+    if (s_setting_request_sequence != 0U) return;
+    s_setting_result_active = true;
     const esp_err_t error = submit_setting_command(topic);
-    if (error != ESP_OK) {
+    if (error == ESP_OK) {
+        show_setting_result(SettingResultPhase::Pending,
+            topic == DAJILOG_UI_CMD_SETTINGS_CONFIRM
+                ? "운전 설정 적용 중" : "설정 저장 중",
+            "처리 결과를 확인하고 있습니다.");
+    } else {
+        s_setting_retry_topic = topic;
+        show_setting_result(SettingResultPhase::Failure, "요청 전달 실패",
+            "설정 요청을 보내지 못했습니다. 다시 시도하세요.");
         std::snprintf(s_setting_status, sizeof(s_setting_status),
                       "명령 전달 실패 · 다시 시도하세요");
         render_setting_views();
@@ -2616,7 +2975,7 @@ void fertilizer_temporary_save_event(lv_event_t *event)
 esp_err_t submit_settings_apply(esp_err_t stage_error)
 {
     return stage_error == ESP_OK
-               ? submit_command(DAJILOG_UI_CMD_SETTINGS_APPLY)
+               ? submit_setting_command(DAJILOG_UI_CMD_SETTINGS_SAVE)
                : stage_error;
 }
 
@@ -2635,11 +2994,14 @@ void ridge_save_settings_event(lv_event_t *event)
     if (error != ESP_OK) {
         setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
                      "두둑 입력 오류 · 폭/길이/구간을 확인하세요");
+        show_action_result("FAILURE", "두둑 저장 입력 오류",
+            "폭·구간 길이를 확인하세요. 저장 요청을 보내지 않았습니다.", "");
         ESP_LOGW(TAG, "ridge settings stage failed: %s", esp_err_to_name(error));
         return;
     }
     dajilog_ui_msg_t command;
     dajilog_ui_msg_init(&command, DAJILOG_UI_MSG_COMMAND, DAJILOG_UI_CMD_RIDGE_SAVE);
+    capture_ridge_save_notice();
     const esp_err_t submit_error = dajilog_ui_adaptor_submit(&command);
     if (submit_error == ESP_OK) {
         s_ridge_request_sequence = command.sequence;
@@ -2650,6 +3012,8 @@ void ridge_save_settings_event(lv_event_t *event)
     } else {
         setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
                      "두둑 저장 요청 실패 · 다시 시도하세요");
+        show_action_result("FAILURE", "두둑 저장 요청 실패",
+            "요청을 전달하지 못했습니다. 다시 시도하세요.", s_ridge_save_notice_detail);
         ESP_LOGW(TAG, "ridge save submit failed: %s", esp_err_to_name(submit_error));
     }
 }
@@ -2661,10 +3025,23 @@ void fertilizer_save_settings_event(lv_event_t *event)
         return;
     }
 
-    const esp_err_t error = submit_settings_apply(stage_fertilizer_from_ui());
-    if (error != ESP_OK) {
-        ESP_LOGW(TAG, "fertilizer settings apply failed: %s",
-                 esp_err_to_name(error));
+    if (s_setting_request_sequence != 0U) {
+        show_action_result("UNKNOWN", "설정 처리 중",
+            "현재 요청이 완료된 뒤 저장하세요.", "");
+        return;
+    }
+    const esp_err_t stage_error = stage_fertilizer_from_ui();
+    if (stage_error == ESP_OK) capture_recipe_save_notice();
+    const esp_err_t error = submit_settings_apply(stage_error);
+    if (error == ESP_OK) {
+        s_recipe_save_notice_pending = true;
+    } else {
+        s_recipe_save_notice_pending = false;
+        show_action_result("FAILURE", "처방 저장 요청 실패",
+            stage_error != ESP_OK
+                ? "입력값·제품·처방을 확인하세요. 저장 요청을 보내지 않았습니다."
+                : "요청을 전달하지 못했습니다. 다시 시도하세요.", "");
+        ESP_LOGW(TAG, "fertilizer settings apply failed: %s", esp_err_to_name(error));
     }
 }
 
@@ -2774,6 +3151,7 @@ extern "C" bool eez_ui_binding_attach(void)
                         LV_EVENT_PRESSED, nullptr);
     lv_obj_add_event_cb(objects.setting_detail_apply_button, setting_apply_event,
                         LV_EVENT_PRESSED, nullptr);
+    create_setting_result_overlay();
     lv_obj_add_event_cb(objects.setting_confirm_ok_button, setting_confirm_event,
                         LV_EVENT_PRESSED, nullptr);
     lv_obj_add_event_cb(objects.setting_confirm_cancel_button, setting_cancel_event,
@@ -2905,6 +3283,10 @@ extern "C" void eez_ui_binding_process(void)
         if (s_ridge_request_sequence != 0U &&
             esp_timer_get_time() > s_ridge_request_deadline) {
             s_ridge_request_sequence = 0U;
+            if (s_ridge_pending_topic == DAJILOG_UI_CMD_RIDGE_SAVE)
+                show_action_result("UNKNOWN", "두둑 저장 결과 미확인",
+                    "응답을 확인하지 못했습니다. 현재 저장 상태를 다시 확인하세요.",
+                    s_ridge_save_notice_detail);
             s_ridge_pending_topic = 0U;
             setting_text(FLOW_GLOBAL_VARIABLE_RIDGE_REGISTRATION_STATUS_TEXT,
                          "두둑 저장 응답 지연 · 목록을 다시 확인하세요");
@@ -2917,14 +3299,30 @@ extern "C" void eez_ui_binding_process(void)
         }
         s_calibration_screen_was_active = calibration_active;
         const int64_t now = esp_timer_get_time();
+        if (s_setting_result_phase == SettingResultPhase::Success &&
+            s_setting_result_close_at != 0 && now >= s_setting_result_close_at) {
+            show_setting_result(SettingResultPhase::Hidden, "", "");
+            s_setting_result_active = false;
+        }
         if (s_apply_sequence && now >= s_apply_deadline) {
             s_apply_sequence = 0;
             select_driver(s_detail_motor_index / 2U);
             lv_label_set_text(objects.driver_detail_safety_hint, "응답 대기 종료 · 실제 적용 상태를 다시 읽었습니다");
+            show_action_result("UNKNOWN", "드라이버 적용 결과 미확인",
+                "응답을 확인하지 못했습니다. 현재 드라이버 모드를 다시 확인하세요.",
+                s_driver_apply_notice_detail);
         }
         if (s_setting_request_sequence != 0U &&
             now >= s_setting_request_deadline) {
             s_setting_request_sequence = 0U;
+            show_setting_result(SettingResultPhase::Unknown, "결과 확인 필요",
+                "응답 확인 실패 · 저장 여부를 단정할 수 없습니다.\n상태 확인을 눌러 현재 설정을 다시 조회하세요.");
+            if (s_recipe_save_notice_pending) {
+                s_recipe_save_notice_pending = false;
+                show_action_result("UNKNOWN", "처방 저장 결과 미확인",
+                    "응답을 확인하지 못했습니다. 현재 저장 상태를 다시 확인하세요.",
+                    s_recipe_save_notice_detail);
+            }
             std::snprintf(s_setting_status, sizeof(s_setting_status),
                           "응답 대기 종료 · 저장 상태를 다시 확인하세요");
             render_setting_views();
@@ -2980,10 +3378,26 @@ extern "C" void eez_ui_binding_detach(void)
     s_run_deadline = 0;
     s_run_request_sequence = 0U;
     s_auto_stop_presented_sequence = 0;
+    s_recipe_save_notice_pending = false;
+    eez::flow::setGlobalVariable(FLOW_GLOBAL_VARIABLE_ACTION_RESULT_VISIBLE,
+                                 eez::BooleanValue(false));
     s_apply_sequence = 0;
     s_setting_request_sequence = 0;
     s_ridge_request_sequence = 0;
     s_setting_pending_topic = 0;
+    if (s_setting_result_overlay) {
+        lv_obj_delete(s_setting_result_overlay);
+        s_setting_result_overlay = nullptr;
+        s_setting_result_title = nullptr;
+        s_setting_result_message = nullptr;
+        s_setting_result_action = nullptr;
+        s_setting_result_action_label = nullptr;
+        s_setting_result_close = nullptr;
+    }
+    s_setting_result_phase = SettingResultPhase::Hidden;
+    s_setting_result_active = false;
+    s_setting_result_close_at = 0;
+    s_setting_retry_topic = 0U;
     (void)dajilog_ui_adaptor_detach(&s_adaptor);
     // System Core and Storage Task remain active across app close/reopen.
     s_attached = false;

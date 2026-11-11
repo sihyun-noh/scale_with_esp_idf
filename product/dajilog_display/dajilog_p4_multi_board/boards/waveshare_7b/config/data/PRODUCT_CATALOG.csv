@@ -1,6 +1,6 @@
-schema_version,product_code,product_name,nitrogen_percent,enabled
-1,P001,유황엔_팜한농,21.0,1
-1,P002,한번에생성,18.0,1
-1,P003,마늘야유파전용_더존,18.0,1
-1,P004,한번에아리커_광분해,18.0,1
-1,P005,슈퍼원예S,18.0,1
+schema_version,product_code,product_name,product_lot,nitrogen_percent,enabled
+1,P001,유황엔_팜한농,SAMPLE-P001-001,21.0,1
+1,P002,한번에생성,SAMPLE-P002-001,18.0,1
+1,P003,마늘야유파전용_더존,SAMPLE-P003-001,15.0,1
+1,P004,한번에아리커_광분해,SAMPLE-P004-001,22.0,1
+1,P005,슈퍼원예S,SAMPLE-P005-001,19.0,1

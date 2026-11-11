@@ -239,6 +239,33 @@ static esp_err_t auto_calculate_commands(
   return ESP_OK;
 }
 
+/** @brief [D-011 출발 대기] 활성 채널 중 표의 최소 배출량에 못 미치는 목표가 있는지 확인한다. */
+static bool auto_below_table_minimum(
+    const dajilog_product_settings_snapshot_t *applied,
+    const dajilog_ridge_profiles_snapshot_t *ridges, float speed_kmh) {
+  if (applied == NULL || ridges == NULL || !isfinite(speed_kmh) ||
+      speed_kmh < 0.5f || speed_kmh > 50.0f) return false;
+  bool below = false;
+  for (size_t zone = 0; zone < DAJILOG_SETTING_ZONE_COUNT; ++zone) {
+    if (s_snapshot.drivers[zone].mode != 1) continue;
+    dajilog_zone_settings_t setting = applied->zones[zone];
+    setting.reference_speed_kmh = speed_kmh;
+    dajilog_flow_target_t flow = {0};
+    if (dajilog_flow_calculate_preview(ridges, &setting, &flow) !=
+        DAJILOG_FLOW_CALC_OK) return false;
+    for (size_t local = 0; local < 2U; ++local) {
+      const size_t i = zone * 2U + local;
+      const dajilog_calibration_binding_t *binding = &applied->calibration[i];
+      dajilog_calibration_summary_t table = {0};
+      if (dajilog_calibration_catalog_find((char)('A' + i), binding->table_id,
+              binding->revision, &table) != ESP_OK) return false;
+      if (flow.channel_target_g_min[local] < table.min_discharge_g_min) below = true;
+      if (flow.channel_target_g_min[local] > table.max_discharge_g_min) return false;
+    }
+  }
+  return below;
+}
+
 /** @brief [D-004 RUN] 실제 START와 같은 자료로 항목별 차단 사유를 만든다. */
 static void readiness_item(dajilog_run_readiness_t *result, size_t id,
                            dajilog_run_check_state_t state, const char *reason) {
@@ -277,21 +304,31 @@ static esp_err_t product_get_run_readiness(dajilog_run_readiness_t *result,
       !operation_ok ? "드라이버 모드 혼합" : "운전 대기");
   for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
     const bool active = live.drivers[i / 2U].mode != 0;
+    const bool zero_confirmed = live.motors[i].command_decivolt == 0 &&
+        live.motors[i].command_readback_valid &&
+        live.motors[i].command_readback_decivolt == 0;
+    const bool motor_ready = channel_ready(i) &&
+        (!auto_mode || live.vehicle.speed_kmh >= 0.5f || zero_confirmed);
     readiness_item(result, DAJILOG_RUN_CHECK_MOTOR_A + i,
         !active ? DAJILOG_RUN_CHECK_NOT_APPLICABLE :
-        channel_ready(i) ? DAJILOG_RUN_CHECK_PASS : DAJILOG_RUN_CHECK_FAIL,
+        motor_ready ? DAJILOG_RUN_CHECK_PASS : DAJILOG_RUN_CHECK_FAIL,
         !active ? "드라이버 미선택" :
-        channel_ready(i) ? "CAN 응답 정상" : "CAN 응답·Fault 확인 필요");
+        motor_ready ? "CAN 응답 정상" :
+        !zero_confirmed && auto_mode && live.vehicle.speed_kmh < 0.5f ?
+        "0V 응답 확인 필요" : "CAN 응답·Fault 확인 필요");
   }
   const bool speed_ok = live.vehicle.online && !live.vehicle.reverse &&
-      live.vehicle.speed_kmh >= 0.5f && live.vehicle.speed_kmh <= 50.0f &&
+      isfinite(live.vehicle.speed_kmh) && live.vehicle.speed_kmh >= 0.0f &&
+      live.vehicle.speed_kmh <= 50.0f &&
       live.vehicle.signal_age_ms <= 500U && s_vehicle_last_us != 0 &&
       result->checked_at_us - s_vehicle_last_us <= 500000;
+  const bool moving = speed_ok && live.vehicle.speed_kmh >= 0.5f;
   readiness_item(result, DAJILOG_RUN_CHECK_SPEED,
       !auto_mode ? DAJILOG_RUN_CHECK_NOT_APPLICABLE :
       speed_ok ? DAJILOG_RUN_CHECK_PASS : DAJILOG_RUN_CHECK_FAIL,
       !auto_mode ? "수동 운전" : !live.vehicle.online ? "속도 신호 없음" :
       live.vehicle.reverse ? "후진 상태" : !speed_ok ? "유효 속도·신선도 확인 필요" :
+      live.vehicle.speed_kmh < 0.5f ? "정상 정차 · 출발 대기 가능" :
       "속도·방향 정상");
   dajilog_product_settings_snapshot_t applied = {0};
   dajilog_ridge_profiles_snapshot_t ridges = {0};
@@ -331,6 +368,8 @@ static esp_err_t product_get_run_readiness(dajilog_run_readiness_t *result,
       product_ok ? DAJILOG_RUN_CHECK_PASS : DAJILOG_RUN_CHECK_FAIL,
       !auto_mode ? "수동 운전" : product_ok ? "제품·처방 확인" :
       "제품·처방 또는 적용 설정 확인 필요");
+  const bool below_minimum = auto_mode && product_ok && moving &&
+      auto_below_table_minimum(&applied, &ridges, live.vehicle.speed_kmh);
   for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
     const size_t zone = i / 2U;
     if (!auto_mode || live.drivers[zone].mode == 0) {
@@ -347,8 +386,12 @@ static esp_err_t product_get_run_readiness(dajilog_run_readiness_t *result,
       dajilog_calibration_summary_t table = {0};
       uint16_t voltage = 0;
       uint32_t expected = 0;
-      valid = dajilog_flow_calculate_preview(&ridges, &setting, &flow) ==
-                  DAJILOG_FLOW_CALC_OK && binding->table_id[0] != '\0' &&
+      valid = (!moving || dajilog_flow_calculate_preview(&ridges, &setting, &flow) ==
+                  DAJILOG_FLOW_CALC_OK) && binding->table_id[0] != '\0' &&
+          (!below_minimum ||
+           (live.motors[i].command_decivolt == 0 &&
+            live.motors[i].command_readback_valid &&
+            live.motors[i].command_readback_decivolt == 0)) &&
           dajilog_calibration_catalog_find((char)('A' + i), binding->table_id,
               binding->revision, &table) == ESP_OK && table.approved &&
 #ifndef CONFIG_DAJILOG_ALLOW_UNMEASURED_AUTO_TEST
@@ -357,14 +400,16 @@ static esp_err_t product_get_run_readiness(dajilog_run_readiness_t *result,
           table.content_hash == binding->content_hash &&
           strcmp(table.product_code, applied.selected_product_codes[zone]) == 0 &&
           (setting.lot[0] == '\0' || strcmp(setting.lot, table.product_lot) == 0) &&
-          dajilog_calibration_catalog_preview_voltage((char)('A' + i), table.table_id,
+          (!moving || flow.channel_target_g_min[i % 2U] < table.min_discharge_g_min ||
+           (dajilog_calibration_catalog_preview_voltage((char)('A' + i), table.table_id,
               table.revision, flow.channel_target_g_min[i % 2U], &voltage,
               &expected) == ESP_OK && voltage != 0U &&
-          voltage <= DAJILOG_MOTOR_OUTPUT_DECIVOLT_MAX;
+              voltage <= DAJILOG_MOTOR_OUTPUT_DECIVOLT_MAX));
     }
     readiness_item(result, DAJILOG_RUN_CHECK_TABLE_A + i,
         valid ? DAJILOG_RUN_CHECK_PASS : DAJILOG_RUN_CHECK_FAIL,
-        valid ? "제품·Lot·목표 범위 확인" :
+        valid ? (moving ? "표 연결 확인 · 저속 시 0V 대기" :
+                 "표 연결 확인 · 출발 후 목표 재검사") :
         !applied_ok ? "적용 설정·두둑 확인 필요" :
         !speed_ok ? "속도 확인 후 표 조회" :
         "배출량표·제품·Lot·목표 범위 확인 필요");
@@ -493,7 +538,7 @@ static esp_err_t start_can_service(void) {
 /** @brief Return a log-friendly name for a product operation state. */
 static const char* state_name(dajilog_operation_state_t state) {
   static const char* names[] = {
-    "BOOT", "INITIALIZING", "READY", "RUN_AUTO", "RUN_MANUAL", "STOPPING", "FAULT",
+    "BOOT", "INITIALIZING", "READY", "RUN_AUTO", "RUN_MANUAL", "STOPPING", "FAULT", "WAIT_AUTO",
   };
   return (unsigned)state < (sizeof(names) / sizeof(names[0])) ? names[state] : "UNKNOWN";
 }
@@ -870,7 +915,8 @@ static void process_command(const core_message_t* message) {
       }
       if (s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active ||
           !s_motor_backend_registered || !s_snapshot.vehicle.online ||
-          s_snapshot.vehicle.reverse || s_snapshot.vehicle.speed_kmh < 0.5f ||
+          s_snapshot.vehicle.reverse || !isfinite(s_snapshot.vehicle.speed_kmh) ||
+          s_snapshot.vehicle.speed_kmh < 0.0f ||
           s_snapshot.vehicle.signal_age_ms > 500U || s_vehicle_last_us == 0 ||
           esp_timer_get_time() - s_vehicle_last_us > 500000) {
         error = ESP_ERR_INVALID_STATE;
@@ -883,13 +929,35 @@ static void process_command(const core_message_t* message) {
           selected = true;
           if (s_snapshot.drivers[d].mode != 1 || !channel_ready(d * 2U) ||
               !channel_ready(d * 2U + 1U)) error = ESP_ERR_INVALID_STATE;
+          if (s_snapshot.vehicle.speed_kmh < 0.5f) {
+            for (size_t local = 0; local < 2U; ++local) {
+              const dajilog_motor_snapshot_t *motor = &s_snapshot.motors[d * 2U + local];
+              if (motor->command_decivolt != 0 ||
+                  !motor->command_readback_valid ||
+                  motor->command_readback_decivolt != 0)
+                error = ESP_ERR_INVALID_STATE;
+            }
+          }
         }
         if (!selected || error != ESP_OK) { error = ESP_ERR_INVALID_STATE; break; }
         error = dajilog_product_settings_get_applied(&s_auto_applied);
         if (error == ESP_OK) error = dajilog_product_settings_get_ridge_profiles(&s_auto_ridges);
         dajilog_motor_voltage_command_t desired[DAJILOG_MOTOR_CHANNEL_COUNT] = {0};
-        if (error == ESP_OK) error = auto_calculate_commands(&s_auto_applied,
-            &s_auto_ridges, s_snapshot.vehicle.speed_kmh, desired, NULL);
+        const bool waiting_for_motion = s_snapshot.vehicle.speed_kmh < 0.5f ||
+            auto_below_table_minimum(&s_auto_applied, &s_auto_ridges,
+                                     s_snapshot.vehicle.speed_kmh);
+        if (waiting_for_motion) {
+          for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
+            if (s_snapshot.drivers[i / 2U].mode != 1) continue;
+            const dajilog_motor_snapshot_t *motor = &s_snapshot.motors[i];
+            if (motor->command_decivolt != 0 ||
+                !motor->command_readback_valid ||
+                motor->command_readback_decivolt != 0) error = ESP_ERR_INVALID_STATE;
+          }
+        }
+        if (error == ESP_OK && !waiting_for_motion)
+          error = auto_calculate_commands(&s_auto_applied,
+              &s_auto_ridges, s_snapshot.vehicle.speed_kmh, desired, NULL);
         if (error != ESP_OK) break;
         const bool same_work = s_estimate_ridge_id == s_auto_ridges.selected_id &&
             s_estimate_applied_revision == s_auto_applied.applied_revision;
@@ -907,8 +975,9 @@ static void process_command(const core_message_t* message) {
         xSemaphoreGive(s_snapshot_lock);
         s_estimate_ridge_id = s_auto_ridges.selected_id;
         s_estimate_applied_revision = s_auto_applied.applied_revision;
-        set_state(DAJILOG_OPERATION_RUN_AUTO);
-        error = auto_update(esp_timer_get_time());
+        set_state(waiting_for_motion ? DAJILOG_OPERATION_WAIT_AUTO :
+                  DAJILOG_OPERATION_RUN_AUTO);
+        error = waiting_for_motion ? ESP_OK : auto_update(esp_timer_get_time());
         if (error != ESP_OK) {
           const core_message_t request = {.topic = DAJILOG_UI_CMD_STOP};
           process_command(&request);
@@ -953,12 +1022,69 @@ static void system_task(void* context) {
         ESP_LOGE(TAG, "AUTO stopped: CAN bus-off");
       }
     }
-    if (s_auto_active && !stop) {
+    /* D-011: 0V 확인 뒤의 정상 정차만 출발 대기로 유지한다. */
+    if (s_auto_active && !stop &&
+        s_snapshot.operation_state == DAJILOG_OPERATION_WAIT_AUTO) {
+      const int64_t now = esp_timer_get_time();
+      const bool signal_ok = s_snapshot.vehicle.online && !s_snapshot.vehicle.reverse &&
+          isfinite(s_snapshot.vehicle.speed_kmh) &&
+          s_snapshot.vehicle.speed_kmh >= 0.0f &&
+          s_snapshot.vehicle.signal_age_ms <= 500U && s_vehicle_last_us != 0 &&
+          now - s_vehicle_last_us <= 500000;
+      bool output_off = true;
+      bool motors_ready = true;
+      for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
+        if (s_snapshot.drivers[i / 2U].mode != 1) continue;
+        const dajilog_motor_snapshot_t *motor = &s_snapshot.motors[i];
+        motors_ready = motors_ready && channel_ready(i);
+        output_off = output_off && motor->command_decivolt == 0 &&
+            motor->command_readback_valid && motor->command_readback_decivolt == 0;
+      }
+      if (!signal_ok || !motors_ready || !output_off) {
+        stop = true;
+        auto_failed = true;
+        record_auto_stop(!signal_ok ? AUTO_STOP_SPEED : AUTO_STOP_MOTOR_FEEDBACK,
+            !signal_ok ? "출발 대기 중 속도 신호 오류: 자동 정지" :
+                         "출발 대기 중 모터·0V 응답 오류: 자동 정지");
+      } else if (s_snapshot.vehicle.speed_kmh >= 0.5f &&
+                 !auto_below_table_minimum(&s_auto_applied, &s_auto_ridges,
+                                           s_snapshot.vehicle.speed_kmh)) {
+        dajilog_motor_voltage_command_t desired[DAJILOG_MOTOR_CHANNEL_COUNT] = {0};
+        const esp_err_t calculation = motors_ready ?
+            auto_calculate_commands(&s_auto_applied, &s_auto_ridges,
+                                    s_snapshot.vehicle.speed_kmh, desired, NULL) :
+            ESP_ERR_INVALID_STATE;
+        if (calculation != ESP_OK) {
+          stop = true;
+          auto_failed = true;
+          record_auto_stop(AUTO_STOP_SETTINGS,
+                           "출발 조건·배출량표 범위 오류: 자동 정지");
+        } else {
+          set_state(DAJILOG_OPERATION_RUN_AUTO);
+          s_auto_last_command_us = 0;
+          s_estimate_last_us = now;
+        }
+      }
+    }
+    if (s_auto_active && !stop &&
+        s_snapshot.operation_state == DAJILOG_OPERATION_RUN_AUTO) {
       const esp_err_t auto_error = auto_update(esp_timer_get_time());
       if (auto_error != ESP_OK) {
         stop = true;
-        auto_failed = true;
-        if (s_snapshot.vehicle.reverse)
+        const int64_t now = esp_timer_get_time();
+        const bool normal_stop = s_snapshot.vehicle.online &&
+            !s_snapshot.vehicle.reverse &&
+            isfinite(s_snapshot.vehicle.speed_kmh) &&
+            s_snapshot.vehicle.speed_kmh >= 0.0f &&
+            (s_snapshot.vehicle.speed_kmh < 0.5f ||
+             auto_below_table_minimum(&s_auto_applied, &s_auto_ridges,
+                                      s_snapshot.vehicle.speed_kmh)) &&
+            s_snapshot.vehicle.signal_age_ms <= 500U &&
+            s_vehicle_last_us != 0 && now - s_vehicle_last_us <= 500000;
+        auto_failed = !normal_stop;
+        if (normal_stop) {
+          ESP_LOGI(TAG, "AUTO normal stop: speed below 0.5 km/h; new RUN required");
+        } else if (s_snapshot.vehicle.reverse)
           record_auto_stop(AUTO_STOP_REVERSE, "후진 감지: 자동 정지");
         else if (!s_snapshot.vehicle.online || s_snapshot.vehicle.speed_kmh < 0.5f ||
                  s_snapshot.vehicle.signal_age_ms > 500U ||
@@ -981,7 +1107,8 @@ static void system_task(void* context) {
         }
         else
           record_auto_stop(AUTO_STOP_MOTOR_FEEDBACK, "모터 전압 명령을 확인하세요");
-        ESP_LOGW(TAG, "AUTO stopped: %s", esp_err_to_name(auto_error));
+        if (!normal_stop)
+          ESP_LOGW(TAG, "AUTO stopped: %s", esp_err_to_name(auto_error));
       }
     }
     if (s_auto_active && !stop && s_motor_backend.command != NULL) {
@@ -1014,7 +1141,9 @@ static void system_task(void* context) {
         if (retry_error != ESP_OK) break;
       }
     }
-    if (s_auto_active && !stop) update_estimated_application(esp_timer_get_time());
+    if (s_auto_active && !stop &&
+        s_snapshot.operation_state == DAJILOG_OPERATION_RUN_AUTO)
+      update_estimated_application(esp_timer_get_time());
     for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
       const bool active = s_test_active ? i == s_test_command.motor_index :
           (s_snapshot.operation_state == DAJILOG_OPERATION_RUN_MANUAL &&

@@ -34,7 +34,7 @@ menu "DAJILOG Configuration"
 
     menu "Diagnostics"
         config DAJILOG_SPEED_SIMULATION
-            bool "Simulate TR07E speed 1-2-3-4-3-2 km/h (bench test only)"
+            bool "Simulate TR07E speed 0-1-2-3-4-3-2 km/h (bench test only)"
             depends on DAJILOG_CAN_ENABLE
             default n
             help
