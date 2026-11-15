@@ -18,6 +18,8 @@ static const char *TAG = "EezUiPort7B";
 static lv_timer_t *s_eez_tick_timer;
 static lv_obj_t *s_upper_product_list;
 static lv_obj_t *s_lower_product_list;
+static lv_obj_t *s_manual_surface_product_list;
+static lv_obj_t *s_manual_subsurface_product_list;
 static bool s_startup_guard_active;
 static int64_t s_startup_started_at_us;
 static int16_t s_last_logged_screen = -1;
@@ -70,6 +72,8 @@ static void eez_ui_tick_timer_cb(lv_timer_t *timer)
     }
     style_product_dropdown_list(objects.main_upper_product, &s_upper_product_list);
     style_product_dropdown_list(objects.main_lower_product, &s_lower_product_list);
+    style_product_dropdown_list(objects.manual_surface_product_dropdown, &s_manual_surface_product_list);
+    style_product_dropdown_list(objects.manual_subsurface_product_dropdown, &s_manual_subsurface_product_list);
     eez_ui_binding_process();
 }
 
@@ -114,6 +118,8 @@ void eez_ui_port_prepare_cleanup(void)
     memset(&objects, 0, sizeof(objects));
     s_upper_product_list = NULL;
     s_lower_product_list = NULL;
+    s_manual_surface_product_list = NULL;
+    s_manual_subsurface_product_list = NULL;
     s_startup_guard_active = false;
     s_startup_started_at_us = 0;
     s_last_logged_screen = -1;

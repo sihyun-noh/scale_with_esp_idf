@@ -23,14 +23,13 @@ enum ScreensEnum {
     SCREEN_ID_RUN_COUNTDOWN = 10,
     SCREEN_ID_SYSTEM_SETTING = 11,
     SCREEN_ID_RIDGE_SETUP = 12,
-    SCREEN_ID_PREPARATION = 13,
-    SCREEN_ID_WORK = 14,
-    SCREEN_ID_WEIGHING_TEST = 15,
-    SCREEN_ID_NUMERIC_INPUT = 16,
-    SCREEN_ID_RIDGE_NUMERIC_INPUT = 17,
-    SCREEN_ID_CALIBRATION_SELECT = 18,
-    SCREEN_ID_RUN_READINESS = 19,
-    _SCREEN_ID_LAST = 19
+    SCREEN_ID_NUMERIC_INPUT = 13,
+    SCREEN_ID_RIDGE_NUMERIC_INPUT = 14,
+    SCREEN_ID_CALIBRATION_SELECT = 15,
+    SCREEN_ID_RUN_READINESS = 16,
+    SCREEN_ID_PRESCRIPTION_MODE = 17,
+    SCREEN_ID_MANUAL_TARGET = 18,
+    _SCREEN_ID_LAST = 18
 };
 
 typedef struct _objects_t {
@@ -46,13 +45,12 @@ typedef struct _objects_t {
     lv_obj_t *run_countdown;
     lv_obj_t *system_setting;
     lv_obj_t *ridge_setup;
-    lv_obj_t *preparation;
-    lv_obj_t *work;
-    lv_obj_t *weighing_test;
     lv_obj_t *numeric_input;
     lv_obj_t *ridge_numeric_input;
     lv_obj_t *calibration_select;
     lv_obj_t *run_readiness;
+    lv_obj_t *prescription_mode;
+    lv_obj_t *manual_target;
     lv_obj_t *startup_top_accent;
     lv_obj_t *startup_brand_label;
     lv_obj_t *startup_subtitle_label;
@@ -616,75 +614,6 @@ typedef struct _objects_t {
     lv_obj_t *ridge_action_result_detail;
     lv_obj_t *ridge_action_result_close_button;
     lv_obj_t *ridge_action_result_close_label;
-    lv_obj_t *prep_app_title;
-    lv_obj_t *prep_status;
-    lv_obj_t *prep_stop;
-    lv_obj_t *prep_stop_label;
-    lv_obj_t *prep_tab_ridge;
-    lv_obj_t *prep_tab_ridge_label;
-    lv_obj_t *prep_tab_line_ridge;
-    lv_obj_t *prep_tab_prescription;
-    lv_obj_t *prep_tab_prescription_label;
-    lv_obj_t *prep_tab_line_prescription;
-    lv_obj_t *prep_tab_preparation;
-    lv_obj_t *prep_tab_preparation_label;
-    lv_obj_t *prep_tab_line_preparation;
-    lv_obj_t *prep_tab_work;
-    lv_obj_t *prep_tab_work_label;
-    lv_obj_t *prep_tab_line_work;
-    lv_obj_t *prep_tab_weighing;
-    lv_obj_t *prep_tab_weighing_label;
-    lv_obj_t *prep_tab_line_weighing;
-    lv_obj_t *prep_content;
-    lv_obj_t *prep_content_title;
-    lv_obj_t *prep_placeholder;
-    lv_obj_t *prep_guide;
-    lv_obj_t *workpage_app_title;
-    lv_obj_t *workpage_status;
-    lv_obj_t *workpage_stop;
-    lv_obj_t *workpage_stop_label;
-    lv_obj_t *workpage_tab_ridge;
-    lv_obj_t *workpage_tab_ridge_label;
-    lv_obj_t *workpage_tab_line_ridge;
-    lv_obj_t *workpage_tab_prescription;
-    lv_obj_t *workpage_tab_prescription_label;
-    lv_obj_t *workpage_tab_line_prescription;
-    lv_obj_t *workpage_tab_preparation;
-    lv_obj_t *workpage_tab_preparation_label;
-    lv_obj_t *workpage_tab_line_preparation;
-    lv_obj_t *workpage_tab_work;
-    lv_obj_t *workpage_tab_work_label;
-    lv_obj_t *workpage_tab_line_work;
-    lv_obj_t *workpage_tab_weighing;
-    lv_obj_t *workpage_tab_weighing_label;
-    lv_obj_t *workpage_tab_line_weighing;
-    lv_obj_t *workpage_content;
-    lv_obj_t *workpage_content_title;
-    lv_obj_t *workpage_placeholder;
-    lv_obj_t *workpage_guide;
-    lv_obj_t *weigh_app_title;
-    lv_obj_t *weigh_status;
-    lv_obj_t *weigh_stop;
-    lv_obj_t *weigh_stop_label;
-    lv_obj_t *weigh_tab_ridge;
-    lv_obj_t *weigh_tab_ridge_label;
-    lv_obj_t *weigh_tab_line_ridge;
-    lv_obj_t *weigh_tab_prescription;
-    lv_obj_t *weigh_tab_prescription_label;
-    lv_obj_t *weigh_tab_line_prescription;
-    lv_obj_t *weigh_tab_preparation;
-    lv_obj_t *weigh_tab_preparation_label;
-    lv_obj_t *weigh_tab_line_preparation;
-    lv_obj_t *weigh_tab_work;
-    lv_obj_t *weigh_tab_work_label;
-    lv_obj_t *weigh_tab_line_work;
-    lv_obj_t *weigh_tab_weighing;
-    lv_obj_t *weigh_tab_weighing_label;
-    lv_obj_t *weigh_tab_line_weighing;
-    lv_obj_t *weigh_content;
-    lv_obj_t *weigh_content_title;
-    lv_obj_t *weigh_placeholder;
-    lv_obj_t *weigh_guide;
     lv_obj_t *numeric_input_card;
     lv_obj_t *numeric_input_title_label;
     lv_obj_t *numeric_input_editor;
@@ -839,6 +768,64 @@ typedef struct _objects_t {
     lv_obj_t *run_readiness_close_button_label;
     lv_obj_t *run_readiness_refresh_button;
     lv_obj_t *run_readiness_refresh_button_label;
+    lv_obj_t *prescriptionmode_title;
+    lv_obj_t *prescription_mode_applied;
+    lv_obj_t *prescription_mode_0_card;
+    lv_obj_t *prescription_mode_0_title;
+    lv_obj_t *prescription_mode_0_description;
+    lv_obj_t *prescription_mode_0_button;
+    lv_obj_t *prescription_mode_0_button_label;
+    lv_obj_t *prescription_mode_1_card;
+    lv_obj_t *prescription_mode_1_title;
+    lv_obj_t *prescription_mode_1_description;
+    lv_obj_t *prescription_mode_1_button;
+    lv_obj_t *prescription_mode_1_button_label;
+    lv_obj_t *prescription_mode_lock;
+    lv_obj_t *prescription_mode_back;
+    lv_obj_t *prescription_mode_back_label;
+    lv_obj_t *manualtarget_title;
+    lv_obj_t *manual_target_ridge;
+    lv_obj_t *manual_target_status;
+    lv_obj_t *manual_surface_card;
+    lv_obj_t *manual_surface_title;
+    lv_obj_t *manual_surface_product_dropdown;
+    lv_obj_t *manual_surface_lot;
+    lv_obj_t *manual_surface_target_caption;
+    lv_obj_t *manual_surface_target_input;
+    lv_obj_t *manual_surface_decrement_button;
+    lv_obj_t *manual_surface_decrement_button_label;
+    lv_obj_t *manual_surface_increment_button;
+    lv_obj_t *manual_surface_increment_button_label;
+    lv_obj_t *manual_subsurface_card;
+    lv_obj_t *manual_subsurface_title;
+    lv_obj_t *manual_subsurface_product_dropdown;
+    lv_obj_t *manual_subsurface_lot;
+    lv_obj_t *manual_subsurface_target_caption;
+    lv_obj_t *manual_subsurface_target_input;
+    lv_obj_t *manual_subsurface_decrement_button;
+    lv_obj_t *manual_subsurface_decrement_button_label;
+    lv_obj_t *manual_subsurface_increment_button;
+    lv_obj_t *manual_subsurface_increment_button_label;
+    lv_obj_t *manual_target_lock;
+    lv_obj_t *manual_target_save_result;
+    lv_obj_t *manual_target_cancel_button;
+    lv_obj_t *manual_target_cancel_button_label;
+    lv_obj_t *manual_target_save_button;
+    lv_obj_t *manual_target_save_button_label;
+    lv_obj_t *manual_surface_keypad_overlay;
+    lv_obj_t *manual_surface_keypad_panel;
+    lv_obj_t *manual_surface_keypad_title;
+    lv_obj_t *manual_surface_keypad_editor;
+    lv_obj_t *manual_surface_keypad;
+    lv_obj_t *manual_surface_keypad_done;
+    lv_obj_t *manual_surface_keypad_done_label;
+    lv_obj_t *manual_subsurface_keypad_overlay;
+    lv_obj_t *manual_subsurface_keypad_panel;
+    lv_obj_t *manual_subsurface_keypad_title;
+    lv_obj_t *manual_subsurface_keypad_editor;
+    lv_obj_t *manual_subsurface_keypad;
+    lv_obj_t *manual_subsurface_keypad_done;
+    lv_obj_t *manual_subsurface_keypad_done_label;
 } objects_t;
 
 extern objects_t objects;
@@ -879,15 +866,6 @@ void tick_screen_system_setting();
 void create_screen_ridge_setup();
 void tick_screen_ridge_setup();
 
-void create_screen_preparation();
-void tick_screen_preparation();
-
-void create_screen_work();
-void tick_screen_work();
-
-void create_screen_weighing_test();
-void tick_screen_weighing_test();
-
 void create_screen_numeric_input();
 void tick_screen_numeric_input();
 
@@ -899,6 +877,12 @@ void tick_screen_calibration_select();
 
 void create_screen_run_readiness();
 void tick_screen_run_readiness();
+
+void create_screen_prescription_mode();
+void tick_screen_prescription_mode();
+
+void create_screen_manual_target();
+void tick_screen_manual_target();
 
 void tick_screen_by_id(enum ScreensEnum screenId);
 void tick_screen(int screen_index);

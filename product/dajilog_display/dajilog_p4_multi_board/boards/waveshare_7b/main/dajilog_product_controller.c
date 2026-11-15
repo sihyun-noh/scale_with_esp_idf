@@ -56,6 +56,9 @@ typedef enum {
   STORAGE_EDIT_RIDGE,
   STORAGE_SELECT_RIDGE,
   STORAGE_DELETE_RIDGE,
+  STORAGE_SAVE_MANUAL,
+  STORAGE_APPLY_MANUAL,
+  STORAGE_DISCARD_MANUAL,
 } storage_operation_t;
 
 typedef struct {
@@ -111,6 +114,8 @@ static uint8_t s_stop_pending_mask;
 static uint8_t s_unconfirmed_output_mask;
 static int64_t s_stop_deadline;
 static bool s_auto_active;
+static uint32_t s_manual_apply_sequence;
+static uint32_t s_auto_confirm_sequence;
 static int64_t s_vehicle_last_us;
 static int64_t s_auto_last_command_us;
 static int64_t s_estimate_last_us;
@@ -118,6 +123,7 @@ static uint32_t s_estimate_ridge_id;
 static uint32_t s_estimate_applied_revision;
 static dajilog_product_settings_snapshot_t s_auto_applied;
 static dajilog_ridge_profiles_snapshot_t s_auto_ridges;
+static dajilog_manual_target_snapshot_t s_manual_run_target;
 
 enum {
   AUTO_STOP_SPEED = 0x3210U,
@@ -239,6 +245,59 @@ static esp_err_t auto_calculate_commands(
   return ESP_OK;
 }
 
+/** @brief [D-013 수동 목표] A+B/C+D 합계 kg/min을 각 채널에 50:50 배분해 표 전압을 찾는다. */
+static esp_err_t manual_calculate_commands(
+    const dajilog_manual_target_snapshot_t *target,
+    dajilog_motor_voltage_command_t commands[DAJILOG_MOTOR_CHANNEL_COUNT]) {
+  if (target == NULL || commands == NULL || target->applied_revision == 0U)
+    return ESP_ERR_INVALID_STATE;
+  memset(commands, 0, sizeof(*commands) * DAJILOG_MOTOR_CHANNEL_COUNT);
+  for (size_t zone = 0; zone < DAJILOG_SETTING_ZONE_COUNT; ++zone) {
+    if (s_snapshot.drivers[zone].mode == 0) continue;
+    if (s_snapshot.drivers[zone].mode != 2 ||
+        !isfinite(target->target_kg_min[zone]) ||
+        target->target_kg_min[zone] <= 0.0f ||
+        target->product_codes[zone][0] == '\0') return ESP_ERR_INVALID_STATE;
+    const dajilog_product_entry_t *product =
+        dajilog_product_catalog_find(target->product_codes[zone]);
+    if (product == NULL) return ESP_ERR_INVALID_STATE;
+    const uint32_t channel_g_min = (uint32_t)lroundf(target->target_kg_min[zone] * 500.0f);
+    for (size_t local = 0; local < 2U; ++local) {
+      const size_t i = zone * 2U + local;
+      const char channel = (char)('A' + i);
+      dajilog_calibration_summary_t candidates[DAJILOG_CALIBRATION_MAX_PROFILES] = {0};
+      const size_t count = dajilog_calibration_catalog_list(
+          channel, product->code, product->lot, candidates,
+          DAJILOG_CALIBRATION_MAX_PROFILES);
+      const dajilog_calibration_summary_t *selected = NULL;
+      for (size_t n = 0; n < count; ++n) {
+        const dajilog_calibration_summary_t *table = &candidates[n];
+        if (!table->approved ||
+#ifndef CONFIG_DAJILOG_ALLOW_UNMEASURED_AUTO_TEST
+            !table->measured ||
+#endif
+            channel_g_min < table->min_discharge_g_min ||
+            channel_g_min > table->max_discharge_g_min) continue;
+        if (selected == NULL || table->revision > selected->revision) selected = table;
+      }
+      if (selected == NULL) return ESP_ERR_INVALID_STATE;
+      uint16_t voltage = 0;
+      uint32_t expected = 0;
+      if (dajilog_calibration_catalog_preview_voltage(channel, selected->table_id,
+              selected->revision, channel_g_min, &voltage, &expected) != ESP_OK ||
+          voltage == 0U || voltage > DAJILOG_MOTOR_OUTPUT_DECIVOLT_MAX)
+        return ESP_ERR_INVALID_STATE;
+      commands[i] = (dajilog_motor_voltage_command_t){
+          .motor_index = (uint8_t)i,
+          .output_step = (uint8_t)(voltage / DAJILOG_MOTOR_DECIVOLT_PER_STEP),
+          .trim_decivolt = (int8_t)(voltage % DAJILOG_MOTOR_DECIVOLT_PER_STEP),
+          .final_decivolt = voltage,
+      };
+    }
+  }
+  return ESP_OK;
+}
+
 /** @brief [D-011 출발 대기] 활성 채널 중 표의 최소 배출량에 못 미치는 목표가 있는지 확인한다. */
 static bool auto_below_table_minimum(
     const dajilog_product_settings_snapshot_t *applied,
@@ -288,8 +347,12 @@ static esp_err_t product_get_run_readiness(dajilog_run_readiness_t *result,
   xSemaphoreGive(s_snapshot_lock);
   const bool selected_0 = live.drivers[0].mode != 0;
   const bool selected_1 = live.drivers[1].mode != 0;
+  dajilog_can_status_t bus = {0};
+  const bool bus_status_valid = dajilog_can_get_status(&bus) == ESP_OK;
+  const bool bus_running = bus_status_valid && bus.state == DAJILOG_CAN_RUNNING;
   const bool auto_mode = (selected_0 && live.drivers[0].mode == 1) ||
                          (selected_1 && live.drivers[1].mode == 1);
+  const bool manual_mode = !auto_mode && (selected_0 || selected_1);
   result->auto_mode = auto_mode;
   const bool operation_ok = live.operation_state == DAJILOG_OPERATION_READY &&
       !s_test_active && s_motor_backend_registered && (selected_0 || selected_1) &&
@@ -307,14 +370,18 @@ static esp_err_t product_get_run_readiness(dajilog_run_readiness_t *result,
     const bool zero_confirmed = live.motors[i].command_decivolt == 0 &&
         live.motors[i].command_readback_valid &&
         live.motors[i].command_readback_decivolt == 0;
-    const bool motor_ready = channel_ready(i) &&
-        (!auto_mode || live.vehicle.speed_kmh >= 0.5f || zero_confirmed);
+    const bool motor_ready = bus_running && channel_ready(i) &&
+        (live.vehicle.speed_kmh >= 0.5f || zero_confirmed);
     readiness_item(result, DAJILOG_RUN_CHECK_MOTOR_A + i,
         !active ? DAJILOG_RUN_CHECK_NOT_APPLICABLE :
         motor_ready ? DAJILOG_RUN_CHECK_PASS : DAJILOG_RUN_CHECK_FAIL,
         !active ? "드라이버 미선택" :
         motor_ready ? "CAN 응답 정상" :
-        !zero_confirmed && auto_mode && live.vehicle.speed_kmh < 0.5f ?
+        !bus_status_valid ? "CAN 상태 조회 실패" :
+        bus.state == DAJILOG_CAN_BUS_OFF ? "CAN bus-off · 복구 요청 대기" :
+        bus.state == DAJILOG_CAN_RECOVERING ? "CAN 통신 복구 중" :
+        !bus_running ? "CAN 통신 재시작 대기" :
+        !zero_confirmed && live.vehicle.speed_kmh < 0.5f ?
         "0V 응답 확인 필요" : "CAN 응답·Fault 확인 필요");
   }
   const bool speed_ok = live.vehicle.online && !live.vehicle.reverse &&
@@ -324,9 +391,9 @@ static esp_err_t product_get_run_readiness(dajilog_run_readiness_t *result,
       result->checked_at_us - s_vehicle_last_us <= 500000;
   const bool moving = speed_ok && live.vehicle.speed_kmh >= 0.5f;
   readiness_item(result, DAJILOG_RUN_CHECK_SPEED,
-      !auto_mode ? DAJILOG_RUN_CHECK_NOT_APPLICABLE :
+      !(auto_mode || manual_mode) ? DAJILOG_RUN_CHECK_NOT_APPLICABLE :
       speed_ok ? DAJILOG_RUN_CHECK_PASS : DAJILOG_RUN_CHECK_FAIL,
-      !auto_mode ? "수동 운전" : !live.vehicle.online ? "속도 신호 없음" :
+      !(auto_mode || manual_mode) ? "운전 드라이버 미선택" : !live.vehicle.online ? "속도 신호 없음" :
       live.vehicle.reverse ? "후진 상태" : !speed_ok ? "유효 속도·신선도 확인 필요" :
       live.vehicle.speed_kmh < 0.5f ? "정상 정차 · 출발 대기 가능" :
       "속도·방향 정상");
@@ -352,26 +419,45 @@ static esp_err_t product_get_run_readiness(dajilog_run_readiness_t *result,
       }
     }
   }
+  dajilog_manual_target_snapshot_t manual = {0};
+  dajilog_motor_voltage_command_t manual_desired[DAJILOG_MOTOR_CHANNEL_COUNT] = {0};
+  const bool manual_applied = manual_mode &&
+      dajilog_product_settings_get_manual_applied(&manual) == ESP_OK;
+  const bool manual_table_ok = manual_applied &&
+      manual_calculate_commands(&manual, manual_desired) == ESP_OK;
+  if (manual_mode) applied_ok = manual_applied;
   readiness_item(result, DAJILOG_RUN_CHECK_APPLIED,
-      !auto_mode ? DAJILOG_RUN_CHECK_NOT_APPLICABLE :
+      !(auto_mode || manual_mode) ? DAJILOG_RUN_CHECK_NOT_APPLICABLE :
       applied_ok ? DAJILOG_RUN_CHECK_PASS : DAJILOG_RUN_CHECK_FAIL,
-      !auto_mode ? "수동 운전" : applied_ok ? "적용 설정·두둑 일치" :
+      manual_mode ? (applied_ok ? "수동 목표 적용 확인" : "수동 목표 저장·적용 필요") :
+      !auto_mode ? "운전 드라이버 미선택" : applied_ok ? "적용 설정·두둑 일치" :
       "설정 적용 또는 두둑 재확인 필요");
   bool product_ok = applied_ok;
-  for (size_t zone = 0; zone < DAJILOG_SETTING_ZONE_COUNT && product_ok; ++zone) {
+  for (size_t zone = 0; auto_mode && zone < DAJILOG_SETTING_ZONE_COUNT && product_ok; ++zone) {
     if (live.drivers[zone].mode == 0) continue;
     product_ok = applied.selected_product_codes[zone][0] != '\0' &&
         applied.zones[zone].configured;
   }
+  if (manual_mode) product_ok = manual_table_ok;
   readiness_item(result, DAJILOG_RUN_CHECK_PRODUCT,
-      !auto_mode ? DAJILOG_RUN_CHECK_NOT_APPLICABLE :
+      !(auto_mode || manual_mode) ? DAJILOG_RUN_CHECK_NOT_APPLICABLE :
       product_ok ? DAJILOG_RUN_CHECK_PASS : DAJILOG_RUN_CHECK_FAIL,
-      !auto_mode ? "수동 운전" : product_ok ? "제품·처방 확인" :
+      manual_mode ? (product_ok ? "수동 제품·목표 확인" : "수동 제품·목표·배출량표 확인 필요") :
+      !auto_mode ? "운전 드라이버 미선택" : product_ok ? "제품·처방 확인" :
       "제품·처방 또는 적용 설정 확인 필요");
   const bool below_minimum = auto_mode && product_ok && moving &&
       auto_below_table_minimum(&applied, &ridges, live.vehicle.speed_kmh);
   for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
     const size_t zone = i / 2U;
+    if (manual_mode) {
+      readiness_item(result, DAJILOG_RUN_CHECK_TABLE_A + i,
+          live.drivers[zone].mode == 0 ? DAJILOG_RUN_CHECK_NOT_APPLICABLE :
+          manual_table_ok ? DAJILOG_RUN_CHECK_PASS : DAJILOG_RUN_CHECK_FAIL,
+          live.drivers[zone].mode == 0 ? "채널 미사용" :
+          manual_table_ok ? "수동 목표·배출량표 범위 확인" :
+          "수동 목표·제품·Lot·배출량표 확인 필요");
+      continue;
+    }
     if (!auto_mode || live.drivers[zone].mode == 0) {
       readiness_item(result, DAJILOG_RUN_CHECK_TABLE_A + i,
                      DAJILOG_RUN_CHECK_NOT_APPLICABLE, "채널 미사용");
@@ -538,7 +624,7 @@ static esp_err_t start_can_service(void) {
 /** @brief Return a log-friendly name for a product operation state. */
 static const char* state_name(dajilog_operation_state_t state) {
   static const char* names[] = {
-    "BOOT", "INITIALIZING", "READY", "RUN_AUTO", "RUN_MANUAL", "STOPPING", "FAULT", "WAIT_AUTO",
+    "BOOT", "INITIALIZING", "READY", "RUN_AUTO", "RUN_MANUAL", "STOPPING", "FAULT", "WAIT_AUTO", "WAIT_MANUAL",
   };
   return (unsigned)state < (sizeof(names) / sizeof(names[0])) ? names[state] : "UNKNOWN";
 }
@@ -836,6 +922,21 @@ static void process_command(const core_message_t* message) {
       }
       error = request_storage(STORAGE_CONFIRM_SETTINGS, message->sequence);
       deferred = error == ESP_OK;
+      if (deferred) s_auto_confirm_sequence = message->sequence;
+      break;
+    case DAJILOG_UI_CMD_MANUAL_SAVE:
+    case DAJILOG_UI_CMD_MANUAL_APPLY:
+    case DAJILOG_UI_CMD_MANUAL_DISCARD:
+      if (s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active) {
+        error = ESP_ERR_INVALID_STATE;
+        break;
+      }
+      error = request_storage(message->topic == DAJILOG_UI_CMD_MANUAL_SAVE
+              ? STORAGE_SAVE_MANUAL : message->topic == DAJILOG_UI_CMD_MANUAL_APPLY
+              ? STORAGE_APPLY_MANUAL : STORAGE_DISCARD_MANUAL, message->sequence);
+      deferred = error == ESP_OK;
+      if (deferred && message->topic == DAJILOG_UI_CMD_MANUAL_APPLY)
+        s_manual_apply_sequence = message->sequence;
       break;
     case DAJILOG_UI_CMD_SETTINGS_DISCARD:
       error = request_storage(STORAGE_DISCARD_SETTINGS, message->sequence);
@@ -871,7 +972,13 @@ static void process_command(const core_message_t* message) {
         }
       }
       if (s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active ||
-          !s_motor_backend_registered) { error = ESP_ERR_INVALID_STATE; break; }
+          !s_motor_backend_registered || !s_snapshot.vehicle.online ||
+          s_snapshot.vehicle.reverse || !isfinite(s_snapshot.vehicle.speed_kmh) ||
+          s_snapshot.vehicle.speed_kmh < 0.0f ||
+          s_snapshot.vehicle.signal_age_ms > 500U || s_vehicle_last_us == 0 ||
+          esp_timer_get_time() - s_vehicle_last_us > 500000) {
+        error = ESP_ERR_INVALID_STATE; break;
+      }
       {
         bool selected = false;
         for (size_t d = 0; d < 2; ++d) {
@@ -882,25 +989,41 @@ static void process_command(const core_message_t* message) {
         }
         if (!selected) error = ESP_ERR_INVALID_STATE;
         if (error != ESP_OK) break;
+        error = dajilog_product_settings_get_manual_applied(&s_manual_run_target);
+        dajilog_motor_voltage_command_t desired[DAJILOG_MOTOR_CHANNEL_COUNT] = {0};
+        if (error == ESP_OK) error = manual_calculate_commands(&s_manual_run_target, desired);
+        if (error != ESP_OK) break;
+        const bool waiting_for_motion = s_snapshot.vehicle.speed_kmh < 0.5f;
+        if (waiting_for_motion) {
+          for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
+            if (s_snapshot.drivers[i / 2U].mode != 2) continue;
+            const dajilog_motor_snapshot_t *motor = &s_snapshot.motors[i];
+            if (motor->command_decivolt != 0 || !motor->command_readback_valid ||
+                motor->command_readback_decivolt != 0) error = ESP_ERR_INVALID_STATE;
+          }
+        }
+        if (error != ESP_OK) break;
         for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT && error == ESP_OK; ++i) {
-          const dajilog_driver_setting_t *driver = &s_snapshot.drivers[i / 2];
-          if (driver->mode == 0) continue;
-          const dajilog_motor_voltage_command_t command = {
-            .motor_index = i, .output_step = driver->step[i % 2],
-            .trim_decivolt = driver->fine_decivolt[i % 2],
-            .final_decivolt = driver->step[i % 2] * 5U + driver->fine_decivolt[i % 2],
-          };
-          error = command_voltage(&command);
+          if (s_snapshot.drivers[i / 2U].mode != 2) continue;
+          if (!waiting_for_motion) error = command_voltage(&desired[i]);
+          if (error == ESP_OK) {
+            xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
+            s_snapshot.motors[i].target_kg_min = s_manual_run_target.target_kg_min[i / 2U] / 2.0f;
+            xSemaphoreGive(s_snapshot_lock);
+          }
         }
         if (error != ESP_OK) {
           (void)s_motor_backend.stop(s_motor_backend.context);
           set_state(DAJILOG_OPERATION_FAULT);
           set_alarm(DAJILOG_ALARM_CRITICAL, 0x3103U, "RUN failed; verify all outputs stopped");
         } else {
+          s_auto_active = true;
+          s_auto_last_command_us = esp_timer_get_time();
           xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
           s_snapshot.work_mode = DAJILOG_WORK_MODE_MANUAL;
           xSemaphoreGive(s_snapshot_lock);
-          set_state(DAJILOG_OPERATION_RUN_MANUAL);
+          set_state(waiting_for_motion ? DAJILOG_OPERATION_WAIT_MANUAL :
+                    DAJILOG_OPERATION_RUN_MANUAL);
         }
       }
       break;
@@ -1022,6 +1145,53 @@ static void system_task(void* context) {
         ESP_LOGE(TAG, "AUTO stopped: CAN bus-off");
       }
     }
+    /* D-013: 수동 목표는 속도값으로 재계산하지 않으며 정차 중 0V로 기다린다. */
+    if (s_auto_active && !stop &&
+        s_snapshot.operation_state == DAJILOG_OPERATION_WAIT_MANUAL) {
+      const int64_t now = esp_timer_get_time();
+      const bool signal_ok = s_snapshot.vehicle.online && !s_snapshot.vehicle.reverse &&
+          isfinite(s_snapshot.vehicle.speed_kmh) && s_snapshot.vehicle.speed_kmh >= 0.0f &&
+          s_snapshot.vehicle.signal_age_ms <= 500U && s_vehicle_last_us != 0 &&
+          now - s_vehicle_last_us <= 500000;
+      bool output_off = true;
+      for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
+        if (s_snapshot.drivers[i / 2U].mode != 2) continue;
+        const dajilog_motor_snapshot_t *motor = &s_snapshot.motors[i];
+        output_off = output_off && channel_ready(i) && motor->command_decivolt == 0 &&
+            motor->command_readback_valid && motor->command_readback_decivolt == 0;
+      }
+      if (!signal_ok || !output_off) {
+        stop = true; auto_failed = true;
+        record_auto_stop(!signal_ok ? AUTO_STOP_SPEED : AUTO_STOP_MOTOR_FEEDBACK,
+            !signal_ok ? "수동 출발 대기 중 속도 신호 오류" :
+                         "수동 출발 대기 중 모터 0V 확인 실패");
+      } else if (s_snapshot.vehicle.speed_kmh >= 0.5f) {
+        dajilog_motor_voltage_command_t desired[DAJILOG_MOTOR_CHANNEL_COUNT] = {0};
+        esp_err_t manual_error = manual_calculate_commands(&s_manual_run_target, desired);
+        for (size_t i = 0; manual_error == ESP_OK && i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
+          if (s_snapshot.drivers[i / 2U].mode == 2) manual_error = command_voltage(&desired[i]);
+        }
+        if (manual_error != ESP_OK) {
+          stop = true; auto_failed = true;
+          record_auto_stop(AUTO_STOP_SETTINGS, "수동 목표·배출량표 또는 전압 출력 실패");
+        } else set_state(DAJILOG_OPERATION_RUN_MANUAL);
+      }
+    }
+    if (s_auto_active && !stop &&
+        s_snapshot.operation_state == DAJILOG_OPERATION_RUN_MANUAL) {
+      const int64_t now = esp_timer_get_time();
+      const bool signal_ok = s_snapshot.vehicle.online && !s_snapshot.vehicle.reverse &&
+          isfinite(s_snapshot.vehicle.speed_kmh) && s_snapshot.vehicle.speed_kmh >= 0.0f &&
+          s_snapshot.vehicle.signal_age_ms <= 500U && s_vehicle_last_us != 0 &&
+          now - s_vehicle_last_us <= 500000;
+      if (!signal_ok || s_snapshot.vehicle.speed_kmh < 0.5f) {
+        stop = true;
+        auto_failed = !signal_ok;
+        if (!signal_ok)
+          record_auto_stop(AUTO_STOP_SPEED, "수동 운전 속도·방향 신호 오류");
+        else ESP_LOGI(TAG, "MANUAL normal stop: speed below 0.5 km/h; new RUN required");
+      }
+    }
     /* D-011: 0V 확인 뒤의 정상 정차만 출발 대기로 유지한다. */
     if (s_auto_active && !stop &&
         s_snapshot.operation_state == DAJILOG_OPERATION_WAIT_AUTO) {
@@ -1115,7 +1285,10 @@ static void system_task(void* context) {
       const int64_t now = esp_timer_get_time();
       for (size_t i = 0; i < DAJILOG_MOTOR_CHANNEL_COUNT; ++i) {
         const dajilog_motor_snapshot_t *motor = &s_snapshot.motors[i];
-        if (s_snapshot.drivers[i / 2U].mode != 1 ||
+        if ((s_snapshot.operation_state == DAJILOG_OPERATION_RUN_AUTO &&
+             s_snapshot.drivers[i / 2U].mode != 1) ||
+            (s_snapshot.operation_state == DAJILOG_OPERATION_RUN_MANUAL &&
+             s_snapshot.drivers[i / 2U].mode != 2) ||
             !motor->command_pending || motor->command_decivolt == 0 ||
             s_command_retry_count[i] >= MOTOR_WRITE_RETRY_MAX ||
             now - s_command_retry_time[i] < MOTOR_WRITE_RETRY_INTERVAL_US)
@@ -1254,6 +1427,39 @@ static void system_task(void* context) {
     switch (message.kind) {
       case CORE_MESSAGE_UI_COMMAND: process_command(&message); break;
       case CORE_MESSAGE_STORAGE_RESULT:
+        if (message.sequence == s_manual_apply_sequence &&
+            s_manual_apply_sequence != 0U) {
+          s_manual_apply_sequence = 0U;
+          if (message.data.storage_error == ESP_OK) {
+            dajilog_manual_target_snapshot_t applied_manual = {0};
+            if (dajilog_product_settings_get_manual_applied(&applied_manual) == ESP_OK) {
+              xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
+              for (size_t zone = 0; zone < DAJILOG_SETTING_ZONE_COUNT; ++zone) {
+                s_snapshot.drivers[zone].mode =
+                    applied_manual.target_kg_min[zone] > 0.0f ? 2 : 0;
+                ++s_snapshot.drivers[zone].revision;
+              }
+              s_snapshot.work_mode = DAJILOG_WORK_MODE_MANUAL;
+              xSemaphoreGive(s_snapshot_lock);
+            }
+          }
+        }
+        if (message.sequence == s_auto_confirm_sequence &&
+            s_auto_confirm_sequence != 0U) {
+          s_auto_confirm_sequence = 0U;
+          if (message.data.storage_error == ESP_OK) {
+            dajilog_product_settings_snapshot_t applied_auto = {0};
+            if (dajilog_product_settings_get_applied(&applied_auto) == ESP_OK) {
+              xSemaphoreTake(s_snapshot_lock, portMAX_DELAY);
+              for (size_t zone = 0; zone < DAJILOG_SETTING_ZONE_COUNT; ++zone) {
+                s_snapshot.drivers[zone].mode = applied_auto.zones[zone].configured ? 1 : 0;
+                ++s_snapshot.drivers[zone].revision;
+              }
+              s_snapshot.work_mode = DAJILOG_WORK_MODE_AUTO;
+              xSemaphoreGive(s_snapshot_lock);
+            }
+          }
+        }
         if (message.data.storage_error == ESP_OK) {
           set_alarm(DAJILOG_ALARM_NONE, 0, "");
         } else {
@@ -1334,6 +1540,15 @@ static void storage_task(void* context) {
         break;
       case STORAGE_DELETE_RIDGE:
         error = dajilog_product_settings_delete_ridge_profile(request.ridge_id);
+        break;
+      case STORAGE_SAVE_MANUAL:
+        error = dajilog_product_settings_save_manual();
+        break;
+      case STORAGE_APPLY_MANUAL:
+        error = dajilog_product_settings_apply_manual();
+        break;
+      case STORAGE_DISCARD_MANUAL:
+        error = dajilog_product_settings_discard_manual();
         break;
       default:
         error = ESP_ERR_INVALID_ARG;
@@ -1578,6 +1793,30 @@ static esp_err_t product_get_settings_applied(
   return dajilog_product_settings_get_applied(settings);
 }
 
+static esp_err_t product_get_manual_draft(dajilog_manual_target_snapshot_t *target, void *context) {
+  (void)context;
+  return dajilog_product_settings_get_manual_draft(target);
+}
+static esp_err_t product_get_manual_saved(dajilog_manual_target_snapshot_t *target, void *context) {
+  (void)context;
+  return dajilog_product_settings_get_manual_saved(target);
+}
+static esp_err_t product_get_saved_mode(uint8_t *mode, void *context) {
+  (void)context;
+  return dajilog_product_settings_get_saved_mode(mode);
+}
+static esp_err_t product_get_manual_applied(dajilog_manual_target_snapshot_t *target, void *context) {
+  (void)context;
+  return dajilog_product_settings_get_manual_applied(target);
+}
+/** @brief [D-013] UI에서 수동 목표만 Draft에 반영한다. 저장은 Storage Task가 수행한다. */
+static esp_err_t product_stage_manual(const dajilog_manual_target_snapshot_t *target, void *context) {
+  (void)context;
+  if (!s_started || s_snapshot.operation_state != DAJILOG_OPERATION_READY || s_test_active)
+    return ESP_ERR_INVALID_STATE;
+  return dajilog_product_settings_stage_manual(target);
+}
+
 /** @brief [두둑 카드] NVS 직접 접근 없이 Bxx RAM 목록을 UI에 제공한다. */
 static esp_err_t product_get_ridge_profiles(
     dajilog_ridge_profiles_snapshot_t* profiles, void* context) {
@@ -1604,6 +1843,11 @@ esp_err_t dajilog_product_controller_register(void) {
     .stage_zone_settings = product_stage_zone_settings,
     .stage_calibration = product_stage_calibration,
     .get_settings_applied = product_get_settings_applied,
+    .get_manual_draft = product_get_manual_draft,
+    .get_manual_saved = product_get_manual_saved,
+    .get_saved_mode = product_get_saved_mode,
+    .get_manual_applied = product_get_manual_applied,
+    .stage_manual = product_stage_manual,
     .get_ridge_profiles = product_get_ridge_profiles,
     .get_run_readiness = product_get_run_readiness,
     .context = NULL,

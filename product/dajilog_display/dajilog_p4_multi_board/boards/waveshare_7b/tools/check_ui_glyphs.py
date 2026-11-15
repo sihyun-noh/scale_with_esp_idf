@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check Korean EEZ fonts against UI text, product names and runtime labels."""
 
+import csv
 import json
 import re
 from pathlib import Path
@@ -39,10 +40,14 @@ def main():
     sources = list((BOARD / "main").glob("*.c"))
     sources += [p for p in (BOARD / "apps/brookesia_app_eez_demo").rglob("*.cpp")
                 if "generated" not in p.parts]
-    sources += list((BOARD / "config/data").glob("*.csv"))
     for source in sources:
         for string in C_STRING.findall(source.read_text(encoding="utf-8", errors="replace")):
             required |= non_ascii(string)
+    for source in (BOARD / "config/data").glob("*.csv"):
+        with source.open(encoding="utf-8", newline="") as file:
+            for row in csv.reader(file):
+                for field in row:
+                    required |= non_ascii(field)
     failed = False
     for font in project["fonts"]:
         if "_KR" not in font["name"]:

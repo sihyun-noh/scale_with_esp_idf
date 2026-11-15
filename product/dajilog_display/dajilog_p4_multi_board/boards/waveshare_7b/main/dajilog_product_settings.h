@@ -72,6 +72,19 @@ esp_err_t dajilog_product_settings_confirm(void);
 esp_err_t dajilog_product_settings_get_applied(
     dajilog_product_settings_snapshot_t *settings);
 
+/** @brief 수동 시비 목표 Draft/Saved/Applied 조회. */
+esp_err_t dajilog_product_settings_get_manual_draft(dajilog_manual_target_snapshot_t *target);
+esp_err_t dajilog_product_settings_get_manual_saved(dajilog_manual_target_snapshot_t *target);
+esp_err_t dajilog_product_settings_get_manual_applied(dajilog_manual_target_snapshot_t *target);
+/** @brief 마지막으로 NVS에 저장한 처방 화면 방식: 1=자동, 2=수동. */
+esp_err_t dajilog_product_settings_get_saved_mode(uint8_t *mode);
+/** @brief 수동 시비 목표를 RAM Draft에만 반영한다. */
+esp_err_t dajilog_product_settings_stage_manual(const dajilog_manual_target_snapshot_t *target);
+/** @brief Storage Task에서 호출한다. AUTO 설정 NVS와 별도 키에 저장한다. */
+esp_err_t dajilog_product_settings_save_manual(void);
+esp_err_t dajilog_product_settings_apply_manual(void);
+esp_err_t dajilog_product_settings_discard_manual(void);
+
 /** @brief Copy independently registered ridge profiles and selection. */
 esp_err_t dajilog_product_settings_get_ridge_profiles(
     dajilog_ridge_profiles_snapshot_t *profiles);

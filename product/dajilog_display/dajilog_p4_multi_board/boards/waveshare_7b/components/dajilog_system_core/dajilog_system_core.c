@@ -92,6 +92,42 @@ esp_err_t dajilog_system_core_get_settings_draft(
                : ESP_ERR_NOT_SUPPORTED;
 }
 
+/** @brief [D-013] 수동 목표는 AUTO 설정과 별도 Product Settings Service가 소유한다. */
+esp_err_t dajilog_system_core_get_manual_draft(dajilog_manual_target_snapshot_t *target)
+{
+    return s_registered && s_implementation.get_manual_draft != NULL
+        ? s_implementation.get_manual_draft(target, s_implementation.context)
+        : ESP_ERR_NOT_SUPPORTED;
+}
+
+esp_err_t dajilog_system_core_get_manual_saved(dajilog_manual_target_snapshot_t *target)
+{
+    return s_registered && s_implementation.get_manual_saved != NULL
+        ? s_implementation.get_manual_saved(target, s_implementation.context)
+        : ESP_ERR_NOT_SUPPORTED;
+}
+
+esp_err_t dajilog_system_core_get_saved_mode(uint8_t *mode)
+{
+    return s_registered && s_implementation.get_saved_mode != NULL
+        ? s_implementation.get_saved_mode(mode, s_implementation.context)
+        : ESP_ERR_NOT_SUPPORTED;
+}
+
+esp_err_t dajilog_system_core_get_manual_applied(dajilog_manual_target_snapshot_t *target)
+{
+    return s_registered && s_implementation.get_manual_applied != NULL
+        ? s_implementation.get_manual_applied(target, s_implementation.context)
+        : ESP_ERR_NOT_SUPPORTED;
+}
+
+esp_err_t dajilog_system_core_stage_manual(const dajilog_manual_target_snapshot_t *target)
+{
+    return s_registered && s_implementation.stage_manual != NULL
+        ? s_implementation.stage_manual(target, s_implementation.context)
+        : ESP_ERR_NOT_SUPPORTED;
+}
+
 esp_err_t dajilog_system_core_stage_ridge_settings(
     const dajilog_ridge_settings_t *settings)
 {

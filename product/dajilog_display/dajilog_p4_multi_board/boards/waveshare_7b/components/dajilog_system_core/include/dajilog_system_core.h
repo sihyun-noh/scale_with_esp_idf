@@ -56,6 +56,11 @@ typedef struct {
         char channel, const dajilog_calibration_binding_t *binding, void *context);
     esp_err_t (*get_settings_applied)(
         dajilog_product_settings_snapshot_t *settings, void *context);
+    esp_err_t (*get_manual_draft)(dajilog_manual_target_snapshot_t *target, void *context);
+    esp_err_t (*get_manual_saved)(dajilog_manual_target_snapshot_t *target, void *context);
+    esp_err_t (*get_saved_mode)(uint8_t *mode, void *context);
+    esp_err_t (*get_manual_applied)(dajilog_manual_target_snapshot_t *target, void *context);
+    esp_err_t (*stage_manual)(const dajilog_manual_target_snapshot_t *target, void *context);
     esp_err_t (*get_ridge_profiles)(
         dajilog_ridge_profiles_snapshot_t *profiles, void *context);
     esp_err_t (*get_run_readiness)(dajilog_run_readiness_t *readiness,
@@ -87,6 +92,12 @@ esp_err_t dajilog_system_core_get_settings_saved(
 /** @brief Copy the product-owned editable settings draft. */
 esp_err_t dajilog_system_core_get_settings_draft(
     dajilog_product_settings_snapshot_t *settings);
+esp_err_t dajilog_system_core_get_manual_draft(dajilog_manual_target_snapshot_t *target);
+esp_err_t dajilog_system_core_get_manual_saved(dajilog_manual_target_snapshot_t *target);
+/** @brief 마지막으로 저장한 처방 화면 방식(1=자동, 2=수동)을 조회한다. */
+esp_err_t dajilog_system_core_get_saved_mode(uint8_t *mode);
+esp_err_t dajilog_system_core_get_manual_applied(dajilog_manual_target_snapshot_t *target);
+esp_err_t dajilog_system_core_stage_manual(const dajilog_manual_target_snapshot_t *target);
 /** @brief Forward ridge input to the product settings service. */
 esp_err_t dajilog_system_core_stage_ridge_settings(
     const dajilog_ridge_settings_t *settings);

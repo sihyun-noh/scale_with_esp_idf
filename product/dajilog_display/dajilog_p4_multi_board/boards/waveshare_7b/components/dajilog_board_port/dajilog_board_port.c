@@ -66,6 +66,8 @@ esp_err_t dajilog_board_display_start(void)
             .mirror_y = 0,
         },
     };
+    /* 저장 결과와 EEZ 화면 갱신이 같은 LVGL Task에서 이어질 때의 스택 여유. */
+    cfg.lv_adapter_cfg.task_stack_size = 16 * 1024;
     if (bsp_display_start_with_config(&cfg) == NULL) {
         return ESP_FAIL;
     }

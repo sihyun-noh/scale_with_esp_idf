@@ -199,6 +199,15 @@ typedef struct {
     bool dirty;
 } dajilog_product_settings_snapshot_t;
 
+/** @brief D-013 수동 시비 목표. AUTO 처방과 독립적으로 저장한다. */
+typedef struct {
+    char product_codes[DAJILOG_SETTING_ZONE_COUNT][DAJILOG_PRODUCT_ID_CAPACITY];
+    float target_kg_min[DAJILOG_SETTING_ZONE_COUNT]; /* 전층 A+B, 지중 C+D 합계 */
+    uint32_t saved_revision;
+    uint32_t applied_revision;
+    bool dirty;
+} dajilog_manual_target_snapshot_t;
+
 typedef enum {
     DAJILOG_OPERATION_BOOT = 0,
     DAJILOG_OPERATION_INITIALIZING,
@@ -208,6 +217,7 @@ typedef enum {
     DAJILOG_OPERATION_STOPPING,
     DAJILOG_OPERATION_FAULT,
     DAJILOG_OPERATION_WAIT_AUTO,
+    DAJILOG_OPERATION_WAIT_MANUAL,
 } dajilog_operation_state_t;
 
 typedef enum {
@@ -324,6 +334,9 @@ typedef enum {
     DAJILOG_UI_CMD_DRIVER_APPLY = 0x0702000AU,
     DAJILOG_UI_CMD_SETTINGS_SAVE = 0x0702000BU,
     DAJILOG_UI_CMD_SETTINGS_CONFIRM = 0x0702000CU,
+    DAJILOG_UI_CMD_MANUAL_SAVE = 0x07020030U,
+    DAJILOG_UI_CMD_MANUAL_APPLY = 0x07020031U,
+    DAJILOG_UI_CMD_MANUAL_DISCARD = 0x07020032U,
     DAJILOG_UI_CMD_RIDGE_ADD = 0x0702000DU,
     DAJILOG_UI_CMD_RIDGE_SELECT = 0x0702000EU,
     DAJILOG_UI_CMD_RIDGE_DELETE = 0x0702000FU,

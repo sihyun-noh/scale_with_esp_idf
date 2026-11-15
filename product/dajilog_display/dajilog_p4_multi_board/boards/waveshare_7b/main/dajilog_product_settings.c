@@ -34,6 +34,15 @@
 #define PRODUCT_STORAGE_KEY            "product_cfg"
 #define RIDGE_PROFILE_STORAGE_KEY       "ridge_list"
 #define RIDGE_PROFILE_SCHEMA_VERSION    2U
+#define MANUAL_TARGET_STORAGE_KEY        "manual_tgt"
+#define MANUAL_TARGET_SCHEMA_VERSION     1U
+#define SAVED_MODE_STORAGE_KEY           "saved_mode"
+#define SAVED_MODE_SCHEMA_VERSION        1U
+
+typedef struct {
+    dajilog_manual_target_snapshot_t saved;
+    dajilog_manual_target_snapshot_t applied;
+} manual_target_record_t;
 
 /* [저장소 호환] v1 NVS에는 next_id가 없으므로 이전 레이아웃을 유지해 이전한다. */
 typedef struct {
@@ -414,6 +423,10 @@ static uint32_t s_draft_generation;
 static uint32_t s_saved_revision;
 static uint32_t s_applied_revision;
 static dajilog_setting_storage_nvs_t s_storage;
+static dajilog_manual_target_snapshot_t s_manual_draft;
+static dajilog_manual_target_snapshot_t s_manual_saved;
+static dajilog_manual_target_snapshot_t s_manual_applied;
+static uint32_t s_saved_mode;
 
 static const char *TAG = "DajilogSettings";
 
@@ -529,6 +542,24 @@ esp_err_t dajilog_product_settings_init(void)
     if (error != ESP_OK) {
         return error;
     }
+    manual_target_record_t manual_record = {0};
+    const esp_err_t manual_load = dajilog_setting_storage_nvs_load(
+        &s_storage, MANUAL_TARGET_STORAGE_KEY, MANUAL_TARGET_SCHEMA_VERSION,
+        &manual_record, sizeof(manual_record));
+    if (manual_load == ESP_OK) {
+        s_manual_saved = manual_record.saved;
+        s_manual_applied = manual_record.applied;
+        s_manual_draft = manual_record.saved;
+        s_manual_draft.dirty = false;
+    } else {
+        memset(&s_manual_saved, 0, sizeof(s_manual_saved));
+        memset(&s_manual_applied, 0, sizeof(s_manual_applied));
+        memset(&s_manual_draft, 0, sizeof(s_manual_draft));
+    }
+    s_saved_mode = 0U;
+    if (dajilog_setting_storage_nvs_load(&s_storage, SAVED_MODE_STORAGE_KEY,
+            SAVED_MODE_SCHEMA_VERSION, &s_saved_mode, sizeof(s_saved_mode)) != ESP_OK ||
+        s_saved_mode > 2U) s_saved_mode = 0U;
     memset(&s_ridge_profiles, 0, sizeof(s_ridge_profiles));
     s_ridge_profiles.next_id = 1U;
     dajilog_ridge_profiles_snapshot_t restored_profiles = {0};
@@ -1147,6 +1178,9 @@ esp_err_t dajilog_product_settings_save(void)
         memcpy(s_calibration_saved, calibration, sizeof(s_calibration_saved));
         s_saved_revision = next_revision;
         xSemaphoreGive(s_lock);
+        const uint32_t mode = 1U;
+        if (dajilog_setting_storage_nvs_save(&s_storage, SAVED_MODE_STORAGE_KEY,
+                SAVED_MODE_SCHEMA_VERSION, &mode, sizeof(mode)) == ESP_OK) s_saved_mode = mode;
     }
     return error;
 }
@@ -1288,6 +1322,133 @@ esp_err_t dajilog_product_settings_get_applied(
                                      &settings->ridge_revision);
     (void)dajilog_table_get_revision(PRESCRIPTION_TABLE_ID,
                                      &settings->prescription_revision);
+    return ESP_OK;
+}
+
+/** @brief [D-013 수동 목표] AUTO 처방과 별도인 수동 목표 Draft를 검증한다. */
+static bool manual_target_valid(const dajilog_manual_target_snapshot_t *target)
+{
+    if (target == NULL) return false;
+    for (size_t zone = 0; zone < DAJILOG_SETTING_ZONE_COUNT; ++zone) {
+        if (memchr(target->product_codes[zone], '\0', DAJILOG_PRODUCT_ID_CAPACITY) == NULL ||
+            !isfinite(target->target_kg_min[zone]) ||
+            target->target_kg_min[zone] < 0.0f || target->target_kg_min[zone] > 10.0f)
+            return false;
+        if (target->target_kg_min[zone] > 0.0f &&
+            (target->product_codes[zone][0] == '\0' ||
+             dajilog_product_catalog_find(target->product_codes[zone]) == NULL))
+            return false;
+    }
+    return target->target_kg_min[0] > 0.0f || target->target_kg_min[1] > 0.0f;
+}
+
+esp_err_t dajilog_product_settings_get_manual_draft(dajilog_manual_target_snapshot_t *target)
+{
+    if (s_lock == NULL || target == NULL) return ESP_ERR_INVALID_ARG;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    *target = s_manual_draft;
+    xSemaphoreGive(s_lock);
+    return ESP_OK;
+}
+
+esp_err_t dajilog_product_settings_get_manual_saved(dajilog_manual_target_snapshot_t *target)
+{
+    if (s_lock == NULL || target == NULL) return ESP_ERR_INVALID_ARG;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    *target = s_manual_saved;
+    xSemaphoreGive(s_lock);
+    return target->saved_revision != 0U ? ESP_OK : ESP_ERR_NOT_FOUND;
+}
+
+esp_err_t dajilog_product_settings_get_manual_applied(dajilog_manual_target_snapshot_t *target)
+{
+    if (s_lock == NULL || target == NULL) return ESP_ERR_INVALID_ARG;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    *target = s_manual_applied;
+    xSemaphoreGive(s_lock);
+    return target->applied_revision != 0U ? ESP_OK : ESP_ERR_NOT_FOUND;
+}
+
+/** @brief [D-015] 운전 적용 상태와 독립적으로 마지막 저장 처방 방식을 조회한다. */
+esp_err_t dajilog_product_settings_get_saved_mode(uint8_t *mode)
+{
+    if (s_lock == NULL || mode == NULL) return ESP_ERR_INVALID_ARG;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    *mode = (uint8_t)s_saved_mode;
+    xSemaphoreGive(s_lock);
+    return s_saved_mode == 0U ? ESP_ERR_NOT_FOUND : ESP_OK;
+}
+
+esp_err_t dajilog_product_settings_stage_manual(const dajilog_manual_target_snapshot_t *target)
+{
+    if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
+    if (!manual_target_valid(target)) return ESP_ERR_INVALID_ARG;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    s_manual_draft = *target;
+    s_manual_draft.saved_revision = s_manual_saved.saved_revision;
+    s_manual_draft.applied_revision = s_manual_applied.applied_revision;
+    s_manual_draft.dirty = true;
+    xSemaphoreGive(s_lock);
+    return ESP_OK;
+}
+
+esp_err_t dajilog_product_settings_save_manual(void)
+{
+    if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    manual_target_record_t record = {.saved = s_manual_draft, .applied = s_manual_applied};
+    if (!manual_target_valid(&record.saved)) {
+        xSemaphoreGive(s_lock);
+        return ESP_ERR_INVALID_STATE;
+    }
+    record.saved.saved_revision = s_manual_saved.saved_revision + 1U;
+    if (record.saved.saved_revision == 0U) record.saved.saved_revision = 1U;
+    record.saved.dirty = false;
+    const esp_err_t error = dajilog_setting_storage_nvs_save(
+        &s_storage, MANUAL_TARGET_STORAGE_KEY, MANUAL_TARGET_SCHEMA_VERSION,
+        &record, sizeof(record));
+    if (error == ESP_OK) {
+        s_manual_saved = record.saved;
+        s_manual_draft = record.saved;
+        s_manual_draft.applied_revision = s_manual_applied.applied_revision;
+        const uint32_t mode = 2U;
+        if (dajilog_setting_storage_nvs_save(&s_storage, SAVED_MODE_STORAGE_KEY,
+                SAVED_MODE_SCHEMA_VERSION, &mode, sizeof(mode)) == ESP_OK) s_saved_mode = mode;
+    }
+    xSemaphoreGive(s_lock);
+    return error;
+}
+
+esp_err_t dajilog_product_settings_apply_manual(void)
+{
+    if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    if (s_manual_draft.dirty || s_manual_saved.saved_revision == 0U ||
+        !manual_target_valid(&s_manual_saved)) {
+        xSemaphoreGive(s_lock);
+        return ESP_ERR_INVALID_STATE;
+    }
+    manual_target_record_t record = {.saved = s_manual_saved, .applied = s_manual_saved};
+    record.applied.applied_revision = record.saved.saved_revision;
+    record.applied.dirty = false;
+    const esp_err_t error = dajilog_setting_storage_nvs_save(
+        &s_storage, MANUAL_TARGET_STORAGE_KEY, MANUAL_TARGET_SCHEMA_VERSION,
+        &record, sizeof(record));
+    if (error == ESP_OK) {
+        s_manual_applied = record.applied;
+        s_manual_draft.applied_revision = record.applied.applied_revision;
+    }
+    xSemaphoreGive(s_lock);
+    return error;
+}
+
+esp_err_t dajilog_product_settings_discard_manual(void)
+{
+    if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    s_manual_draft = s_manual_saved;
+    s_manual_draft.applied_revision = s_manual_applied.applied_revision;
+    xSemaphoreGive(s_lock);
     return ESP_OK;
 }
 
